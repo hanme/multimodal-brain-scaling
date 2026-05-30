@@ -1,0 +1,31 @@
+target_brain_regions:
+  - whole_brain
+  
+decoders:
+  whole_brain:
+    decoder_label: 'whole_brain'
+    features_label: 'whole_brain_feats'
+    output_dim: 13600
+    hidden_dim: 512
+    num_hidden_layers: 0
+    loss_fn: 'mse'
+    is_frozen: False
+  neural_behavior:
+    decoder_label: 'neural_behavior'
+    features_label: 'neural_behavior_feats'
+    output_dim: 1854
+    hidden_dim: 512
+    num_hidden_layers: 0
+    loss_fn: 'cross_entropy'
+    is_frozen: False
+num_classes_neural: 1854
+
+projectors:
+  output_dim: 10240
+  token_reduction_method: Null
+
+# Loss weights
+loss_weights:
+  image: 1
+  neural_behavior: 0
+  neural_response: 10

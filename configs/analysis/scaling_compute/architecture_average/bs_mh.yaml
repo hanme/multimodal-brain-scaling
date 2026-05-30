@@ -1,0 +1,11 @@
+experiment_name: scaling_compute-architecture_average-bs_mh
+base_config: architecture_average-base.yaml
+
+data_filters:
+    set_filters:
+        benchmark_name:
+            - bs_mh
+
+
+experiment_description: >
+    ""

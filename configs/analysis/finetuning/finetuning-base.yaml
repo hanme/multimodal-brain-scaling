@@ -1,0 +1,47 @@
+experiment_name: finetuning-base
+data_filters:
+
+    set_filters:
+        exp_type:
+            - finetuning_data_pct
+
+
+    group_by:
+        avg_score:
+            keys:
+                - fitting_samples
+                - data_pct
+                - finetuning_dataset
+                - finetuning_regions
+                - finetuning_subjects
+                - seed
+            reduce:
+                pearsonr_nc: mean
+                rsa_c_test: mean
+                rsa_ve_test: mean
+                cka_c_test: mean
+                cka_ve_test: mean
+    apply_hierarchical_aggregation: True
+
+fitting_parameters:
+    curve_type: 'one_variable'
+    X: fitting_samples
+    Y: pearsonr_nc
+    delta: 1e-5
+    method: 'BFGS' # 'BFGS' or 'L-BFGS-B'
+    use_log: True
+    X_scaler: 1e1
+    loss_function: power_law_LSE
+    num_bootstraps: 1000
+    data_fraction: 1
+    random_seed: 42
+    initial_parameters:
+        e: [-1, -0.5, 0, 0.5, 1]
+        a: [0, 5, 10, 15, 20, 25]
+        alpha: [0, 0.5, 1, 1.5, 2]
+
+visualization:
+    loss_function: power_law
+
+experiment_description: >
+    ""

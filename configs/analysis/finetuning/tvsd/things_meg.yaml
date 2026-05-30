@@ -1,0 +1,11 @@
+experiment_name: finetuning-f_tvsd-b_things_meg
+base_config: tvsd-base.yaml
+
+data_filters:
+    set_filters:
+        benchmark_name:
+            - things_meg
+
+
+experiment_description: >
+    ""

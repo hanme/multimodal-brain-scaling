@@ -1,0 +1,11 @@
+experiment_name: finetuning-f_things_meg-b_nsd
+base_config: things_meg-base.yaml
+
+data_filters:
+    set_filters:
+        benchmark_name:
+            - nsd_func1pt8mm_individualROIs
+
+
+experiment_description: >
+    ""

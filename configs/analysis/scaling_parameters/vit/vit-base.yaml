@@ -1,0 +1,13 @@
+experiment_name: scaling_parameters-vit-base
+base_config: ../scaling_parameters-base.yaml
+
+
+data_filters:
+    set_filters:
+
+        backbone_arch_family:
+            - ViT
+            - ViTFlex
+    
+
+    combine_arch_families: True

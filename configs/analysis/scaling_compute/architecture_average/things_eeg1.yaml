@@ -1,0 +1,12 @@
+experiment_name: scaling_compute-architecture_average-things_eeg1
+base_config: architecture_average-base.yaml
+
+
+data_filters:
+    set_filters:
+        benchmark_name:
+            - things_eeg1
+
+
+experiment_description: >
+    ""

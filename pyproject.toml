@@ -1,0 +1,89 @@
+[project]
+name = "multimodal-brain-scaling"
+version = "0.1.0"
+description = "Code for Multimodal Scaling Laws for Task & Data-Optimized Models of Visual Cortex."
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Abdulkadir Gokce" },
+]
+dependencies = [
+    "h5py",
+    "huggingface-hub",
+    "numpy",
+    "pandas",
+    "pyarrow",
+    "pyyaml",
+    "scikit-learn",
+    "scipy",
+    "torch",
+    "torchvision",
+    "tqdm",
+]
+
+[project.optional-dependencies]
+training = [
+    "albumentations==1.4.3",
+    "lightning==2.5.0.post0",
+    "opencv-python==4.6.0.66",
+    "peft",
+    "python-dotenv",
+    "scaling-primate-vvs",
+    "timm==0.9.16",
+    "wandb==0.16.6",
+]
+evaluation = [
+    "brainscore-vision",
+    "peft",
+    "scaling-primate-vvs",
+    "scikit-learn-intelex; platform_system != 'Darwin' or platform_machine != 'arm64'",
+    "tables==3.10.2",
+    "timm==0.9.16",
+    "transformers",
+]
+visualization = [
+    "matplotlib",
+    "seaborn",
+]
+analysis = [
+    "numba",
+]
+neuro = [
+    "pybids==0.19.0",
+    "pycortex==1.2.11",
+]
+dev = [
+    "pytest",
+]
+
+[tool.uv.sources]
+scaling-primate-vvs = { git = "https://github.com/epflneuroailab/scaling-primate-vvs.git" }
+
+# scaling-primate-vvs declares Composer/importlib-metadata constraints that
+# conflict with brainscore-vision. The original repo installs it with
+# `pip install --no-deps`; this override gives uv the same effect by treating
+# the package as having no transitive requirements.
+[[tool.uv.dependency-metadata]]
+name = "scaling-primate-vvs"
+version = "0.1.0"
+requires-dist = []
+
+[project.scripts]
+mbs-download-artifacts = "mbs.download_artifacts:main"
+mbs-train = "mbs.training.train:cli"
+mbs-extract-features = "mbs.extraction.extract_features:cli"
+mbs-evaluate-all-layers = "mbs.evaluation.evaluate_features_all_layers:cli"
+mbs-evaluate-committed-layers = "mbs.evaluation.evaluate_features_committed_layers:cli"
+mbs-evaluate-attn-probe = "mbs.evaluation.evaluate_features_attn_probe:cli"
+mbs-fit-curves = "mbs.analysis.curve_fitting.start_fitting:cli"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mbs"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

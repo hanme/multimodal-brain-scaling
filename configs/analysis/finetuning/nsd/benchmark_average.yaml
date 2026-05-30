@@ -1,0 +1,18 @@
+experiment_name: finetuning-f_nsd-b_benchmark_average
+base_config: nsd-base.yaml
+
+data_filters:
+    set_filters:
+        benchmark_name:
+            - bs_fz
+            - bs_mh        
+            - tvsd
+            - things_eeg1
+            - things_eeg2
+            - things_meg
+            - things_fmri
+            - nsd_func1pt8mm_individualROIs
+
+
+experiment_description: >
+    ""

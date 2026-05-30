@@ -1,0 +1,15 @@
+base_config: defaults.yaml
+
+# Model
+arch: deit3_large_patch16_224
+drop_path_rate: 0.4
+
+# Data
+batch_size: 256
+
+feat_layers:
+  spvvs:
+    V1: blocks.4.norm1
+    V2: blocks.18.norm2
+    V4: blocks.9.norm1
+    IT: blocks.20.norm2

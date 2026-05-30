@@ -1,0 +1,11 @@
+experiment_name: finetuning-f_things_fmri-b_things_eeg1
+base_config: things_fmri-base.yaml
+
+data_filters:
+    set_filters:
+        benchmark_name:
+            - things_eeg1
+
+
+experiment_description: >
+    ""

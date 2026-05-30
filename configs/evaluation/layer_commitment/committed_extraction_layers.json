@@ -1,0 +1,2396 @@
+{
+    "config": {
+        "layer_eval_results_dir": "./results/proj_feats",
+        "output_dir": "./configs/evaluation/layer_commitment",
+        "valid_filenames": [
+            "bs_fz",
+            "bs_mh",
+            "tvsd",
+            "things_fmri",
+            "things_eeg1",
+            "things_eeg2",
+            "things_meg",
+            "nsd_func1pt8mm_individualROIs"
+        ],
+        "eval_metric": "cv_score",
+        "eval_metric_lower_is_better": false,
+        "target_model_id": null,
+        "verbose": false,
+        "time_created": "2026-02-23T06:43:13.280106"
+    },
+    "Qwen3-VL-2B-Instruct": {
+        "FreemanZiemba2013.aperture-public": [
+            "visual.blocks.7",
+            "visual.blocks.8.attn"
+        ],
+        "hvm-public": [
+            "visual.blocks.12.norm2",
+            "visual.blocks.5"
+        ],
+        "object_images": [
+            "visual.blocks.10.norm2",
+            "visual.blocks.12.attn",
+            "visual.blocks.12.norm2",
+            "visual.blocks.13.attn",
+            "visual.blocks.13.norm2",
+            "visual.blocks.16.norm1",
+            "visual.blocks.17.attn",
+            "visual.blocks.18.norm1",
+            "visual.blocks.2.attn",
+            "visual.blocks.4.attn",
+            "visual.blocks.5.attn",
+            "visual.blocks.6.mlp",
+            "visual.blocks.6.norm2",
+            "visual.blocks.7.norm2",
+            "visual.blocks.8",
+            "visual.blocks.9.attn"
+        ],
+        "nsd_stimuli": [
+            "language_model.layers.3.post_attention_layernorm",
+            "language_model.layers.6.post_attention_layernorm",
+            "visual.blocks.10.attn",
+            "visual.blocks.11.attn",
+            "visual.blocks.13.norm2",
+            "visual.blocks.17.norm1",
+            "visual.blocks.18.norm1",
+            "visual.blocks.4.attn",
+            "visual.blocks.7",
+            "visual.blocks.7.attn",
+            "visual.blocks.8.norm1"
+        ]
+    },
+    "alexnet_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "features.5"
+        ],
+        "hvm-public": [
+            "avgpool",
+            "features.5"
+        ],
+        "object_images": [
+            "avgpool",
+            "classifier.0",
+            "classifier.1",
+            "classifier.4",
+            "classifier.6",
+            "features.2",
+            "features.5",
+            "features.9"
+        ],
+        "nsd_stimuli": [
+            "avgpool",
+            "classifier.1",
+            "classifier.4",
+            "classifier.6",
+            "features.5",
+            "features.6"
+        ]
+    },
+    "convnext_base_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "features.5.5"
+        ],
+        "hvm-public": [
+            "features.5.0",
+            "features.5.9"
+        ],
+        "object_images": [
+            "features.2.1",
+            "features.3.0",
+            "features.5.10",
+            "features.5.11",
+            "features.5.2",
+            "features.5.6",
+            "features.5.7",
+            "features.5.8",
+            "features.5.9",
+            "features.6.0"
+        ],
+        "nsd_stimuli": [
+            "features.5.11",
+            "features.5.13",
+            "features.5.5",
+            "features.5.7",
+            "features.5.8",
+            "features.6.0"
+        ]
+    },
+    "convnext_large.fb_in22k_ft_in1k": {
+        "FreemanZiemba2013.aperture-public": [
+            "stages.2.blocks.4",
+            "stages.3.blocks.0"
+        ],
+        "hvm-public": [
+            "stages.2.blocks.0",
+            "stages.3.blocks.0"
+        ],
+        "object_images": [
+            "stages.0.blocks.0",
+            "stages.2.blocks.0",
+            "stages.2.blocks.11",
+            "stages.2.blocks.3",
+            "stages.2.blocks.4",
+            "stages.2.blocks.5",
+            "stages.2.blocks.8",
+            "stages.3.blocks.0"
+        ],
+        "nsd_stimuli": [
+            "stages.2.blocks.11",
+            "stages.2.blocks.12",
+            "stages.2.blocks.13",
+            "stages.2.blocks.15",
+            "stages.2.blocks.3",
+            "stages.2.blocks.5",
+            "stages.2.blocks.7",
+            "stages.2.blocks.8",
+            "stages.3.blocks.0"
+        ]
+    },
+    "convnext_large_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "features.1.0",
+            "features.5.6"
+        ],
+        "hvm-public": [
+            "features.4.1",
+            "features.5.7"
+        ],
+        "object_images": [
+            "features.2.1",
+            "features.3.0",
+            "features.3.1",
+            "features.5.10",
+            "features.5.4",
+            "features.5.7",
+            "features.5.8",
+            "features.5.9"
+        ],
+        "nsd_stimuli": [
+            "avgpool",
+            "features.5.0",
+            "features.5.10",
+            "features.5.13",
+            "features.5.3",
+            "features.5.4",
+            "features.5.9"
+        ]
+    },
+    "convnext_large_mlp.clip_laion2b_augreg_ft_in1k_384": {
+        "FreemanZiemba2013.aperture-public": [
+            "stages.2.blocks.4"
+        ],
+        "hvm-public": [
+            "stages.2.blocks.0",
+            "stages.2.blocks.15"
+        ],
+        "object_images": [
+            "stages.2.blocks.0",
+            "stages.2.blocks.1",
+            "stages.2.blocks.11",
+            "stages.2.blocks.12",
+            "stages.2.blocks.14",
+            "stages.2.blocks.15",
+            "stages.2.blocks.16",
+            "stages.2.blocks.17",
+            "stages.2.blocks.18",
+            "stages.2.blocks.2",
+            "stages.2.blocks.9"
+        ],
+        "nsd_stimuli": [
+            "stages.2.blocks.0",
+            "stages.2.blocks.12",
+            "stages.2.blocks.16",
+            "stages.2.blocks.17",
+            "stages.2.blocks.18",
+            "stages.2.blocks.2",
+            "stages.2.blocks.5",
+            "stages.2.blocks.7"
+        ]
+    },
+    "convnext_small_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "features.5.10",
+            "features.5.3"
+        ],
+        "hvm-public": [
+            "features.4.1",
+            "features.5.14"
+        ],
+        "object_images": [
+            "features.2.1",
+            "features.3.0",
+            "features.3.1",
+            "features.5.11",
+            "features.5.12",
+            "features.5.13",
+            "features.5.14",
+            "features.5.15",
+            "features.5.3",
+            "features.5.7",
+            "features.5.8",
+            "features.5.9",
+            "features.6"
+        ],
+        "nsd_stimuli": [
+            "features.5.0",
+            "features.5.11",
+            "features.5.15",
+            "features.5.16",
+            "features.5.17",
+            "features.5.18",
+            "features.5.3",
+            "features.5.9",
+            "features.7.0"
+        ]
+    },
+    "convnext_tiny_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "features.5.1",
+            "features.7.0"
+        ],
+        "hvm-public": [
+            "features.4.1",
+            "features.7.0"
+        ],
+        "object_images": [
+            "features.2.1",
+            "features.3.0",
+            "features.5.1",
+            "features.5.2",
+            "features.5.3",
+            "features.5.4",
+            "features.5.5",
+            "features.6",
+            "features.6.1",
+            "features.7.0"
+        ],
+        "nsd_stimuli": [
+            "features.5.1",
+            "features.5.4",
+            "features.6.1",
+            "features.7.0"
+        ]
+    },
+    "convnext_xlarge.fb_in22k_ft_in1k": {
+        "FreemanZiemba2013.aperture-public": [
+            "norm_pre",
+            "stages.2.blocks.2"
+        ],
+        "hvm-public": [
+            "stages.2.blocks.0",
+            "stages.3.blocks.0"
+        ],
+        "object_images": [
+            "stages.0.blocks.0",
+            "stages.2.blocks.0",
+            "stages.2.blocks.1",
+            "stages.2.blocks.2",
+            "stages.2.blocks.3",
+            "stages.2.blocks.4",
+            "stages.2.blocks.5",
+            "stages.2.blocks.7"
+        ],
+        "nsd_stimuli": [
+            "stages.2.blocks.2",
+            "stages.2.blocks.3",
+            "stages.2.blocks.4",
+            "stages.2.blocks.9",
+            "stages.3.blocks.0",
+            "stages.3.blocks.1"
+        ]
+    },
+    "convnext_xxlarge.clip_laion2b_soup_ft_in1k": {
+        "FreemanZiemba2013.aperture-public": [
+            "stages.2.blocks.4"
+        ],
+        "hvm-public": [
+            "stages.2.blocks.0",
+            "stages.2.blocks.11"
+        ],
+        "object_images": [
+            "stages.0.blocks.0",
+            "stages.2.blocks.0",
+            "stages.2.blocks.1",
+            "stages.2.blocks.14",
+            "stages.2.blocks.16",
+            "stages.2.blocks.17",
+            "stages.2.blocks.18",
+            "stages.2.blocks.19",
+            "stages.2.blocks.2",
+            "stages.2.blocks.3",
+            "stages.2.blocks.4"
+        ],
+        "nsd_stimuli": [
+            "stages.2.blocks.0",
+            "stages.2.blocks.13",
+            "stages.2.blocks.14",
+            "stages.2.blocks.17",
+            "stages.2.blocks.18",
+            "stages.2.blocks.19",
+            "stages.2.blocks.2",
+            "stages.2.blocks.3",
+            "stages.3.blocks.0"
+        ]
+    },
+    "convnextflex-l-0_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "features.5.2",
+            "features.7.0"
+        ],
+        "hvm-public": [
+            "features.4.1",
+            "features.7.0"
+        ],
+        "object_images": [
+            "features.3.0",
+            "features.3.1",
+            "features.5.4",
+            "features.5.5",
+            "features.6",
+            "features.6.1",
+            "features.7.0",
+            "features.7.1"
+        ],
+        "nsd_stimuli": [
+            "features.5.0",
+            "features.5.4",
+            "features.5.5",
+            "features.6.1",
+            "features.7.0",
+            "features.7.1"
+        ]
+    },
+    "convnextflex-l-1_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "features.5.2",
+            "features.7.0"
+        ],
+        "hvm-public": [
+            "features.5.0",
+            "features.6.1"
+        ],
+        "object_images": [
+            "features.3.2",
+            "features.4.1",
+            "features.5.4",
+            "features.5.5",
+            "features.5.7",
+            "features.6.0",
+            "features.6.1",
+            "features.7.0",
+            "features.7.1"
+        ],
+        "nsd_stimuli": [
+            "features.5.2",
+            "features.5.5",
+            "features.7.0",
+            "features.7.1"
+        ]
+    },
+    "convnextflex-l-2_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "features.5.4",
+            "features.7.0"
+        ],
+        "hvm-public": [
+            "features.5.0",
+            "features.6"
+        ],
+        "object_images": [
+            "features.3.0",
+            "features.5.3",
+            "features.5.6",
+            "features.6.1",
+            "features.7.0",
+            "features.7.1"
+        ],
+        "nsd_stimuli": [
+            "features.5.2",
+            "features.5.3",
+            "features.5.7",
+            "features.6.1",
+            "features.7.0",
+            "features.7.1"
+        ]
+    },
+    "convnextflex-l-3_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "features.4.0",
+            "features.7.1"
+        ],
+        "hvm-public": [
+            "features.5.2",
+            "features.7.0"
+        ],
+        "object_images": [
+            "features.3.2",
+            "features.5.1",
+            "features.5.3",
+            "features.5.4",
+            "features.6.0",
+            "features.6.1",
+            "features.7.0",
+            "features.7.1"
+        ],
+        "nsd_stimuli": [
+            "features.5.1",
+            "features.5.2",
+            "features.5.4",
+            "features.5.6",
+            "features.7.0",
+            "features.7.1"
+        ]
+    },
+    "cornet_s_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "V1",
+            "V4"
+        ],
+        "hvm-public": [
+            "IT",
+            "V1"
+        ],
+        "object_images": [
+            "IT",
+            "V1",
+            "V4"
+        ],
+        "nsd_stimuli": [
+            "IT",
+            "V4"
+        ]
+    },
+    "deit_base_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "blocks.2.attn",
+            "blocks.8.norm2"
+        ],
+        "hvm-public": [
+            "blocks.10.norm2",
+            "blocks.5"
+        ],
+        "object_images": [
+            "blocks.10.norm1",
+            "blocks.10.norm2",
+            "blocks.11.norm1",
+            "blocks.2.norm2",
+            "blocks.6",
+            "blocks.8.norm2",
+            "blocks.9.norm2"
+        ],
+        "nsd_stimuli": [
+            "blocks.10.norm2",
+            "blocks.11.norm2",
+            "blocks.6",
+            "blocks.8.norm2",
+            "blocks.9.norm2"
+        ]
+    },
+    "deit_large_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "blocks.6",
+            "blocks.6.attn"
+        ],
+        "hvm-public": [
+            "blocks.10",
+            "blocks.21.norm2"
+        ],
+        "object_images": [
+            "blocks.10",
+            "blocks.11",
+            "blocks.15",
+            "blocks.16.norm2",
+            "blocks.18.norm2",
+            "blocks.19.norm2",
+            "blocks.20.norm1",
+            "blocks.20.norm2",
+            "blocks.21.norm1",
+            "blocks.21.norm2",
+            "blocks.4.norm1"
+        ],
+        "nsd_stimuli": [
+            "blocks.12",
+            "blocks.16.norm2",
+            "blocks.18.norm2",
+            "blocks.19.norm2",
+            "blocks.21.norm1",
+            "blocks.21.norm2",
+            "blocks.22.norm1",
+            "blocks.23.norm2"
+        ]
+    },
+    "deit_small_ecoset_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "blocks.2.attn"
+        ],
+        "hvm-public": [
+            "blocks.2",
+            "blocks.9.attn"
+        ],
+        "object_images": [
+            "blocks.1",
+            "blocks.10.norm1",
+            "blocks.10.norm2",
+            "blocks.3.norm2",
+            "blocks.5.norm2",
+            "blocks.6.norm2",
+            "blocks.7.norm2",
+            "blocks.8.attn",
+            "blocks.8.norm2",
+            "blocks.9.norm1",
+            "blocks.9.norm2",
+            "norm"
+        ],
+        "nsd_stimuli": [
+            "blocks.10.norm1",
+            "blocks.10.norm2",
+            "blocks.5.norm2",
+            "blocks.6.norm2",
+            "blocks.7.norm2",
+            "blocks.9.norm2"
+        ]
+    },
+    "deit_small_ecoset_full_seed-1": {
+        "FreemanZiemba2013.aperture-public": [
+            "blocks.2",
+            "blocks.8.norm2"
+        ],
+        "hvm-public": [
+            "blocks.2",
+            "blocks.8.attn"
+        ],
+        "object_images": [
+            "blocks.1",
+            "blocks.10.norm1",
+            "blocks.10.norm2",
+            "blocks.5",
+            "blocks.5.norm2",
+            "blocks.6",
+            "blocks.7",
+            "blocks.7.mlp",
+            "blocks.8.attn",
+            "blocks.8.norm2"
+        ],
+        "nsd_stimuli": [
+            "blocks.10.norm2",
+            "blocks.5",
+            "blocks.5.norm2",
+            "blocks.6",
+            "blocks.7",
+            "blocks.7.norm2",
+            "blocks.8.norm2"
+        ]
+    },
+    "deit_small_ecoset_full_seed-2": {
+        "FreemanZiemba2013.aperture-public": [
+            "blocks.2.attn",
+            "blocks.6.attn"
+        ],
+        "hvm-public": [
+            "blocks.3",
+            "blocks.8.attn"
+        ],
+        "object_images": [
+            "blocks.10.norm1",
+            "blocks.10.norm2",
+            "blocks.2.norm2",
+            "blocks.3.attn",
+            "blocks.6",
+            "blocks.6.norm2",
+            "blocks.8",
+            "blocks.9.attn",
+            "blocks.9.norm2",
+            "norm"
+        ],
+        "nsd_stimuli": [
+            "blocks.10.norm2",
+            "blocks.11.norm2",
+            "blocks.6",
+            "blocks.6.norm2",
+            "blocks.7.norm2",
+            "blocks.8",
+            "blocks.8.norm2",
+            "blocks.9.norm2"
+        ]
+    },
+    "deit_small_imagenet_100_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "blocks.5.attn",
+            "blocks.9.attn"
+        ],
+        "hvm-public": [
+            "blocks.10",
+            "blocks.8"
+        ],
+        "object_images": [
+            "blocks.10.norm1",
+            "blocks.10.norm2",
+            "blocks.11.attn",
+            "blocks.11.norm1",
+            "blocks.11.norm2",
+            "blocks.2.norm2",
+            "blocks.9.attn"
+        ],
+        "nsd_stimuli": [
+            "blocks.10.attn",
+            "blocks.10.norm1",
+            "blocks.11.attn",
+            "blocks.11.norm1",
+            "blocks.11.norm2",
+            "blocks.9.attn"
+        ]
+    },
+    "deit_small_imagenet_10_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "blocks.3.attn",
+            "blocks.5.attn"
+        ],
+        "hvm-public": [
+            "blocks.11.norm1"
+        ],
+        "object_images": [
+            "blocks.0.attn",
+            "blocks.1.attn",
+            "blocks.11.mlp",
+            "blocks.2.mlp",
+            "blocks.5.attn",
+            "blocks.7.attn",
+            "blocks.7.mlp",
+            "blocks.9.attn"
+        ],
+        "nsd_stimuli": [
+            "blocks.0.mlp",
+            "blocks.5.attn",
+            "blocks.6.attn"
+        ]
+    },
+    "deit_small_imagenet_1_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "blocks.1.attn"
+        ],
+        "hvm-public": [
+            "blocks.11"
+        ],
+        "object_images": [
+            "blocks.1.attn",
+            "blocks.1.mlp",
+            "blocks.1.norm1",
+            "blocks.11.norm2",
+            "blocks.3.attn",
+            "blocks.4.attn",
+            "blocks.4.mlp",
+            "blocks.5.mlp",
+            "blocks.6.mlp"
+        ],
+        "nsd_stimuli": [
+            "blocks.0",
+            "blocks.11",
+            "blocks.11.norm2",
+            "blocks.2.mlp",
+            "blocks.4.mlp",
+            "blocks.8",
+            "norm"
+        ]
+    },
+    "deit_small_imagenet_300_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "blocks.4",
+            "blocks.7.attn"
+        ],
+        "hvm-public": [
+            "blocks.4",
+            "blocks.9"
+        ],
+        "object_images": [
+            "blocks.10.attn",
+            "blocks.10.norm1",
+            "blocks.10.norm2",
+            "blocks.11.norm1",
+            "blocks.11.norm2",
+            "blocks.3",
+            "blocks.6",
+            "blocks.8",
+            "blocks.9",
+            "blocks.9.attn",
+            "blocks.9.norm2",
+            "norm"
+        ],
+        "nsd_stimuli": [
+            "blocks.10.attn",
+            "blocks.10.norm2",
+            "blocks.11.norm1",
+            "blocks.11.norm2",
+            "blocks.6.attn",
+            "blocks.6.norm2",
+            "blocks.9.norm2"
+        ]
+    },
+    "deit_small_imagenet_30_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "blocks.6.attn"
+        ],
+        "hvm-public": [
+            "blocks.11.norm1"
+        ],
+        "object_images": [
+            "blocks.10.norm2",
+            "blocks.11.norm1",
+            "blocks.2.mlp",
+            "blocks.6.attn",
+            "blocks.7.attn",
+            "blocks.8.attn"
+        ],
+        "nsd_stimuli": [
+            "blocks.10.attn",
+            "blocks.11.norm1",
+            "blocks.6.attn",
+            "blocks.8.attn"
+        ]
+    },
+    "deit_small_imagenet_3_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "blocks.3.attn",
+            "blocks.7.attn"
+        ],
+        "hvm-public": [
+            "blocks.1.mlp",
+            "blocks.11"
+        ],
+        "object_images": [
+            "blocks.0.attn",
+            "blocks.0.mlp",
+            "blocks.1.attn",
+            "blocks.10.attn",
+            "blocks.11",
+            "blocks.11.mlp",
+            "blocks.3.attn",
+            "blocks.4.attn",
+            "blocks.4.mlp",
+            "blocks.5.mlp",
+            "blocks.6.attn",
+            "blocks.7.attn",
+            "blocks.8.attn"
+        ],
+        "nsd_stimuli": [
+            "blocks.1.mlp",
+            "blocks.2.mlp",
+            "blocks.4.attn",
+            "blocks.5.mlp",
+            "blocks.7.attn"
+        ]
+    },
+    "deit_small_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "blocks.11.norm1",
+            "blocks.2.attn"
+        ],
+        "hvm-public": [
+            "blocks.4",
+            "blocks.8.attn"
+        ],
+        "object_images": [
+            "blocks.10.norm1",
+            "blocks.10.norm2",
+            "blocks.2.norm1",
+            "blocks.4.norm2",
+            "blocks.5",
+            "blocks.5.attn",
+            "blocks.6.norm2",
+            "blocks.7.norm1",
+            "blocks.8.norm2",
+            "blocks.9.attn",
+            "blocks.9.norm2",
+            "norm"
+        ],
+        "nsd_stimuli": [
+            "blocks.10.norm1",
+            "blocks.6.norm2",
+            "blocks.7.norm2",
+            "blocks.9.attn",
+            "blocks.9.norm2"
+        ]
+    },
+    "deit_small_imagenet_full_seed-1": {
+        "FreemanZiemba2013.aperture-public": [
+            "blocks.4.attn",
+            "blocks.8.norm2"
+        ],
+        "hvm-public": [
+            "blocks.5",
+            "blocks.9.attn"
+        ],
+        "object_images": [
+            "blocks.10.norm1",
+            "blocks.10.norm2",
+            "blocks.11.norm1",
+            "blocks.3.norm2",
+            "blocks.6",
+            "blocks.7.norm2",
+            "blocks.8",
+            "blocks.8.norm2",
+            "blocks.9.attn",
+            "blocks.9.norm2",
+            "norm"
+        ],
+        "nsd_stimuli": [
+            "blocks.10.norm2",
+            "blocks.11.norm1",
+            "blocks.8",
+            "blocks.8.norm2",
+            "blocks.9.attn",
+            "blocks.9.norm2"
+        ]
+    },
+    "deit_small_imagenet_full_seed-2": {
+        "FreemanZiemba2013.aperture-public": [
+            "blocks.2",
+            "blocks.2.attn"
+        ],
+        "hvm-public": [
+            "blocks.2",
+            "blocks.9.attn"
+        ],
+        "object_images": [
+            "blocks.0",
+            "blocks.3.attn",
+            "blocks.3.norm2",
+            "blocks.4.norm2",
+            "blocks.5.norm2",
+            "blocks.7.norm2",
+            "blocks.8.attn",
+            "blocks.8.norm2",
+            "blocks.9.norm2"
+        ],
+        "nsd_stimuli": [
+            "blocks.10.norm1",
+            "blocks.3.norm2",
+            "blocks.4",
+            "blocks.4.norm2",
+            "blocks.5.norm2",
+            "blocks.7.norm2",
+            "blocks.8.norm2",
+            "blocks.9.norm2"
+        ]
+    },
+    "deit_tiny_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "blocks.3",
+            "blocks.6"
+        ],
+        "hvm-public": [
+            "blocks.4",
+            "blocks.7.attn"
+        ],
+        "object_images": [
+            "blocks.10.norm2",
+            "blocks.2",
+            "blocks.7",
+            "blocks.7.norm2",
+            "blocks.8",
+            "blocks.8.attn",
+            "blocks.8.norm2",
+            "blocks.9.attn",
+            "blocks.9.norm2"
+        ],
+        "nsd_stimuli": [
+            "blocks.10.norm1",
+            "blocks.7.norm2",
+            "blocks.9.attn",
+            "blocks.9.norm2"
+        ]
+    },
+    "deitflex-l-0_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "blocks.4",
+            "blocks.7.attn"
+        ],
+        "hvm-public": [
+            "blocks.3",
+            "blocks.9.attn"
+        ],
+        "object_images": [
+            "blocks.1",
+            "blocks.10.norm1",
+            "blocks.10.norm2",
+            "blocks.6.norm2",
+            "blocks.7",
+            "blocks.7.norm2",
+            "blocks.8.attn",
+            "blocks.8.norm1",
+            "blocks.8.norm2",
+            "blocks.9.attn",
+            "blocks.9.norm2"
+        ],
+        "nsd_stimuli": [
+            "blocks.10.norm1",
+            "blocks.10.norm2",
+            "blocks.7.norm2",
+            "blocks.8.norm2",
+            "blocks.9.attn",
+            "blocks.9.norm2"
+        ]
+    },
+    "deitflex-l-1_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "blocks.2",
+            "blocks.6"
+        ],
+        "hvm-public": [
+            "blocks.4",
+            "blocks.8.norm2"
+        ],
+        "object_images": [
+            "blocks.1",
+            "blocks.10.norm1",
+            "blocks.10.norm2",
+            "blocks.4.norm2",
+            "blocks.6.norm2",
+            "blocks.7",
+            "blocks.7.norm2",
+            "blocks.8.attn",
+            "blocks.8.norm1",
+            "blocks.8.norm2",
+            "blocks.9.norm2"
+        ],
+        "nsd_stimuli": [
+            "blocks.10.norm2",
+            "blocks.6",
+            "blocks.6.norm2",
+            "blocks.8.norm2",
+            "blocks.9.norm2"
+        ]
+    },
+    "deitflex-l-2_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "blocks.3",
+            "blocks.4.attn"
+        ],
+        "hvm-public": [
+            "blocks.4",
+            "blocks.9.norm2"
+        ],
+        "object_images": [
+            "blocks.1",
+            "blocks.10.attn",
+            "blocks.10.norm1",
+            "blocks.10.norm2",
+            "blocks.11.norm1",
+            "blocks.3.norm1",
+            "blocks.5.norm2",
+            "blocks.6.norm1",
+            "blocks.7.norm1",
+            "blocks.8",
+            "blocks.8.norm2",
+            "blocks.9",
+            "blocks.9.norm1",
+            "blocks.9.norm2"
+        ],
+        "nsd_stimuli": [
+            "blocks.10.attn",
+            "blocks.10.norm1",
+            "blocks.10.norm2",
+            "blocks.11.attn",
+            "blocks.11.norm1",
+            "blocks.11.norm2",
+            "blocks.5.norm2",
+            "blocks.7.norm2",
+            "blocks.8.norm2",
+            "blocks.9",
+            "blocks.9.norm1"
+        ]
+    },
+    "deitflex-l-3_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "blocks.1",
+            "blocks.2.attn"
+        ],
+        "hvm-public": [
+            "blocks.10.norm1",
+            "blocks.4"
+        ],
+        "object_images": [
+            "blocks.1.attn",
+            "blocks.1.norm1",
+            "blocks.10.attn",
+            "blocks.10.norm1",
+            "blocks.10.norm2",
+            "blocks.11.norm1",
+            "blocks.5.norm1",
+            "blocks.6",
+            "blocks.6.attn",
+            "blocks.6.norm1",
+            "blocks.6.norm2",
+            "blocks.7",
+            "blocks.7.attn",
+            "blocks.7.norm1",
+            "blocks.8",
+            "blocks.8.norm1",
+            "blocks.9.norm1"
+        ],
+        "nsd_stimuli": [
+            "blocks.10.norm1",
+            "blocks.11.norm1",
+            "blocks.4",
+            "blocks.6.norm2",
+            "blocks.7",
+            "blocks.7.norm1",
+            "blocks.8.attn",
+            "blocks.8.norm1"
+        ]
+    },
+    "efficientnet_b0_imagenet_full": {
+        "FreemanZiemba2013.aperture-public": [
+            "features.4.0.block.1",
+            "features.6.0.block.1"
+        ],
+        "hvm-public": [
+            "features.4.0.block.2",
+            "features.6.0.block.1"
+        ],
+        "object_images": [
+            "features.2.1.block.0",
+            "features.4.0.block.1",
+            "features.4.0.block.2",
+            "features.4.2.block.0",
+            "features.5.0.block.3",
+            "features.6.0.block.1",
+            "features.6.0.block.2",
+            "features.6.1.block.1",
+            "features.7.0.block.1"
+        ],
+        "nsd_stimuli": [
+            "features.4.0.block.2",
+            "features.5.0.block.2",
+            "features.6.0.block.1",
+            "features.6.0.block.2",
+            "features.7.0.block.1",
+            "features.7.0.block.2"
+        ]
+    },
+    "efficientnet_b1_imagenet_full": {
+        "FreemanZiemba2013.aperture-public": [
+            "features.5.0.block.1",
+            "features.6.0.block.3"
+        ],
+        "hvm-public": [
+            "features.4.0.block.2",
+            "features.6.0.block.1"
+        ],
+        "object_images": [
+            "features.2.1.block.0",
+            "features.2.2.block.0",
+            "features.4.0.block.2",
+            "features.6.0.block.1",
+            "features.6.0.block.2",
+            "features.6.1.block.0",
+            "features.6.1.block.1",
+            "features.7.0.block.1",
+            "features.7.0.block.2"
+        ],
+        "nsd_stimuli": [
+            "features.4.0.block.2",
+            "features.4.0.block.3",
+            "features.6.0.block.1",
+            "features.6.0.block.2",
+            "features.6.0.block.3",
+            "features.7.0.block.1"
+        ]
+    },
+    "efficientnet_b2_imagenet_full": {
+        "FreemanZiemba2013.aperture-public": [
+            "features.4.0.block.1",
+            "features.6.0.block.3"
+        ],
+        "hvm-public": [
+            "features.5.0.block.1",
+            "features.7.0.block.1"
+        ],
+        "object_images": [
+            "features.2.1.block.0",
+            "features.4.0.block.2",
+            "features.4.0.block.3",
+            "features.5.0.block.1",
+            "features.6.0.block.1",
+            "features.6.0.block.2",
+            "features.6.0.block.3",
+            "features.6.1.block.1",
+            "features.7.0.block.1",
+            "features.7.0.block.2"
+        ],
+        "nsd_stimuli": [
+            "features.4.0.block.2",
+            "features.6.0.block.1",
+            "features.6.0.block.2",
+            "features.6.0.block.3",
+            "features.7.0.block.1"
+        ]
+    },
+    "resnet101_imagenet_full": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer3.17",
+            "layer3.5"
+        ],
+        "hvm-public": [
+            "layer3.0",
+            "layer4.1"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1.0",
+            "layer3.0",
+            "layer3.10",
+            "layer3.12",
+            "layer3.13",
+            "layer3.16",
+            "layer3.18",
+            "layer3.19",
+            "layer3.20",
+            "layer3.21",
+            "layer3.3",
+            "layer4",
+            "layer4.0",
+            "layer4.1"
+        ],
+        "nsd_stimuli": [
+            "layer3.1",
+            "layer3.12",
+            "layer3.13",
+            "layer3.17",
+            "layer3.19",
+            "layer3.21",
+            "layer4.0",
+            "layer4.1"
+        ]
+    },
+    "resnet152_imagenet_full": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer3.32",
+            "layer3.4"
+        ],
+        "hvm-public": [
+            "layer3.0",
+            "layer4.0"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1.0",
+            "layer2.0",
+            "layer3",
+            "layer3.0",
+            "layer3.1",
+            "layer3.15",
+            "layer3.16",
+            "layer3.21",
+            "layer3.24",
+            "layer3.25",
+            "layer3.27",
+            "layer3.28",
+            "layer3.29",
+            "layer3.30",
+            "layer3.33",
+            "layer4.1"
+        ],
+        "nsd_stimuli": [
+            "layer3.0",
+            "layer3.1",
+            "layer3.17",
+            "layer3.18",
+            "layer3.24",
+            "layer3.25",
+            "layer3.27",
+            "layer4.1"
+        ]
+    },
+    "resnet18_imagenet_full": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer3.0"
+        ],
+        "hvm-public": [
+            "layer3.0",
+            "layer4.0"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1.0",
+            "layer2",
+            "layer2.0",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ],
+        "nsd_stimuli": [
+            "avgpool",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ]
+    },
+    "resnet34_imagenet_full": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer3.0",
+            "layer3.2"
+        ],
+        "hvm-public": [
+            "layer3.0",
+            "layer4.1"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1.0",
+            "layer2.0",
+            "layer3.0",
+            "layer3.1",
+            "layer3.3",
+            "layer3.4",
+            "layer4.0",
+            "layer4.1"
+        ],
+        "nsd_stimuli": [
+            "layer3.0",
+            "layer3.2",
+            "layer4.0",
+            "layer4.1"
+        ]
+    },
+    "resnet50_imagenet_full": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer3.2",
+            "layer4.1"
+        ],
+        "hvm-public": [
+            "layer3.0",
+            "layer4.0"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1.0",
+            "layer2.0",
+            "layer3",
+            "layer3.1",
+            "layer3.3",
+            "layer3.4",
+            "layer4",
+            "layer4.0",
+            "layer4.1"
+        ],
+        "nsd_stimuli": [
+            "layer3.1",
+            "layer3.4",
+            "layer4.1"
+        ]
+    },
+    "resnetflexfilters-d-1-0-0-0_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "avgpool",
+            "layer1"
+        ],
+        "hvm-public": [
+            "layer1"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1"
+        ],
+        "nsd_stimuli": [
+            "avgpool",
+            "layer1"
+        ]
+    },
+    "resnetflexfilters-d-1-0-0-1_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "avgpool",
+            "layer1"
+        ],
+        "hvm-public": [
+            "layer1",
+            "layer4.0"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1",
+            "layer4.0"
+        ],
+        "nsd_stimuli": [
+            "avgpool",
+            "layer1",
+            "layer4.0"
+        ]
+    },
+    "resnetflexfilters-d-1-0-0-2_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer1",
+            "layer4.1"
+        ],
+        "hvm-public": [
+            "layer1",
+            "layer4.1"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1",
+            "layer4.0",
+            "layer4.1"
+        ],
+        "nsd_stimuli": [
+            "avgpool",
+            "layer4.0",
+            "layer4.1"
+        ]
+    },
+    "resnetflexfilters-d-1-0-1-0_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer1",
+            "layer4"
+        ],
+        "hvm-public": [
+            "layer1",
+            "layer4"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1",
+            "layer4"
+        ],
+        "nsd_stimuli": [
+            "avgpool",
+            "layer1",
+            "layer4"
+        ]
+    },
+    "resnetflexfilters-d-1-1-0-0_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "avgpool",
+            "layer1"
+        ],
+        "hvm-public": [
+            "layer1",
+            "layer3"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1",
+            "layer3"
+        ],
+        "nsd_stimuli": [
+            "avgpool",
+            "layer1",
+            "layer3"
+        ]
+    },
+    "resnetflexfilters-d-1-1-1-0_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "avgpool",
+            "layer1"
+        ],
+        "hvm-public": [
+            "layer2",
+            "layer3.0"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1",
+            "layer2",
+            "layer3.0"
+        ],
+        "nsd_stimuli": [
+            "avgpool",
+            "layer2",
+            "layer3.0"
+        ]
+    },
+    "resnetflexfilters-d-1-1-1-1_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer2.0",
+            "layer3.0"
+        ],
+        "hvm-public": [
+            "layer2.0",
+            "layer4"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1",
+            "layer2.0",
+            "layer3.0",
+            "layer4"
+        ],
+        "nsd_stimuli": [
+            "avgpool",
+            "layer2.0",
+            "layer3.0",
+            "layer4"
+        ]
+    },
+    "resnetflexfilters-d-1-1-1-2_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer3.0",
+            "layer4.0"
+        ],
+        "hvm-public": [
+            "layer3.0",
+            "layer4.0"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1",
+            "layer2.0",
+            "layer3.0",
+            "layer4.0"
+        ],
+        "nsd_stimuli": [
+            "avgpool",
+            "layer3.0",
+            "layer4",
+            "layer4.0"
+        ]
+    },
+    "resnetflexfilters-d-1-1-2-2_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer2",
+            "layer3"
+        ],
+        "hvm-public": [
+            "layer3.0",
+            "layer4.0"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1",
+            "layer2",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ],
+        "nsd_stimuli": [
+            "avgpool",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ]
+    },
+    "resnetflexfilters-d-1-2-2-2_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer3.0"
+        ],
+        "hvm-public": [
+            "layer3.0",
+            "layer4.0"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1",
+            "layer2.0",
+            "layer3.0",
+            "layer3.1",
+            "layer4",
+            "layer4.0"
+        ],
+        "nsd_stimuli": [
+            "avgpool",
+            "layer3.0",
+            "layer3.1",
+            "layer4",
+            "layer4.0"
+        ]
+    },
+    "resnetflexfilters-d-2-2-2-2_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer2.0",
+            "layer3"
+        ],
+        "hvm-public": [
+            "layer3.0",
+            "layer4.0"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1.0",
+            "layer2.0",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ],
+        "nsd_stimuli": [
+            "avgpool",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ]
+    },
+    "resnetflexfilters-f-1-16-20-0_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer3.0",
+            "layer4.0"
+        ],
+        "hvm-public": [
+            "layer3.0",
+            "layer4.0"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1.0",
+            "layer3",
+            "layer3.0",
+            "layer4.0"
+        ],
+        "nsd_stimuli": [
+            "layer2.0",
+            "layer3.0",
+            "layer4.0"
+        ]
+    },
+    "resnetflexfilters-f-1-16-20-10_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer1.0",
+            "layer4.1"
+        ],
+        "hvm-public": [
+            "layer3.0",
+            "layer4.0"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1.0",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ],
+        "nsd_stimuli": [
+            "avgpool",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ]
+    },
+    "resnetflexfilters-f-1-16-20-11_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer1.0",
+            "layer3.0"
+        ],
+        "hvm-public": [
+            "layer3.0",
+            "layer4.0"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1.0",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ],
+        "nsd_stimuli": [
+            "avgpool",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ]
+    },
+    "resnetflexfilters-f-1-16-20-12_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer1.0",
+            "layer3.0"
+        ],
+        "hvm-public": [
+            "layer3.0",
+            "layer4.1"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1.0",
+            "layer2",
+            "layer3",
+            "layer3.0",
+            "layer3.1",
+            "layer4.0",
+            "layer4.1"
+        ],
+        "nsd_stimuli": [
+            "avgpool",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ]
+    },
+    "resnetflexfilters-f-1-16-20-13_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer1.0",
+            "layer3.0"
+        ],
+        "hvm-public": [
+            "layer3.0",
+            "layer4.0"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer2",
+            "layer2.0",
+            "layer3",
+            "layer3.1",
+            "layer4.0",
+            "layer4.1"
+        ],
+        "nsd_stimuli": [
+            "avgpool",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ]
+    },
+    "resnetflexfilters-f-1-16-20-14_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer1",
+            "layer4.0"
+        ],
+        "hvm-public": [
+            "layer3.0",
+            "layer4.0"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1",
+            "layer2.0",
+            "layer3",
+            "layer4.0",
+            "layer4.1"
+        ],
+        "nsd_stimuli": [
+            "avgpool",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ]
+    },
+    "resnetflexfilters-f-1-16-20-15_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer3",
+            "layer3.0"
+        ],
+        "hvm-public": [
+            "layer3.0",
+            "layer4.0"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer2",
+            "layer2.0",
+            "layer3",
+            "layer3.1",
+            "layer4",
+            "layer4.0",
+            "layer4.1"
+        ],
+        "nsd_stimuli": [
+            "avgpool",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ]
+    },
+    "resnetflexfilters-f-1-16-20-16_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer2",
+            "layer3.0"
+        ],
+        "hvm-public": [
+            "layer3.0",
+            "layer4.0"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer2",
+            "layer2.0",
+            "layer3",
+            "layer3.1",
+            "layer4.0",
+            "layer4.1"
+        ],
+        "nsd_stimuli": [
+            "avgpool",
+            "layer2",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ]
+    },
+    "resnetflexfilters-f-1-16-20-17_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer1.0",
+            "layer4.0"
+        ],
+        "hvm-public": [
+            "layer3.0",
+            "layer4.0"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1",
+            "layer2",
+            "layer3",
+            "layer4.0",
+            "layer4.1"
+        ],
+        "nsd_stimuli": [
+            "avgpool",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ]
+    },
+    "resnetflexfilters-f-1-16-20-18_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer3",
+            "layer4.0"
+        ],
+        "hvm-public": [
+            "layer3.0",
+            "layer4.0"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1",
+            "layer2",
+            "layer3",
+            "layer3.1",
+            "layer4.0",
+            "layer4.1"
+        ],
+        "nsd_stimuli": [
+            "avgpool",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ]
+    },
+    "resnetflexfilters-f-1-16-20-19_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer2",
+            "layer3.0"
+        ],
+        "hvm-public": [
+            "layer3.0",
+            "layer4.1"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1",
+            "layer2",
+            "layer3",
+            "layer4.0",
+            "layer4.1"
+        ],
+        "nsd_stimuli": [
+            "avgpool",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ]
+    },
+    "resnetflexfilters-f-1-16-20-1_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer3",
+            "layer4.0"
+        ],
+        "hvm-public": [
+            "layer3.0",
+            "layer4.0"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1.0",
+            "layer3",
+            "layer3.0",
+            "layer4.0"
+        ],
+        "nsd_stimuli": [
+            "layer2.0",
+            "layer3",
+            "layer3.0",
+            "layer4.0"
+        ]
+    },
+    "resnetflexfilters-f-1-16-20-2_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer3.0"
+        ],
+        "hvm-public": [
+            "layer3",
+            "layer3.0"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1.0",
+            "layer2.0",
+            "layer3",
+            "layer3.0",
+            "layer4.0"
+        ],
+        "nsd_stimuli": [
+            "avgpool",
+            "layer2.0",
+            "layer3",
+            "layer3.0",
+            "layer4.0"
+        ]
+    },
+    "resnetflexfilters-f-1-16-20-3_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer3",
+            "layer3.0"
+        ],
+        "hvm-public": [
+            "layer3",
+            "layer3.0"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1.0",
+            "layer3",
+            "layer3.0",
+            "layer4.0"
+        ],
+        "nsd_stimuli": [
+            "avgpool",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ]
+    },
+    "resnetflexfilters-f-1-16-20-4_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer3.0",
+            "layer4.0"
+        ],
+        "hvm-public": [
+            "layer3.0",
+            "layer4.0"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1.0",
+            "layer2.0",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ],
+        "nsd_stimuli": [
+            "avgpool",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ]
+    },
+    "resnetflexfilters-f-1-16-20-5_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer3.0"
+        ],
+        "hvm-public": [
+            "layer3.0",
+            "layer4.0"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1.0",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ],
+        "nsd_stimuli": [
+            "avgpool",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ]
+    },
+    "resnetflexfilters-f-1-16-20-6_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer1.0",
+            "layer3.0"
+        ],
+        "hvm-public": [
+            "layer3.0",
+            "layer4.0"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1.0",
+            "layer2.0",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ],
+        "nsd_stimuli": [
+            "avgpool",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ]
+    },
+    "resnetflexfilters-f-1-16-20-7_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer3.0"
+        ],
+        "hvm-public": [
+            "layer3.0",
+            "layer4.0"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1.0",
+            "layer2.0",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ],
+        "nsd_stimuli": [
+            "avgpool",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ]
+    },
+    "resnetflexfilters-f-1-16-20-8_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer1.0",
+            "layer4.0"
+        ],
+        "hvm-public": [
+            "layer3.0",
+            "layer4.0"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1.0",
+            "layer2",
+            "layer3",
+            "layer3.0",
+            "layer4",
+            "layer4.0"
+        ],
+        "nsd_stimuli": [
+            "avgpool",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ]
+    },
+    "resnetflexfilters-f-1-16-20-9_imagenet_full_seed-0": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer1.0",
+            "layer3.0"
+        ],
+        "hvm-public": [
+            "layer3.0",
+            "layer4.0"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1.0",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ],
+        "nsd_stimuli": [
+            "avgpool",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ]
+    },
+    "resnetflexfilters_wr-4-1-2-4-0_imagenet_full": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer3"
+        ],
+        "hvm-public": [
+            "layer3.0",
+            "layer4.0"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1.0",
+            "layer2.0",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ],
+        "nsd_stimuli": [
+            "layer3",
+            "layer3.0",
+            "layer4.0"
+        ]
+    },
+    "resnetflexfilters_wr-4-1-2-4-1_imagenet_full": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer3"
+        ],
+        "hvm-public": [
+            "layer3.0",
+            "layer4.0"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1.0",
+            "layer2.0",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ],
+        "nsd_stimuli": [
+            "layer2.0",
+            "layer3.0",
+            "layer4.0"
+        ]
+    },
+    "resnetflexfilters_wr-4-1-2-4-2_imagenet_full": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer3.0",
+            "layer4.0"
+        ],
+        "hvm-public": [
+            "layer3.0",
+            "layer4.0"
+        ],
+        "object_images": [
+            "avgpool",
+            "layer1.0",
+            "layer2.0",
+            "layer3",
+            "layer3.0",
+            "layer4.0",
+            "layer4.1"
+        ],
+        "nsd_stimuli": [
+            "layer2.0",
+            "layer3.0",
+            "layer4.0"
+        ]
+    },
+    "vit_base_patch14_dinov2.lvd142m": {
+        "FreemanZiemba2013.aperture-public": [
+            "blocks.1.attn",
+            "blocks.7.attn"
+        ],
+        "hvm-public": [
+            "blocks.3.attn",
+            "blocks.8.attn"
+        ],
+        "object_images": [
+            "blocks.10.attn",
+            "blocks.11.attn",
+            "blocks.3.attn",
+            "blocks.5",
+            "blocks.6.attn",
+            "blocks.6.mlp",
+            "blocks.7",
+            "blocks.7.mlp",
+            "blocks.8.attn",
+            "blocks.8.norm2",
+            "blocks.9.attn"
+        ],
+        "nsd_stimuli": [
+            "blocks.10.norm1",
+            "blocks.11.attn",
+            "blocks.11.norm2",
+            "blocks.3.attn",
+            "blocks.6.norm2",
+            "blocks.8.norm1",
+            "blocks.8.norm2",
+            "blocks.9.attn",
+            "blocks.9.norm1",
+            "blocks.9.norm2"
+        ]
+    },
+    "vit_base_patch14_reg4_dinov2.lvd142m": {
+        "FreemanZiemba2013.aperture-public": [
+            "blocks.2.attn",
+            "blocks.6.attn"
+        ],
+        "hvm-public": [
+            "blocks.11.norm2",
+            "blocks.2.attn"
+        ],
+        "object_images": [
+            "blocks.10.attn",
+            "blocks.11.attn",
+            "blocks.2",
+            "blocks.5",
+            "blocks.6",
+            "blocks.6.norm1",
+            "blocks.7.norm1",
+            "blocks.7.norm2",
+            "blocks.8.attn",
+            "blocks.8.norm1",
+            "blocks.8.norm2",
+            "blocks.9.attn",
+            "blocks.9.norm2"
+        ],
+        "nsd_stimuli": [
+            "blocks.10.attn",
+            "blocks.11.attn",
+            "blocks.11.norm2",
+            "blocks.4",
+            "blocks.7.norm2",
+            "blocks.8.norm2",
+            "blocks.9.attn",
+            "blocks.9.norm2"
+        ]
+    },
+    "vit_base_patch16_clip_224.openai_ft_in1k": {
+        "FreemanZiemba2013.aperture-public": [
+            "blocks.2.attn",
+            "blocks.4.attn"
+        ],
+        "hvm-public": [
+            "blocks.3",
+            "blocks.6.attn"
+        ],
+        "object_images": [
+            "blocks.2",
+            "blocks.2.attn",
+            "blocks.3",
+            "blocks.4",
+            "blocks.5.norm2",
+            "blocks.6.attn",
+            "blocks.6.norm1",
+            "blocks.6.norm2",
+            "blocks.7.attn",
+            "blocks.7.norm1",
+            "blocks.7.norm2",
+            "blocks.8.norm1"
+        ],
+        "nsd_stimuli": [
+            "blocks.5.norm2",
+            "blocks.6.norm2",
+            "blocks.7.attn",
+            "blocks.7.norm2",
+            "blocks.8.norm1",
+            "blocks.8.norm2"
+        ]
+    },
+    "vit_base_patch16_dinov3.lvd1689m": {
+        "FreemanZiemba2013.aperture-public": [
+            "blocks.1",
+            "blocks.6.attn"
+        ],
+        "hvm-public": [
+            "blocks.11.norm2",
+            "blocks.2"
+        ],
+        "object_images": [
+            "blocks.1",
+            "blocks.11.norm1",
+            "blocks.11.norm2",
+            "blocks.4",
+            "blocks.4.norm1",
+            "blocks.6.norm1",
+            "blocks.7.norm2",
+            "blocks.8.norm1",
+            "blocks.8.norm2",
+            "blocks.9.norm2"
+        ],
+        "nsd_stimuli": [
+            "blocks.11.norm2",
+            "blocks.3",
+            "blocks.4",
+            "blocks.5",
+            "blocks.7",
+            "blocks.7.norm2"
+        ]
+    },
+    "vit_huge_patch14_clip_224.laion2b_ft_in12k_in1k": {
+        "FreemanZiemba2013.aperture-public": [
+            "blocks.11.attn",
+            "blocks.6.attn"
+        ],
+        "hvm-public": [
+            "blocks.12.attn",
+            "blocks.6.attn"
+        ],
+        "object_images": [
+            "blocks.10.norm2",
+            "blocks.11",
+            "blocks.11.norm2",
+            "blocks.13.norm2",
+            "blocks.14.norm1",
+            "blocks.14.norm2",
+            "blocks.15.norm1",
+            "blocks.15.norm2",
+            "blocks.16.norm1",
+            "blocks.17.norm1",
+            "blocks.3.attn",
+            "blocks.6.norm1",
+            "blocks.7.norm2",
+            "blocks.8.norm1"
+        ],
+        "nsd_stimuli": [
+            "blocks.10.norm2",
+            "blocks.11.norm2",
+            "blocks.12.norm2",
+            "blocks.13.norm2",
+            "blocks.16.norm1",
+            "blocks.16.norm2",
+            "blocks.17.norm1",
+            "blocks.19.norm2",
+            "blocks.9.norm2"
+        ]
+    },
+    "vit_large_patch14_clip_224.laion2b_ft_in1k": {
+        "FreemanZiemba2013.aperture-public": [
+            "blocks.4.attn",
+            "blocks.6.attn"
+        ],
+        "hvm-public": [
+            "blocks.13.attn",
+            "blocks.6.attn"
+        ],
+        "object_images": [
+            "blocks.10.norm2",
+            "blocks.11.norm2",
+            "blocks.12.norm2",
+            "blocks.13.norm2",
+            "blocks.3.attn",
+            "blocks.5.norm1",
+            "blocks.7.norm2",
+            "blocks.8.norm1",
+            "blocks.8.norm2"
+        ],
+        "nsd_stimuli": [
+            "blocks.11.norm2",
+            "blocks.13.norm2",
+            "blocks.14.norm2",
+            "blocks.6.norm1",
+            "blocks.8.norm2",
+            "blocks.9.norm2"
+        ]
+    },
+    "vit_large_patch14_clip_224.openai_ft_in1k": {
+        "FreemanZiemba2013.aperture-public": [
+            "blocks.10.norm2",
+            "blocks.9.norm1"
+        ],
+        "hvm-public": [
+            "blocks.16.norm2",
+            "blocks.6.norm1"
+        ],
+        "object_images": [
+            "blocks.10.norm2",
+            "blocks.12.norm1",
+            "blocks.13.norm1",
+            "blocks.13.norm2",
+            "blocks.14.norm1",
+            "blocks.14.norm2",
+            "blocks.15.norm1",
+            "blocks.15.norm2",
+            "blocks.16.norm1",
+            "blocks.5.norm2",
+            "blocks.6.norm1",
+            "blocks.7.norm2",
+            "blocks.8.norm2",
+            "blocks.9.norm2"
+        ],
+        "nsd_stimuli": [
+            "blocks.10.norm2",
+            "blocks.13.norm2",
+            "blocks.14.norm2",
+            "blocks.15.norm1",
+            "blocks.17.norm1",
+            "blocks.18.norm2",
+            "blocks.8.norm2",
+            "blocks.9.norm2"
+        ]
+    },
+    "vit_relpos_base_patch16_clsgap_224.sw_in1k": {
+        "FreemanZiemba2013.aperture-public": [
+            "blocks.2.attn",
+            "blocks.6.norm2"
+        ],
+        "hvm-public": [
+            "blocks.2",
+            "blocks.9.norm2"
+        ],
+        "object_images": [
+            "blocks.0",
+            "blocks.4.norm2",
+            "blocks.5.norm2",
+            "blocks.6.norm2",
+            "blocks.7.attn",
+            "blocks.7.norm2",
+            "blocks.8.norm2",
+            "blocks.9.norm2"
+        ],
+        "nsd_stimuli": [
+            "blocks.10.norm2",
+            "blocks.11.norm1",
+            "blocks.5.norm2",
+            "blocks.7.norm2",
+            "blocks.8",
+            "blocks.8.norm2"
+        ]
+    },
+    "vjepa2-vitl-fpc64-256": {
+        "FreemanZiemba2013.aperture-public": [
+            "layer.6",
+            "layer.8.attention"
+        ],
+        "hvm-public": [
+            "layer.11.attention",
+            "layer.8"
+        ],
+        "object_images": [
+            "layer.11",
+            "layer.11.norm2",
+            "layer.12.norm2",
+            "layer.13.norm2",
+            "layer.16.norm2",
+            "layer.18.attention",
+            "layer.18.norm2",
+            "layer.19.attention",
+            "layer.19.norm2",
+            "layer.20.attention",
+            "layer.20.norm2",
+            "layer.4",
+            "layer.5.attention"
+        ],
+        "nsd_stimuli": [
+            "layer.10",
+            "layer.11",
+            "layer.12.norm2",
+            "layer.19",
+            "layer.19.attention",
+            "layer.20.attention",
+            "layer.20.norm2",
+            "layer.21.norm2"
+        ]
+    }
+}

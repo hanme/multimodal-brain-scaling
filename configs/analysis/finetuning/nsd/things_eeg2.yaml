@@ -1,0 +1,11 @@
+experiment_name: finetuning-f_nsd-b_things_eeg2
+base_config: nsd-base.yaml
+
+data_filters:
+    set_filters:
+        benchmark_name:
+            - things_eeg2
+
+
+experiment_description: >
+    ""

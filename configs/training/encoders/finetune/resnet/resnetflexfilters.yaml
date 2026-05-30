@@ -1,0 +1,11 @@
+base_config: defaults.yaml
+
+# Model
+arch: resnetflexfilters
+
+# Filters
+geomspace_start: 1
+geomspace_end: 16
+geomspace_num: 20
+geomspace_id: 0
+

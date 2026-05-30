@@ -1,0 +1,59 @@
+target_brain_regions:
+  - V1
+  - V2
+  - V4
+  - IT
+
+decoder_type: 'region_specific'
+decoders:
+  V1:
+    decoder_label: 'V1'
+    features_label: 'V1_feats'
+    output_dim: 915
+    hidden_dim: 512
+    num_hidden_layers: 0
+    loss_fn: 'logcka'
+    is_frozen: False
+  V2:
+    decoder_label: 'V2'
+    features_label: 'V2_feats'
+    output_dim: 666
+    hidden_dim: 512
+    num_hidden_layers: 0
+    loss_fn: 'logcka'
+    is_frozen: False
+  V4:
+    decoder_label: 'V4'
+    features_label: 'V4_feats'
+    output_dim: 478
+    hidden_dim: 512
+    num_hidden_layers: 0
+    loss_fn: 'logcka'
+    is_frozen: False
+  IT:
+    decoder_label: 'IT'
+    features_label: 'IT_feats'
+    output_dim: 759
+    hidden_dim: 512
+    num_hidden_layers: 0
+    loss_fn: 'logcka'
+    is_frozen: False
+  neural_behavior:
+    decoder_label: 'neural_behavior'
+    features_label: 'neural_behavior_feats'
+    output_dim: 720
+    hidden_dim: 512
+    num_hidden_layers: 0
+    loss_fn: 'cross_entropy'
+    is_frozen: False
+num_classes_neural: 720
+
+projectors:
+  output_dim: 0
+  token_reduction_method: Null
+
+# Loss weights
+loss_weights:
+  image: 1
+  neural_behavior: 0
+  neural_response: 1

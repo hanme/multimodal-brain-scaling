@@ -1,0 +1,5 @@
+base_config: defaults.yaml
+
+epochs: 20
+lr: 1e-3
+dropout: 0.8

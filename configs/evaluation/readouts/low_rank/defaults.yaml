@@ -1,0 +1,5 @@
+base_config: ../attn_probe/defaults.yaml
+
+head_type: lowrank
+head_rank: 5330
+cross_attn_layers: 0

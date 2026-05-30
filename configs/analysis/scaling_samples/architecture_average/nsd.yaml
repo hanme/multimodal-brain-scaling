@@ -1,0 +1,11 @@
+experiment_name: scaling_samples-architecture_average-nsd
+base_config: architecture_average-base.yaml
+
+data_filters:
+    set_filters:
+        benchmark_name:
+            - nsd_func1pt8mm_individualROIs
+
+
+experiment_description: >
+    ""

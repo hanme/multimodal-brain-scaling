@@ -1,0 +1,10 @@
+experiment_name: finetuning-f_things_eeg2-base
+base_config: ../finetuning-base.yaml
+
+data_filters:
+    set_filters:
+        finetuning_dataset:
+            - things_eeg2
+
+experiment_description: >
+    ""

@@ -1,0 +1,10 @@
+decoder_type: 'region_specific'
+neural_loss_fn: 'mse'
+
+decoder_hidden_layers: 0
+
+# Loss weights
+loss_weights:
+  image: 1e-1
+  neural_behavior: 0
+  neural_response: 100

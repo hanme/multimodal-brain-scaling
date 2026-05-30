@@ -1,0 +1,14 @@
+experiment_name: mapping-tvsd-linear
+base_config: ../mapping-base.yaml
+
+data_filters:
+    set_filters:
+        benchmark_name:
+            - tvsd
+
+        probe_type:
+            - linear_individual
+
+
+experiment_description: >
+    ""

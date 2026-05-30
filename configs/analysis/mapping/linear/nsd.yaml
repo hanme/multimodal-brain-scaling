@@ -1,0 +1,14 @@
+experiment_name: mapping-nsd-linear
+base_config: ../mapping-base.yaml
+
+data_filters:
+    set_filters:
+        benchmark_name:
+            - nsd_func1pt8mm_individualROIs
+
+        probe_type:
+            - linear_individual
+
+
+experiment_description: >
+    ""

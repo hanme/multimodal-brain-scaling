@@ -1,0 +1,11 @@
+base_config: defaults.yaml
+
+# Model
+arch: resnet50
+
+feat_layers:
+  spvvs:
+    - layer1.0.conv1
+    - layer3.0.conv1
+    - layer3.5.bn3
+    - layer4.0.relu

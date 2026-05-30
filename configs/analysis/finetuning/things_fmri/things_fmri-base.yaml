@@ -1,0 +1,10 @@
+experiment_name: finetuning-f_things_fmri-base
+base_config: ../finetuning-base.yaml
+
+data_filters:
+    set_filters:
+        finetuning_dataset:
+            - things_fmri
+
+experiment_description: >
+    ""

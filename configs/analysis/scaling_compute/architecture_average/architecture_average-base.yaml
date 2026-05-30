@@ -1,0 +1,18 @@
+experiment_name: scaling_compute-architecture_average-base
+base_config: ../scaling_compute-base.yaml
+
+data_filters:
+    set_filters:
+
+        backbone_arch_family:
+            - AlexNet
+            - CORnet-S
+            - EfficientNet
+            - ResNet
+            - ResNetFlex
+            - ConvNeXt
+            - ConvNeXtFlex
+            - ViT
+            - ViTFlex
+
+    combine_arch_families: True

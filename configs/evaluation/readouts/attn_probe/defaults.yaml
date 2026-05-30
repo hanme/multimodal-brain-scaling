@@ -1,0 +1,28 @@
+# Default configuration for attention probe evaluation
+
+# Model
+in_dim: 384
+d_model: 384
+nhead: 16
+dim_ff: 0
+num_latents: 16
+cross_attn_layers: 1
+token_encoder_layers: 0
+pos_mode: sin
+head_type: linear
+head_rank: 256
+
+
+# Training
+epochs: 10
+batch_size: 256
+lr: 1e-4
+weight_decay: 1e-4
+lr_schedule: cosine
+dropout: 0.3
+grad_clip: 1.0
+seed: 0
+
+# Dataset splits
+train_split: train
+val_split: test

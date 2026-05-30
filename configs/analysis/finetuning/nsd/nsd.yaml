@@ -1,0 +1,11 @@
+experiment_name: finetuning-f_nsd-b_nsd
+base_config: nsd-base.yaml
+
+data_filters:
+    set_filters:
+        benchmark_name:
+            - nsd_func1pt8mm_individualROIs
+
+
+experiment_description: >
+    ""

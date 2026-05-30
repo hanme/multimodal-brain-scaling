@@ -1,0 +1,4 @@
+base_config: defaults.yaml
+
+epochs: 20
+lr: 1e-4

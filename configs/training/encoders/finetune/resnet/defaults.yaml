@@ -1,0 +1,40 @@
+# Model
+device: 'gpu'
+compile_mode: 'default'
+backbone_source: spvvs
+# channels_last: True
+
+# Optimizer & LR scheme
+max_epochs: 100
+batch_size_image: 512
+batch_size_neural: 256
+concat_inputs: True
+opt: 'sgd'
+lr_encoder: 1e-4
+lr_decoder: 1e-1
+min_lr: 1e-6
+lr_scheduler: 'cosineannealinglrwarmup'
+lr_warmup_duration: 5
+momentum: 0.9
+
+
+# Data
+data_path_image: './data/imagenet/'
+workers: 16
+pin_memory: True
+train_samples: 0
+seed: 0
+
+# Resizing
+val_resize_size: 256
+val_crop_size: 224
+train_crop_size: 224
+
+# Misc
+disable_progress_bar: False
+lr_monitor: False
+log_interval: 1
+
+# Logging
+eval_interval: 1
+

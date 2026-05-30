@@ -1,0 +1,12 @@
+experiment_name: scaling_compute-resnet-base
+base_config: ../scaling_compute-base.yaml
+
+
+data_filters:
+    set_filters:
+
+        backbone_arch_family:
+            - ResNet
+            - ResNetFlex
+
+    combine_arch_families: True

@@ -1,0 +1,9 @@
+experiment_name: scaling_samples-efficientnet-base
+base_config: ../scaling_samples-base.yaml
+
+
+data_filters:
+    set_filters:
+
+        backbone_arch_family:
+            - EfficientNet

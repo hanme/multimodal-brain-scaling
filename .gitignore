@@ -191,6 +191,22 @@ cython_debug/
 # Ruff stuff:
 .ruff_cache/
 
+# Research outputs and local assets
+/artifacts/
+/checkpoints/
+/data/
+/features/
+/logs/
+/outputs/
+/results/
+*.ckpt
+*.h5
+*.hdf5
+*.parquet
+
+# OS cruft
+.DS_Store
+
 # PyPI configuration file
 .pypirc
 

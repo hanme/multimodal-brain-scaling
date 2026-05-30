@@ -1,0 +1,11 @@
+experiment_name: scaling_compute-resnet-bs_fz
+base_config: resnet-base.yaml
+
+data_filters:
+    set_filters:
+        benchmark_name:
+            - bs_fz
+
+
+experiment_description: >
+    ""

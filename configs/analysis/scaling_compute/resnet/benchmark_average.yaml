@@ -1,0 +1,39 @@
+experiment_name: scaling_compute-resnet-benchmark_average
+base_config: resnet-base.yaml
+
+data_filters:
+    set_filters:
+        benchmark_name:
+            - bs_fz
+            - bs_mh
+            - tvsd
+            - things_eeg1
+            - things_eeg2
+            - things_fmri
+            - things_meg
+            - nsd_func1pt8mm_individualROIs
+
+    group_by:
+        avg_score:
+            keys:
+                - model_id
+                # - benchmark_name
+                - backbone_arch
+                - backbone_arch_family
+                - backbone_n_params
+                - pretraining_dataset
+                - pretraining_n_samples
+                - pretraining_total_flops
+                - pretraining_samples_per_class
+                - pretraining_total_flops_estimate
+                
+            reduce:
+                pearsonr_nc: mean
+                rsa_c_test: mean
+                rsa_ve_test: mean
+                cka_c_test: mean
+                cka_ve_test: mean
+
+
+experiment_description: >
+    ""

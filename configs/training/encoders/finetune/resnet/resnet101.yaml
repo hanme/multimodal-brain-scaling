@@ -1,0 +1,4 @@
+base_config: defaults.yaml
+
+# Model
+arch: resnet101

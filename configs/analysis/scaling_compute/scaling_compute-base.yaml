@@ -1,0 +1,60 @@
+experiment_name: scaling_compute-base
+
+
+data_filters:
+    set_filters:
+        backbone_source:
+            - spvvs
+
+    boolean_filters:
+        equals_false:
+            - is_selfsupervised_learning
+            - is_adversarially_finetuned
+
+    group_by:
+        avg_score:
+            keys:
+                - model_id
+                - benchmark_name
+                - backbone_arch
+                - backbone_arch_family
+                - backbone_n_params
+                - pretraining_dataset
+                - pretraining_n_samples
+                - pretraining_total_flops
+                - pretraining_samples_per_class
+                - pretraining_total_flops_estimate
+                
+            reduce:
+                pearsonr_nc: mean
+                rsa_c_test: mean
+                rsa_ve_test: mean
+                cka_c_test: mean
+                cka_ve_test: mean
+    apply_hierarchical_aggregation: True
+
+    combine_arch_families: True
+
+fitting_parameters:
+    curve_type: 'one_variable'
+    X: pretraining_total_flops_estimate
+    Y: pearsonr_nc
+    delta: 1e-3
+    method: 'BFGS' # 'BFGS' or 'L-BFGS-B'
+    use_log: True
+    X_scaler: 1e12
+    loss_function: power_law_shift_LSE
+    num_bootstraps: 1000
+    data_fraction: 1
+    random_seed: 42                                                                                                                                
+    initial_parameters:
+        e: [-1, -0.5, 0, 0.5, 1]
+        a: [0, 5, 10, 15, 20, 25]
+        alpha: [0, 0.5, 1, 1.5, 2]
+        lambda_: [0, 0.5, 1, 1.5, 2]
+visualization:
+    loss_function: power_law_shift
+
+
+experiment_description: >
+    ""

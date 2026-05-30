@@ -1,0 +1,3 @@
+base_config: defaults.yaml
+# Model
+arch: efficientnet_b0

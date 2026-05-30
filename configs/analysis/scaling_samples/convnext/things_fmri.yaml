@@ -1,0 +1,11 @@
+experiment_name: scaling_samples-convnext-things_fmri
+base_config: convnext-base.yaml
+
+data_filters:
+    set_filters:
+        benchmark_name:
+            - things_fmri
+
+
+experiment_description: >
+    ""

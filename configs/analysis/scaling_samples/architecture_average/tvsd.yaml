@@ -1,0 +1,11 @@
+experiment_name: scaling_samples-architecture_average-tvsd
+base_config: architecture_average-base.yaml
+
+data_filters:
+    set_filters:
+        benchmark_name:
+            - tvsd
+
+
+experiment_description: >
+    ""

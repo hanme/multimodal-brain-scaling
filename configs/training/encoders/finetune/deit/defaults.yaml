@@ -1,0 +1,71 @@
+# Model
+device: 'gpu'
+drop_path_rate: 0.0
+layer_scale_init_value: 1e-4
+# model_ema: True
+# model_ema_decay: 0.9999
+# model_ema_eval: True
+load_modell_ema: True
+compile_mode: 'None'
+backbone_source: spvvs
+
+# Optimizer & LR scheme
+loss_fn: 'cross_entropy'
+max_epochs: 100
+batch_size_image: 512
+batch_size_neural: 256
+opt: 'adamw'
+lr_encoder: 1e-5
+lr_decoder: 1e-3
+min_lr: 1e-6
+lr_scheduler: 'cosineannealinglrwarmup'
+lr_warmup_duration: 5
+wd_encoder: 0.05
+wd_decoder: 1e-1
+opt_betas: [0.9, 0.999]
+opt_eps: 1e-8
+# clip_grad: 1.0
+# label_smoothing: 0.0
+# accumulation_steps: 1
+# target_batch_size: 2048
+
+# Data
+data_path: './data/imagenet/'
+dataset: 'imagenet'
+num_classes: 1000
+workers: 16
+pin_memory: True
+# repeated_aug: True
+seed: 0
+
+# Augmentation
+transform_lib: 'albumentations'
+albumentations_aug_set: 'ThreeAugment'
+train_crop_size: 224
+val_resize_size: 256
+val_crop_size: 224
+interpolation: bicubic
+color_jitter: 0.3
+aa: None
+re_prob: 0.0
+re_mode: pixel
+re_count: 1
+
+# MixUp / CutMix
+# mixup: 0.8
+# cutmix: 1.0
+# # cutmix_minmax: None
+# mixup_prob: 1.0
+# mixup_switch_prob: 0.5
+# mixup_mode: 'batch'
+
+
+# Misc
+disable_progress_bar: False
+lr_monitor: False
+log_interval: 1
+
+# Logging
+eval_interval: 1
+# run_name: ' # Should be defined model-wise
+

@@ -1,0 +1,6 @@
+base_config: ../attn_probe/defaults.yaml
+
+head_type: shallow_mlp
+head_mlp_hidden_dim: 91
+head_mlp_dropout: 0.0
+cross_attn_layers: 0

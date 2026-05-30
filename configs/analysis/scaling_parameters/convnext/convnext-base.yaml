@@ -1,0 +1,12 @@
+experiment_name: scaling_parameters-convnext-base
+base_config: ../scaling_parameters-base.yaml
+
+
+data_filters:
+    set_filters:
+
+        backbone_arch_family:
+            - ConvNeXt
+            - ConvNeXtFlex
+
+    combine_arch_families: True

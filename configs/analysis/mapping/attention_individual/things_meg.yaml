@@ -1,0 +1,14 @@
+experiment_name: mapping-things_meg-attention_individual
+base_config: ../mapping-base.yaml
+
+data_filters:
+    set_filters:
+        benchmark_name:
+            - things_meg
+
+        probe_type:
+            - attention_individual
+
+
+experiment_description: >
+    ""

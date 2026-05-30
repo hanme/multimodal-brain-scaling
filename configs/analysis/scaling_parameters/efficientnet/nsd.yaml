@@ -1,0 +1,11 @@
+experiment_name: scaling_parameters-efficientnet-nsd
+base_config: efficientnet-base.yaml
+
+data_filters:
+    set_filters:
+        benchmark_name:
+            - nsd_func1pt8mm_individualROIs
+
+
+experiment_description: >
+    ""

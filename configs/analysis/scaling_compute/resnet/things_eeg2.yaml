@@ -1,0 +1,11 @@
+experiment_name: scaling_compute-resnet-things_eeg2
+base_config: resnet-base.yaml
+
+data_filters:
+    set_filters:
+        benchmark_name:
+            - things_eeg2
+
+
+experiment_description: >
+    ""

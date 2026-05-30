@@ -1,0 +1,5 @@
+base_config: defaults.yaml
+
+epochs: 10
+lr: 5e-5
+head_mlp_dropout: 0.3

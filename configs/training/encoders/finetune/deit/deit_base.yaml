@@ -1,0 +1,12 @@
+base_config: defaults.yaml
+
+# Model
+arch: deit3_base_patch16_224
+drop_path_rate: 0.1
+
+feat_layers:
+  spvvs:
+    - blocks.3.norm2
+    - blocks.5.norm2
+    - blocks.8.norm2
+    - blocks.9.norm2

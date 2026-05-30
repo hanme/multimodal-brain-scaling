@@ -1,0 +1,12 @@
+experiment_name: scaling_samples-cornet-things_meg
+base_config: cornet-base.yaml
+
+
+data_filters:
+    set_filters:
+        benchmark_name:
+            - things_meg
+
+
+experiment_description: >
+    ""

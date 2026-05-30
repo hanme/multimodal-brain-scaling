@@ -1,0 +1,12 @@
+experiment_name: scaling_compute-efficientnet-things_meg
+base_config: efficientnet-base.yaml
+
+
+data_filters:
+    set_filters:
+        benchmark_name:
+            - things_meg
+
+
+experiment_description: >
+    ""

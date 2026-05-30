@@ -1,0 +1,11 @@
+experiment_name: scaling_compute-resnet-tvsd
+base_config: resnet-base.yaml
+
+data_filters:
+    set_filters:
+        benchmark_name:
+            - tvsd
+
+
+experiment_description: >
+    ""

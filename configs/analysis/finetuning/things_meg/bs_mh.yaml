@@ -1,0 +1,11 @@
+experiment_name: finetuning-f_things_meg-b_bs_mh
+base_config: things_meg-base.yaml
+
+data_filters:
+    set_filters:
+        benchmark_name:
+            - bs_mh
+
+
+experiment_description: >
+    ""
