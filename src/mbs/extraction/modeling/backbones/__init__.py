@@ -7,6 +7,7 @@ MODEL_LOADERS = [
     "timm",
     "spvvs",
     "hf",
+    "audio",
 ]
 
 class BackboneWrapper(nn.Module):
@@ -56,10 +57,15 @@ def create_backbone(**model_config) -> nn.Module:
     elif backbone_source == "hf":
         from .hf_models import load_model_hf
         model, transform = load_model_hf(**model_config)
+    elif backbone_source == "audio":
+        from .audio_models import load_model_audio
+        model, transform = load_model_audio(**model_config)
 
     # Wrap the model in the Backbone wrapper
     if backbone_source == "hf":
         model = BackboneWrapperHF(model)
+    elif backbone_source == "audio":
+        pass  # load_model_audio returns a ready-to-use wrapper
     else:
         model = BackboneWrapper(model)
     

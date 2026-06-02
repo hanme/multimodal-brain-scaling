@@ -33,3 +33,8 @@ def test_evaluation_help():
 def test_analysis_help():
     pytest.importorskip("numba")
     run_help("mbs.analysis.curve_fitting.start_fitting")
+
+
+def test_temporal_evaluation_help():
+    pytest.importorskip("sklearnex")
+    run_help("mbs.evaluation.evaluate_features_temporal")

@@ -193,6 +193,7 @@ cython_debug/
 
 # Research outputs and local assets
 /artifacts/
+/cache/
 /checkpoints/
 /data/
 /features/
@@ -203,6 +204,7 @@ cython_debug/
 *.h5
 *.hdf5
 *.parquet
+*.pdf
 
 # OS cruft
 .DS_Store

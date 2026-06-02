@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Literal
 
 import torch
@@ -5,6 +6,7 @@ from torch.utils.data import DataLoader
 from torchvision import transforms as T
 
 from .datasets import BrainScoreStimulusDataset, H5ImageDataset, THINGSImageDataset
+from .datasets_audio import AudioSegmentDataset
 
 
 def collate_fn(batch):
@@ -37,7 +39,7 @@ def collate_fn(batch):
 
 def create_dataloader(
     data_root: str,
-    dataset_type: Literal['brain_score', 'h5', 'things'],
+    dataset_type: Literal['brain_score', 'h5', 'things', 'audio'],
     transform: T.Compose,
     batch_size: int = 32,
     shuffle: bool = False,
@@ -46,7 +48,7 @@ def create_dataloader(
     **kwargs
 ) -> DataLoader:
 
-    assert dataset_type in ['brain_score', 'h5', 'things'], f"Unsupported dataset_type: {dataset_type}"
+    assert dataset_type in ['brain_score', 'h5', 'things', 'audio'], f"Unsupported dataset_type: {dataset_type}"
 
     match dataset_type:
         case 'brain_score':
@@ -56,6 +58,16 @@ def create_dataloader(
             dataset = H5ImageDataset(h5_path=data_root, x_key=x_key, transform=transform)
         case 'things':
             dataset = THINGSImageDataset(root_dir=data_root, transform=transform)
+        case 'audio':
+            wav_files = sorted(Path(data_root).glob("*.wav"))
+            if not wav_files:
+                raise FileNotFoundError(f"No .wav files found in {data_root}")
+            dataset = AudioSegmentDataset(
+                wav_files=wav_files,
+                window_duration=kwargs.get('window_duration', 30.0),
+                stride=kwargs.get('window_stride', 10.0),
+                transform=transform,
+            )
             
             
     dataloader = DataLoader(

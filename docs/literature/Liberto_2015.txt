@@ -1,0 +1,541 @@
+Article
+Low-Frequency Cortical Entrainment to Speech
+Reﬂects Phoneme-Level Processing
+Highlights
+dEEG reﬂects categorical processing of phonemes within
+continuous speech
+dEEG is best modeled when representing speech as acousticsignal plus phoneme labels
+dNeural delta and theta bands reﬂect this speech-speciﬁccortical activity
+dSpeciﬁc speech articulatory features are discriminable in EEGresponsesAuthors
+Giovanni M. Di Liberto, James A.O’Sullivan, Edmund C. Lalor
+Correspondence
+diliberg@tcd.ie (G.M.D.L.),
+edlalor@tcd.ie (E.C.L.)
+In Brief
+Di Liberto et al. show that EEG responses
+to natural speech are best modeled whenthat speech is represented in terms of itslow-level acoustics plus a categoricallabeling of phonetic features. Thissuggests that EEG reﬂects categoricalphoneme-level speech processing andprovides a new framework for studyingsuch processing.
+Di Liberto et al., 2015, Current Biology 25, 2457–2465
+October 5, 2015 ª2015 Elsevier Ltd All rights reserved
+http://dx.doi.org/10.1016/j.cub.2015.08.030
+
+Current Biology
+Article
+Low-Frequency Cortical Entrainment to Speech
+Reﬂects Phoneme-Level Processing
+Giovanni M. Di Liberto,1,*James A. O’Sullivan,1and Edmund C. Lalor1,*
+1Trinity College Institute of Neuroscience, School of Engineering, and Trinity Centre for Bioengineering Trinity College Dublin, Dublin 2, Ireland
+*Correspondence: diliberg@tcd.ie (G.M.D.L.), edlalor@tcd.ie (E.C.L.)
+http://dx.doi.org/10.1016/j.cub.2015.08.030
+SUMMARY
+The human ability to understand speech is under-
+pinned by a hierarchical auditory system whose suc-cessive stages process increasingly complex attri-butes of the acoustic input. It has been suggestedthat to produce categorical speech perception, this
+system must elicit consistent neural responses to
+speech tokens (e.g., phonemes) despite variationsin their acoustics. Here, using electroencephalog-raphy (EEG), we provide evidence for this categoricalphoneme-level speech processing by showing thatthe relationship between continuous speech andneural activity is best described when that speechis represented using both low-level spectrotemporal
+information and categorical labeling of phonetic fea-
+tures. Furthermore, the mapping between phonemesand EEG becomes more discriminative for phoneticfeatures at longer latencies, in line with what onemight expect from a hierarchical system. Impor-tantly, these effects are not seen for time-reversedspeech. These ﬁndings may form the basis for futureresearch on natural language processing in speciﬁc
+cohorts of interest and for broader insights into
+how brains transform acoustic input into meaning.
+INTRODUCTION
+Humans effortlessly parse the spectrotemporally complex
+acoustic patterns of continuous speech into coherent, categori-cal, semantic representations. This is true despite enormous var-
+iations in the low-level spectrotemporal dynamics of speech
+across listening conditions, including different speaker accents,coarticulation effects, and prosodic ﬂuctuations. Although the
+precise neurophysiological mechanisms and neuroanatomic
+infrastructure underpinning this ability are not well understood[1], it has been proposed that robust speech perception is the
+product of a hierarchical auditory processing system whose suc-
+cessive stages process increasingly complex attributes of theaudio input [ 2–4]. In particular, it has been suggested that, while
+earlier areas of the auditory system undoubtedly respond to
+acoustic differences in speech tokens, later areas must exhibit
+consistent neural responses to those tokens in order to producea categorical perception of words and phonemes [ 2–4].
+fMRI [ 5, 6], nonhuman primate electrophysiology [ 7], and elec-
+trocorticography (ECoG) [ 4, 8, 9 ] have all made important contri-butions to our understanding of hierarchical speech encoding in
+the brain. However, all of these methods have their shortcom-
+ings. Electroencephalography (EEG) and magnetoencephalog-raphy (MEG), as macroscopic non-invasive technologies, may
+offer important opportunities for further progress. Although these
+approaches have been used for years to study the processing ofdiscrete syllables [ 10], recent research has also shown that both
+EEG and MEG index cortical entrainment to the low-frequency
+amplitude envelope of natural speech [ 11–13 ]. This has proved
+useful for investigating the mechanisms underlying speechprocessing [ 14], how such processing is affected by attention
+[13, 15, 16 ], and how audio and visual speech interact [ 17, 18 ].
+However, it remains unclear to what extent these EEG/MEGindices reﬂect higher-level speech-speciﬁc processing versus
+lower-level processing of the spectrotemporal/acoustic stimulus
+dynamics [ 19].
+There has been somewhat equivocal evidence that speech
+intelligibility affects these envelope entrainment measures, sug-
+gesting that they may indeed index speech-speciﬁc processing
+[20–22 ]. These ﬁndings have led to the suggestion that different
+neural populations, having different functional roles in receptive
+speech processing, may simultaneously contribute to envelope
+entrainment measures [ 19]. Support for this notion comes
+from ECoG research focusing on low-frequency entrainment
+to speech that has shown differential effects of ‘‘cocktail
+party’’-type attention in low- and higher-level auditory corticalareas [ 9]. However, there has been no deﬁnitive evidence to
+date that low-frequency EEG or MEG entrainment reﬂects pro-
+cessing at the level of categorical speech perception.
+Here we investigated the degree to which low-level (envelope,
+spectrogram) and higher-level (phonemic, phonetic feature)
+characteristics of natural speech are reﬂected in EEG activity.
+In doing so, we provide evidence that EEG not only reﬂects pas-sive neural following of the acoustic energy of speech but also
+indexes the categorical perception of phonemes in the human
+brain. Furthermore, we sought to determine whether processingof different phonetic features can be discriminated in EEG re-
+sponses and found that this discriminative power varies as a
+function of response latency, in line with what one might expectof a hierarchical system.
+RESULTS
+128-channel EEG was recorded from ten subjects as they
+listened to segments of an audiobook and ten subjects wholistened to the same audiobook played in reverse (ﬁve subjects
+undertook both experiments). To identify neural indices of lower-
+and higher-level speech processing, we investigated mappings
+Current Biology 25, 2457–2465, October 5, 2015 ª2015 Elsevier Ltd All rights reserved 2457
+between different representations of the speech and the low-
+frequency (1–15 Hz) EEG ( Figure 1 ). Speciﬁcally, we did this by
+using linear regression to model the relationship between eachspeech representation and the data from each EEG channel
+(Figure 1 ). This approach has been used previously to describe
+the relationship between the speech envelope and EEG [ 12],
+MEG [ 23], and ECoG [ 9] data. The resulting models are
+commonly referred to as temporal response functions (TRFs).
+Here, as we will be representing speech using multiple variables,
+we refer to our models as multivariate temporal response func-tions (mTRFs).
+Neural Evidence for Phonetic Processing
+We employed a cross-validation approach to quantify how well
+each speech representation related to the neural data. Specif-
+ically, we ﬁt our mTRF models using a subset of the speech seg-ments for each subject and used these models to predict the
+data corresponding to the remaining segments. The quality of
+the prediction was assessed using correlation (Pearson’s r).The overarching rationale was to use variations in these EEG pre-diction scores across speech representations as a dependent
+measure for assessing how well the EEG reﬂects the processing
+of lower- and higher-level speech features. We focused our anal-ysis on the EEG data from six bilateral pairs of frontotemporal
+electrodes in order to investigate auditory cortical activity bilater-
+ally (see Supplemental Experimental Procedures andFigure S1 ).We tested ﬁve speech representations ( Figure 1 ; see Supple-
+mental Experimental Procedures ): (1) broadband amplitude en-
+velope, Env; (2) spectrogram, Sgram ; (3) time-aligned sequence
+of phonemes, Ph; (4) time-aligned sequence of phonetic
+features, Fea; and (5) a combination of time-aligned phonetic
+features and spectrogram, FS. Neural entrainment to speech en-
+velopes is well established and, as such, performance of the Env
+model acted as a baseline with which to compare the perfor-
+mance of the other models. Robust mappings between speech
+spectrograms and high-gamma-frequency ECoG have beenpreviously shown [ 24]. However it is unknown whether this richer
+representation can be accurately indexed using low-frequency
+EEG, something we address with the Sgram model. Similarly,
+the relationship between high-frequency ECoG and a categorical
+phoneme representation of speech has been examined before
+[8]. However, no such relationship has been investigated for
+EEG (or MEG), hence the Phmodel. Transforming phonemes
+into a lower-dimensional phonetic-feature representation [ 25]
+frames our results in terms of the articulatory and acoustic prop-erties of each phoneme and has advantages for the efﬁciency ofthis type of modeling. This motivated our Feamodel.
+An important issue when considering the spectrogram repre-
+sentation and the phonemic/phonetic-feature representationsis that they are mutually highly redundant. This is because, on
+average, each phoneme will have a particular characteristic
+spectrotemporal proﬁle. So if each phoneme were always
+Figure 1. Assessing the Encoding of Speech Features in EEG
+128-channel EEG data were recorded while subjects listened to continuous, natural speech consisting of a male speaker reading from a novel or its time -reversed
+complement. Linear regression was used to ﬁt multivariate temporal response functions (mTRFs) between the low-frequency (1–15 Hz) EEG data and ﬁvedifferent representations of the speech stimulus. Each mTRF model was then tested for its ability to predict EEG using leave-one-out cross-validati on.
+2458 Current Biology 25, 2457–2465, October 5, 2015 ª2015 Elsevier Ltd All rights reserved
+spoken in the same way, then the two representations would be
+equivalent. However, in natural speech this is not the case, withsigniﬁcant variation in the spectrotemporal proﬁle of a given
+phoneme across instances. One might thus expect that our Ph
+model, which is ignorant of these variations, would underperformrelative to the Sgram model. However, it is also true that human
+listeners categorically perceive phonemes despite spectrotem-
+poral variations, a fact that is presumably underpinned byconsistent neural responses to those phonemes [ 2, 3]. Such
+consistent responses would be captured by our Phmodel,
+potentially leading to it outperforming the Sgram model, which
+is ignorant of the categorical nature of these utterances. Indeed,given their mutual redundancy and complementary strengths,
+both models may perform similarly. To attempt to reveal their
+complementary strengths, we also derived a model based oncombining the time-aligned phonetic features and the corre-
+sponding speech spectrogram (the FSmodel). Improved perfor-
+mance of this model over the others would suggest that the EEGis indexing the processing of both low-level acoustic ﬂuctuations
+and higher-level phonetic features.
+In line with this hypothesis, the average performance of the FS
+model across our 12 chosen electrodes was better than all othermodels (ANOVA: F(1.5,13.6) = 29.1, p = 2.9 310
+/C05; post hoc
+paired t test comparisons of FSwith all other models: p =
+0.001, p = 0.002, p = 8.2 310/C05, p = 0.001 for Env,Sgram ,Ph,
+and Fea respectively; Figure 2 A). Indeed, FSwas best for all
+ten subjects ( Figure 2 B). The fact that the Phand Feamodels
+are simple transformations of one another was reﬂected in thelack of any performance difference between them (p > 0.05).
+There was also no difference between the PhorFeaand Sgram
+models (p = 0.24 and p = 0.34, respectively), which, as
+mentioned previously, was always a possibility. Importantly,
+given the reliance on envelope in many studies of speech neuro-physiology [ 9, 14, 26 ], the Envmodel underperformed relative to
+all other models (p < 0.01). Furthermore, we found no lateraliza-
+tion effects in the performance of any model (p > 0.05, ANOVA).Indeed, model performances were qualitatively similar at otherscalp locations ( Figure S2 ).
+While we contend that the improved performance of the FS
+model is evidence for the encoding of both low-level acousticvariations and higher-level phonetic features, it remained
+possible that this result was driven by the FSmodel having
+more free parameters than the other models. We sought to testwhether or not this was the case by investigating the performance
+of several other high-dimensional models. Combining Phand
+Sgram did not outperform the FSmodel (p > 0.05), even though
+it has 16 additional dimensions. Also, combining the Phand
+Feamodels did not outperform either the PhorFeamodels alone
+(p > 0.05). These results suggest that the greater number ofparameters in the FSmodel does not explain our ﬁnding.
+However, to further establish the validity of our interpretation,
+we performed the same analyses on the data from the subjects
+who listened to time-reversed speech. Because the samespeech segments were used, the same Env,Sgram ,Ph,Fea,
+and FSmodels could be used in a time-reversed fashion. The
+key manipulation here is that time-reversed speech has the
+Figure 2. EEG Responses to Forward
+Speech, but Not Time-Reversed Speech,Are Best Predicted When Speech Is Repre-sented as a Combination of Spectrotempo-ral Features and Phonetic-Feature Labels
+(A) Grand-average EEG prediction correlations
+(Pearson’s r) for each speech model (mean ±SEM). While there is no statistical difference inprediction performance between the spectrogram(Sgram ), phonetic-features ( Fea), and phonemic
+(Ph) models (p > 0.05), all of these models are
+better predictors of the EEG than that based onthe envelope ( Env;:p < 0.01). Importantly, the
+model based on the combination of phoneticfeatures and spectrogram ( FS) outperforms all
+other models (*p < 0.01).
+(B) Correlation values between recorded EEG and
+that predicted by each mTRF model for individualsubjects. The subjects are sorted according to theprediction correlations of the FSmodel. Although
+the results show variability across subjects, the FS
+model outperforms all the other models for everysubject. The model based on the speech envelope(Env) performs worse than every other model for
+every subject.(C) Grand-average EEG prediction correlations forthe time-reversed speech condition (mean ±SEM). Prediction correlations using the modelbased on the envelope ( Env) are lower than those
+for all other models ( :p < 0.05). As with normal speech, there is no statistical difference in prediction performance between the spectrogram ( Sgram ), phonetic-
+features ( Fea), and phonemic ( Ph) models (p > 0.05). Importantly in this case, there is also no difference between the performance of those models and that
+based on the combination of phonetic features and spectrogram ( FS; p > 0.05).
+(D) Correlation values between recorded EEG and that predicted by each mTRF model for individual subjects for time-reversed speech. The subjects are sorted
+according to the prediction correlations of the FSmodel. The model based on the speech envelope ( Env) performs worse than every other model for every subject.
+Current Biology 25, 2457–2465, October 5, 2015 ª2015 Elsevier Ltd All rights reserved 2459
+same long-term amplitude spectrum as natural speech but is not
+perceived as intelligible speech. Overall, the prediction values
+were lower than for forward speech, likely as a result of differ-ences in top-down attention and also consistent with previous
+research showing weaker neural entrainment to unintelligible
+speech [ 20]. However, crucially, whereas the Envmodel again
+performed more poorly than the others (p < 0.05), the FSmodel
+in this case showed no improvement over the Sgram ,Ph,o rFea
+models (p > 0.05; Figures 2 C and 2D). This supports our conten-
+tion that the FSmodel in the case of forward speech indexes the
+neural processing of speech features at the level of phonemes.
+Phonetic Processing across Different EEG Frequency
+Bands
+Given previous research positing different functional roles in
+speech processing for different cortical oscillations [ 27] and in
+particular differential encoding of speech features by delta-
+and theta-band entrainment [ 19], we examined the improved
+model performances for different frequency bands. Phoneme-level processing (i.e., FSoutperforming all other models) was
+evident only in the delta and theta bands ( Figure 3 ). The Ph
+and Fea models outperformed the Sgram model for the delta
+band while the Sgram model outperformed the Phand Fea
+models for the alpha, beta, and low-gamma bands, possibly
+evincing the differential sensitivity of these bands to detailed
+acoustic information ( Sgram ) and categorical phonemic pro-cessing ( Phand Fea). Relative model performances in the theta
+band are qualitatively similar to the results obtained above with
+the broadband (1–15 Hz) signal. EEG prediction scores arevery low for beta and low gamma, in keeping with the generally
+low signal-to-noise ratio for EEG at these frequencies. Given
+the higher prediction scores for delta, theta, and alpha andthe phonetic processing effects visible using the broadband(1–15 Hz) EEG signal, we continue to analyze this broader repre-
+sentation of the EEG in the following section.
+Insights into Hierarchical Speech Encoding Based on
+Multivariate Temporal Response Functions
+Examination of the various mTRFs gives insight into the factorsdriving the performance of each model. Contrasting the Env
+model ( Figure 4 A) with the Sgram model ( Figure 4 B) explains
+why the former leads to poorer prediction, as it discards a wealthof response variability across frequency by reducing the speech
+signal to a scalar value.
+ThePhmTRF shows variable dynamics across phonemes ( Fig-
+ure 4 C). To reveal groups of phonemes with similar responses, we
+performed hierarchical clustering on the PhmTRFs at the 12 elec-
+trodes of interest (see Supplemental Experimental Procedures ).
+In doing so, we found that the model could accurately discrimi-nate consonants and vowels (32 of 35 phonemes classiﬁed
+correctly). For visualization purposes ( Figure 4 C), we present
+the phonemes grouped as vowels, diphthongs, semi-vowels,
+Figure 3. EEG Response Prediction for Different EEG Frequency Bands
+Grand-average EEG prediction correlations (Pearson’s r) for each speech model (mean ± SEM) for delta (A), theta (B), alpha (C), beta (D), and low-gamm a (E) EEG
+frequencies. * indicates prediction differences at the level of p < 0.05 and ** at the level of p < 0.01, both using planned paired t tests.
+2460 Current Biology 25, 2457–2465, October 5, 2015 ª2015 Elsevier Ltd All rights reserved
+and consonants, and we sort within each group according to the
+hierarchical clustering distances. It can be seen that the mTRFsfor consonants show activation by around 50 ms, while those
+for vowels do not generally show a signiﬁcant response before
+/C24100 ms. In contrast to these early differences, all phonemes
+show a similar response between /C24150 and 200 ms. This timing
+pattern is consistent with previous research showing that acous-
+tic-phonetic features of speech modulate activity in non-primary
+auditory cortex from 50–100 ms onward, with language-speciﬁcphonetic-phonological analysis starting by 100–200 ms [ 10].
+Interestingly, in the case of time-reversed speech, the PhmTRF
+amplitude is noticeably lower than for forward speech, particu-larly during the 150–200 ms interval ( Figure S3 ).
+When considering the mTRF for the Feamodel, it should be
+remembered that each phoneme is simply a combination ofphonetic features. Indeed, a linear mapping from the Fea
+mTRF to the phonemic space produced a model that is highly
+correlated with the Phmodel (r = 0.93, p = 1.6 310
+/C05; two-
+tailed t test). We therefore consider these two models to beessentially equivalent. However, while the mTRF for the Ph
+model highlights differences between vowels and consonants,
+the mTRF for the Fea model allows us to visualize sensitivity
+to different articulatory speech features ( Figure 4 D). Again,
+the vowels stand out strongly from the features associated
+with consonants. But within each of the consonant-related fea-tures, a considerable degree of variability is evident across the
+speciﬁc distinctions.
+Sensitivity of EEG to Phonetic Features as a Function of
+LatencyWe wished to test the hypothesis that the sensitivity of our neuralresponses to different acoustic and phonetic features would in-
+crease as a function of response latency in line with what one
+might expect of a hierarchical system. To do this, we appliedunsupervised multi-dimensional scaling (see Experimental Pro-
+cedures ) to the mTRFs in the time intervals 50–100 ms, 100–
+150 ms, and 150–200 ms, which correspond approximately tothe three main peaks in the PhmTRF ( Figure 4 C). This approach
+allowed us to build a geometric space in which the Euclidean dis-
+tance between phonemes (or phonetic features) corresponds tothe similarity of their neural responses. Furthermore, this allowed
+us to examine how sensitive the neural responses were to
+different phonetic features by quantifying how well the re-sponses clustered according to the different groups of phoneticfeatures that produced them. We did this by performing k-means
+clustering, where k is the number of groups under consideration,
+and then calculating the corresponding F-scores (the harmonicmean of precision and recall) between the actual grouping and
+the result of the clustering (see Supplemental Experimental Pro-
+cedures ). All statistical tests were performed using a jackknifed
+Figure 4. mTRF Models for Natural Speech Reﬂect Sensitivity to Different Speech Features
+mTRFs plotted for envelope ( Env, A), spectrogram ( Sgram , B), phonemic ( Ph, C), and phonetic-features ( Fea, D) models at peri-stimulus time lags from /C0100 to
+400 ms for natural speech, averaged over 12 frontotemporal electrodes (see Figure S1 ). The phonemes were sorted based on a hierarchical clustering analysis on
+the average mTRF after grouping them into vowels, diphthongs, semi-vowels, and consonants. Horizontal dashed lines separate distinct categories o f phonemes
+and phonetic features.
+Current Biology 25, 2457–2465, October 5, 2015 ª2015 Elsevier Ltd All rights reserved 2461
+one-way repeated-measures ANOVA with a Greenhouse-
+Geisser correction if the assumption of sphericity was not met.
+The increasing F-scores as a function of latency for the Ph
+mTRF show that the responses become more discriminative be-
+tween consonants and non-consonants at longer latencies
+(F(2.0, 18.0) = 3 3109, p < 0.0005; Figure 5 A). Similarly, the
+F-scores for the Fea mTRF show that the responses become
+more sensitive to different groups of phonetic features as a func-
+tion of latency (F(1.3, 11.4) = 105, p < 0.0005; Figure 5 B). Again, itcan be seen that responses to vowels are clearly separable from
+those to consonant-related features at longer latencies. Analysiswithin each phonetic-feature group revealed no sensitivity in ourmTRFs for place of articulation, for voicing, or for different vowels
+(data not shown). However, the mTRFs did discriminate manner
+of articulation ( Figure 5 C), especially at longer latencies (F(2.0,
+18.0) = 215.0, p < 0.0005). These results show that noninvasive
+neural responses to speech are sensitive to speciﬁc phonetic fea-
+tures and that this sensitivity increases as a function of latency.
+Figure 5. Sensitivity of EEG to Speech Features Increases with Response Latency
+Multidimensional scaling (MDS) on the phonetic-features and phonemic mTRFs as a function of peri-stimulus time lag. By carrying out repeated k-mean s
+classiﬁcation, we derive F-score measures that represent the discriminability of our mTRFs in each of the three time intervals 50–100 ms, 100–150 ms, and 150–
+200 ms, which correspond approximately to the three main peaks and troughs of the phonemic mTRF ( Figure 3 C).
+(A) MDS on the phonetic-features mTRF. The F-scores indicate the differential sensitivity of responses to manner of articulation, voicing, backnes s of a vowel, and
+place of articulation features. These F-scores show signiﬁcant increase with response latency.(B) MDS on the phoneme mTRF. The F-scores are a measure of the binary classiﬁcation of responses to consonants and non-consonants (vowels, diphthongs ,
+and semi-vowels), which, again, signiﬁcantly increase with latency. Although the classiﬁcation performed was binary, the distinction between the four main
+classes of phonemes is evident.
+(C) MDS on the phoneme mTRF. Here the F-scores are computed for the four classes: plosive, liquid & glide, nasal, and fricative & affricate. The four cat egories
+are progressively more separable across the three time intervals (jackknife method, p < 0.0005).
+2462 Current Biology 25, 2457–2465, October 5, 2015 ª2015 Elsevier Ltd All rights reserved
+The lack of response sensitivity to different speciﬁc vowels
+above, combined with the high degree of discriminability be-
+tween vowels and consonants, caused us to wonder whether
+our model performance ( Figure 2 A) was mostly driven by this be-
+tween-class response sensitivity. We tested this by randomly re-
+labeling the consonants in our time-aligned phoneme model ( Ph)
+with other consonants and by relabeling the vowels withrandomly chosen vowels. This led to a marked drop in EEG pre-diction performance (mean ± SD, r = 0.0247 ± 0.0009, shufﬂed
+over 50 randomly relabeled versions of the stimulus, compared
+with 0.0635 for the correct Phlabeling). This suggests that while
+the neural responses strongly discriminate between vowels and
+consonants, the data are also sensitive to differences within
+these two classes.
+Finally, we repeated the above analyses for the time-reversed
+speech ( Figure S4 ). In this case, consonants and non-conso-
+nants could still be discriminated in the PhmTRF (F(1.1,
+20.3) = 42.9, p < 0.0005). In addition, phonetic features (F(1.3,23.1) = 148.0, p < 0.0005) and manner of articulation (F(2.0,
+36.0) = 147.7, p < 0.0005) could also be discriminated. However,
+importantly, unlike for forward speech, there was no signiﬁcantrelationship between discriminability and latency for either
+phonetic features (F(1.3, 11.6) = 0.1, p = 0.79) or manner of artic-
+ulation (F(2.0, 18.0) = 0.46, p = 0.64), and discriminability for con-sonants and non-consonants did not monotonically increase
+with latency.
+DISCUSSION
+For humans to successfully process natural speech, they must
+parse complex and variable acoustic inputs into categorical units
+and correctly encode those units as particular phonemes [ 4].
+Here, in the context of natural speech, we have shown thatlow-frequency, noninvasively recorded EEG indexes this cate-
+gorical phoneme-level processing. Furthermore, we have shown
+that the articulatory features of speech can best be discriminatedby responses at longer latencies, in line with what one might
+expect of a hierarchical system.
+Our ﬁndings have important implications for current theories
+on cortical entrainment to the envelope of speech [ 11, 14,
+19, 27 ]. In particular, we have shown that the processing of
+different speech features that covary with the envelope can be
+dissociated according to the neural responses they elicit. There-fore, neural measures based on the envelope alone are likely to
+include contributions from neural populations at different levels
+of the speech processing hierarchy. Given the relatively modestdifference in modeling performance between our FSand Sgram
+models, it is entirely possible that the speech-speciﬁc contribu-
+tion to measures of cortical entrainment is relatively small incomparison to the more general response to the stimulus acous-
+tics. One brain region that could be responsible for such a
+contribution is the superior temporal sulcus (STS). It has beensuggested that STS is involved in phonological-level processingbilaterally [ 28], a ﬁnding that ﬁts with the lack of any lateralization
+effects in our prediction performances ( Figures S1 andS2). While
+this region has been implicated in many other cognitive domains[29], recent neuroimaging work has suggested that it may repre-
+sent a special locus of speech analysis that is distinct from
+lexical, semantic, or syntactic processes [ 30]. The notion thatspeech-speciﬁc effects in EEG may derive from a relatively small
+contribution from a speciﬁc brain region such as STS would
+partly explain why it has been so difﬁcult to deﬁnitively say
+whether envelope entrainment measures reﬂect anything morethan low-level processing of the acoustics of speech [ 19].
+Recently it has been suggested that there may be different
+functional roles for entrainment at different frequencies, withtheta-band entrainment (4–8 Hz) encoding speech features crit-ical for intelligibility and delta-band entrainment (1–4 Hz) being
+related to the perceived, non-speech-speciﬁc acoustic rhythm
+[19]. Our ﬁnding that FSoutperforms all other models for delta
+and theta bands ( Figure 3 ) suggests that both of these bands
+may reﬂect speech-speciﬁc processing. One attempt to recon-
+cile these views is to suggest that relying on envelope trackingas a dependent measure, particularly for delta band where it per-
+forms poorly, results in a lower sensitivity to subtle speech-spe-
+ciﬁc effects. While we have argued that these speech-speciﬁceffects can be seen by comparing FSandSgram performances,
+it is also worth noting how the Sgram and Phmodel perfor-
+mances differentially vary across frequency bands (e.g.,
+compare the relative model performances for delta and alpha).This variation potentially provides another way to disambiguate
+lower- and higher-level speech processing effects, something
+we will investigate in future work.
+Our ﬁndings align well with recent invasive ECoG research
+investigating the encoding of natural speech in the human brain
+[4, 8]. Speciﬁcally, based on recordings from the superior tempo-
+ral gyrus (STG) in epilepsy patients, high gamma frequency (75–
+150 Hz) activity was shown to encode an acoustic-phonetic
+representation of speech. Based on this, it has been suggestedthat the STG may be a transitional stage in the auditory process-ing hierarchy, early enough to still encode the acoustic features
+of speech but high enough to exhibit response selectivity to
+complex spectrotemporal patterns [ 31]. The fact that the ECoG
+recordings were shown to be optimally sensitive to intermediate
+acoustic-phonetic speech features at an intermediate response
+time lag of around 150 ms [ 8] agrees reasonably well with the
+increased discriminative power of our EEG responses at this
+latency. While we have speculated that our ﬁndings may have
+speciﬁc contributions from STS, the concordance with ECoGfrom STG suggests that the analysis framework we have outlinedmay represent an important mechanism for applying ﬁndings
+from the ECoG community into research with a wider variety of
+subjects including infants [ 32], children with developmental difﬁ-
+culties [ 33], the elderly [ 34], and patients with psychiatric disor-
+ders [ 35]. This is particularly important because much of the
+EEG/MEG research in these cohorts relies on stimuli composedof discrete syllables, leading to a literature that is limited in what it
+can say about the parsing and processing of continuous speech
+(e.g., [ 32]).
+Developing further insights using our approach would beneﬁt
+from an ability to disentangle the activity from the many neural
+sources that are concurrently active during speech processing.Although this issue is often seen as a shortcoming of EEG andMEG, it can also be seen as a strength in terms of the global
+view of hierarchical processing that these methods provide.
+But it will still be necessary to further characterize how differentspeech representations map to different neural responses and to
+determine which speciﬁc neural populations are responsible for
+Current Biology 25, 2457–2465, October 5, 2015 ª2015 Elsevier Ltd All rights reserved 2463
+those responses. Furthermore, it will be necessary to disen-
+tangle how much the cortical entrainment of speech is driven
+by additive evoked activity and how much by the entrainment
+of ongoing oscillations [ 9, 27, 36 ]. One potentially fruitful
+approach to address these questions is to manipulate the rela-
+tive amount of low- and high-level information that is available
+in the speech stimuli, with a view toward disambiguating the in-formation contained within our Sgram andPhmodels (e.g., [ 37]).
+Indeed, this is already possible to an extent by considering the
+difference between the FSand Sgram model performances,
+which we contend is likely to reﬂect phoneme-level processingin relative isolation. Importantly, this difference was positive for
+each and every subject. As such, it has the potential to act as
+a dependent measure in research aimed at understandingspeech processing in particular populations. The sensitivity of
+response functions to different phonetic features and how that
+sensitivity varies with latency also represent potentially usefuldependent measures of speech-speciﬁc processing.
+EXPERIMENTAL PROCEDURES
+All experimental procedures were approved by the Ethics Committee of the
+School of Psychology at Trinity College Dublin. In the ﬁrst experiment, ten sub-jects undertook 28 trials, each of /C24155 s in length, in which they were pre-
+sented with an audiobook version of a classic work of ﬁction read by a maleAmerican English speaker. The second experiment involved the presentationof the same trials in the same order, but with each of the 28 speech stimuliplayed in reverse. All stimuli were presented monophonically using head-phones in a dark room while subjects ﬁxated on a crosshair centered on ascreen. High-density EEG was recorded and digitally ﬁltered between 1 and15 Hz and referenced to the average of the two mastoid channels. Linearregression was used to determine multivariate temporal response functions(mTRFs) describing a mapping between the EEG and ﬁve speech representa-tions. The broadband amplitude envelope representation ( Env) was calculated
+using the Hilbert transform. The spectrogram representation ( Sgram ) was ob-
+tained by ﬁrst ﬁltering the speech stimulus into 16 frequency bands between250 Hz and 8 kHz and then using the Hilbert transform to compute the ampli-
+tude envelope for each band. The phoneme representation ( Ph) was computed
+using the forced-alignment software Prosodylab-Aligner [ 38], which returns
+the starting and ending time points for each phoneme. This representationwas a multivariate time series composed of mutually exclusive binary arrays(one for each phoneme). The average acoustic envelope produced by thisalignment can be seen in Figure S5 . The phonetic-features representation
+was obtained through a linear mapping of the phonemic representation intoa space of 19 features [ 8], which are a distinctive subset of those deﬁned by
+Chomsky and Halle [ 25] to describe the articulatory and acoustic properties
+of the phonetic content of speech. Finally, we propose a model that combinesFeaandSgram (FS), which was obtained by concatenating FeaandSgram into
+a single matrix.
+The sensitivity of EEG to different speech features was assessed by using
+leave-one-out cross-validation to see how well each model could predictEEG data, as indexed by Pearson’s correlation. This was done using mTRFscomputed over a range of time lags from 0 to 250 ms, as no visible responsewas present outside this range. While this was done for all electrodes, wefocused our analysis on a set of 12 electrodes from the two areas of the scalp
+with the highest prediction correlations (six symmetric pairs on the left and
+right scalp; see Supplemental Experimental Procedures for more details),
+without biasing any of the mTRF models. This subset of electrodes wasused to obtain the prediction correlations presented in Figures 2 and 3. The
+average of the mTRFs across these 12 electrodes is presented in Figures 4
+andS3. To examine the dissimilarity of neural responses to different speech
+tokens, a multi-dimensional scaling (MDS) analysis was applied to thephonemic and phonetic-features mTRF models on all 12 of these channelscollectively (i.e., without averaging; Figures 5 and S4). Similar to previous
+research [ 4], we employed a non-metric MDS that minimizes the reconstruc-tion error measured by Kruskal stress [ 39]. The MDS was calculated in ﬁve
+dimensions (eigenvariates), which was enough to allow the reconstruction ofthe original dissimilarities with an accuracy in excess of 90% in all cases(stress%0.1) [ 39]. 100 repetitions of k-means unsupervised classiﬁcation
+with prior knowledge of the number of classes k [ 40] was performed to
+classify phonemes and phonetic features. For each repetition, this wasperformed based on the phonemic or phonetic-features mTRF model at allelectrodes of interest for every subject. Sensitivity to different phonemesand features was quantiﬁed by calculating F-scores on the output of thek-means clustering [ 41]. The values reported in Figures 5 andS4are the aver-
+ages of these repetitions.
+A more detailed description of the subjects, data collection, and analysis
+can be found in the Supplemental Information .
+SUPPLEMENTAL INFORMATION
+Supplemental Information includes ﬁve ﬁgures and Supplemental Experi-
+mental Procedures and can be found with this article online at http://dx.doi.
+org/10.1016/j.cub.2015.08.030 .
+AUTHOR CONTRIBUTIONS
+The study was conceived and the experiments were designed by E.C.L.
+G.M.D.L. programmed the tasks and collected the data. G.M.D.L. andJ.A.O. analyzed the data. E.C.L., G.M.D.L., and J.A.O. wrote the manuscript.
+ACKNOWLEDGMENTS
+This study was supported by a grant from Science Foundation Ireland
+(09-RFP-NES2382) and by an Irish Research Council Government of IrelandPostgraduate Scholarship. The authors thank S. Shamma, N. Mesgarani,J. Butler, S. Kelly, J. Murphy, M. Crosse, and G. Loughnane for useful discus-sions and comments on the manuscript.
+Received: May 14, 2015
+Revised: July 27, 2015Accepted: August 13, 2015Published: September 24, 2015
+REFERENCES
+1.
+Poeppel, D. (2014). The neuroanatomic and neurophysiological infrastruc-
+ture for speech and language. Curr. Opin. Neurobiol. 28, 142–149 .
+2.Okada, K., Rong, F., Venezia, J., Matchin, W., Hsieh, I.H., Saberi, K.,
+Serences, J.T., and Hickok, G. (2010). Hierarchical organization of humanauditory cortex: evidence from acoustic invariance in the response to intel-ligible speech. Cereb. Cortex 20, 2486–2495 .
+3.Peelle, J.E., Johnsrude, I.S., and Davis, M.H. (2010). Hierarchical process-
+ing for speech in human auditory cortex and beyond. Front. Hum.Neurosci. 4,5 1.
+4.Chang, E.F., Rieger, J.W., Johnson, K., Berger, M.S., Barbaro, N.M., and
+Knight, R.T. (2010). Categorical speech representation in human superiortemporal gyrus. Nat. Neurosci. 13, 1428–1432 .
+5.DeWitt, I., and Rauschecker, J.P. (2012). Phoneme and word recognition
+in the auditory ventral stream. Proc. Natl. Acad. Sci. USA 109, E505–E514 .
+6.Obleser, J., Zimmermann, J., Van Meter, J., and Rauschecker, J.P. (2007).
+Multiple stages of auditory speech perception reﬂected in event-relatedFMRI. Cereb. Cortex 17, 2251–2257 .
+7.Rauschecker, J.P., and Scott, S.K. (2009). Maps and streams in the audi-
+tory cortex: nonhuman primates illuminate human speech processing.Nat. Neurosci. 12, 718–724 .
+8.Mesgarani, N., Cheung, C., Johnson, K., and Chang, E.F. (2014). Phonetic
+feature encoding in human superior temporal gyrus. Science 343, 1006–
+1010 .
+9.Zion Golumbic, E.M., Ding, N., Bickel, S., Lakatos, P., Schevon, C.A.,
+McKhann, G.M., Goodman, R.R., Emerson, R., Mehta, A.D., Simon,
+2464 Current Biology 25, 2457–2465, October 5, 2015 ª2015 Elsevier Ltd All rights reserved
+J.Z., et al. (2013). Mechanisms underlying selective neuronal tracking of
+attended speech at a ‘‘cocktail party’’. Neuron 77, 980–991 .
+10.Salmelin, R. (2007). Clinical neurophysiology of language: the MEG
+approach. Clin. Neurophysiol. 118, 237–254 .
+11.Aiken, S.J., and Picton, T.W. (2008). Human cortical responses to the
+speech envelope. Ear Hear. 29, 139–157 .
+12.Lalor, E.C., and Foxe, J.J. (2010). Neural responses to uninterrupted nat-
+ural speech can be extracted with precise temporal resolution. Eur. J.Neurosci. 31, 189–193 .
+13.Ding, N., and Simon, J.Z. (2012). Emergence of neural encoding of audi-
+tory objects while listening to competing speakers. Proc. Natl. Acad.Sci. USA 109, 11854–11859 .
+14.Luo, H., and Poeppel, D. (2007). Phase patterns of neuronal responses
+reliably discriminate speech in human auditory cortex. Neuron 54, 1001–
+1010 .
+15.Power, A.J., Foxe, J.J., Forde, E.J., Reilly, R.B., and Lalor, E.C. (2012). At
+what time is the cocktail party? A late locus of selective attention to naturalspeech. Eur. J. Neurosci. 35, 1497–1503 .
+16.Kerlin, J.R., Shahin, A.J., and Miller, L.M. (2010). Attentional gain control of
+ongoing cortical speech representations in a ‘‘cocktail party’’. J. Neurosci.30, 620–628 .
+17.Zion Golumbic, E., Cogan, G.B., Schroeder, C.E., and Poeppel, D. (2013).
+Visual input enhances selective speech envelope tracking in auditory cor-tex at a ‘‘cocktail party’’. J. Neurosci. 33, 1417–1426 .
+18.Luo, H., Liu, Z., and Poeppel, D. (2010). Auditory cortex tracks both audi-
+tory and visual stimulus dynamics using low-frequency neuronal phasemodulation. PLoS Biol. 8, e1000445 .
+19.Ding, N., and Simon, J.Z. (2014). Cortical entrainment to continuous
+speech: functional roles and interpretations. Front. Hum. Neurosci. 8,3 1 1 .
+20.Peelle, J.E., Gross, J., and Davis, M.H. (2013). Phase-locked responses to
+speech in human auditory cortex are enhanced during comprehension.Cereb. Cortex 23, 1378–1387 .
+21.Howard, M.F., and Poeppel, D. (2010). Discrimination of speech stimuli
+based on neuronal response phase patterns depends on acoustics butnot comprehension. J. Neurophysiol. 104, 2500–2511 .
+22.Gross, J., Hoogenboom, N., Thut, G., Schyns, P., Panzeri, S., Belin, P.,
+and Garrod, S. (2013). Speech rhythms and multiplexed oscillatory sen-sory coding in the human brain. PLoS Biol. 11, e1001752 .
+23.Ding, N., and Simon, J.Z. (2012). Neural coding of continuous speech in
+auditory cortex during monaural and dichotic listening. J. Neurophysiol.107, 78–89 .
+24.Pasley, B.N., David, S.V., Mesgarani, N., Flinker, A., Shamma, S.A., Crone,
+N.E., Knight, R.T., and Chang, E.F. (2012). Reconstructing speech fromhuman auditory cortex. PLoS Biol. 10, e1001251 .25.Chomsky, N., and Halle, M. (1968). The Sound Pattern of English (Harper &
+Row) .
+26.Ding, N., Chatterjee, M., and Simon, J.Z. (2013). Robust cortical entrain-
+ment to the speech envelope relies on the spectro-temporal ﬁne structure.
+Neuroimage 88C, 41–46 .
+27.Giraud, A.L., and Poeppel, D. (2012). Cortical oscillations and speech
+processing: emerging computational principles and operations. Nat.Neurosci. 15, 511–517 .
+28.Hickok, G., and Poeppel, D. (2007). The cortical organization of speech
+processing. Nat. Rev. Neurosci. 8, 393–402 .
+29.Hein, G., and Knight, R.T. (2008). Superior temporal sulcus–It’s my area: or
+is it? J. Cogn. Neurosci. 20, 2125–2136 .
+30.Overath, T., McDermott, J.H., Zarate, J.M., and Poeppel, D. (2015). The
+cortical analysis of speech-speciﬁc temporal structure revealed by re-sponses to sound quilts. Nat. Neurosci. 18, 903–911 .
+31.Shamma, S. (2014). How phonetically selective is the human auditory cor-
+tex? Trends Cogn. Sci. 18, 391–392 .
+32.Kuhl, P.K. (2010). Brain mechanisms in early language acquisition. Neuron
+67, 713–727 .
+33.Gervais, H., Belin, P., Boddaert, N., Leboyer, M., Coez, A., Sfaello, I.,
+Barthe ´le´my, C., Brunelle, F., Samson, Y., and Zilbovicius, M. (2004).
+Abnormal cortical voice processing in autism. Nat. Neurosci. 7, 801–802 .
+34.Ruggles, D., Bharadwaj, H., and Shinn-Cunningham, B.G. (2012). Why
+middle-aged listeners have trouble hearing in everyday settings. Curr.Biol. 22, 1417–1422 .
+35.Li, X., Branch, C.A., and DeLisi, L.E. (2009). Language pathway abnormal-
+ities in schizophrenia: a review of fMRI and other imaging studies. Curr.Opin. Psychiatry 22, 131–139 .
+36.Schroeder, C.E., and Lakatos, P. (2009). Low-frequency neuronal oscilla-
+tions as instruments of sensory selection. Trends Neurosci. 32, 9–18 .
+37.Zoefel, B., and VanRullen, R. (2015). Selective perceptual phase entrain-
+ment to speech rhythm in the absence of spectral energy ﬂuctuations.J. Neurosci. 35, 1954–1964 .
+38.Gorman, K., Howell, J., and Wagner, M. (2011). Prosodylab-Aligner: A tool
+for forced alignment of laboratory speech. Can. Acoust. 39, 192–193 .
+39.Kruskal, J.B., and Wish, M. (1978). Multidimensional Scaling (Sage
+Publications) .
+40.MacQueen, J. (1967). Some methods for classiﬁcation and analysis of
+multivariate observations. In Proceedings of the Fifth BerkeleySymposium on Mathematical Statistics and Probability, Volume I:
+Theory of Statistics , L. Lecam, and J. Neyman, eds. (University of
+California Press), pp. 281–297 .
+41.Rijsbergen, C.J.V. (1979). Information Retrieval (Butterworth-Heinemann) .
+Current Biology 25, 2457–2465, October 5, 2015 ª2015 Elsevier Ltd All rights reserved 2465

@@ -1,0 +1,975 @@
+SCALING LAWS FOR TASK-OPTIMIZED MODELS OF
+THE PRIMATE VISUAL VENTRAL STREAM
+Abdulkadir Gokce, Martin Schrimpf
+EPFL
+{abdulkadir.gokce, martin.schrimpf }@epfl.ch
+ABSTRACT
+When trained on large-scale object classification datasets, certain artificial neural
+network models begin to approximate core object recognition (COR) behaviors
+and neural response patterns in the primate visual ventral stream (VVS). While
+recent machine learning advances suggest that scaling model size, dataset size,
+and compute resources improve task performance, the impact of scaling on brain
+alignment remains unclear. In this study, we explore scaling laws for modeling
+the primate VVS by systematically evaluating over 600 models trained under con-
+trolled conditions on benchmarks spanning V1, V2, V4, IT and COR behaviors.
+We observe that while behavioral alignment continues to scale with larger models,
+neural alignment saturates. This observation remains true across model architec-
+tures and training datasets, even though models with stronger inductive bias and
+datasets with higher-quality images are more compute-efficient. Increased scaling
+is especially beneficial for higher-level visual areas, where small models trained
+on few samples exhibit only poor alignment. Finally, we develop a scaling recipe,
+indicating that a greater proportion of compute should be allocated to data sam-
+ples over model size. Our results suggest that while scaling alone might suffice for
+alignment with human core object recognition behavior, it will not yield improved
+models of the brain’s visual ventral stream with current architectures and datasets,
+highlighting the need for novel strategies in building brain-like models.1
+1 I NTRODUCTION
+The advent of neural networks has revolutionized our understanding and modeling of complex neural
+processes. A particularly active area of study is the ventral visual stream in primates, a key pathway
+in the brain responsible for processing visual information Goodale & Milner (1992); Grill-Spector
+et al. (2001); Malach et al. (2002); Kriegeskorte et al. (2008). Neural networks, when trained on
+extensive datasets, have emerged as the most accurate quantitative tools for simulating the response
+patterns of neurons within this stream Yamins et al. (2014); Schrimpf et al. (2018). These advanced
+models offer a precise computational account of how neural mechanisms in the brain give rise to
+visual perception.
+Recent developments in machine learning have emphasized the significance of both the volume of
+training data and the complexity of model architectures Kaplan et al. (2020); Hoffmann et al. (2022);
+Zhai et al. (2022); Bahri et al. (2022); Antonello et al. (2023); Muennighoff et al. (2023); Aghajanyan
+et al. (2023); Isik et al. (2024). Henighan et al. (2020). These findings raise the question: Can we
+build better models of the brain by scaling up model architectures and dataset sizes? Recent studies
+have found that in pre-trained models, the number of parameters and dataset samples respectively
+seem to improve predictions of fMRI and behavioral measurements (Antonello et al., 2023; Mutten-
+thaler et al., 2023). With the numerous differences between pre-trained models however, the relative
+contributions of model parameters and dataset size to brain and behavioral alignment are not clear.
+In this paper, we examine how scaling – of model parameters and training dataset size – impacts
+the alignment of artificial neural networks with the primate ventral visual stream. We systematically
+train models from a variety of architectural families on image classification datasets which allows us
+1We open-source all code and checkpoints: github.com/epflneuroailab/scaling-primate-vvs .
+1arXiv:2411.05712v2  [cs.LG]  5 Dec 2024
+a)b)
+Figure 1: a)For a given compute budget ( C), we determine the scaling laws for maximal neural
+and behavioral alignment to the primate visual ventral stream. b)We find consistent scaling laws
+for brain and behavioral alignment across over 600 models. While we predict models to approach
+perfect behavioral alignment of 1 at large scales, the effect of scaling on brain alignment is already
+saturating at 0.48.
+to independently control and observe the effects of model complexity and data volume. To capture
+the observed trends, we introduce parametric power-law trends that describe the impact of scale on
+alignment with behavior and brain regions along the visual ventral stream.
+We summarize the contributions of this work as follows:
+• While scale initially improves alignment, brain alignment saturates whereas behavioral
+alignment continues to improve.
+• Increasing both parameter count and training dataset size improves alignment, with data
+providing more gains over model scaling.
+• Architectures with stronger inductive bias (such as convolutions) and datasets with higher-
+quality images are more sample- and compute-efficient.
+• Fitting parametric power-law curves, we find that model alignment with higher-level brain
+regions and especially behavior benefits the most from scaling.
+• We publicly release our training code, evaluation pipeline, and over 600 checkpoints for
+models trained in a controlled manner to enable future research.
+2 R ELATED WORK
+Primate Visual Ventral Stream. The ventral visual stream, a critical pathway in the primate
+brain, including humans, plays a key role in visual perception, extending from the occipital to the
+temporal lobes and serving as the ”what pathway” for object recognition and form representation
+Goodale & Milner (1992); Grill-Spector et al. (2001); Malach et al. (2002); Kriegeskorte et al.
+(2008). Beginning in the primary visual cortex (V1), where basic visual information from retinal
+ganglion cells is processed, the ventral stream proceeds through areas such as V2, V3, V4, and the
+inferotemporal cortex (IT), each responsible for increasingly complex features of visual perception
+Kandel et al. (2000).
+Despite decades of research and a wealth of brain data, the precise neural mechanisms underlying
+visual perception are not well understood.
+Modeling the Primate Visual Ventral Stream. Particular artificial neural networks (ANNs) are
+the most accurate models of brain responses in the visual ventral stream and associated core ob-
+ject recognition behaviors Schrimpf et al. (2018; 2020). Models optimized for ecologically viable
+tasks (Yamins & DiCarlo, 2016) in particular have demonstrated strong brain and behavioral align-
+ment (Yamins et al., 2014; Khaligh-Razavi & Kriegeskorte, 2014; Cadena et al., 2019; Schrimpf
+et al., 2018; Nayebi et al., 2018; Kietzmann et al., 2019; Rajalingham et al., 2018; Zhuang et al.,
+2021; Geiger et al., 2022) – notably these models are trained purely on image classification datasets,
+without fitting to brain data.
+2
+Scaling Laws. Recent advancements in artificial intelligence are driven by scaling the model size
+and training data. Empirical evidence suggests a power-law relationship between model perfor-
+mance and both model parameters and dataset size, indicating that continued scaling will further
+improve performance Kaplan et al. (2020); Cherti et al. (2023); Zhai et al. (2022); Hoffmann et al.
+(2022); Dehghani et al. (2023); Henighan et al. (2020); Brown et al. (2020); Bahri et al. (2022);
+Hestness et al. (2017). The power-law exponents enable the optimal allocation of compute between
+model parameters and dataset samples, such that performance is maximized Kaplan et al. (2020);
+Hoffmann et al. (2022).
+While scaling laws for machine learning performance has been extensively studied, the scaling laws
+forbrain alignment remain unclear. Recent studies indeed suggest an involvement of both model
+size and data volume in the functional alignment with brain data Azabou et al. (2023); Benchetrit
+et al. (2023); Caro et al. (2024); Antonello et al. (2023). Conversely, Muttenthaler et al. Muttenthaler
+et al. (2023) indicate that sample size is critical for behavioral alignment. We here unify these results,
+in the realm of the primate visual ventral stream, into quantitative scaling laws for how model and
+dataset sizes relate to alignment with the brain and behavior.
+3 M ETHODS
+Neural & Behavioral Alignment. To evaluate the alignment of our model with brain function, we
+utilize a range of benchmarks from Brain-Score Schrimpf et al. (2018; 2020). These benchmarks
+assess model performance by comparing model activations or behavior with primate neural data
+using the same images. Specifically, the V1 and V2 benchmarks compare model outputs to primate
+single-unit recordings from Freeman et al. (2013), using 315 texture images and data from 102
+V1 and 103 V2 neurons. For the V4 and IT benchmarks, 2,560 images are used to match model
+activations to primate Utah array recordings from Majaj et al. (2015), based on data from 88 V4
+and 168 IT electrodes. A linear regression is trained on 90% of the images to correlate model and
+neural data, with prediction accuracy for the remaining 10% evaluated using Pearson correlation,
+repeated ten times for cross-validation. The behavioral benchmark assesses model predictions for
+240 images against primate behavioral data from Rajalingham et al. (2018) using a logistic classifier
+trained on 2,160 labeled images. Pearson correlation is used to measure the similarity in confusion
+patterns between model predictions and primate responses. All benchmark scores are normalized to
+their respective maximum possible values.
+We define the model’s alignment score S(and an inverse Misalignment Score L= 1−S) as the
+average across the V1, V2, V4, IT, and behavioral benchmark scores. Layers are committed to brain
+regions based on models trained on a full dataset, and applied to all variants trained with subsampled
+datasets. As we reused the same neural and behavioral data both to select the optimal model layer
+for readout and to assess the model’s alignment, we validated the benchmark results on a private
+split of each dataset on Brain-Score. We observed an almost perfect correlation between the results
+on the private and public splits (Appendix C).
+Scaling Models and Data. We trained an array of standard models from several architecture
+families. Specifically, we used ResNet 18,34,50,101,152 from He et al. (2016); EfficientNet-
+B0,1,2from Tan & Le (2019); Vision Transformer ViTT ,S,B,L from Dosovitskiy et al. (2021);
+ConvNeXtT ,S,B,L from Liu et al. (2022b); CORnet-S from Kubilius et al. (2019); and AlexNet
+from Krizhevsky et al. (2012). We also trained 33 modified versions of ResNet18: 22 models ob-
+tained by scaling the network width from 1/16to4times the original size, and 11 models derived
+by adjusting the depth. Similarly, we trained four additional ConvNeXt and ViT models by scaling
+the width of the ConvNeXt-T and ViT-S architectures.
+For our experiments, we selected two image classification datasets: ImageNet Deng et al. (2009) and
+EcoSet Mehrer et al. (2021). ImageNet, with millions of labeled images across 1,000 categories, has
+long been a benchmark in computer vision, designed to challenge and evaluate automated visual
+object recognition systems. On the other hand, EcoSet is a more recent dataset, designed to provide
+an ecologically valid representation of human-relevant objects. It contains over 1.5 million images
+spanning 565 basic-level categories, curated to better reflect the natural distribution of objects in the
+real world, aligning with human perceptual and cognitive experiences.
+3
+To create subsets of ImageNet and EcoSet, we sampled d∈1,3,10,30,100,300images per cate-
+gory. For d∈1,10,100, we repeated the runs with three random seeds to ensure robustness. For
+ConvNeXts (Liu et al., 2022b) and ViTs (Touvron et al., 2022), we used the training recipes de-
+veloped by the original model authors. The remaining models were trained for 100 epochs using a
+minibatch size of 512. We employed a stochastic gradient descent (SGD) optimizer with a cosine
+decaying learning rate schedule, starting with a peak learning rate of 0.1 and incorporating a linear
+warm-up phase spanning five epochs. We maintained the momentum at 0.9 and applied a weight
+decay of 10−4. Cross-entropy loss was used as the minimization objective. We utilized standard
+ImageNet data augmentations, specifically random resized cropping and horizontal flipping.
+Scaling Power-Law Curves. Following previous work on scaling laws Zhai et al. (2022); Hoff-
+mann et al. (2022); Besiroglu et al. (2024), we fit power law functions in the form
+L=E+AX−α(1)
+on the data where Lis the misalignment score, and Xis an independent variable, such as the number
+of samples seen ( D), number of parameters ( N), and the total training floating point operations
+(FLOPs) ( C). Coefficients E,A, andαare found by minimizing
+min
+a,e,αX
+i∈[#Runs]Huber δ(LSE(a−αlogXi, e)−logLi) (2)
+where E= exp( e), A= exp( a)and LSE is the log-sum-exp operator. We solve Eq. 1 using BFGS
+minimizer with δ= 1e−3, and use a grid of initialiations as follows: e∈ {− 1,−0.5, . . . , 1},
+a∈ {0,5, . . . , 25},α∈ {0,0.5, . . . , 2}.
+To capture the slow initial increase in benchmark scores of modern architectures like ConvNeXt and
+ViT models in the low-data regime, we introduce an additional parameter λto Eq. 2. This parameter
+allows the fitted curve to saturate at lower scales, better reflecting the observed performance of these
+models under limited data conditions:
+L=E+A 
+X+ 10λ−α(3)
+We minimize the modified equation as before, using λ∈0,0.5,1.0,1.5,2.0. To fit the curve de-
+scribed by Eq. 3, we utilize all data points from the ConvNeXt and ViT models. For fitting the
+remaining curves, we select ConvNeXt and ViT runs that were trained on datasets with either 300
+samples per class or the full dataset. This approach ensures that the fitted curves accurately represent
+the scaling behavior of these architectures across different data regimes.
+Furthermore, we would like to describe the misalignment ( L) as a function of both the model and
+data size ( N,D) and predict optimal allocations N∗andD∗by solving
+(N∗, D∗) = arg min
+N, DL(N, D )s.t FLOPs (N, D ) =C (4)
+In that regard, following Hoffmann et al. (2022); Besiroglu et al. (2024) we fit a parametric function
+of the form
+ˆL(N, D ) =E+A
+Nα+B
+Dβ(5)
+where the loss ( ˆL) is a function of parameter count ( N) and number of samples seen ( D). In Eq.
+5, the first term represents the loss in an ideal data generation scenario (entropy), the second and
+the third terms reflect the under-performance of a model due to limitations in parameter and data
+size Hoffmann et al. (2022); Muennighoff et al. (2023). Following the example of Hoffmann et al.
+(2022), we learn variables {E, A, α, B, β }that characterizes misalignment by solving
+arg min
+e, a, α, b, βX
+i∈[#Runs]Huber δ(LSE(a−αlogNi, b−βlogDi, e)−logLi) (6)
+withδ= 10−3andE= exp( e),A= exp( a)B= exp( b). Initialiations of bandβfollow aandα,
+respectively.
+Both Kaplan et al. (2020); Hoffmann et al. (2022) assume that compute follows the relationship
+C(N, D )≈6ND to predict the optimal allocation of compute ( C) toNandDusing a set of
+4
+a) b)
+c)Figure 2: Scaling Model Size. a) Neural and behavioral alignments of four architecture fami-
+lies. Models with inductive biases (ResNet, EfficientNet) are more compute-efficient than less
+constrained models (ConvNeXt, ViT). b)Average alignment per model architecture. All models
+converge to similar alignments. c)Increasing parameters improves alignment (models trained on
+full datasets), but the effects saturate.
+equations with the learned variables mentioned above:
+N∗(C) =G(C/6)a, D∗(C) =G−1(C/6)b
+where a′=β
+α+β, b′=α
+α+β, G =αA
+βB 1
+α+β (7)
+However, we observe that C(N, D )≈6ND does not hold with different architectures, and various
+CNN families have a slightly different relationship of C,N, andD. As such, we assume a power-law
+relationship of the form
+C(N, D ) =m(ND)n(8)
+where we fit mandnvia linear regression of CandND in log-log scale. Then, the updated
+equations governing the optimal allocation becomes
+N∗(C) =G(C/m )a′/n, D∗(C) =G−1(C/m )b′/n(9)
+where a′,b′, andGare calculated as before.
+To evaluate the uncertainty of our model fits, we performed bootstrapping with 1,000 resamples.
+We compute 95% confidence intervals for each point along the fitted curves based on the variability
+observed across the bootstrapped estimates.
+Finally, to avoid large constants during curve fitting, we rescale the variables C,N, andDby setting
+˜C=C/1013,˜N=N/105, and ˜D=D/104.
+4 R ESULTS
+4.1 S CALING DRIVES BEHAVIORAL ALIGNMENT ,BUT SATURATES FOR NEURAL ALIGNMENT
+Our experiments show a clear and consistent improvement in behavioral alignment as both model
+size and training dataset size increase. Fig 1.b illustrates this trend across different architectures and
+scaling axes. The curve S= 1−1.4˜C−0.06converges to perfect alignment score of 1in the limit of
+C.
+In contrast to behavioral alignment, neural alignment with specific brain regions demonstrated
+saturation as training compute scaled up in size. The curve represented by the formula S=
+5
+b) a)Figure 3: Scaling Dataset Size. a) Training on larger datasets enhances brain alignment. The align-
+ment scaling curves derived from ImageNet and EcoSet closely estimate the alignment achieved
+when using ImageNet21k. In contrast, datasets with specialized image distributions—such as
+Places365—fall below the alignment scaling laws established by these generalist datasets. b)Model
+families with weaker inductive bias start at a lower alignment and require more data to improve.
+0.48−0.55˜C−0.16represents a saturation at 0.48. The diminishing returns in neural alignment
+imply that merely scaling up models and data is insufficient to achieve better alignment with higher-
+level neural representations.
+4.2 A RCHITECTURAL INDUCTIVE BIASINFLUENCES ALIGNMENT AND SCALING BEHAVIOR
+Experimental results indicate that modern architectures, such as ConvNeXt and Vision Transformers
+(ViTs), exhibit poorer neural alignment compared to models like ResNets and EfficientNets in low
+data regime. ResNets and EfficientNets, which have stronger inductive biases due to their fully con-
+volutional structures, demonstrate high neural alignment even at initialization. In Fig. 2, alignment
+score of ResNets and EfficientNets increase steadily with additional compute in the form of training
+samples, however ConvNeXt and ViT requires more compute in order to start rising.
+This difference in initial alignment also affects how the scaling laws evolve for each architecture.
+Models with weaker inductive biases require more extensive scaling—specifcally in terms of train-
+ing data—to achieve levels of neural alignment comparable to those with stronger inductive biases.
+Consequently, the scaling curves for ConvNeXt and ViT models develop differently, highlighting
+that architectural choices not only impact baseline alignment but also influence the efficiency of
+scaling strategies.
+4.3 M ORE DATA ISBETTER THAN MORE PARAMETERS
+Our analysis reveals that increasing the size of the training dataset has a more significant impact
+on improving brain alignment than simply enlarging the number of model parameters. While both
+strategies lead to performance enhancements, the benefits from data scaling exhibit less severe di-
+minishing returns compared to model scaling. Specifically, models trained on larger datasets consis-
+tently demonstrate superior neural and behavioral alignment with the primate ventral visual stream,
+following a predictable power-law relationship.
+In contrast, expanding the model size without proportionally increasing the training data results in
+steeper diminishing returns in alignment performance. Larger models rapidly reach a point where
+additional parameters do not translate into meaningful improvements. Fig. 2c estimates a saturation
+level of 0.44by scaling model sizes with all samples of training data whereas Fig. 3a predicts
+maximum alignment of 0.48and0.50for ImageNet and Ecoset respectively. This indicates that
+scaling training datasets overall improves brain alignment better than models scaling. Furthermore,
+Fig. 4b demonstrates that larger models of the same architecture family require much more samples
+to achieve the same level of alignment.
+To quantitatively capture the joint interaction between data and model scaling, we fitted a parametric
+curve based on Eq.5, as shown in Fig.4a. This curve effectively models how compute ( C), dataset
+size (D), and model size ( N) collectively influence brain alignment. Utilizing the parametric rela-
+6
+b) a)Figure 4: Optimal Compute Allocation. a) Alignment as a function of both model and training
+dataset sizes. Marker size is log-proportional to model size. Compute should be spent 0.3/0.7 on
+model/dataset size respectively. b)Models start out at different alignments but converge to the same
+saturating point.
+tionships described in Eq. 9, we estimate that additional compute should be allocated following the
+scaling laws D≈C0.7andN≈C0.3. These exponents indicate that, for optimal brain alignment,
+computational resources should be predominantly invested in increasing the dataset size rather than
+the model size.
+4.4 O RDERED EFFECT OF SCALE ON ALIGNMENT
+Our study reveals a graded effect of scaling on alignment across the cortical hierarchy of the primate
+visual system. Specifically, we observe that the benefits of increased training compute—achieved
+through larger datasets and more complex models—vary systematically among different brain re-
+gions, reflecting their position in the visual processing pathway. Fig. 5.a illustrates the alignment
+as a function of training compute across various brain regions. We categorized the models into two
+groups based on their architectural inductive biases. Group 1 includes most models with strong in-
+ductive biases, such as ResNets and EfficientNets. These models start with higher neural alignment
+scores even at initialization due to their fully convolutional architectures. Group 2 consists of mod-
+els with weaker inductive biases, specifically ConvNeXt and Vision Transformers (ViTs). These
+models exhibit lower neural alignment in the low-data regime and require more compute to achieve
+similar alignment levels.
+To quantify the impact of scaling on each brain region, we define the alignment gain per region as
+A10αwhere Aandαare parameters of Eq. 2. Our findings indicate that higher regions in the cortical
+hierarchy show greater benefits from increased compute. Fig. 5b illustrates the alignment gain per
+region, highlighting how higher cortical areas benefit more from scaling efforts. This ordered effect
+suggests that regions higher up in the visual hierarchy, such as the Inferior Temporal (IT) cortex and
+behavioral outputs, gain more substantially from additional data and increased model complexity. In
+contrast, early visual areas like V1 and V2 exhibit smaller alignment gains with increased compute,
+indicating a potential saturation effect.
+5 D ISCUSSION
+We establish scaling laws governing the effect of model and dataset scale on behavioral and brain
+alignment with the primate visual ventral stream. While scale is a necessary component for all brain-
+like models, model architectures with priors such as convolutions, and datasets with high-quality
+images are more sample efficient, leading to alignment with smaller compute requirements. Scale
+especially improves alignment with higher-level visual regions, but brain alignment saturates across
+all conditions tested here whereas behavioral alignment continuously improves with increased scale.
+Platonic representations. Our results are consistent with the view that representations in deep
+neural network models are converging. This observation has been likened to Plato’s concept of
+an ideal reality (Huh et al., 2024). Our findings support this view in that neural network models
+at scale tend to converge toward similar brain and behavioral alignment, regardless of their initial
+7
+a)
+b)Figure 5: Graded Effect of Scale across Cortical Hierarchy. a) Alignment as a function of train-
+ing compute across different brain regions. Group 1 contains most models except those with low
+inductive bias (Group 2; ConvNeXt, ViT). b)Alignment gain per region, defined as A10α. Regions
+higher in the cortical hierarchy show greater benefits from increased compute (Behavior >IT>V4
+>V2>V1).
+.
+architectural differences. However, we find that the representational convergence in current models
+isdistinct from representations in the brain ’s visual ventral stream. Intriguingly, behavioral choices
+on the other hand seem to converge to human-like core object recognition, suggesting that there
+is no unique solution to human-like behavior. Even models with differing inductive biases, such
+as ConvNeXt and ViT (which start with poorer neural alignment), eventually converge to the same
+behavioral, and, saturating brain alignment as models like ResNet and EfficientNet. Building models
+with representations that are consistent with the brain might thus require substantial changes to
+current architectures and training approaches.
+Dissociation of behavioral and neural alignment. Our findings reveal a dissociation between be-
+havioral and neural alignment as models are scaled with more parameters and larger datasets. While
+behavioral alignment continues to improve consistently with increased model parameters and train-
+ing data – exhibiting a strong power-law relationship – neural alignment reaches a saturation point
+beyond which additional scaling yields minimal gains. This divergence suggests that behavioral
+alignment benefits more substantially from scaling efforts, whereas neural alignment may require
+alternative approaches beyond merely increasing model size and data volume to achieve further
+improvements.
+This disparity is further highlighted by the correlation between task performance and alignment de-
+picted in Figure 6. Behavioral alignment closely tracks validation accuracy, improving hand-in-hand
+as models become more accurate. Consistent with prior work(Schrimpf et al., 2018; Linsley et al.,
+2023), neural alignment eventually saturates, indicating that factors other than task performance
+influence neural alignment.
+Generalization Beyond Supervised Training. We assessed whether alternative training
+paradigms can overcome the limitations observed in neural alignment under supervised learning.
+Figure 7a illustrates the scaling of alignment as a function of compute spent during self-supervised
+training of ResNet models using SimCLR Chen et al. (2020) on ImageNet. The results confirm the
+trends observed in supervised training: behavioral alignment continues to improve with increased
+compute, following a strong power-law relationship, while neural alignment approaches a saturation
+point. This consistency suggests that the saturation in neural alignment is not exclusive to supervised
+learning but may be inherent to the models or datasets employed.
+The region-specific breakdown (as illustrated in Figure 13 of the appendix) further reinforces this
+observation. Even in a self-supervised learning context, higher-level visual areas like IT and be-
+8
+a) b) c)Figure 6: Correlation between Task Performance and Alignment. a,b) Correlation between
+validation accuracy (ImageNet & EcoSet) and brain (a) and behavioral (b) alignment. Behavioral
+alignment strongly correlates with task performance, whereas neural alignment shows a non-linear
+trend, reaching saturation. c)Pearson’s correlation coefficient per region, with all p-values less than
+10−40.
+havioral outputs demonstrate more pronounced improvements with increased compute, while early
+visual areas like V1 and V2 show minimal gains. This suggests that the hierarchical nature of neural
+alignment is a fundamental characteristic that transcends specific training methodologies.
+Additionally, we explored the impact of adversarial fine-tuning on alignment performance. In Fig-
+ure 7b, ResNet models trained on subsets of ImageNet were fine-tuned adversarially for 10 epochs
+using the Fast Gradient Sign Method (FGSM) (Goodfellow et al., 2015; Wong et al., 2020). Impor-
+tantly, the scaling curves were estimated solely from the non-adversarial runs, yet the adversarially
+fine-tuned models exhibited improvements along these existing scaling curves. This indicates that
+adversarial training can enhance alignment without deviating from the established scaling behavior.
+Impact of Architectural Inductive Biases on Alignment Dynamics. Our evaluation of align-
+ment during training reveals that the alignment behavior varies significantly across different model
+architectures. Figure 7.c shows that while various models eventually converge to similar alignment
+levels with sufficient training, fully convolutional architectures—such as ResNets and Efficient-
+Nets—exhibit substantially higher alignment scores at the very beginning of training. This early
+advantage suggests that these architectures possess inherent features that align closely with neural
+data from the primate ventral visual stream even before learning from data occurs.
+Further analysis in Figure 10 of the appendix confirms that this initial high alignment is due to the
+strong inductive biases present in fully convolutional networks. These biases enable the models
+to start with representations already well-suited for neural alignment. Figure 11 in the appendix
+reinforces this finding by demonstrating that models with strong inductive biases achieve higher
+initial alignment compared to architectures like ConvNeXt and ViT, which have weaker inductive
+biases.
+Influence of Learning Signals on Alignment Dynamics. Our investigation reveals that the type
+of learning signal plays a crucial role in the dynamics of alignment during training. Figure 7d illus-
+trates the alignment trajectories of ResNet50 and ViT-S models trained on ImageNet using super-
+vised learning, SimCLR, and DINO (Caron et al., 2021) methods. Notably, the ViT-S model requires
+significantly more training steps to achieve the same level of alignment under supervised learning
+compared to when trained with self-supervised objectives like DINO and SimCLR. In contrast, the
+ResNet50 model, which possesses strong inductive biases due to its convolutional architecture, ex-
+hibits relatively consistent alignment dynamics across different learning signals. This robustness
+implies that models with strong inductive biases are less affected by the choice of training objective,
+whereas architectures like ViT-S benefit more substantially from rich, self-supervised feedback to
+achieve optimal alignment.
+Limitations and Future Directions. Our study has several limitations. First, the extrapolation
+of our scaling functions is constrained by the specific range of model sizes and dataset volumes we
+examined. While we observed power-law relationships between scaling factors and brain alignment,
+these functions may not generalize beyond the scales tested.
+9
+c)a) b)
+d)Figure 7: Alignment Scaling of Alternative Training Strategies. a) Unsupervised: ResNet models
+trained with SimCLR improve behavioral alignment with compute, while neural alignment saturates.
+b)Adversarial Robustness: Fine-tuning ResNets with adversarial training (FGSM) enhances align-
+ment along the scaling curve. c)Architectural Prior: ResNets and EfficientNets exhibit higher initial
+alignment in early phases of training, due to strong inductive biases, unlike ConvNeXt and ViT. d)
+Alignment dynamics vary with training objectives, but converge to the same alignment saturation.
+Second, we evaluated a subset of models focusing primarily on standard and modern convolutional
+neural networks (e.g., ResNets and ConvNeXts), transformer-based architectures (e.g. ViTs) and
+recurrent networks (CORnet-S). While these architectures cover a range of inductive biases and
+complexities, they do not encompass the full spectrum of possible neural network designs, such
+as more biologically plausible models. We see scaling laws as an opportunity to extrapolate the
+alignment of models at scale, even if their current training is compute-constrained.
+Third, our experiments utilized a subset of training datasets primarily from ImageNet and EcoSet.
+Although these datasets are extensive and widely used, they may not capture all the nuances of
+visual stimuli relevant to the primate ventral visual stream. Therefore, models trained on other
+datasets might exhibit improved scaling properties.
+Taken together, our results demonstrate that while scaling both model parameters and training data
+size enhances behavioral alignment with human visual perception, it leads to saturation in neural
+alignment with the primate ventral visual stream. Data scaling proves more effective than model
+scaling in improving alignment, emphasizing the critical role of extensive and diverse training
+datasets. We also find that architectural choices significantly influence alignment efficiency, with
+models possessing strong inductive biases—such as fully convolutional networks—achieving higher
+neural alignment even at initialization. Additionally, the impact of scaling varies across different
+brain regions, benefiting higher cortical areas more than early visual areas. These findings suggest
+that merely increasing scale is insufficient for modeling the intricate neural representations of the
+brain’s visual system. Future work should investigate new approaches, including alternative archi-
+tectures and training strategies, to develop models that more accurately reflect the complexities of
+neural processing in the primate visual cortex.
+To push neural alignment beyond current saturation levels, future research should explore adversarial
+training methods that encourage models to learn more robust, brain-like representations. Leverag-
+ing biologically inspired architectures such as VOneNets (Dapello et al., 2020) may lead to more
+compute-efficient models achieving higher neural alignment without extensive scaling. Addition-
+ally, investigating co-training with brain data—integrating neural recordings directly into the train-
+ing process—could enhance both neural and behavioral alignment, paving the way for more accurate
+and efficient brain-like models.
+10
+REFERENCES
+Armen Aghajanyan, Lili Yu, Alexis Conneau, Wei-Ning Hsu, Karen Hambardzumyan, Susan
+Zhang, Stephen Roller, Naman Goyal, Omer Levy, and Luke Zettlemoyer. Scaling laws for
+generative mixed-modal language models. In Andreas Krause, Emma Brunskill, Kyunghyun
+Cho, Barbara Engelhardt, Sivan Sabato, and Jonathan Scarlett (eds.), Proceedings of the 40th
+International Conference on Machine Learning , volume 202 of Proceedings of Machine Learn-
+ing Research , pp. 265–279. PMLR, 23–29 Jul 2023. URL https://proceedings.mlr.
+press/v202/aghajanyan23a.html .
+Richard J. Antonello, Aditya R. Vaidya, and Alexander G. Huth. Scaling laws for language encoding
+models in fmri. Advances in Neural Information Processing Systems , 36, 2023.
+Mehdi Azabou, Vinam Arora, Venkataramana Ganesh, Ximeng Mao, Santosh B Nachimuthu,
+Michael Jacob Mendelson, Blake Aaron Richards, Matthew G Perich, Guillaume Lajoie, and
+Eva L Dyer. A unified, scalable framework for neural population decoding. In Thirty-seventh
+Conference on Neural Information Processing Systems , 2023. URL https://openreview.
+net/forum?id=sw2Y0sirtM .
+Yasaman Bahri, Ethan Dyer, Jared Kaplan, Jaehoon Lee, and Utkarsh Sharma. Explaining scaling
+laws of neural network generalization, 2022. URL https://openreview.net/forum?
+id=FvfV64rovnY .
+Yohann Benchetrit, Hubert Banville, and Jean-Remi King. Brain decoding: toward real-time recon-
+struction of visual perception. In Submitted to The Twelfth International Conference on Learning
+Representations , 2023. URL https://openreview.net/forum?id=3y1K6buO8c .
+Tamay Besiroglu, Ege Erdil, Matthew Barnett, and Josh You. Chinchilla scaling: A replication
+attempt, 2024. URL https://arxiv.org/abs/2404.10102 .
+Tom Brown, Benjamin Mann, Nick Ryder, Melanie Subbiah, Jared D Kaplan, Prafulla Dhari-
+wal, Arvind Neelakantan, Pranav Shyam, Girish Sastry, Amanda Askell, Sandhini Agar-
+wal, Ariel Herbert-V oss, Gretchen Krueger, Tom Henighan, Rewon Child, Aditya Ramesh,
+Daniel Ziegler, Jeffrey Wu, Clemens Winter, Chris Hesse, Mark Chen, Eric Sigler, Mateusz
+Litwin, Scott Gray, Benjamin Chess, Jack Clark, Christopher Berner, Sam McCandlish, Alec
+Radford, Ilya Sutskever, and Dario Amodei. Language models are few-shot learners. In
+H. Larochelle, M. Ranzato, R. Hadsell, M.F. Balcan, and H. Lin (eds.), Advances in Neu-
+ral Information Processing Systems , volume 33, pp. 1877–1901. Curran Associates, Inc.,
+2020. URL https://proceedings.neurips.cc/paper_files/paper/2020/
+file/1457c0d6bfcb4967418bfb8ac142f64a-Paper.pdf .
+Alexander Buslaev, Vladimir I. Iglovikov, Eugene Khvedchenya, Alex Parinov, Mikhail Druzhinin,
+and Alexandr A. Kalinin. Albumentations: Fast and flexible image augmentations. Information ,
+11(2), 2020. ISSN 2078-2489. doi: 10.3390/info11020125. URL https://www.mdpi.com/
+2078-2489/11/2/125 .
+Santiago A. Cadena, George H. Denfield, Edgar Y . Walker, Leon A. Gatys, Andreas S. Tolias,
+Matthias Bethge, and Alexander S. Ecker. Deep convolutional models improve predictions of
+macaque v1 responses to natural images. PLOS Computational Biology , 15(4):e1006897, April
+2019. ISSN 1553-7358. doi: 10.1371/journal.pcbi.1006897. URL http://dx.doi.org/
+10.1371/journal.pcbi.1006897 .
+Josue Ortega Caro, Antonio Henrique de Oliveira Fonseca, Syed A Rizvi, Matteo Rosati, Christo-
+pher Averill, James L Cross, Prateek Mittal, Emanuele Zappala, Rahul Madhav Dhodapkar,
+Chadi Abdallah, and David van Dijk. BrainLM: A foundation model for brain activity record-
+ings. In The Twelfth International Conference on Learning Representations , 2024. URL
+https://openreview.net/forum?id=RwI7ZEfR27 .
+Mathilde Caron, Hugo Touvron, Ishan Misra, Herv ´e J´egou, Julien Mairal, Piotr Bojanowski, and
+Armand Joulin. Emerging properties in self-supervised vision transformers. In Proceedings of
+the International Conference on Computer Vision (ICCV) , 2021.
+11
+Ting Chen, Simon Kornblith, Mohammad Norouzi, and Geoffrey Hinton. A simple framework for
+contrastive learning of visual representations. In Hal Daum ´e III and Aarti Singh (eds.), Pro-
+ceedings of the 37th International Conference on Machine Learning , volume 119 of Proceed-
+ings of Machine Learning Research , pp. 1597–1607. PMLR, 13–18 Jul 2020. URL https:
+//proceedings.mlr.press/v119/chen20j.html .
+M. Cherti, R. Beaumont, R. Wightman, M. Wortsman, G. Ilharco, C. Gordon, C. Schuhmann,
+L. Schmidt, and J. Jitsev. Reproducible scaling laws for contrastive language-image learn-
+ing. In 2023 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) ,
+pp. 2818–2829, Los Alamitos, CA, USA, jun 2023. IEEE Computer Society. doi: 10.
+1109/CVPR52729.2023.00276. URL https://doi.ieeecomputersociety.org/10.
+1109/CVPR52729.2023.00276 .
+Joel Dapello, Tiago Marques, Martin Schrimpf, Franziska Geiger, David Cox, and James J Di-
+Carlo. Simulating a primary visual cortex at the front of cnns improves robustness to im-
+age perturbations. In H. Larochelle, M. Ranzato, R. Hadsell, M.F. Balcan, and H. Lin (eds.),
+Advances in Neural Information Processing Systems , volume 33, pp. 13073–13087. Curran
+Associates, Inc., 2020. URL https://proceedings.neurips.cc/paper_files/
+paper/2020/file/98b17f068d5d9b7668e19fb8ae470841-Paper.pdf .
+Mostafa Dehghani, Josip Djolonga, Basil Mustafa, Piotr Padlewski, Jonathan Heek, Justin
+Gilmer, Andreas Peter Steiner, Mathilde Caron, Robert Geirhos, Ibrahim Alabdulmohsin,
+Rodolphe Jenatton, Lucas Beyer, Michael Tschannen, Anurag Arnab, Xiao Wang, Carlos
+Riquelme Ruiz, Matthias Minderer, Joan Puigcerver, Utku Evci, Manoj Kumar, Sjoerd Van
+Steenkiste, Gamaleldin Fathy Elsayed, Aravindh Mahendran, Fisher Yu, Avital Oliver, Fantine
+Huot, Jasmijn Bastings, Mark Collier, Alexey A. Gritsenko, Vighnesh Birodkar, Cristina Nader
+Vasconcelos, Yi Tay, Thomas Mensink, Alexander Kolesnikov, Filip Pavetic, Dustin Tran,
+Thomas Kipf, Mario Lucic, Xiaohua Zhai, Daniel Keysers, Jeremiah J. Harmsen, and Neil
+Houlsby. Scaling vision transformers to 22 billion parameters. In Andreas Krause, Emma
+Brunskill, Kyunghyun Cho, Barbara Engelhardt, Sivan Sabato, and Jonathan Scarlett (eds.), Pro-
+ceedings of the 40th International Conference on Machine Learning , volume 202 of Proceed-
+ings of Machine Learning Research , pp. 7480–7512. PMLR, 23–29 Jul 2023. URL https:
+//proceedings.mlr.press/v202/dehghani23a.html .
+Jia Deng, Wei Dong, Richard Socher, Li-Jia Li, Kai Li, and Li Fei-Fei. Imagenet: A large-scale hi-
+erarchical image database. In 2009 IEEE conference on computer vision and pattern recognition ,
+pp. 248–255. Ieee, 2009.
+Mingyu Ding, Bin Xiao, Noel Codella, Ping Luo, Jingdong Wang, and Lu Yuan. Davit: Dual
+attention vision transformers. In Computer Vision–ECCV 2022: 17th European Conference, Tel
+Aviv, Israel, October 23–27, 2022, Proceedings, Part XXIV , pp. 74–92. Springer, 2022.
+Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov, Dirk Weissenborn, Xiaohua Zhai, Thomas
+Unterthiner, Mostafa Dehghani, Matthias Minderer, Georg Heigold, Sylvain Gelly, Jakob Uszko-
+reit, and Neil Houlsby. An image is worth 16x16 words: Transformers for image recogni-
+tion at scale. In International Conference on Learning Representations , 2021. URL https:
+//openreview.net/forum?id=YicbFdNTTy .
+Jeremy Freeman, Corey M Ziemba, David J Heeger, Eero P Simoncelli, and J Anthony Movshon. A
+functional and perceptual signature of the second visual area in primates. Nature Neuroscience ,
+16(7):974–981, 2013. doi: 10.1038/nn.3402.
+Franziska Geiger, Martin Schrimpf, Tiago Marques, and James J. DiCarlo. Wiring up vision:
+Minimizing supervised synaptic updates needed to produce a primate ventral stream. In In-
+ternational Conference on Learning Representations (ICLR) Spotlight , 2022. URL https:
+//openreview.net/forum?id=g1SzIRLQXMM .
+Melvyn A Goodale and A David Milner. Separate visual pathways for perception and action. Trends
+in Neurosciences , 1992.
+Ian Goodfellow, Jonathon Shlens, and Christian Szegedy. Explaining and harnessing adversarial
+examples. In International Conference on Learning Representations , 2015. URL http://
+arxiv.org/abs/1412.6572 .
+12
+Benjamin Graham, Alaaeldin El-Nouby, Hugo Touvron, Pierre Stock, Armand Joulin, Herve Jegou,
+and Matthijs Douze. Levit: A vision transformer in convnet’s clothing for faster inference. In
+Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) , pp. 12259–
+12269, October 2021.
+Kalanit Grill-Spector, Zoe Kourtzi, and Nancy Kanwisher. The lateral occipital complex and its role
+in object recognition. Vision Research , 41(10-11):1409–1422, 2001.
+Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. Deep Residual Learning for Im-
+age Recognition. In Proceedings of 2016 IEEE Conference on Computer Vision and Pattern
+Recognition , CVPR ’16, pp. 770–778. IEEE, June 2016. doi: 10.1109/CVPR.2016.90. URL
+http://ieeexplore.ieee.org/document/7780459 .
+Tom Henighan, Jared Kaplan, Mor Katz, Mark Chen, Christopher Hesse, Jacob Jackson, Heewoo
+Jun, Tom B. Brown, Prafulla Dhariwal, Scott Gray, Chris Hallacy, Benjamin Mann, Alec Rad-
+ford, Aditya Ramesh, Nick Ryder, Daniel M. Ziegler, John Schulman, Dario Amodei, and Sam
+McCandlish. Scaling laws for autoregressive generative modeling, 2020.
+Joel Hestness, Sharan Narang, Newsha Ardalani, Gregory Diamos, Heewoo Jun, Hassan Kianinejad,
+Md. Mostofa Ali Patwary, Yang Yang, and Yanqi Zhou. Deep learning scaling is predictable,
+empirically, 2017.
+Jordan Hoffmann, Sebastian Borgeaud, Arthur Mensch, Elena Buchatskaya, Trevor Cai, Eliza
+Rutherford, Diego de las Casas, Lisa Anne Hendricks, Johannes Welbl, Aidan Clark, Tom Hen-
+nigan, Eric Noland, Katherine Millican, George van den Driessche, Bogdan Damoc, Aurelia
+Guy, Simon Osindero, Karen Simonyan, Erich Elsen, Oriol Vinyals, Jack William Rae, and
+Laurent Sifre. An empirical analysis of compute-optimal large language model training. In
+Alice H. Oh, Alekh Agarwal, Danielle Belgrave, and Kyunghyun Cho (eds.), Advances in Neu-
+ral Information Processing Systems , 2022. URL https://openreview.net/forum?id=
+iBBcRUlOAPR .
+Minyoung Huh, Brian Cheung, Tongzhou Wang, and Phillip Isola. The platonic representation
+hypothesis. In International Conference on Machine Learning , 2024.
+Berivan Isik, Natalia Ponomareva, Hussein Hazimeh, Dimitris Paparas, Sergei Vassilvitskii, and
+Sanmi Koyejo. Scaling laws for downstream task performance of large language models, 2024.
+URLhttps://arxiv.org/abs/2402.04177 .
+Eric R Kandel, James H Schwartz, and Thomas M Jessell. Principles of Neural Science . McGraw-
+Hill, 2000.
+Jared Kaplan, Sam McCandlish, Tom Henighan, Tom B. Brown, Benjamin Chess, Rewon Child,
+Scott Gray, Alec Radford, Jeffrey Wu, and Dario Amodei. Scaling laws for neural language
+models, 2020.
+Seyed-Mahdi Khaligh-Razavi and Nikolaus Kriegeskorte. Deep supervised, but not unsupervised,
+models may explain it cortical representation. PLoS Computational Biology , 10(11):e1003915,
+November 2014. ISSN 1553-7358. doi: 10.1371/journal.pcbi.1003915. URL http://dx.
+doi.org/10.1371/journal.pcbi.1003915 .
+Tim C. Kietzmann, Courtney J. Spoerer, Lynn K. A. S ¨orensen, Radoslaw M. Cichy, Olaf Hauk, and
+Nikolaus Kriegeskorte. Recurrence is required to capture the representational dynamics of the
+human visual system. Proceedings of the National Academy of Sciences , 116(43):21854–21863,
+October 2019. ISSN 1091-6490. doi: 10.1073/pnas.1905544116. URL http://dx.doi.
+org/10.1073/pnas.1905544116 .
+Hoki Kim. Torchattacks: A pytorch repository for adversarial attacks, 2020.
+Nikolaus Kriegeskorte et al. Matching categorical object representations in inferior temporal cortex
+of man and monkey. Neuron , 60(6):1126–1141, 2008.
+Alex Krizhevsky, Ilya Sutskever, and Geoffrey E Hinton. Imagenet classification with deep con-
+volutional neural networks. In F. Pereira, C.J. Burges, L. Bottou, and K.Q. Weinberger (eds.),
+Advances in Neural Information Processing Systems , volume 25. Curran Associates, Inc., 2012.
+13
+Jonas Kubilius, Martin Schrimpf, Ha Hong, Najib J. Majaj, Rishi Rajalingham, Elias B. Issa, Kohitij
+Kar, Pouya Bashivan, Jonathan Prescott-Roy, Kailyn Schmidt, Aran Nayebi, Daniel Bear, Daniel
+L. K. Yamins, and James J. DiCarlo. Brain-Like Object Recognition with High-Performing
+Shallow Recurrent ANNs. In H. Wallach, H. Larochelle, A. Beygelzimer, F. D’Alch ´e-
+Buc, E. Fox, and R. Garnett (eds.), Neural Information Processing Systems (NeurIPS) , pp.
+12785—-12796. Curran Associates, Inc., 2019. URL http://papers.nips.cc/paper/
+9441-brain-like-object-recognition-with-high-performing-shallow-recurrent-anns .
+Yann LeCun, Corinna Cortes, and Christopher J.C. Burges. The mnist database. https://yann.
+lecun.com/exdb/mnist/ , 1998. [Accessed 16-11-2024].
+Wen Li, Limin Wang, Wei Li, Eirikur Agustsson, and Luc Van Gool. Webvision database: Vi-
+sual learning and understanding from web data. CoRR , abs/1708.02862, 2017. URL http:
+//arxiv.org/abs/1708.02862 .
+Drew Linsley, Ivan F Rodriguez Rodriguez, Thomas FEL, Michael Arcaro, Saloni Sharma,
+Margaret Livingstone, and Thomas Serre. Performance-optimized deep neural networks
+are evolving into worse models of inferotemporal visual cortex. In A. Oh, T. Nau-
+mann, A. Globerson, K. Saenko, M. Hardt, and S. Levine (eds.), Advances in Neural
+Information Processing Systems , volume 36, pp. 28873–28891. Curran Associates, Inc.,
+2023. URL https://proceedings.neurips.cc/paper_files/paper/2023/
+file/5bf234ecf83cd77bc5b77a24ba9338b0-Paper-Conference.pdf .
+Zhuang Liu, Hanzi Mao, Chao-Yuan Wu, Christoph Feichtenhofer, Trevor Darrell, and Saining Xie.
+A convnet for the 2020s. Proceedings of the IEEE/CVF Conference on Computer Vision and
+Pattern Recognition (CVPR) , 2022a.
+Zhuang Liu, Hanzi Mao, Chao-Yuan Wu, Christoph Feichtenhofer, Trevor Darrell, and Saining Xie.
+A convnet for the 2020s. Proceedings of the IEEE/CVF Conference on Computer Vision and
+Pattern Recognition (CVPR) , 2022b.
+Ga¨elle Loosli, L ´eon Bottou, and Patrice Simard. projects:infimnist [leon.bottou.org] —
+leon.bottou.org. https://leon.bottou.org/projects/infimnist , 2007. [Ac-
+cessed 16-11-2024].
+TorchVision maintainers and contributors. Torchvision: Pytorch’s computer vision library. https:
+//github.com/pytorch/vision , 2016.
+Najib J. Majaj, Ha Hong, Ethan A. Solomon, and James J. DiCarlo. Simple learned weighted
+sums of inferior temporal neuronal firing rates accurately predict human core object recognition
+performance. The Journal of Neuroscience , 35(39):13402–13418, 2015. doi: 10.1523/jneurosci.
+5181-14.2015.
+Rafael Malach, Itzhak Levy, and Uri Hasson. The topography of high-order human object areas.
+Trends in Cognitive Sciences , 6(4):176–184, 2002.
+Johannes Mehrer, Courtney J. Spoerer, Emer C. Jones, Nikolaus Kriegeskorte, and Tim C. Ki-
+etzmann. An ecologically motivated image dataset for deep learning yields better models
+of human vision. Proceedings of the National Academy of Sciences , 118(8), 2021. doi:
+10.1073/pnas.2011417118.
+Sachin Mehta and Mohammad Rastegari. Mobilevit: Light-weight, general-purpose, and mobile-
+friendly vision transformer. In International Conference on Learning Representations , 2022. URL
+https://openreview.net/forum?id=vh-0sUt8HlG .
+Niklas Muennighoff, Alexander M Rush, Boaz Barak, Teven Le Scao, Nouamane Tazi, Aleksan-
+dra Piktus, Sampo Pyysalo, Thomas Wolf, and Colin Raffel. Scaling data-constrained language
+models. In Thirty-seventh Conference on Neural Information Processing Systems , 2023. URL
+https://openreview.net/forum?id=j5BuTrEj35 .
+Lukas Muttenthaler, Jonas Dippel, Lorenz Linhardt, Robert A. Vandermeulen, and Simon Korn-
+blith. Human alignment of neural network representations. In The Eleventh International Confer-
+ence on Learning Representations , 2023. URL https://openreview.net/forum?id=
+ReDQ1OUQR0X .
+14
+Aran Nayebi, Daniel Bear, Jonas Kubilius, Kohitij Kar, Surya Ganguli, David Sussillo, James J
+DiCarlo, and Daniel L Yamins. Task-driven convolutional recurrent models of the visual
+system. In S. Bengio, H. Wallach, H. Larochelle, K. Grauman, N. Cesa-Bianchi, and
+R. Garnett (eds.), Advances in Neural Information Processing Systems , volume 31. Curran
+Associates, Inc., 2018. URL https://proceedings.neurips.cc/paper_files/
+paper/2018/file/6be93f7a96fed60c477d30ae1de032fd-Paper.pdf .
+Maxime Oquab, Timoth ´ee Darcet, Theo Moutakanni, Huy V . V o, Marc Szafraniec, Vasil Khalidov,
+Pierre Fernandez, Daniel Haziza, Francisco Massa, Alaaeldin El-Nouby, Russell Howes, Po-Yao
+Huang, Hu Xu, Vasu Sharma, Shang-Wen Li, Wojciech Galuba, Mike Rabbat, Mido Assran,
+Nicolas Ballas, Gabriel Synnaeve, Ishan Misra, Herve Jegou, Julien Mairal, Patrick Labatut, Ar-
+mand Joulin, and Piotr Bojanowski. Dinov2: Learning robust visual features without supervision,
+2023.
+Adam Paszke, Sam Gross, Francisco Massa, Adam Lerer, James Bradbury, Gregory Chanan,
+Trevor Killeen, Zeming Lin, Natalia Gimelshein, Luca Antiga, Alban Desmaison, Andreas
+Kopf, Edward Yang, Zachary DeVito, Martin Raison, Alykhan Tejani, Sasank Chilamkurthy,
+Benoit Steiner, Lu Fang, Junjie Bai, and Soumith Chintala. Pytorch: An imperative style, high-
+performance deep learning library. In Advances in Neural Information Processing Systems 32 , pp.
+8024–8035. Curran Associates, Inc., 2019. URL http://papers.neurips.cc/paper/
+9015-pytorch-an-imperative-style-high-performance-deep-learning-library.
+pdf.
+Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini Agar-
+wal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark, Gretchen Krueger, and Ilya
+Sutskever. Learning transferable visual models from natural language supervision, 2021. URL
+https://arxiv.org/abs/2103.00020 .
+Rishi Rajalingham, Elias B. Issa, Pouya Bashivan, Kohitij Kar, Kailyn Schmidt, and James J. Di-
+Carlo. Large-scale, high-resolution comparison of the core visual object recognition behavior
+of humans, monkeys, and state-of-the-art deep artificial neural networks. The Journal of Neuro-
+science , 38(33):7255–7269, 2018. doi: 10.1523/jneurosci.0388-18.2018.
+Tal Ridnik, Emanuel Ben-Baruch, Asaf Noy, and Lihi Zelnik-Manor. Imagenet-21k pretraining for
+the masses, 2021.
+Martin Schrimpf, Jonas Kubilius, Ha Hong, Najib J. Majaj, Rishi Rajalingham, Elias B. Issa, Kohitij
+Kar, Pouya Bashivan, Jonathan Prescott-Roy, Franziska Geiger, Kailyn Schmidt, Daniel L. K.
+Yamins, and James J. DiCarlo. Brain-score: Which artificial neural network for object recognition
+is most brain-like? bioRxiv preprint , 2018. URL https://www.biorxiv.org/content/
+10.1101/407007v2 .
+Martin Schrimpf, Jonas Kubilius, Michael J Lee, N Apurva Ratan Murty, Robert Ajemian, and
+James J DiCarlo. Integrative benchmarking to advance neurally mechanistic models of hu-
+man intelligence. Neuron , 2020. URL https://www.cell.com/neuron/fulltext/
+S0896-6273(20)30605-X .
+Christoph Schuhmann, Richard Vencu, Romain Beaumont, Robert Kaczmarczyk, Clayton Mullis,
+Aarush Katta, Theo Coombes, Jenia Jitsev, and Aran Komatsuzaki. Laion-400m: Open dataset of
+clip-filtered 400 million image-text pairs, 2021.
+Christoph Schuhmann, Romain Beaumont, Richard Vencu, Cade W Gordon, Ross Wightman,
+Mehdi Cherti, Theo Coombes, Aarush Katta, Clayton Mullis, Mitchell Wortsman, Patrick
+Schramowski, Srivatsa R Kundurthy, Katherine Crowson, Ludwig Schmidt, Robert Kaczmarczyk,
+and Jenia Jitsev. LAION-5b: An open large-scale dataset for training next generation image-text
+models. In Thirty-sixth Conference on Neural Information Processing Systems Datasets and
+Benchmarks Track , 2022. URL https://openreview.net/forum?id=M3Y74vmsMcY .
+Igor Susmelj, Matthias Heller, Philipp Wirth, Jeremy Prescott, and Malte Ebner. Lightly, 2020.
+15
+Mingxing Tan and Quoc Le. EfficientNet: Rethinking model scaling for convolutional neural net-
+works. In Kamalika Chaudhuri and Ruslan Salakhutdinov (eds.), Proceedings of the 36th In-
+ternational Conference on Machine Learning , volume 97 of Proceedings of Machine Learning
+Research , pp. 6105–6114. PMLR, 09–15 Jun 2019. URL https://proceedings.mlr.
+press/v97/tan19a.html .
+The Mosaic ML Team. composer. https://github.com/mosaicml/composer/ , 2021.
+Hugo Touvron, Matthieu Cord, and Herv ´e J´egou. Deit iii: Revenge of the vit, 2022. URL https:
+//arxiv.org/abs/2204.07118 .
+Zhengzhong Tu, Hossein Talebi, Han Zhang, Feng Yang, Peyman Milanfar, Alan Bovik, and Yinxiao
+Li. Maxvit: Multi-axis vision transformer. ECCV , 2022.
+Grant Van Horn, Oisin Mac Aodha, Yang Song, Yin Cui, Chen Sun, Alex Shepard, Hartwig Adam,
+Pietro Perona, and Serge Belongie. The inaturalist species classification and detection dataset. In
+Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR) , June
+2018.
+Pavan Kumar Anasosalu Vasu, James Gabriel, Jeff Zhu, Oncel Tuzel, and Anurag Ranjan. Fastvit:
+A fast hybrid vision transformer using structural reparameterization. In Proceedings of the
+IEEE/CVF International Conference on Computer Vision , 2023.
+Ross Wightman. Pytorch image models. https://github.com/rwightman/
+pytorch-image-models , 2019.
+Eric Wong, Leslie Rice, and J. Zico Kolter. Fast is better than free: Revisiting adversarial training. In
+International Conference on Learning Representations , 2020. URL https://openreview.
+net/forum?id=BJx040EFvH .
+Daniel L. Yamins, Ha Hong, Charles F. Cadieu, Ethan A. Solomon, Darren Seibert, and James J.
+DiCarlo. Performance-optimized hierarchical models predict neural responses in higher visual
+cortex. Proceedings of the National Academy of Sciences , 111(23):8619–8624, 2014. doi: 10.
+1073/pnas.1403112111.
+Daniel L K Yamins and James J DiCarlo. Using goal-driven deep learning models to understand
+sensory cortex. Nature Neuroscience , 19(3):356–365, February 2016. ISSN 1546-1726. doi:
+10.1038/nn.4244. URL http://dx.doi.org/10.1038/nn.4244 .
+Xiaohua Zhai, Alexander Kolesnikov, Neil Houlsby, and Lucas Beyer. Scaling vision transform-
+ers. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition
+(CVPR) , pp. 12104–12113, June 2022.
+Bolei Zhou, Agata Lapedriza, Aditya Khosla, Aude Oliva, and Antonio Torralba. Places: A 10 mil-
+lion image database for scene recognition. IEEE Transactions on Pattern Analysis and Machine
+Intelligence , 2017.
+Chengxu Zhuang, Siming Yan, Aran Nayebi, Martin Schrimpf, Michael C. Frank, James J. DiCarlo,
+and Daniel L. Yamins. Unsupervised neural network models of the ventral visual stream. Pro-
+ceedings of the National Academy of Sciences , 118(3), 2021. doi: 10.1073/pnas.2014196118.
+16
+A I MPLEMENTATION DETAILS
+Our experiments are conducted using the PyTorch framework (Paszke et al., 2019), with Com-
+poser (Team, 2021) employed as the GPU orchestration tool to efficiently manage computational
+resources.
+For image augmentations, we leverage the Albumentations Buslaev et al., 2020 library due to its rich
+set of augmentation techniques, which are crucial for enhancing model robustness and preventing
+overfitting. In experiments involving self-supervised learning, we use the Lightly Susmelj et al.
+(2020) library to facilitate the implementation of self-supervised losses, augmentations, and model
+heads. This library streamlines the process of setting up models for SimCLR and DINO training
+methods.
+To generate adversarial examples for adversarial fine-tuning, we employ the Torchattacks library
+Kim (2020). Specifically, we use the Fast Gradient Sign Method (FGSM) to create perturbations that
+challenge the models, aiming to enhance their alignment with neural representations by exposing
+them to adversarial inputs.
+B A DDITIONAL IMAGE DATASETS
+To further validate our findings across diverse image distributions and to estimate scaling curves
+across different sample scales, we trained ResNet18 models on subsets of several large-scale image
+datasets: ImageNet-21k-P, WebVision-P, iNaturalist, and Places365. Below, we provide detailed
+descriptions of each dataset.
+B.1 I MAGE NET21K-P
+ImageNet-21k-P is a processed subset of the full ImageNet-21k dataset (Ridnik et al., 2021), which
+originally contains over 14 million images organized into more than 21,000 categories following
+the WordNet hierarchy. The ”P” denotes a pruned version where classes with insufficient images or
+noisy labels are filtered out to enhance dataset quality. This results in a refined dataset that maintains
+the richness of the original ImageNet-21k while improving label accuracy and image relevance. The
+resulting dataset contains approximately 11 million training images across 10,450 classes.
+B.2 W EBVISION -P
+The WebVision dataset (Li et al., 2017) is a large-scale web image dataset designed to provide a
+real-world, noisy alternative to ImageNet. It originally contains over 16 million images categorized
+into 5,000 classes. The images are collected from the internet using queries from search engines
+like Google and Flickr, leading to a dataset that includes label noise, varying image resolutions,
+and diverse visual contexts. Due to classes with very few available samples, we processed the
+WebVision dataset similarly to ImageNet-21k-P to remove classes with insufficient images. The
+resulting dataset, which we denote as WebVision-P, contains approximately 13.5 million training
+images across 4,189 categories.
+B.3 INATURALIST
+iNaturalist Van Horn et al. (2018) contains 2.7 million photographs of organisms in their natural
+environments, representing 10000 species. The dataset features highly specialized fine-grained cat-
+egories and natural backgrounds, offering insight into how domain-specific visual features influence
+alignment scaling.
+B.4 P LACES 365
+Places365 Zhou et al. (2017) is a large-scale scene-centric dataset containing approximately 1.8 mil-
+lion training images across 365 scene categories. Unlike object-centric datasets such as ImageNet,
+Places365 focuses on the recognition of environmental scenes, including natural landscapes, urban
+settings, and indoor environments. Each category includes a wide variety of images to capture the
+diversity within scene types.
+17
+B.5 INFIMNIST
+The MNIST dataset (LeCun et al., 1998) is a classic benchmark in machine learning, comprising
+70,000 grayscale images of handwritten digits (0-9), each sized 28×28 pixels. To expand this dataset
+for more extensive experimentation, we utilize the Infinite MNIST (Infimnist) tool Loosli et al.,
+2007, which generates additional MNIST-like samples through data augmentation techniques. We
+create an extended dataset by modifying the original training dataset 19 additional times, resulting in
+a total of 1.2 million images. This enlarged dataset allows for a more thorough evaluation of scaling
+effects on the alignment.
+C V ALIDATION ON PRIVATE DATA
+0.05 0.10 0.15 0.20 0.25
+Public0.050.100.150.200.250.30Private
+V1
+R2: 0.97
+p-value =3.18e-22
+0.0 0.1 0.2 0.3
+Public0.00.10.20.3Private
+V2
+R2: 0.95
+p-value =6.75e-19
+0.1 0.2 0.3 0.4 0.5 0.6
+Public0.20.40.6Private
+V4
+R2: 0.99
+p-value =1.06e-26
+0.1 0.2 0.3 0.4 0.5
+Public0.00.20.4Private
+IT
+R2: 1.00
+p-value =1.87e-32
+0.0 0.2 0.4
+Public0.00.20.40.6Private
+Behavioral
+R2: 0.99
+p-value =4.79e-27
+0.1 0.2 0.3 0.4
+Public0.00.10.20.30.4Private
+Average
+R2: 1.00
+p-value =9.62e-35
+Figure 8: Public benchmarks used in this study correlates highly with private benchmarks on Brain-
+Score
+As described in Section 3 we test a diverse set of models on private benchmarks on Brain-Score
+platform. All R2values are above 0.95with p-values less than 10−18.
+18
+D P RETRAINED MODELS
+As part of our comprehensive evaluation, we benchmarked a diverse set of pretrained models sourced
+from both torchvision (maintainers & contributors, 2016) and the timm (Wightman, 2019)
+libraries. We tested a total of 94, including ViT Dosovitskiy et al. (2021), DaViT Ding et al. (2022),
+LeViT Graham et al. (2021), ConvNeXt Liu et al. (2022a), MobileViT Mehta & Rastegari (2022),
+MaxVit Tu et al. (2022), FastViT Vasu et al. (2023). Each model varies in parameter count, training
+sample size, dataset source, and training objective, providing a broad spectrum for analysis.
+To verify the generalizability of our findings, we conducted evaluations with these pretrained mod-
+els, including larger networks like CLIP (Radford et al., 2021) and DINOv2 (Oquab et al., 2023),
+which are pretrained on richer and more diverse datasets such as LAION Schuhmann et al. (2021;
+2022). We also compared variations of these models by examining base pretrained models alongside
+their fine-tuned counterparts on ImageNet, aiming to investigate the impact of fine-tuning on scaling
+behavior.
+Our results indicate that models with extensive pretraining achieve enhanced behavioral alignment,
+likely due to their exposure to richer and more varied data. However, similar to models trained
+solely on ImageNet or EcoSet, these pretrained models still exhibit a saturation effect in neural
+alignment with the primate visual ventral stream (VVS). This suggests that while larger and more
+diverse datasets improve behavioral predictability, they do not substantially extend the scaling of
+neural alignment beyond the observed plateau.
+The curves in Figure 9 closely follow the scaling patterns estimated for our trained models shown
+in Figure 2.c, further validating that the observed saturation is consistent across different pretrain-
+ing regimes and dataset scales. This reinforces our conclusion that scaling alone is insufficient to
+overcome the limitations in neural alignment and highlights the need for alternative approaches to
+improve alignment with neural representations.
+106107108109
+Model Parameters (N)0.300.400.50Alignment Score (S)ConvNeXt
+DaVit
+EfficientNet
+FastViT
+LeViT
+MaxxViT
+MobileViT
+ResNet
+ViT
+S=0.430.32N0.78
+Figure 9: Alignment of pretrained vision models as a function of model parameters
+19
+E T RAINING EVOLUTION
+100101102
+Training Epoch0.000.100.200.300.400.50Alignment Score (S)ResNet
+100101102
+Training Epoch0.000.100.200.300.400.50Alignment Score (S)EfficientNet
+100101102
+Training Epoch0.000.100.200.300.400.50Alignment Score (S)ViT
+100101102
+Training Epoch0.000.100.200.300.400.50Alignment Score (S)ConvNeXt
+V1
+V2
+V4
+IT
+Behavioral
+Figure 10: Evolution of per-region alignment throughout training. Models with stronger pri-
+ors—such as ResNet and EfficientNet—exhibit higher neural alignment initially. However, the gap
+in representational power diminishes as more generalist models are trained on data.
+ResNet18 ResNet34 ResNet50ResNet101 ResNet152
+EfficientNet-B0 EfficientNet-B1 EfficientNet-B2ConvNeXt-T ConvNeXt-S ConvNeXt-B ConvNeXt-LViT-T ViT-S ViT-B ViT-L
+Model0.00.10.20.30.4Alignment Score (S)Neural Alignment
+Untrained
+False
+True
+ResNet18 ResNet34 ResNet50ResNet101 ResNet152
+EfficientNet-B0 EfficientNet-B1 EfficientNet-B2ConvNeXt-T ConvNeXt-S ConvNeXt-B ConvNeXt-LViT-T ViT-S ViT-B ViT-L
+Model0.1
+0.00.10.20.30.40.5Alignment Score (S)Behavioral Alignment
+Untrained
+False
+True
+Figure 11: Some untrained models demonstrate non-zero neural alignment at initialization. Never-
+theless, all models start with almost zero behavioral alignment, indicating that initial neural align-
+ment arises from architectural biases rather than learned behavior.
+20
+F E FFECT OF TRAINING OBJECTIVE
+ViT-B ViT-S
+ResNet-50 ResNet-18
+Model0.300.320.340.360.380.400.420.44Alignment Score (S)Effect of Learning Paradigms
+V1 V2 V4 IT
+Behavioral
+Region0.00.10.20.30.40.5Alignment Score (S)ViT-S Aligment
+Training Method
+Supervised
+DINO
+SimCLR
+V1 V2 V4 IT
+Behavioral
+Region0.00.10.20.30.40.50.6Alignment Score (S)ResNet-50 Aligment
+Training Method
+DINO
+Supervised
+SimCLR
+Figure 12: Effect of training objective on alignment
+21
+1016101710181019
+Total Flops (C)0.100.200.300.400.500.600.70Alignment Score (S)
+V1
+S=1.000.92C0.01
+1016101710181019
+Total Flops (C)0.100.200.300.400.500.600.70Alignment Score (S)
+V2
+S=0.331.28C0.29
+1016101710181019
+Total Flops (C)0.100.200.300.400.500.600.70Alignment Score (S)
+V4
+S=0.581.43C0.32
+1016101710181019
+Total Flops (C)0.100.200.300.400.500.600.70Alignment Score (S)
+IT
+S=0.593.07C0.33
+1016101710181019
+Total Flops (C)0.100.200.300.400.500.600.70Alignment Score (S)
+Behavioral
+S=1.001.39C0.05
+1016101710181019
+Total Flops (C)0.100.200.300.400.500.600.70Alignment Score (S)
+Average
+S=0.480.81C0.16
+SimCLR Training - RegionsFigure 13: Scaling of SimCLR training across regions
+22
+G R EGION -WISE SCATTER PLOTS
+0.0 0.2 0.4 0.6 0.8
+Validation Accuracy0.000.050.100.150.200.250.30Alignment Score for V1V1 x Accuracy
+0.00 0.05 0.10 0.15 0.20 0.25 0.30
+Alignment Score for V10.000.050.100.150.200.250.300.35Alignment Score for V2V2 x V1
+0.0 0.2 0.4 0.6 0.8
+Validation Accuracy0.000.050.100.150.200.250.300.35Alignment Score for V2V2 x Accuracy
+0.00 0.05 0.10 0.15 0.20 0.25 0.30
+Alignment Score for V10.10.20.30.40.50.6Alignment Score for V4V4 x V1
+0.00 0.05 0.10 0.15 0.20 0.25 0.30 0.35
+Alignment Score for V20.10.20.30.40.50.6Alignment Score for V4V4 x V2
+0.0 0.2 0.4 0.6 0.8
+Validation Accuracy0.10.20.30.40.50.6Alignment Score for V4V4 x Accuracy
+0.00 0.05 0.10 0.15 0.20 0.25 0.30
+Alignment Score for V10.10.20.30.40.5Alignment Score for ITIT x V1
+0.00 0.05 0.10 0.15 0.20 0.25 0.30 0.35
+Alignment Score for V20.10.20.30.40.5Alignment Score for ITIT x V2
+0.1 0.2 0.3 0.4 0.5 0.6
+Alignment Score for V40.10.20.30.40.5Alignment Score for ITIT x V4
+0.0 0.2 0.4 0.6 0.8
+Validation Accuracy0.10.20.30.40.5Alignment Score for ITIT x Accuracy
+0.00 0.05 0.10 0.15 0.20 0.25 0.30
+Alignment Score for V10.1
+0.00.10.20.30.40.5Alignment Score for BehavioralBehavioral x V1
+0.00 0.05 0.10 0.15 0.20 0.25 0.30 0.35
+Alignment Score for V20.1
+0.00.10.20.30.40.5Alignment Score for BehavioralBehavioral x V2
+0.1 0.2 0.3 0.4 0.5 0.6
+Alignment Score for V40.1
+0.00.10.20.30.40.5Alignment Score for BehavioralBehavioral x V4
+0.1 0.2 0.3 0.4 0.5
+Alignment Score for IT0.1
+0.00.10.20.30.40.5Alignment Score for BehavioralBehavioral x IT
+0.0 0.2 0.4 0.6 0.8
+Validation Accuracy0.1
+0.00.10.20.30.40.5Alignment Score for BehavioralBehavioral x Accuracy
+Figure 14: Region vs. Region Comparisons: This figure shows how the alignment scores for each
+brain region correlate with those of other regions. The diagonal plots illustrate the relationship
+between the alignment score of each region and the validation accuracy on ImageNet and EcoSet
+datasets.
+23

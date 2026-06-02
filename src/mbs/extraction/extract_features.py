@@ -17,7 +17,7 @@ from .utils import str2bool, load_yaml
 def parse_args():
     parser = argparse.ArgumentParser(description="Extract features from a dataset using a feature extractor model.")
     parser.add_argument("--model_id", type=str, required=True, help="Model identifier.")
-    parser.add_argument("--backbone_source", choices=["timm", "spvvs", "hf"], default="spvvs", help="Source of the backbone model.")
+    parser.add_argument("--backbone_source", choices=["timm", "spvvs", "hf", "audio"], default="spvvs", help="Source of the backbone model.")
     parser.add_argument("--layer_config", default="None", help="Layer configuration string for custom models.")
     parser.add_argument("--lora_config", default="None", help="LoRA configuration YAML file path.")
     parser.add_argument("--backbone_checkpoint", type=str, default=None, help="Path to the backbone model checkpoint. Will use default weights if not provided.")
@@ -26,7 +26,10 @@ def parse_args():
     parser.add_argument("--stimulus_set_id", type=str, required=False, help="Stimulus-set key to use with --committed_extraction_layers. Defaults to output_dir.name.")
     parser.add_argument("--layer_commitments_model_id", type=str, required=False, help="Model ID for committed extraction layers, if different from model_id.")
     parser.add_argument("--data_root", type=str, required=True, help="Path to the dataset directory or stimulus set id.")
-    parser.add_argument("--dataset_type", type=str, choices=["things", "h5", "brain_score"], help="Type of dataset.")
+    parser.add_argument("--dataset_type", type=str, choices=["things", "h5", "brain_score", "audio"], help="Type of dataset.")
+    parser.add_argument("--mean_pool_time", type=str2bool, default=False, help="Mean-pool the temporal dimension of audio features before saving. Required for compatibility with existing (non-temporal) evaluation code.")
+    parser.add_argument("--window_duration", type=float, default=30.0, help="Audio window duration in seconds (AudioSegmentDataset).")
+    parser.add_argument("--window_stride", type=float, default=10.0, help="Audio window stride in seconds (AudioSegmentDataset).")
     parser.add_argument("--output_dir", type=str, required=True, help="Path to save the extracted features.")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size for data loading.")
     parser.add_argument("--num_workers", type=int, default=4, help="Number of workers for data loading.")
@@ -36,6 +39,7 @@ def parse_args():
     parser.add_argument("--dtype", type=str, default="float16", help="Data type for the model inputs.")
     parser.add_argument("--prompt", type=str, default=None, help="Optional fixed prompt for HF multimodal backbones. Applied to every sample.")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility.")
+    parser.add_argument("--model_cache_dir", type=str, default="cache/model_weights", help="Directory for downloaded model weights (e.g. Whisper checkpoints). Defaults to cache/model_weights/ inside the project.")
     parser.add_argument("--projector_backend", type=str, choices=["pytorch", "sklearn"], default="sklearn", help="Backend for random projection.")
     parser.add_argument("--projector_type", type=str, choices=["sparse", "gaussian"], default="sparse", help="Type of random projection.")
     parser.add_argument("--projector_cache", type=str, default="cache/projectors/", help="Path to cache directory for projectors.")
@@ -51,7 +55,12 @@ def main(args):
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     config["device"] = str(device)
-    
+
+    dtype = getattr(torch, args.dtype)
+    if device.type == "cpu" and dtype == torch.float16:
+        print("Note: float16 not supported on CPU — using float32.")
+        dtype = torch.float32
+
     if args.lora_config != "None":
         config["lora_config"] = load_yaml(args.lora_config)
     
@@ -92,7 +101,6 @@ def main(args):
         **config
     )
     feature_extractor.eval()
-    dtype = getattr(torch, args.dtype)
     feature_extractor = feature_extractor.to(device=device, dtype=dtype)
     
     # Create dataloader
@@ -101,7 +109,9 @@ def main(args):
         dataset_type=args.dataset_type,
         transform=transform,
         num_workers=args.num_workers,
-        batch_size=args.batch_size
+        batch_size=args.batch_size,
+        window_duration=args.window_duration,
+        window_stride=args.window_stride,
     )
     
     # all_features = []
@@ -118,6 +128,8 @@ def main(args):
             if (isinstance(batch, List) and torch.is_tensor(batch[0])) or (isinstance(batch, Tuple) and torch.is_tensor(batch[0])):
                 inputs = batch[0].to(device=device, dtype=dtype)  # Assuming batch[0] contains the input images
                 features = feature_extractor(inputs)
+                if args.mean_pool_time:
+                    features = {k: v.mean(axis=1) if v.ndim == 3 else v for k, v in features.items()}
             elif isinstance(batch, Tuple) and isinstance(batch[0], dict):
                 inputs = {}
                 for k, v in batch[0].items():

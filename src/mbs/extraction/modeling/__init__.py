@@ -4,11 +4,27 @@ from .backbones import create_backbone
 from .encoder_feature_extractor import create_feature_encoder
 from .encoder_hooks import create_hook_feature_encoder
 
+def _create_audio_hook_feature_extractor(backbone, feat_layers=None, **kwargs):
+    """Build a HookFeatureExtractor for audio backbones without image-shape inference."""
+    from .encoder_hooks import HookedEncoder, HookFeatureExtractor
+    import torch.nn as nn
+
+    if not feat_layers:
+        raise ValueError("feat_layers must be specified for backbone_source='audio'")
+
+    return_nodes = {f"backbone.{layer}": layer.replace(".", "-") for layer in feat_layers}
+    encoder = HookedEncoder(backbone=backbone, feat_layers=return_nodes, include_output=False)
+    projectors = nn.ModuleDict({alias: nn.Identity() for alias in return_nodes.values()})
+    return HookFeatureExtractor(encoder=encoder, projectors=projectors, flatten_features=False)
+
+
 def create_feature_extractor(**kwargs):
-    
+
     backbone, transform = create_backbone(**kwargs)
-    
-    if kwargs.get("backbone_source") in ['hf']:
+
+    if kwargs.get("backbone_source") == "audio":
+        feature_extractor_model = _create_audio_hook_feature_extractor(backbone, **kwargs)
+    elif kwargs.get("backbone_source") in ['hf']:
         print("Using hook-based feature extractor...")
         feature_extractor_model = create_hook_feature_encoder(backbone=backbone, transform=transform, **kwargs)
     else:

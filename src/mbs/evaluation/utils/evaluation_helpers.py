@@ -84,6 +84,9 @@ def load_yaml(yaml_file: str) -> dict:
     return config
 
 def compute_metrics(y_true, y_pred, noise_ceiling=None, verbose=True):
+    # sklearn squeezes single-output predictions to 1D; restore shape to match y_true
+    if y_true.ndim == 2 and y_pred.ndim == 1:
+        y_pred = y_pred.reshape(-1, 1)
     try:
         r2_score_val = r2_score(y_true, y_pred)
         explained_variance_score_val = explained_variance_score(y_true, y_pred)
@@ -180,6 +183,8 @@ def compute_rsa_cka(X_test, y_test, y_test_pred, X_train=None, y_train=None, y_t
 
 
 def pearsonr_score(y_true, y_pred, noise_ceiling=None):
+    if y_true.ndim == 2 and y_pred.ndim == 1:
+        y_pred = y_pred.reshape(-1, 1)
     pearsonr_raw_values = scipy.stats.pearsonr(y_true, y_pred, axis=0)[0]
     if noise_ceiling is not None:
         pearsonr_ncorrected_values = pearsonr_raw_values / noise_ceiling
@@ -241,6 +246,8 @@ def load_neural_data(data_path: Path, subject:str, roi:str, split:str):
             stimulus_ids = f[split]['stimulus_ids'][subject][()]
         else:
             stimulus_ids = f[split]['stimulus_ids'][()]
+        if len(stimulus_ids) > 0 and hasattr(stimulus_ids[0], 'decode'):
+            stimulus_ids = [s.decode('utf-8') for s in stimulus_ids]
         nc_max = f.attrs.get('max_nc', 100.0)
         neural_data = f[split]['neural_data'][subject][roi][()]
         noise_ceiling = f['noise_ceilings'][subject][roi][()]/nc_max + 1e-6  # to avoid division by zero
