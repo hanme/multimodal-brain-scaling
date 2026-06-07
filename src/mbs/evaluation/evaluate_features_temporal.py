@@ -73,7 +73,9 @@ def evaluate_layer_temporal(feat_train, feat_test, eeg_train, eeg_test, noise_ce
         model = RidgeCV(alphas=alphas)
         model.fit(feat_train[:, t, :], eeg_train[:, t, :])
         y_pred = model.predict(feat_test[:, t, :])
-        r = scipy.stats.pearsonr(eeg_test[:, t, :], y_pred, axis=0)[0]
+        y_ref = eeg_test[:, t, :]
+        y_pred = y_pred.reshape(y_ref.shape)  # sklearn squeezes n_ch=1 to 1D
+        r = scipy.stats.pearsonr(y_ref, y_pred, axis=0)[0]
         scores[t] = r.astype(np.float32)
 
     return scores
@@ -86,7 +88,8 @@ def main(args):
     layer_list_path = Path(args.target_feature_layers)
     assert layer_list_path.exists(), f"Layer list not found: {layer_list_path}"
     with open(layer_list_path) as f:
-        layer_list = json.load(f)
+        layer_list_raw = json.load(f)
+    layer_list = [e["name"] if isinstance(e, dict) else e for e in layer_list_raw]
 
     data_hdf5_path = Path(args.data_hdf5_path)
     assert data_hdf5_path.exists(), f"Neural HDF5 not found: {data_hdf5_path}"
@@ -97,9 +100,17 @@ def main(args):
     alphas = ALPHA_LIST_SHORT
 
     scores_path = output_dir / "temporal_scores.h5"
-    summary = {"model_id": args.model_id, "layers": []}
+    summary_path = output_dir / "temporal_scores_summary.json"
 
-    with h5py.File(scores_path, "w") as out_h5:
+    # Load existing summary entries so we can resume after a job timeout.
+    if summary_path.exists():
+        with open(summary_path) as f:
+            summary = json.load(f)
+    else:
+        summary = {"model_id": args.model_id, "layers": []}
+
+    # Append mode: keeps completed datasets intact if the job was killed mid-run.
+    with h5py.File(scores_path, "a") as out_h5:
         for layer_name in tqdm(layer_list, desc="Layers"):
             layer_feats, id_map = load_layer_features(layer_name, features_folder=features_dir)
 
@@ -109,6 +120,10 @@ def main(args):
 
             for subject in subjects:
                 for roi in rois:
+                    key = f"{layer_name.replace('.', '-')}/{subject}/{roi}"
+                    if key in out_h5:
+                        continue  # already computed in a previous run
+
                     train_ids_raw, eeg_train, nc = load_neural_data(
                         data_hdf5_path, subject, roi, "train"
                     )
@@ -118,18 +133,31 @@ def main(args):
                     train_ids = _decode_ids(train_ids_raw)
                     test_ids = _decode_ids(test_ids_raw)
 
-                    train_idx = [id_map.get(sid) for sid in train_ids]
-                    test_idx = [id_map.get(sid) for sid in test_ids]
-                    if any(v is None for v in train_idx + test_idx):
-                        valid_train = sum(1 for v in train_idx if v is not None)
-                        valid_test = sum(1 for v in test_idx if v is not None)
+                    train_idx_raw = [id_map.get(sid) for sid in train_ids]
+                    test_idx_raw = [id_map.get(sid) for sid in test_ids]
+
+                    # Filter to IDs present in both the feature set and the EEG set.
+                    # Missing IDs arise when a SLURM chunk wrote fewer stimuli than expected
+                    # (e.g. the last chunk); we drop those rows and proceed with the rest.
+                    train_eeg_mask = [i for i, v in enumerate(train_idx_raw) if v is not None]
+                    test_eeg_mask  = [i for i, v in enumerate(test_idx_raw)  if v is not None]
+                    train_feat_idx = [v for v in train_idx_raw if v is not None]
+                    test_feat_idx  = [v for v in test_idx_raw  if v is not None]
+
+                    n_miss_train = len(train_idx_raw) - len(train_feat_idx)
+                    n_miss_test  = len(test_idx_raw)  - len(test_feat_idx)
+                    if n_miss_train or n_miss_test:
                         print(f"  Warning: {layer_name}/{subject}/{roi} — "
-                              f"{valid_train}/{len(train_idx)} train, "
-                              f"{valid_test}/{len(test_idx)} test IDs matched.")
+                              f"{len(train_feat_idx)}/{len(train_idx_raw)} train, "
+                              f"{len(test_feat_idx)}/{len(test_idx_raw)} test IDs matched.")
+                    if not train_feat_idx or not test_feat_idx:
+                        print(f"  Skipping {layer_name}/{subject}/{roi}: no matched IDs.")
                         continue
 
-                    feat_train = layer_feats[train_idx]
-                    feat_test = layer_feats[test_idx]
+                    feat_train = layer_feats[train_feat_idx]
+                    feat_test  = layer_feats[test_feat_idx]
+                    eeg_train  = eeg_train[train_eeg_mask]
+                    eeg_test   = eeg_test[test_eeg_mask]
 
                     nc_for_correction = nc if args.noise_ceiling_correct else None
                     scores = evaluate_layer_temporal(
@@ -141,8 +169,8 @@ def main(args):
                         nc_safe = np.where(nc > 0, nc, 1e-6)
                         scores = scores / nc_safe
 
-                    key = f"{layer_name.replace('.', '-')}/{subject}/{roi}"
                     out_h5.create_dataset(key, data=scores, compression="gzip")
+                    out_h5.flush()
                     summary["layers"].append({
                         "layer": layer_name,
                         "subject": subject,
@@ -150,9 +178,9 @@ def main(args):
                         "mean_score": float(np.nanmean(scores)),
                         "peak_score": float(np.nanmax(scores)),
                     })
-
-    with open(output_dir / "temporal_scores_summary.json", "w") as f:
-        json.dump(summary, f, indent=2)
+                    # Write summary after each dataset so progress survives a kill.
+                    with open(summary_path, "w") as f:
+                        json.dump(summary, f, indent=2)
 
     print(f"Temporal scores written to {scores_path}")
     print(f"Summary written to {output_dir / 'temporal_scores_summary.json'}")

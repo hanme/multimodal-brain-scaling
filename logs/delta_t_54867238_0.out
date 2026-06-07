@@ -1,0 +1,27 @@
+========================================================================
+DELTA-T FEATURE EXTRACTION  (mode=pilot)
+Array task 0 / Job 54867238
+Node: jst367   CPUs: 1
+Start: mar 02 jun 2026 05:58:33 CEST
+========================================================================
+Python: /work/upschrimpf1/mehrer/code/20260601_multimodal_brain_scaling_schizophrenia/multimodal-brain-scaling/.venv/bin/python
+
+Stimuli: start=0  count=3
+Output:  outputs/features/whisper-base-delta-t-slurm-pilot/chunk_0
+
+Arguments: {'model_id': 'whisper-base', 'data_root': '/work/upschrimpf1/mehrer/datasets/Broderick_2018_EEG_The_old_man_and_the_sea/stimuli', 'target_feature_layers': 'configs/extraction/audio/whisper_base_layers.json', 'output_dir': 'outputs/features/whisper-base-delta-t-slurm-pilot/chunk_0', 'window_duration': 30.0, 'window_stride': 10.0, 'batch_t': 4, 't_stride': 1, 'stim_start_idx': 0, 'n_stimuli': 3, 'save_every': 3, 'model_cache_dir': 'cache/model_weights', 'seed': 42, 'overwrite': False}
+Device: cpu
+Stimuli: 3 (idx 0..2 of 314)  |  Time bins: 1500 (t_stride=1)  |  batch_t: 4
+Layers: ['blocks.0', 'blocks.1', 'blocks.2', 'blocks.3', 'blocks.4', 'blocks.5']
+  stim 1/3: 1394.1s  ETA 0.8h  (3 stim/hr)
+  stim 2/3: 1396.6s  ETA 0.4h  (3 stim/hr)
+  stim 3/3: 1386.0s  ETA 0.0h  (3 stim/hr)
+
+Done. 1 HDF5 files written to outputs/features/whisper-base-delta-t-slurm-pilot/chunk_0
+Feature shape per stimulus: [T_out=1500, d_model] per layer
+
+SUCCESS  task=0  stim_start=0
+Files written:
+total 22M
+-rw-r--r-- 1 mehrer upschrimpf1-unit 24M  2 jun 07:09 feats_delta_t-bs_3-batch_0-seed_42.h5
+End: mar 02 jun 2026 07:09:07 CEST

@@ -137,22 +137,59 @@ def _find_roi_indices(channel_names: List[str]) -> Dict[str, List[int]]:
         ch_xyz = np.array([bsl_pos_dict.get(n, [np.nan, np.nan, np.nan])
                            for n in channel_names])
 
-        target_singles = ["Fz", "FCz", "Cz", "Pz", "F3", "F4", "C3", "C4", "T7", "T8"]
+        # Full extended 10-20 set.  Any name not in standard_1020 or whose
+        # nearest BioSemi128 channel is > MAX_DIST_MM away is silently skipped.
+        target_singles = [
+            # Standard 10-20
+            "Fp1", "Fpz", "Fp2",
+            "F9", "F7", "F5", "F3", "F1", "Fz", "F2", "F4", "F6", "F8", "F10",
+            "FT9", "FT7", "FC5", "FC3", "FC1", "FCz", "FC2", "FC4", "FC6", "FT8", "FT10",
+            "T9", "T7", "C5", "C3", "C1", "Cz", "C2", "C4", "C6", "T8", "T10",
+            "TP9", "TP7", "CP5", "CP3", "CP1", "CPz", "CP2", "CP4", "CP6", "TP8", "TP10",
+            "P9", "P7", "P5", "P3", "P1", "Pz", "P2", "P4", "P6", "P8", "P10",
+            "PO9", "PO7", "PO3", "PO1", "POz", "PO2", "PO4", "PO8", "PO10",
+            "O9", "O1", "Oz", "O2", "O10",
+            # Additional anterior / frontal
+            "AFz", "AF7", "AF3", "AF4", "AF8",
+            "Nz", "Iz",
+        ]
+        MAX_DIST_MM = 25.0
+
         single_idx: Dict[str, int] = {}
+        # Track which BioSemi channel is already claimed to detect collisions.
+        claimed: Dict[int, str] = {}
         for name in target_singles:
             if name not in std_pos_dict:
                 continue
             target_xyz = std_pos_dict[name]
             dists = np.linalg.norm(ch_xyz - target_xyz, axis=1)
             valid = ~np.isnan(dists)
-            if valid.any():
-                single_idx[name] = int(np.where(valid, dists, np.inf).argmin())
+            if not valid.any():
+                continue
+            best_idx = int(np.where(valid, dists, np.inf).argmin())
+            best_dist_mm = float(dists[best_idx]) * 1000
+            if best_dist_mm > MAX_DIST_MM:
+                continue
+            if best_idx in claimed:
+                # Two standards want the same BioSemi channel — keep the closer one.
+                prev_name = claimed[best_idx]
+                prev_dist = float(np.linalg.norm(ch_xyz[best_idx] - std_pos_dict[prev_name])) * 1000
+                if best_dist_mm < prev_dist:
+                    del single_idx[prev_name]
+                    claimed[best_idx] = name
+                    single_idx[name] = best_idx
+                # else keep previous, skip current
+            else:
+                single_idx[name] = best_idx
+                claimed[best_idx] = name
 
         rois: Dict[str, List[int]] = {n: [i] for n, i in single_idx.items()}
         for cname, members in [
-            ("frontal_cluster",  ["Fz", "F3", "F4", "FCz"]),
-            ("central_cluster",  ["Cz", "C3", "C4"]),
-            ("temporal_cluster", ["T7", "T8"]),
+            ("frontal_cluster",   ["Fz", "F3", "F4", "FCz"]),
+            ("central_cluster",   ["Cz", "C3", "C4"]),
+            ("temporal_cluster",  ["T7", "T8"]),
+            ("parietal_cluster",  ["Pz", "P3", "P4", "P7", "P8"]),
+            ("occipital_cluster", ["O1", "Oz", "O2"]),
         ]:
             idxs = [single_idx[m] for m in members if m in single_idx]
             if idxs:

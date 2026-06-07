@@ -1,0 +1,2819 @@
+{
+  "model_id": "whisper-base",
+  "layers": [
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "AF3",
+      "mean_score": 0.0027038783300668,
+      "peak_score": 0.4745370149612427
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "AF4",
+      "mean_score": 0.17569464445114136,
+      "peak_score": 1.2368532419204712
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "AF7",
+      "mean_score": -0.022231770679354668,
+      "peak_score": 1.0758576393127441
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "AF8",
+      "mean_score": 17.188108444213867,
+      "peak_score": 378.5081481933594
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "AFz",
+      "mean_score": -0.004281152505427599,
+      "peak_score": 0.6074877977371216
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "C1",
+      "mean_score": 7.610386848449707,
+      "peak_score": 434.3697204589844
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "C2",
+      "mean_score": 48.67777633666992,
+      "peak_score": 382.0970458984375
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "C3",
+      "mean_score": 0.04284088313579559,
+      "peak_score": 6.624153137207031
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "C4",
+      "mean_score": 3.0903658866882324,
+      "peak_score": 466.02447509765625
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "C5",
+      "mean_score": -0.002156563103199005,
+      "peak_score": 0.6251557469367981
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "C6",
+      "mean_score": -0.66796875,
+      "peak_score": 472.1865539550781
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "CP1",
+      "mean_score": -10.961775779724121,
+      "peak_score": 444.6492004394531
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "CP2",
+      "mean_score": 38.57830810546875,
+      "peak_score": 556.313232421875
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "CP3",
+      "mean_score": 58.887840270996094,
+      "peak_score": 392.60540771484375
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "CP4",
+      "mean_score": 3.5767691135406494,
+      "peak_score": 462.10205078125
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "CP5",
+      "mean_score": -4.864931583404541,
+      "peak_score": 480.74554443359375
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "CP6",
+      "mean_score": 0.003932873252779245,
+      "peak_score": 1.017055869102478
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "CPz",
+      "mean_score": -4.919996738433838,
+      "peak_score": 391.1648254394531
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "Cz",
+      "mean_score": 0.1101885586977005,
+      "peak_score": 3.1240336894989014
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "F1",
+      "mean_score": -6.975566387176514,
+      "peak_score": 469.8308410644531
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "F2",
+      "mean_score": 32.37257385253906,
+      "peak_score": 445.1860046386719
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "F3",
+      "mean_score": -0.0005229511298239231,
+      "peak_score": 0.8690999150276184
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "F4",
+      "mean_score": 0.003645088290795684,
+      "peak_score": 0.9246314764022827
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "F5",
+      "mean_score": 8.388486862182617,
+      "peak_score": 428.5609130859375
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "F6",
+      "mean_score": 48.33782958984375,
+      "peak_score": 483.5163269042969
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "F7",
+      "mean_score": 0.010750583373010159,
+      "peak_score": 0.5857812762260437
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "F8",
+      "mean_score": 0.014913812279701233,
+      "peak_score": 1.3671157360076904
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "FC1",
+      "mean_score": 5.435734748840332,
+      "peak_score": 416.8372497558594
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "FC2",
+      "mean_score": 6.036074638366699,
+      "peak_score": 509.688232421875
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "FC3",
+      "mean_score": 0.006071646232157946,
+      "peak_score": 0.5874618291854858
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "FC4",
+      "mean_score": 0.09675148874521255,
+      "peak_score": 0.6885071992874146
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "FC5",
+      "mean_score": 3.666118860244751,
+      "peak_score": 470.9021301269531
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "FC6",
+      "mean_score": 74.55519104003906,
+      "peak_score": 444.46295166015625
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "FCz",
+      "mean_score": 17.716459274291992,
+      "peak_score": 445.1052551269531
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "FT7",
+      "mean_score": 0.004717994015663862,
+      "peak_score": 0.4947301745414734
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "FT8",
+      "mean_score": 38.98676681518555,
+      "peak_score": 421.0885925292969
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "Fp1",
+      "mean_score": 0.020044246688485146,
+      "peak_score": 0.6912318468093872
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "Fp2",
+      "mean_score": 0.017839109525084496,
+      "peak_score": 0.5313439965248108
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "Fpz",
+      "mean_score": -0.0027770092710852623,
+      "peak_score": 0.5085483193397522
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "Fz",
+      "mean_score": 0.03477286919951439,
+      "peak_score": 0.6908503174781799
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "O1",
+      "mean_score": -0.9860051870346069,
+      "peak_score": 440.2197265625
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "O2",
+      "mean_score": -0.00037427106872200966,
+      "peak_score": 0.600804328918457
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "Oz",
+      "mean_score": 0.006841645576059818,
+      "peak_score": 0.7562898397445679
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "P1",
+      "mean_score": -0.9823167324066162,
+      "peak_score": 471.4945068359375
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "P10",
+      "mean_score": -0.017812643200159073,
+      "peak_score": 0.5904540419578552
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "P2",
+      "mean_score": -28.2399845123291,
+      "peak_score": 399.03533935546875
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "P3",
+      "mean_score": 2.585495710372925,
+      "peak_score": 471.5350341796875
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "P4",
+      "mean_score": 22.422773361206055,
+      "peak_score": 448.5598449707031
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "P5",
+      "mean_score": -3.182551383972168,
+      "peak_score": 484.76873779296875
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "P6",
+      "mean_score": 0.016863476485013962,
+      "peak_score": 0.6800649166107178
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "P7",
+      "mean_score": -0.009187140502035618,
+      "peak_score": 0.5440120100975037
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "P8",
+      "mean_score": 0.04585648700594902,
+      "peak_score": 1.4002783298492432
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "P9",
+      "mean_score": 0.008145519532263279,
+      "peak_score": 0.5183022022247314
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "PO3",
+      "mean_score": -5.503932476043701,
+      "peak_score": 448.4399719238281
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "PO4",
+      "mean_score": -0.004085450898855925,
+      "peak_score": 0.6474962830543518
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "POz",
+      "mean_score": -0.003276580711826682,
+      "peak_score": 1.9073131084442139
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "Pz",
+      "mean_score": 0.014941512607038021,
+      "peak_score": 0.5087105631828308
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "T7",
+      "mean_score": -0.0026424394454807043,
+      "peak_score": 0.5466097593307495
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "T8",
+      "mean_score": 0.006829850375652313,
+      "peak_score": 0.573493480682373
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "TP7",
+      "mean_score": -0.0029006022959947586,
+      "peak_score": 0.5181817412376404
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "TP8",
+      "mean_score": 0.013197140768170357,
+      "peak_score": 0.7375718355178833
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "central_cluster",
+      "mean_score": 2.6662681102752686,
+      "peak_score": 407.2315673828125
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "frontal_cluster",
+      "mean_score": 4.759771347045898,
+      "peak_score": 473.0758972167969
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "occipital_cluster",
+      "mean_score": -0.9363389611244202,
+      "peak_score": 439.0989074707031
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "parietal_cluster",
+      "mean_score": 4.942070007324219,
+      "peak_score": 471.5350341796875
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "temporal_cluster",
+      "mean_score": 0.0014549978077411652,
+      "peak_score": 0.573493480682373
+    },
+    {
+      "layer": "blocks.0",
+      "subject": "group",
+      "roi": "whole_brain",
+      "mean_score": 6.131689548492432,
+      "peak_score": 509.688232421875
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "AF3",
+      "mean_score": 0.009620197117328644,
+      "peak_score": 0.49467217922210693
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "AF4",
+      "mean_score": 0.1829279214143753,
+      "peak_score": 1.2155530452728271
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "AF7",
+      "mean_score": -0.00972929410636425,
+      "peak_score": 1.1137617826461792
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "AF8",
+      "mean_score": 25.935523986816406,
+      "peak_score": 386.4956970214844
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "AFz",
+      "mean_score": 0.002829510485753417,
+      "peak_score": 0.6142146587371826
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "C1",
+      "mean_score": 17.058609008789062,
+      "peak_score": 430.9056091308594
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "C2",
+      "mean_score": 49.194026947021484,
+      "peak_score": 428.9638977050781
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "C3",
+      "mean_score": 0.10260992497205734,
+      "peak_score": 6.795205593109131
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "C4",
+      "mean_score": 10.680012702941895,
+      "peak_score": 466.7790832519531
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "C5",
+      "mean_score": 0.00047080134390853345,
+      "peak_score": 0.6180514693260193
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "C6",
+      "mean_score": 1.6151368618011475,
+      "peak_score": 476.0906982421875
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "CP1",
+      "mean_score": -2.641704797744751,
+      "peak_score": 444.2928161621094
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "CP2",
+      "mean_score": 43.28506088256836,
+      "peak_score": 520.5598754882812
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "CP3",
+      "mean_score": 57.5588264465332,
+      "peak_score": 367.6878356933594
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "CP4",
+      "mean_score": 8.883552551269531,
+      "peak_score": 472.353759765625
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "CP5",
+      "mean_score": -2.3815550804138184,
+      "peak_score": 470.91497802734375
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "CP6",
+      "mean_score": 0.002752596279606223,
+      "peak_score": 0.9537771940231323
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "CPz",
+      "mean_score": -15.401374816894531,
+      "peak_score": 366.6406555175781
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "Cz",
+      "mean_score": 0.11175104975700378,
+      "peak_score": 3.286069869995117
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "F1",
+      "mean_score": -3.912158489227295,
+      "peak_score": 467.0861511230469
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "F2",
+      "mean_score": 35.313072204589844,
+      "peak_score": 448.6523742675781
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "F3",
+      "mean_score": 0.006555892992764711,
+      "peak_score": 0.8943564891815186
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "F4",
+      "mean_score": -0.022441552951931953,
+      "peak_score": 0.977941632270813
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "F5",
+      "mean_score": 9.600170135498047,
+      "peak_score": 423.4403381347656
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "F6",
+      "mean_score": 54.59601593017578,
+      "peak_score": 493.33148193359375
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "F7",
+      "mean_score": 0.020615506917238235,
+      "peak_score": 0.5672048926353455
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "F8",
+      "mean_score": 0.03542223572731018,
+      "peak_score": 1.2263208627700806
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "FC1",
+      "mean_score": 10.553065299987793,
+      "peak_score": 375.17401123046875
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "FC2",
+      "mean_score": 11.295851707458496,
+      "peak_score": 487.31781005859375
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "FC3",
+      "mean_score": 0.0036652786657214165,
+      "peak_score": 0.5432671308517456
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "FC4",
+      "mean_score": 0.08527816832065582,
+      "peak_score": 0.7007052302360535
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "FC5",
+      "mean_score": -0.37630242109298706,
+      "peak_score": 447.4812927246094
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "FC6",
+      "mean_score": 78.00616455078125,
+      "peak_score": 503.1583557128906
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "FCz",
+      "mean_score": 15.786293983459473,
+      "peak_score": 417.3769226074219
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "FT7",
+      "mean_score": 0.007468424271792173,
+      "peak_score": 0.4995929002761841
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "FT8",
+      "mean_score": 42.345218658447266,
+      "peak_score": 417.5486145019531
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "Fp1",
+      "mean_score": 0.029278088361024857,
+      "peak_score": 0.6804425120353699
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "Fp2",
+      "mean_score": 0.030729761347174644,
+      "peak_score": 0.5426753759384155
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "Fpz",
+      "mean_score": 0.002960248850286007,
+      "peak_score": 0.5173724889755249
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "Fz",
+      "mean_score": 0.04305056855082512,
+      "peak_score": 0.6245703101158142
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "O1",
+      "mean_score": -1.2071763277053833,
+      "peak_score": 440.0492858886719
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "O2",
+      "mean_score": -0.0005935402004979551,
+      "peak_score": 0.5664812922477722
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "Oz",
+      "mean_score": 0.015465742908418179,
+      "peak_score": 0.7462150454521179
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "P1",
+      "mean_score": -0.038315918296575546,
+      "peak_score": 474.7204284667969
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "P10",
+      "mean_score": -0.013366065919399261,
+      "peak_score": 0.5820868611335754
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "P2",
+      "mean_score": -38.40613555908203,
+      "peak_score": 385.66339111328125
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "P3",
+      "mean_score": 6.9985151290893555,
+      "peak_score": 480.87164306640625
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "P4",
+      "mean_score": 25.697046279907227,
+      "peak_score": 427.39501953125
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "P5",
+      "mean_score": -1.822761058807373,
+      "peak_score": 488.68505859375
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "P6",
+      "mean_score": 0.017622308805584908,
+      "peak_score": 0.6505576968193054
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "P7",
+      "mean_score": -0.004507157020270824,
+      "peak_score": 0.5560466051101685
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "P8",
+      "mean_score": 0.04873491823673248,
+      "peak_score": 1.362524390220642
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "P9",
+      "mean_score": 0.01286399457603693,
+      "peak_score": 0.5276088714599609
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "PO3",
+      "mean_score": -5.2346014976501465,
+      "peak_score": 430.635986328125
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "PO4",
+      "mean_score": -0.000574569043237716,
+      "peak_score": 0.6484713554382324
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "POz",
+      "mean_score": 0.010227457620203495,
+      "peak_score": 1.9614158868789673
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "Pz",
+      "mean_score": 0.02211429364979267,
+      "peak_score": 0.5131294131278992
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "T7",
+      "mean_score": 0.0009032516391016543,
+      "peak_score": 0.5434204339981079
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "T8",
+      "mean_score": 0.008964916691184044,
+      "peak_score": 0.5835202932357788
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "TP7",
+      "mean_score": -0.0029160724952816963,
+      "peak_score": 0.505430281162262
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "TP8",
+      "mean_score": 0.014294975437223911,
+      "peak_score": 0.7656081914901733
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "central_cluster",
+      "mean_score": 4.20730447769165,
+      "peak_score": 463.259765625
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "frontal_cluster",
+      "mean_score": 5.440898418426514,
+      "peak_score": 445.8390808105469
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "occipital_cluster",
+      "mean_score": -0.6051524877548218,
+      "peak_score": 440.0492858886719
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "parietal_cluster",
+      "mean_score": 6.165354251861572,
+      "peak_score": 480.87164306640625
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "temporal_cluster",
+      "mean_score": 0.003657995257526636,
+      "peak_score": 0.5835202932357788
+    },
+    {
+      "layer": "blocks.1",
+      "subject": "group",
+      "roi": "whole_brain",
+      "mean_score": 7.096146583557129,
+      "peak_score": 520.5598754882812
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "AF3",
+      "mean_score": 0.06848274171352386,
+      "peak_score": 0.49987316131591797
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "AF4",
+      "mean_score": 0.2116180807352066,
+      "peak_score": 1.2518298625946045
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "AF7",
+      "mean_score": -0.002139743883162737,
+      "peak_score": 1.264581561088562
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "AF8",
+      "mean_score": 63.71442794799805,
+      "peak_score": 433.0279235839844
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "AFz",
+      "mean_score": 0.06263666599988937,
+      "peak_score": 0.6221325993537903
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "C1",
+      "mean_score": 92.47154235839844,
+      "peak_score": 589.976318359375
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "C2",
+      "mean_score": 91.63887786865234,
+      "peak_score": 530.5242919921875
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "C3",
+      "mean_score": 0.6093014478683472,
+      "peak_score": 6.765202045440674
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "C4",
+      "mean_score": 79.05827331542969,
+      "peak_score": 471.1329040527344
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "C5",
+      "mean_score": 0.06375035643577576,
+      "peak_score": 0.6831755638122559
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "C6",
+      "mean_score": 45.14513397216797,
+      "peak_score": 485.060546875
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "CP1",
+      "mean_score": 9.240042686462402,
+      "peak_score": 489.9551086425781
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "CP2",
+      "mean_score": 45.68301010131836,
+      "peak_score": 562.4324951171875
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "CP3",
+      "mean_score": 73.45349884033203,
+      "peak_score": 397.2557678222656
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "CP4",
+      "mean_score": 53.601505279541016,
+      "peak_score": 487.15338134765625
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "CP5",
+      "mean_score": 30.45461654663086,
+      "peak_score": 472.80255126953125
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "CP6",
+      "mean_score": 0.07187790423631668,
+      "peak_score": 0.9896268844604492
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "CPz",
+      "mean_score": -23.887531280517578,
+      "peak_score": 323.20166015625
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "Cz",
+      "mean_score": 0.15650223195552826,
+      "peak_score": 3.1321890354156494
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "F1",
+      "mean_score": 39.10975646972656,
+      "peak_score": 498.7164001464844
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "F2",
+      "mean_score": 91.11436462402344,
+      "peak_score": 493.9357604980469
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "F3",
+      "mean_score": 0.09124566614627838,
+      "peak_score": 0.9119259715080261
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "F4",
+      "mean_score": -0.009812140837311745,
+      "peak_score": 0.8894314169883728
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "F5",
+      "mean_score": 45.944217681884766,
+      "peak_score": 469.93621826171875
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "F6",
+      "mean_score": 77.53387451171875,
+      "peak_score": 511.6269836425781
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "F7",
+      "mean_score": 0.08728078007698059,
+      "peak_score": 0.7722364068031311
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "F8",
+      "mean_score": 0.17803633213043213,
+      "peak_score": 1.4416217803955078
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "FC1",
+      "mean_score": 34.435333251953125,
+      "peak_score": 374.58270263671875
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "FC2",
+      "mean_score": 76.84220123291016,
+      "peak_score": 591.016357421875
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "FC3",
+      "mean_score": 0.03597785905003548,
+      "peak_score": 0.5940337181091309
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "FC4",
+      "mean_score": 0.0638500303030014,
+      "peak_score": 0.7022120356559753
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "FC5",
+      "mean_score": 14.05670166015625,
+      "peak_score": 481.638916015625
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "FC6",
+      "mean_score": 114.48582458496094,
+      "peak_score": 523.3236694335938
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "FCz",
+      "mean_score": 22.030223846435547,
+      "peak_score": 425.2398681640625
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "FT7",
+      "mean_score": 0.060361459851264954,
+      "peak_score": 0.5876026153564453
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "FT8",
+      "mean_score": 70.86264038085938,
+      "peak_score": 495.85009765625
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "Fp1",
+      "mean_score": 0.08029433339834213,
+      "peak_score": 0.7463438510894775
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "Fp2",
+      "mean_score": 0.08090580999851227,
+      "peak_score": 0.5768649578094482
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "Fpz",
+      "mean_score": 0.06718559563159943,
+      "peak_score": 0.555834949016571
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "Fz",
+      "mean_score": 0.1096305325627327,
+      "peak_score": 0.7946402430534363
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "O1",
+      "mean_score": 39.78567123413086,
+      "peak_score": 440.0938415527344
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "O2",
+      "mean_score": 0.042247239500284195,
+      "peak_score": 0.6622936129570007
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "Oz",
+      "mean_score": 0.09703391790390015,
+      "peak_score": 0.7906320095062256
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "P1",
+      "mean_score": 42.200138092041016,
+      "peak_score": 469.160400390625
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "P10",
+      "mean_score": 0.024501217529177666,
+      "peak_score": 0.6369225382804871
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "P2",
+      "mean_score": -53.899688720703125,
+      "peak_score": 466.5478210449219
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "P3",
+      "mean_score": 54.19478988647461,
+      "peak_score": 488.7008361816406
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "P4",
+      "mean_score": 42.0908088684082,
+      "peak_score": 398.0599670410156
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "P5",
+      "mean_score": 39.45146179199219,
+      "peak_score": 490.8957214355469
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "P6",
+      "mean_score": 0.06742572784423828,
+      "peak_score": 0.6636934876441956
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "P7",
+      "mean_score": 0.04768747091293335,
+      "peak_score": 0.5820112824440002
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "P8",
+      "mean_score": 0.11393333226442337,
+      "peak_score": 1.357764482498169
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "P9",
+      "mean_score": 0.06493861973285675,
+      "peak_score": 0.5249043107032776
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "PO3",
+      "mean_score": 39.13392639160156,
+      "peak_score": 469.502197265625
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "PO4",
+      "mean_score": 0.05585170537233353,
+      "peak_score": 0.6824910044670105
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "POz",
+      "mean_score": 0.20921994745731354,
+      "peak_score": 1.9906954765319824
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "Pz",
+      "mean_score": 0.0676947608590126,
+      "peak_score": 0.5207820534706116
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "T7",
+      "mean_score": 0.04991403594613075,
+      "peak_score": 0.5739040374755859
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "T8",
+      "mean_score": 0.06874153763055801,
+      "peak_score": 0.586429238319397
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "TP7",
+      "mean_score": 0.036733344197273254,
+      "peak_score": 0.5438634157180786
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "TP8",
+      "mean_score": 0.05954517051577568,
+      "peak_score": 0.7996092438697815
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "central_cluster",
+      "mean_score": 14.804638862609863,
+      "peak_score": 495.23846435546875
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "frontal_cluster",
+      "mean_score": 8.545605659484863,
+      "peak_score": 461.9580993652344
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "occipital_cluster",
+      "mean_score": 12.396021842956543,
+      "peak_score": 497.1894836425781
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "parietal_cluster",
+      "mean_score": 16.718820571899414,
+      "peak_score": 477.6353454589844
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "temporal_cluster",
+      "mean_score": 0.058998409658670425,
+      "peak_score": 0.6165395975112915
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "whole_brain",
+      "mean_score": 15.704273223876953,
+      "peak_score": 562.4324951171875
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "AF3",
+      "mean_score": 0.02461707592010498,
+      "peak_score": 0.49318933486938477
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "AF4",
+      "mean_score": 0.19439323246479034,
+      "peak_score": 1.230903148651123
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "AF7",
+      "mean_score": -0.005585702136158943,
+      "peak_score": 1.0389453172683716
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "AF8",
+      "mean_score": 38.210994720458984,
+      "peak_score": 393.1178283691406
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "AFz",
+      "mean_score": 0.024429474025964737,
+      "peak_score": 0.6333124041557312
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "C1",
+      "mean_score": 24.800416946411133,
+      "peak_score": 387.41949462890625
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "C2",
+      "mean_score": 52.701210021972656,
+      "peak_score": 433.4153747558594
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "C3",
+      "mean_score": 0.27578315138816833,
+      "peak_score": 6.788590908050537
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "C4",
+      "mean_score": 23.512069702148438,
+      "peak_score": 402.18963623046875
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "C5",
+      "mean_score": 0.01897713541984558,
+      "peak_score": 0.6554694175720215
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "C6",
+      "mean_score": 13.03642749786377,
+      "peak_score": 459.76666259765625
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "CP1",
+      "mean_score": 3.2912046909332275,
+      "peak_score": 422.2640686035156
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "CP2",
+      "mean_score": 46.7005729675293,
+      "peak_score": 529.8203735351562
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "CP3",
+      "mean_score": 58.55122375488281,
+      "peak_score": 374.7067565917969
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "CP4",
+      "mean_score": 23.765666961669922,
+      "peak_score": 460.7180480957031
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "CP5",
+      "mean_score": 10.427136421203613,
+      "peak_score": 490.5929870605469
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "CP6",
+      "mean_score": 0.04503878951072693,
+      "peak_score": 0.956773042678833
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "CPz",
+      "mean_score": -23.589921951293945,
+      "peak_score": 334.3271484375
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "Cz",
+      "mean_score": 0.16961753368377686,
+      "peak_score": 3.324251174926758
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "F1",
+      "mean_score": 15.227663040161133,
+      "peak_score": 506.9502868652344
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "F2",
+      "mean_score": 41.41230392456055,
+      "peak_score": 367.4758605957031
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "F3",
+      "mean_score": 0.024652933701872826,
+      "peak_score": 0.8859280347824097
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "F4",
+      "mean_score": -0.03050190955400467,
+      "peak_score": 0.8865101337432861
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "F5",
+      "mean_score": 14.963146209716797,
+      "peak_score": 427.1875915527344
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "F6",
+      "mean_score": 59.95707321166992,
+      "peak_score": 438.49774169921875
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "F7",
+      "mean_score": 0.03192489594221115,
+      "peak_score": 0.5938900113105774
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "F8",
+      "mean_score": 0.08403602242469788,
+      "peak_score": 1.3216438293457031
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "FC1",
+      "mean_score": 5.966517448425293,
+      "peak_score": 386.0159912109375
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "FC2",
+      "mean_score": 23.220369338989258,
+      "peak_score": 455.1883239746094
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "FC3",
+      "mean_score": 0.01746179535984993,
+      "peak_score": 0.5722836256027222
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "FC4",
+      "mean_score": 0.07570856064558029,
+      "peak_score": 0.6893920302391052
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "FC5",
+      "mean_score": 4.509570121765137,
+      "peak_score": 468.2348327636719
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "FC6",
+      "mean_score": 84.49202728271484,
+      "peak_score": 472.2893981933594
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "FCz",
+      "mean_score": 18.308210372924805,
+      "peak_score": 379.4836730957031
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "FT7",
+      "mean_score": 0.020749766379594803,
+      "peak_score": 0.5288779735565186
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "FT8",
+      "mean_score": 47.74502182006836,
+      "peak_score": 465.1351318359375
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "Fp1",
+      "mean_score": 0.03826163336634636,
+      "peak_score": 0.6383251547813416
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "Fp2",
+      "mean_score": 0.04903961345553398,
+      "peak_score": 0.5185661315917969
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "Fpz",
+      "mean_score": 0.01905560865998268,
+      "peak_score": 0.49881795048713684
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "Fz",
+      "mean_score": 0.047510456293821335,
+      "peak_score": 0.6555339694023132
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "O1",
+      "mean_score": 11.581393241882324,
+      "peak_score": 430.26800537109375
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "O2",
+      "mean_score": 0.017437154427170753,
+      "peak_score": 0.6564224362373352
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "Oz",
+      "mean_score": 0.03956522420048714,
+      "peak_score": 0.7545707821846008
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "P1",
+      "mean_score": 14.222402572631836,
+      "peak_score": 480.47027587890625
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "P10",
+      "mean_score": -4.751587039208971e-05,
+      "peak_score": 0.5192511081695557
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "P2",
+      "mean_score": -50.068843841552734,
+      "peak_score": 405.5315856933594
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "P3",
+      "mean_score": 22.39980125427246,
+      "peak_score": 469.7322692871094
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "P4",
+      "mean_score": 48.572975158691406,
+      "peak_score": 446.8428039550781
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "P5",
+      "mean_score": 13.030130386352539,
+      "peak_score": 494.0892639160156
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "P6",
+      "mean_score": 0.04555107280611992,
+      "peak_score": 0.6271004676818848
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "P7",
+      "mean_score": 0.012763701379299164,
+      "peak_score": 0.5975979566574097
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "P8",
+      "mean_score": 0.12313824146986008,
+      "peak_score": 1.2335917949676514
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "P9",
+      "mean_score": 0.03079410269856453,
+      "peak_score": 0.5190358757972717
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "PO3",
+      "mean_score": 6.993675708770752,
+      "peak_score": 442.0832214355469
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "PO4",
+      "mean_score": 0.018124449998140335,
+      "peak_score": 0.6918349862098694
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "POz",
+      "mean_score": 0.07826889306306839,
+      "peak_score": 1.9095345735549927
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "Pz",
+      "mean_score": 0.035079412162303925,
+      "peak_score": 0.5098962187767029
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "T7",
+      "mean_score": 0.016705958172678947,
+      "peak_score": 0.5799518823623657
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "T8",
+      "mean_score": 0.02912643365561962,
+      "peak_score": 0.605551540851593
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "TP7",
+      "mean_score": 0.010953669436275959,
+      "peak_score": 0.5408737063407898
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "TP8",
+      "mean_score": 0.0485299676656723,
+      "peak_score": 0.7388955354690552
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "central_cluster",
+      "mean_score": 8.52078914642334,
+      "peak_score": 402.18963623046875
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "frontal_cluster",
+      "mean_score": 4.963561058044434,
+      "peak_score": 379.4836730957031
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "occipital_cluster",
+      "mean_score": 3.4287569522857666,
+      "peak_score": 430.26800537109375
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "parietal_cluster",
+      "mean_score": 13.821630477905273,
+      "peak_score": 469.7322692871094
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "temporal_cluster",
+      "mean_score": 0.023221272975206375,
+      "peak_score": 0.605551540851593
+    },
+    {
+      "layer": "blocks.3",
+      "subject": "group",
+      "roi": "whole_brain",
+      "mean_score": 11.137139320373535,
+      "peak_score": 514.1253051757812
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "AF3",
+      "mean_score": 0.016215123236179352,
+      "peak_score": 0.4410020709037781
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "AF4",
+      "mean_score": 0.2097301185131073,
+      "peak_score": 1.3705452680587769
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "AF7",
+      "mean_score": -0.03150297701358795,
+      "peak_score": 1.0789707899093628
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "AF8",
+      "mean_score": 33.500938415527344,
+      "peak_score": 402.46697998046875
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "AFz",
+      "mean_score": 0.013884964399039745,
+      "peak_score": 0.5427131056785583
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "C1",
+      "mean_score": 23.5883731842041,
+      "peak_score": 389.6764831542969
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "C2",
+      "mean_score": 52.525306701660156,
+      "peak_score": 387.7997131347656
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "C3",
+      "mean_score": 0.21235555410385132,
+      "peak_score": 5.949410915374756
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "C4",
+      "mean_score": 22.6849422454834,
+      "peak_score": 372.5304260253906
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "C5",
+      "mean_score": 0.008488673716783524,
+      "peak_score": 0.5302483439445496
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "C6",
+      "mean_score": 5.357902526855469,
+      "peak_score": 412.7969055175781
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "CP1",
+      "mean_score": 12.519856452941895,
+      "peak_score": 372.0985107421875
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "CP2",
+      "mean_score": 53.780853271484375,
+      "peak_score": 504.30963134765625
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "CP3",
+      "mean_score": 61.169525146484375,
+      "peak_score": 361.0339050292969
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "CP4",
+      "mean_score": 18.584781646728516,
+      "peak_score": 407.2622985839844
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "CP5",
+      "mean_score": 5.217051029205322,
+      "peak_score": 402.2276611328125
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "CP6",
+      "mean_score": 0.03222854062914848,
+      "peak_score": 0.804883599281311
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "CPz",
+      "mean_score": -26.780332565307617,
+      "peak_score": 267.3923645019531
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "Cz",
+      "mean_score": 0.1960618495941162,
+      "peak_score": 2.553593635559082
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "F1",
+      "mean_score": 7.592209815979004,
+      "peak_score": 418.38311767578125
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "F2",
+      "mean_score": 44.69746017456055,
+      "peak_score": 432.199462890625
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "F3",
+      "mean_score": 0.014440427534282207,
+      "peak_score": 0.7809810042381287
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "F4",
+      "mean_score": -0.018298421055078506,
+      "peak_score": 0.8968074917793274
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "F5",
+      "mean_score": 11.798283576965332,
+      "peak_score": 384.6935729980469
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "F6",
+      "mean_score": 65.65111541748047,
+      "peak_score": 437.5780944824219
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "F7",
+      "mean_score": 0.023056533187627792,
+      "peak_score": 0.5035154223442078
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "F8",
+      "mean_score": 0.0704008936882019,
+      "peak_score": 1.318271279335022
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "FC1",
+      "mean_score": 4.6442341804504395,
+      "peak_score": 431.0484924316406
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "FC2",
+      "mean_score": 17.802410125732422,
+      "peak_score": 438.7513427734375
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "FC3",
+      "mean_score": 0.01147227268666029,
+      "peak_score": 0.4556635022163391
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "FC4",
+      "mean_score": 0.10059106349945068,
+      "peak_score": 0.7264487147331238
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "FC5",
+      "mean_score": 2.3122386932373047,
+      "peak_score": 454.6151123046875
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "FC6",
+      "mean_score": 95.77052307128906,
+      "peak_score": 440.85516357421875
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "FCz",
+      "mean_score": 7.537533283233643,
+      "peak_score": 385.79840087890625
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "FT7",
+      "mean_score": 0.013326534070074558,
+      "peak_score": 0.441150426864624
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "FT8",
+      "mean_score": 55.83626937866211,
+      "peak_score": 444.5904846191406
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "Fp1",
+      "mean_score": 0.03139560669660568,
+      "peak_score": 0.5405421853065491
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "Fp2",
+      "mean_score": 0.043175261467695236,
+      "peak_score": 0.5514066219329834
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "Fpz",
+      "mean_score": 0.00937014538794756,
+      "peak_score": 0.4426146447658539
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "Fz",
+      "mean_score": 0.046884480863809586,
+      "peak_score": 0.6019619107246399
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "O1",
+      "mean_score": 4.656637191772461,
+      "peak_score": 371.37823486328125
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "O2",
+      "mean_score": 0.010174952447414398,
+      "peak_score": 0.4835366904735565
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "Oz",
+      "mean_score": 0.028814315795898438,
+      "peak_score": 0.683191180229187
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "P1",
+      "mean_score": 7.409106731414795,
+      "peak_score": 395.965087890625
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "P10",
+      "mean_score": -0.008444903418421745,
+      "peak_score": 0.5737622380256653
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "P2",
+      "mean_score": -61.064056396484375,
+      "peak_score": 353.8864440917969
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "P3",
+      "mean_score": 16.667234420776367,
+      "peak_score": 413.1817321777344
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "P4",
+      "mean_score": 46.96692657470703,
+      "peak_score": 457.7931213378906
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "P5",
+      "mean_score": 6.883376121520996,
+      "peak_score": 409.19000244140625
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "P6",
+      "mean_score": 0.04013396054506302,
+      "peak_score": 0.5546090006828308
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "P7",
+      "mean_score": 0.0039009908214211464,
+      "peak_score": 0.49680086970329285
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "P8",
+      "mean_score": 0.11834298819303513,
+      "peak_score": 1.316980004310608
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "P9",
+      "mean_score": 0.025565093383193016,
+      "peak_score": 0.4644290804862976
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "PO3",
+      "mean_score": -0.8279091119766235,
+      "peak_score": 376.2444152832031
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "PO4",
+      "mean_score": 0.007711838465183973,
+      "peak_score": 0.5576987266540527
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "POz",
+      "mean_score": 0.04892358556389809,
+      "peak_score": 1.7154324054718018
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "Pz",
+      "mean_score": 0.031651969999074936,
+      "peak_score": 0.4640909731388092
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "T7",
+      "mean_score": 0.009509282186627388,
+      "peak_score": 0.4729405343532562
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "T8",
+      "mean_score": 0.021849170327186584,
+      "peak_score": 0.5146998167037964
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "TP7",
+      "mean_score": 0.0031170218717306852,
+      "peak_score": 0.42706599831581116
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "TP8",
+      "mean_score": 0.0443711131811142,
+      "peak_score": 0.6543028354644775
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "central_cluster",
+      "mean_score": 9.4036226272583,
+      "peak_score": 370.2738342285156
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "frontal_cluster",
+      "mean_score": 1.9725520610809326,
+      "peak_score": 379.7867126464844
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "occipital_cluster",
+      "mean_score": 0.46211621165275574,
+      "peak_score": 371.37823486328125
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "parietal_cluster",
+      "mean_score": 12.563490867614746,
+      "peak_score": 457.94281005859375
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "temporal_cluster",
+      "mean_score": 0.015236575156450272,
+      "peak_score": 0.5146998167037964
+    },
+    {
+      "layer": "blocks.4",
+      "subject": "group",
+      "roi": "whole_brain",
+      "mean_score": 10.510016441345215,
+      "peak_score": 457.7931213378906
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "AF3",
+      "mean_score": 0.0034144443925470114,
+      "peak_score": 0.4175512492656708
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "AF4",
+      "mean_score": 0.18536661565303802,
+      "peak_score": 1.2592804431915283
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "AF7",
+      "mean_score": -0.03370438888669014,
+      "peak_score": 1.2599643468856812
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "AF8",
+      "mean_score": 20.195093154907227,
+      "peak_score": 397.70697021484375
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "AFz",
+      "mean_score": -0.0020111931953579187,
+      "peak_score": 0.5188067555427551
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "C1",
+      "mean_score": 24.382705688476562,
+      "peak_score": 386.7586669921875
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "C2",
+      "mean_score": 60.82848358154297,
+      "peak_score": 367.97186279296875
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "C3",
+      "mean_score": 0.05743679404258728,
+      "peak_score": 5.636866569519043
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "C4",
+      "mean_score": 21.242319107055664,
+      "peak_score": 394.11724853515625
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "C5",
+      "mean_score": -0.00619595916941762,
+      "peak_score": 0.5348043441772461
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "C6",
+      "mean_score": -10.17997932434082,
+      "peak_score": 422.70538330078125
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "CP1",
+      "mean_score": 15.30031681060791,
+      "peak_score": 387.3923645019531
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "CP2",
+      "mean_score": 52.25453186035156,
+      "peak_score": 464.8861389160156
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "CP3",
+      "mean_score": 67.94535064697266,
+      "peak_score": 365.8587646484375
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "CP4",
+      "mean_score": 3.616776704788208,
+      "peak_score": 402.0917663574219
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "CP5",
+      "mean_score": -8.910052299499512,
+      "peak_score": 407.1142578125
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "CP6",
+      "mean_score": 0.015144345350563526,
+      "peak_score": 0.8115260004997253
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "CPz",
+      "mean_score": -26.571603775024414,
+      "peak_score": 297.2285461425781
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "Cz",
+      "mean_score": 0.0873868390917778,
+      "peak_score": 2.4917242527008057
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "F1",
+      "mean_score": -1.9616682529449463,
+      "peak_score": 418.3447265625
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "F2",
+      "mean_score": 46.507999420166016,
+      "peak_score": 357.48663330078125
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "F3",
+      "mean_score": -0.011765711009502411,
+      "peak_score": 0.806338369846344
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "F4",
+      "mean_score": -0.016065923497080803,
+      "peak_score": 0.9888562560081482
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "F5",
+      "mean_score": -1.3500950336456299,
+      "peak_score": 405.23095703125
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "F6",
+      "mean_score": 56.26422882080078,
+      "peak_score": 436.3556823730469
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "F7",
+      "mean_score": 0.01336098462343216,
+      "peak_score": 0.5230089426040649
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "F8",
+      "mean_score": 0.032427024096250534,
+      "peak_score": 1.187117338180542
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "FC1",
+      "mean_score": 3.9320292472839355,
+      "peak_score": 381.33636474609375
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "FC2",
+      "mean_score": 14.492751121520996,
+      "peak_score": 390.6288146972656
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "FC3",
+      "mean_score": 0.005945709068328142,
+      "peak_score": 0.5091656446456909
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "FC4",
+      "mean_score": 0.10094229876995087,
+      "peak_score": 0.725383460521698
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "FC5",
+      "mean_score": -9.035239219665527,
+      "peak_score": 425.8891296386719
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "FC6",
+      "mean_score": 101.74005889892578,
+      "peak_score": 482.8203125
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "FCz",
+      "mean_score": 3.9404098987579346,
+      "peak_score": 376.1620178222656
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "FT7",
+      "mean_score": 0.0028885239735245705,
+      "peak_score": 0.4197591245174408
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "FT8",
+      "mean_score": 55.1135139465332,
+      "peak_score": 427.7144775390625
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "Fp1",
+      "mean_score": -0.0015737483045086265,
+      "peak_score": 0.5702410936355591
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "Fp2",
+      "mean_score": 0.026984773576259613,
+      "peak_score": 0.5384359955787659
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "Fpz",
+      "mean_score": -0.0031428879592567682,
+      "peak_score": 0.4183335304260254
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "Fz",
+      "mean_score": 0.039060648530721664,
+      "peak_score": 0.563590407371521
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "O1",
+      "mean_score": -9.068077087402344,
+      "peak_score": 390.07818603515625
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "O2",
+      "mean_score": 0.00363893061876297,
+      "peak_score": 0.5525225400924683
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "Oz",
+      "mean_score": 0.00244737952016294,
+      "peak_score": 0.6414799690246582
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "P1",
+      "mean_score": -4.5934600830078125,
+      "peak_score": 455.9175109863281
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "P10",
+      "mean_score": -0.01955636776983738,
+      "peak_score": 0.5624634027481079
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "P2",
+      "mean_score": -63.3735466003418,
+      "peak_score": 343.2264099121094
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "P3",
+      "mean_score": 1.3727835416793823,
+      "peak_score": 402.10162353515625
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "P4",
+      "mean_score": 43.499141693115234,
+      "peak_score": 449.7274169921875
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "P5",
+      "mean_score": -6.595772743225098,
+      "peak_score": 398.31341552734375
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "P6",
+      "mean_score": 0.034615177661180496,
+      "peak_score": 0.5678346157073975
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "P7",
+      "mean_score": -0.007717024069279432,
+      "peak_score": 0.46668270230293274
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "P8",
+      "mean_score": 0.11390237510204315,
+      "peak_score": 1.358219027519226
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "P9",
+      "mean_score": 0.01174925733357668,
+      "peak_score": 0.437081515789032
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "PO3",
+      "mean_score": -9.970873832702637,
+      "peak_score": 399.50946044921875
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "PO4",
+      "mean_score": -0.008451038040220737,
+      "peak_score": 0.5899049043655396
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "POz",
+      "mean_score": -0.009792394004762173,
+      "peak_score": 1.5802820920944214
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "Pz",
+      "mean_score": 0.012032137252390385,
+      "peak_score": 0.4400186240673065
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "T7",
+      "mean_score": -0.005480348132550716,
+      "peak_score": 0.4840930104255676
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "T8",
+      "mean_score": 0.010259280912578106,
+      "peak_score": 0.4641537070274353
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "TP7",
+      "mean_score": -0.006508470978587866,
+      "peak_score": 0.45582520961761475
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "TP8",
+      "mean_score": 0.04078492894768715,
+      "peak_score": 0.6536850333213806
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "central_cluster",
+      "mean_score": 7.985513687133789,
+      "peak_score": 394.11724853515625
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "frontal_cluster",
+      "mean_score": 1.2184040546417236,
+      "peak_score": 404.7962646484375
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "occipital_cluster",
+      "mean_score": -3.8261168003082275,
+      "peak_score": 414.837890625
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "parietal_cluster",
+      "mean_score": 8.954973220825195,
+      "peak_score": 463.4881591796875
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "temporal_cluster",
+      "mean_score": 0.0014166075270622969,
+      "peak_score": 0.4707638919353485
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "whole_brain",
+      "mean_score": 7.675342559814453,
+      "peak_score": 483.0103759765625
+    }
+  ]
+}

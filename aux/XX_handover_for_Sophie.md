@@ -1,7 +1,7 @@
 # Handover: Auditory EEG Encoding Models — Sophie
 
 **Status: living document, updated as plan executes.**
-Last updated: 2026-06-02
+Last updated: 2026-06-07
 See `02_project_plan_make_compatible_for_auditory_EEG.md` for the full technical roadmap.
 See `00_schizophrenia_pipeline_Sophie_2026.md` for the MMN unit-selection pipeline this feeds into.
 
@@ -340,9 +340,50 @@ or that the continuous-speech paradigm is simply weak there relative to an oddba
 ### 3e. `src/mbs/evaluation/evaluate_features_temporal.py` — temporal evaluator
 *(Phase 4b, status: **Done** — CLI + full implementation)*
 
-New CLI `mbs-evaluate-temporal`. Loops over time steps, fits Ridge per step, returns
-`score[layer, t, electrode]`. Key output for MMN: prediction score at Fz vs. time,
-compared across model layers.
+New CLI `mbs-evaluate-temporal`. For each (layer, electrode) pair it fits **T separate Ridge
+regressions**, one per time step, and stores the resulting prediction score curve `scores[T]`.
+
+**Mechanics in detail:** for a given layer L and electrode E:
+
+```
+for t in 0..T-1:
+    X_train = feat_train[:, t, :]   # [n_stim=250, d_model]  — model activations at time t
+    y_train = eeg_train[:, t, :]    # [n_stim=250, n_ch=1]   — EEG amplitude at time t
+    ridge = RidgeCV(alphas=...).fit(X_train, y_train)
+
+    X_test = feat_test[:, t, :]     # [n_stim=62,  d_model]
+    y_pred = ridge.predict(X_test)
+    scores[t] = pearsonr(eeg_test[:, t, :], y_pred) / nc[t]  # NC-corrected
+```
+
+Each of the 1500 time steps is treated as an independent regression problem: take all stimuli
+at that moment in time (rows = stimuli, columns = model features), map to EEG, test on held-out
+stimuli. There is **no single committed layer** — each layer yields its own `scores[T]` curve.
+
+**What `mean_score` and `peak_score` in the summary JSON are:**
+- `mean_score = nanmean(scores[0:T])` — average prediction over all time bins. Used as a
+  scalar summary to rank layers (blocks.2 best for ds004408). This collapses the temporal
+  structure and should be treated as a rough ranking tool, not the primary output.
+- `peak_score = nanmax(scores[0:T])` — best prediction at any single time bin.
+
+**The scientifically interesting output is the full `scores[T]` curve**, not the mean.
+Different time lags may be dominated by different layers — e.g. early lags (0–100ms) may favour
+sensory layers (blocks.0–2) while later lags (100–300ms) may favour higher-level layers
+(blocks.3–5). This time × layer interaction is the key question for the MMN dataset: does the
+best-predicting layer at the MMN latency (~100–200ms at Fz) match the layer Sophie uses for
+unit selection?
+
+**Why Phase 4a (mean-pool) and Phase 4b (temporal) give different best layers:**
+- Phase 4a collapsed 30s of EEG to a single vector before regressing → blocks.4 won. A higher-level
+  layer captures more of the semantic/phonemic content that varies across 30s segments.
+- Phase 4b fits at each 20ms bin → blocks.2 wins on average. The dominant signal in continuous
+  naturalistic EEG is the auditory cortex envelope-following response, which is a low-level
+  acoustic feature better encoded in earlier layers.
+Both results are correct — they answer different questions.
+
+**Output stored in HDF5:** `scores[T, n_ch]` per (layer, subject, roi) in
+`outputs/results/{model}-delta-t-full/temporal_scores.h5`. Key for the MMN: read `scores[:, 0]`
+at key `blocks-2/group/Fz` and plot vs. time to see the prediction time course at the primary MMN electrode.
 
 ### 3f. `src/mbs/extraction/extract_features_delta_t.py` — Delta_T (causal) feature extractor
 *(Phase 4b-pre, status: **Done** — 2026-06-02)*
@@ -568,21 +609,41 @@ The evaluator loads features from a single directory. After the parallel run, ei
 - (a) merge all `chunk_N/` directories into one by moving the HDF5 files, or
 - (b) run `mbs-evaluate-temporal` once per chunk and combine summaries.
 
-Option (a) is simpler — all HDF5 files use unique names, so a flat merge works:
+Option (a) is simpler. HDF5 filenames now encode `stim_start_idx` (the global stimulus
+offset for each SLURM task), so filenames are globally unique and a flat `cp` works:
 
 ```bash
 REPO=/work/upschrimpf1/mehrer/code/20260601_multimodal_brain_scaling_schizophrenia/multimodal-brain-scaling
 mkdir -p $REPO/outputs/features/whisper-base-delta-t/merged
-for chunk in $REPO/outputs/features/whisper-base-delta-t/chunk_*/; do
-  cp "$chunk"*.h5 $REPO/outputs/features/whisper-base-delta-t/merged/
-done
+cp $REPO/outputs/features/whisper-base-delta-t/chunk_*/feats*.h5 \
+   $REPO/outputs/features/whisper-base-delta-t/merged/
 
 mbs-evaluate-temporal \
   --model_id whisper-base \
   --target_feature_layers configs/extraction/audio/whisper_base_layers.json \
   --features_dir outputs/features/whisper-base-delta-t/merged/ \
   --data_hdf5_path outputs/neural_data/broderick2018_30s.h5 \
-  --output_dir outputs/layer_search_temporal/whisper-base-delta-t/
+  --output_dir outputs/results/whisper-base-delta-t/
+```
+
+**Note on the first full run (job 54867710, 2026-06-02):** chunk_19 is missing its
+last 2 stimuli (indices 312–313) due to a since-fixed flush bug (`stim_idx == total-1`
+was wrong when `stim_start_idx > 0`; fixed to `stim_idx == end - 1`). All other 19
+chunks are complete. The evaluation (job 54912412) ran on 312/314 stimuli — results
+are valid. If you need the complete 314-stimulus run, re-extract chunk_19 with the
+fixed code and re-evaluate:
+
+```bash
+# Re-extract missing stimuli 312–313 (only ~26 min, 2 stimuli × 13 min each)
+python -m mbs.extraction.extract_features_delta_t \
+  --model_id whisper-base \
+  --data_root /work/upschrimpf1/mehrer/datasets/Broderick_2018_EEG_The_old_man_and_the_sea/stimuli \
+  --target_feature_layers configs/extraction/audio/whisper_base_layers.json \
+  --output_dir outputs/features/whisper-base-delta-t/chunk_19/ \
+  --stim_start_idx 312 --n_stimuli 2 --save_every 8 --t_stride 1 --batch_t 4
+# Then re-merge (the new file will be feats_delta_t-start_00312-batch_0-seed_42.h5)
+cp outputs/features/whisper-base-delta-t/chunk_19/feats_delta_t-start_00312*.h5 \
+   outputs/features/whisper-base-delta-t/merged/
 ```
 
 **Success criterion (ds004408):** mean prediction score above zero across most time bins for
@@ -638,29 +699,28 @@ Mean-pool (Phase 4a) was a quick sanity check using Full_T, which is acceptable 
 (a) the temporal axis was collapsed anyway, and (b) the goal was only to confirm a signal
 exists before investing in the full Delta_T temporal run.
 
-### FCz noise ceiling is 0% — needs investigation
+### FCz (and Cz, C3, C4) noise ceiling is ~0% — expected for this paradigm
 
-In the verified run (2026-06-01), **FCz NC averaged to 0.0%** across all 1500 time bins. This is
-unexpected because FCz is a classical MMN electrode in the literature. Fz (50.4%), F3 (23.2%),
-and F4 (20.4%) were all fine, so the problem is specific to FCz.
+In the Broderick 2018 (audiobook) dataset, FCz NC = 0.0%, Cz = 2.6%, C3 = 0.8%, C4 = 0.0%.
+This was diagnosed with `scripts/diagnose_roi_mapping.py` (2026-06-04) and confirmed to be
+**genuine physiology, not a bug**. Key findings from the diagnostic:
 
-Two likely causes:
+- FCz → BioSemi channel **C23**, distance 9.8 mm (same as Fz → C21 at 9.8 mm). Mapping is correct.
+- No channel collisions (each standard name maps to a unique BioSemi electrode).
+- The fronto-central / central strip simply does not drive consistent cross-subject responses
+  during **passive audiobook listening**. The NC is an honest measure of cross-subject agreement,
+  and motor/central cortex has no reason to respond consistently to speech in this paradigm.
 
-1. **Channel mapping issue:** The formatter uses MNE's `biosemi128` montage to find the BioSemi
-   channel nearest to standard 10-20 FCz. The nearest neighbour may land on a channel that is
-   physically far from the true FCz position in this particular cap layout, or on a noisy channel.
-   To verify: run `mne.channels.make_standard_montage("biosemi128")` and check which A/B/C/D
-   channel maps to FCz.
+Compare: temporal (T7/T8 ~75%) and parietal/frontal (Pz 74%, Fz 50%) are driven by auditory
+cortex envelope-following and attention responses that ARE consistent across subjects.
 
-2. **Paradigm effect:** For continuous naturalistic speech (audiobook), auditory cortex drives
-   strong envelope-following responses at temporal (T7/T8) and parietal (Pz) electrodes. The
-   frontocentral vertex may have too weak a sustained response for cross-subject NC to emerge
-   when averaged across all 1500 time bins. The NC is a time-averaged quantity — even if FCz
-   has a strong response at 100–200ms (as in a true MMN), the average across all 1499 other
-   bins could wash it out.
+**FCz is still the primary electrode of interest for Phase 6 (MMN).** The oddball paradigm
+generates a sharp, time-locked deviant response at FCz/Fz at 100–200 ms that will produce
+strong cross-subject agreement (and thus high NC) in that dataset. The Broderick NC numbers
+should not be used to judge FCz's viability — different paradigm, different response.
 
-**Implication for the MMN dataset:** do not exclude FCz from that analysis before investigating.
-The continuous-speech NC may not reflect what FCz looks like in a proper oddball paradigm.
+**For the Broderick temporal evaluation, the scientifically meaningful electrodes are:**
+Fz (50%), T7/T8/Pz (~73–75%), F3/F4 (~20–23%). Ignore NC-corrected scores at FCz/Cz/C3/C4.
 
 ### wav2vec2: variable-length output
 
@@ -696,19 +756,28 @@ This gives a lower bound on the ceiling compared to within-subject split-half.
 
 ---
 
-## 6b. Bugs fixed during Phase 4a bringup (2026-06-01)
+## 6b. Bugs fixed (all already in codebase)
 
-All fixes are already in the codebase. Documented here so you don't hit them again when running
-the same pipeline for other models.
+### Phase 4a bringup (2026-06-01)
 
 | File | Symptom | Fix |
 |---|---|---|
 | `extract_features.py` | `error: argument --backbone_source: invalid choice: 'audio'` | Added `"audio"` to `--backbone_source` choices |
-| `extract_features.py` | `RuntimeError: mixed dtype (CPU)` — Whisper LayerNorm calls `x.float()` but weights were float16 | Auto-downgrade to float32 when `device == cpu` |
-| `configs/extraction/audio/*.json` | `KeyError: backbone.backbone.blocks.0` — factory prepends `backbone.` but names already had it | Layer names in JSON must be `blocks.{i}`, NOT `backbone.blocks.{i}` |
-| `configs/extraction/audio/*.json` | `KeyError: 'position'` — evaluator needs normalized depth field | Added `"position": 0.0…1.0` to each layer entry |
+| `extract_features.py` | `RuntimeError: mixed dtype (CPU)` — Whisper LayerNorm calls `x.float()` internally | Auto-downgrade to float32 when `device == cpu` |
+| `configs/extraction/audio/*.json` | `KeyError: backbone.backbone.blocks.0` — factory double-prepends `backbone.` | Layer names in JSON must be `blocks.{i}`, not `backbone.blocks.{i}` |
+| `configs/extraction/audio/*.json` | `KeyError: 'position'` — evaluator requires normalized depth field | Added `"position": 0.0…1.0` to each layer entry |
 | `evaluation_helpers.py` | `KeyError: b'audio01_0000000'` — IDs returned as bytes, mapping used strings | Added `.decode('utf-8')` in `load_neural_data` |
-| `evaluation_helpers.py` | `ValueError: x and y must have the same length along axis` — sklearn squeezes single-channel predictions to 1D | Added `y_pred.reshape(-1,1)` guard in `compute_metrics` and `pearsonr_score` |
+| `evaluation_helpers.py` | `ValueError: x and y must have the same length` — sklearn squeezes single-channel output to 1D | Added `y_pred.reshape(-1,1)` guard in `compute_metrics` and `pearsonr_score` |
+
+### Phase 4b bringup (2026-06-02 – 2026-06-04)
+
+| File | Symptom | Fix |
+|---|---|---|
+| `extract_features_delta_t.py` | All chunk files had identical names (`batch_0`, `batch_1`) → flat `cp` to merged/ collided and only chunk_0 survived | Filename now encodes `stim_start_idx`: `feats_delta_t-start_NNNNN-batch_K-seed_42.h5` |
+| `extract_features_delta_t.py` | Last batch of last chunk never flushed — 2 stimuli lost from chunk_19 | Flush condition was `stim_idx == total-1`; fixed to `stim_idx == end-1` (correct when `stim_start_idx > 0`) |
+| `evaluate_features_temporal.py` | `AttributeError: 'dict' object has no attribute 'replace'` — layer list JSON loaded as dicts | Extract `entry["name"]` from each entry after JSON load |
+| `evaluate_features_temporal.py` | `ValueError: x and y must have the same length along axis` — sklearn squeezes single-ch output to 1D | Added `y_pred = y_pred.reshape(y_ref.shape)` after `model.predict()` |
+| `evaluate_features_temporal.py` | 2 missing stimulus IDs (from flush bug) caused entire layer × ROI to be `continue`d → empty results | Filter to matched-ID subset instead of skipping; warn but proceed |
 
 ## 7. Implementation status
 
@@ -721,64 +790,210 @@ the same pipeline for other models.
 | 1 | Register `audio` in backbone registry | **Done** |
 | 2 | `datasets_audio.py` — `AudioPreprocessor`, `AudioSegmentDataset` | **Done** |
 | 2 | `_create_audio_hook_feature_extractor` (bypass image-shape inference) | **Done** |
-| 2 | `evaluate_features_temporal.py` — per-timepoint Ridge CLI stub | **Done** |
+| 2 | `evaluate_features_temporal.py` — per-timepoint Ridge CLI | **Done** |
 | 3 | Download ds004408 | **Done** — `/work/upschrimpf1/mehrer/datasets/Broderick_2018_EEG_The_old_man_and_the_sea` |
-| 3 | `format_eeg_hdf5.py` — BIDS EEG → `[n_stimuli, T_model, n_ch]` HDF5 | **Done** — `outputs/neural_data/broderick2018_30s.h5` (252 train / 62 test stimuli) |
+| 3 | `format_eeg_hdf5.py` — BIDS EEG → `[n_stimuli, T_model, n_ch]` HDF5 | **Done** — `outputs/neural_data/broderick2018_30s.h5` (252 train / 62 test; **67 ROIs**) |
 | 4a | Mean-pool pilot: whisper-base × ds004408 (sanity check) | **Done** — results in `outputs/layer_search/whisper-base-meanpool/`; pearsonr >0.82 at T7/T8/Fz |
-| 4b-pre | `extract_features_delta_t.py` — Delta_T causal extractor | **Done** (2026-06-02) — `mbs-extract-features-delta-t` CLI registered |
-| 4b-pre | `scripts/slurm_extract_delta_t.sh` — SLURM array job script | **Done** (2026-06-02) — pilot=`--array=0`, full=`--array=0-19` after `MODE="full"` |
-| 4b | Delta_T temporal features: whisper-base × ds004408 | **In progress** — SLURM pilot running (job 54867238, ~40 min, 3 stimuli) |
-| 4b | Temporal evaluation: whisper-base × ds004408 | **TODO** — run after 4b features done |
+| 4b-pre | `extract_features_delta_t.py` — Delta_T causal extractor | **Done** (2026-06-02) |
+| 4b-pre | `scripts/slurm_extract_delta_t.sh` — SLURM array job script | **Done** (2026-06-02) |
+| 4b | Delta_T features: whisper-base × ds004408 (312/314 stimuli) | **Done** — job 54867710; merged at `outputs/features/whisper-base-delta-t/merged/` |
+| 4b | Temporal evaluation: whisper-base × ds004408 (67 ROIs) | **Done** — job 54930384, ~31.5 h; results at `outputs/results/whisper-base-delta-t-full/` |
+| 4b-sweep | Window/stride sweep infrastructure for whisper-small | **Done** (2026-06-04) — see `scripts/submit_whisper_small_sweep.sh` |
+| 5 | `configs/extraction/audio/whisper_small_layers.json` (12 blocks) | **Done** (2026-06-04) |
 | 5 | `load_wav2vec2`, `load_vggish`, `load_ast` in `audio_models.py` | TODO |
 | 5 | Scale runs: wav2vec2 (temporal), AST + VGGish (mean-pool) | TODO |
 | 6 | MMN EEG dataset integration (dataset TBD) | TODO |
 
 ---
 
-## ⏭ Immediate next steps (pick up here)
+## ⏭ Immediate next steps (pick up here — last updated 2026-06-04)
 
-**Phase 4a is done** (2026-06-02): pearsonr > 0.82 at T7/T8/Pz/Fz on held-out test runs.
-Best layer at Fz: `blocks.4` (pearsonr = 0.867). The pipeline works.
+### Current state
 
-**Phase 4b in progress** (2026-06-02): SLURM pilot job running (job 54867238, ~40 min).
+| Item | Status |
+|---|---|
+| Phase 4a (mean-pool pilot) | ✅ Done — pearsonr > 0.82 at Fz/T7/T8; best layer `blocks.4` |
+| Delta_T features (312/314 stimuli) | ✅ Done — `outputs/features/whisper-base-delta-t/merged/` (39 files) |
+| Temporal evaluation (67 ROIs) | ✅ Done — job 54930384, ~31.5 h; results at `outputs/results/whisper-base-delta-t-full/` |
+| whisper-small sweep infrastructure | ✅ Done — `scripts/submit_whisper_small_sweep.sh` |
 
-1. **Activate the environment** (needed every session — no `pip install` required):
-   ```bash
-   cd /work/upschrimpf1/mehrer/code/20260601_multimodal_brain_scaling_schizophrenia/multimodal-brain-scaling
-   source env.sh       # loads gcc/13.2.0 + python/3.11.7 and activates .venv
-   ```
-   The venv was created with `uv sync` which already performed the editable install.
-   Any new `.py` file added to `src/mbs/` is immediately importable — no reinstall needed.
-   Use `python -m mbs.extraction.extract_features_delta_t` (not the `mbs-` shortcut;
-   shortcut requires `pip install -e .` which fails on this cluster's old pip).
+**Activate the environment** (needed every session):
+```bash
+cd /work/upschrimpf1/mehrer/code/20260601_multimodal_brain_scaling_schizophrenia/multimodal-brain-scaling
+source env.sh       # loads gcc/13.2.0 + python/3.11.7 and activates .venv
+```
 
-2. **Check SLURM pilot** (job 54867238 — expect ~40 min, 3 stimuli × 1500 bins):
-   ```bash
-   squeue -u $USER
-   tail -f logs/delta_t_54867238_0.out
-   # No tqdm updates for ~13 min per stimulus — this is normal, not a hang
-   ```
+---
 
-3. **If pilot passes**: edit `MODE="full"` in `scripts/slurm_extract_delta_t.sh` and submit:
-   ```bash
-   sbatch --array=0-19 scripts/slurm_extract_delta_t.sh
-   # 20 tasks × 16 stimuli, ~3.5–5 h wall time, ~1–1.5 GB total output
-   ```
+### Phase 4b results (2026-06-07)
 
-4. **Merge chunks** after all 20 tasks complete:
-   ```bash
-   mkdir -p outputs/features/whisper-base-delta-t/merged/
-   cp outputs/features/whisper-base-delta-t/chunk_*/feats*.h5 \
-      outputs/features/whisper-base-delta-t/merged/
-   ```
+Job 54930384 completed after ~31.5 h wall time. Results at
+`outputs/results/whisper-base-delta-t-full/` (`temporal_scores.h5` + `temporal_scores_summary.json`).
 
-5. **Evaluate** once merged:
-   ```bash
-   python -m mbs.evaluation.evaluate_features_temporal \
-     --features_dir outputs/features/whisper-base-delta-t/merged/ \
-     --neural_data   outputs/neural_data/broderick2018_30s.h5 \
-     --output_dir    outputs/results/whisper-base-delta-t/
-   ```
+**Key finding: blocks.2 is the best layer** (NC-corrected Pearson r, mean over 1500 time bins):
 
-6. **After 4b:** add wav2vec2/AST/VGGish loaders (Phase 5), then obtain an MMN EEG dataset
-   (Phase 6) to answer the schizophrenia question with the validated pipeline.
+| Electrode | NC (raw) | blocks.0 | blocks.1 | blocks.2 (best) | blocks.3 | blocks.4 | blocks.5 |
+|---|---|---|---|---|---|---|---|
+| Fz | 50.4% | 0.035 | 0.043 | **0.110** | 0.048 | 0.047 | 0.039 |
+| T7 | 75.3% | -0.003 | 0.001 | **0.050** | 0.017 | 0.010 | -0.006 |
+| FT7 | 91.1% | 0.005 | 0.008 | **0.060** | 0.021 | 0.013 | 0.003 |
+| AF3 | 94.6% | 0.003 | 0.010 | **0.069** | 0.025 | 0.016 | 0.003 |
+
+This differs from Phase 4a (mean-pool: blocks.4 best at Fz). The temporal evaluation captures the
+auditory cortex envelope-following response, which is driven by a more sensory (earlier) layer than
+the whole-stimulus average.
+
+**Statistical validation of layer signals** (`scripts/plot_score_distributions.py`,
+figure: `outputs/figures/whisper_base_score_distributions.png`):
+
+A one-sample t-test of scores[T] against 0 across 8 electrodes reveals three tiers:
+
+| Tier | Layers | Mean range | Evidence |
+|---|---|---|---|
+| Unambiguous signal | **blocks.2** | 0.037–0.110 | t = 10–21, 62–70% of bins > 0, all electrodes |
+| Weak but real | blocks.1, 3, 4 | 0.009–0.048 | t = 2–10, 52–58% bins > 0, significant at most electrodes |
+| Noise | blocks.0, blocks.5 | −0.007–0.015 | t < 2, ~50% bins > 0, not significant at AF3/FT7/T7/TP7/Fpz |
+
+blocks.2 mean is 2–5× larger than the next best layer across all speech electrodes. Fz is an
+exception — all 6 layers reach significance at Fz, because its lower and more midline position
+picks up a broader mixture of processing stages.
+
+**Autocorrelation correction (option 1 implemented):** ρ₁ ≈ 0.71–0.82 across layers/electrodes,
+giving n_eff ≈ 160–460 from T=1500. Implemented in `scripts/plot_score_distributions.py` via
+`n_eff = T × (1−ρ₁) / (1+ρ₁)` and `t_corr = mean / (std / √n_eff)` with `df = n_eff − 1`.
+After correction the tier structure sharpens — only blocks.2 is *** everywhere; blocks.3 holds
+* or ** at a few electrodes; blocks.0/1/4/5 are ns at all speech electrodes.
+
+Three approaches exist for this correction (see `02_project_plan_make_compatible_for_auditory_EEG.md`
+for full detail):
+- **Option 1 (implemented):** AR(1) n_eff = T×(1−ρ₁)/(1+ρ₁). Fast, assumes exponential ACF decay.
+- **Option 2:** Full-ACF n_eff = T / (1 + 2Σρₖ). More accurate for slow-decaying autocorrelation.
+- **Option 3:** Circular shift permutation — randomly shift the time series, preserving autocorrelation structure; p = fraction of null means ≥ observed. Non-parametric, ideal for paper reporting.
+
+Robust evidence = Cohen's d and ratio of means, not p-values.
+
+**Electrode NC map — 33 valid electrodes (raw NC > 0), sorted by NC:**
+
+| Electrode | NC (raw) | Note |
+|---|---|---|
+| AF3 | 94.6% | Left anterior frontal — highest NC |
+| FT7 | 91.1% | Left fronto-temporal |
+| P9 | 88.0% | Left posterior temporal (extreme lateral) |
+| TP7 | 84.3% | Left temporo-parietal |
+| Fpz | 79.9% | Frontal pole midline |
+| P7 | 78.5% | Left posterior temporal |
+| T7 | 75.3% | Left temporal — primary auditory cortex |
+| Pz | 74.4% | Parietal midline |
+| T8 | 73.3% | Right temporal |
+| FC3 | 71.3% | Left frontal-central |
+| AFz | 64.8% | Anterior frontal midline |
+| O2 | 64.3% | Right occipital (note: O1 = 0%, mapping gap) |
+| Fp2 | 59.0% | Right frontal pole |
+| P6 | 58.0% | Left posterior parietal |
+| F7 | 57.4% | Left frontal |
+| C5 | 57.4% | Left central |
+| PO4 | 54.8% | Right parieto-occipital |
+| Fz | 50.4% | **Primary MMN electrode** |
+| P10 | 47.1% | Right posterior temporal |
+| TP8 | 43.3% | Right temporo-parietal |
+| Fp1 | 41.7% | Left frontal pole |
+| Oz | 36.0% | Occipital midline |
+| FC4 | 29.5% | Right frontal-central |
+| CP6 | 25.2% | Right centro-parietal |
+| F3 | 23.2% | Left frontal |
+| F4 | 20.4% | Right frontal |
+| AF4 | 12.0% | Right anterior frontal |
+| P8 | 11.9% | Right posterior temporal |
+| AF7 | 11.6% | Left anterior frontal |
+| F8 | 10.8% | Right frontal |
+| POz | 6.3% | Parieto-occipital midline |
+| Cz | 2.6% | Central midline — near zero |
+| C3 | 0.8% | Left motor cortex — near zero |
+
+**Strong left-hemisphere dominance** (language lateralization): AF3 (94.6%) vs AF4 (12.0%),
+FT7 (91.1%) vs FT8 (0%), FC3 (71.3%) vs FC4 (29.5%), TP7 (84.3%) vs TP8 (43.3%).
+
+**28 electrodes excluded (raw NC = 0.0% in HDF5):**
+P4, AF8, C1, C2, C4, C6, CP1, CP2, CP3, CP4, CP5, CPz, F1, F2, F5, F6, FC1, FC2, FC5, FC6,
+FCz, FT8, O1, P1, P2, P3, P5, PO3.
+
+These fall into two groups: (a) genuine physiology — FCz/Cz/C1/C2/CP* do not respond
+consistently to continuous speech; (b) mapping gaps in `format_eeg_hdf5.py` where standard
+10-20 names were not matched to BioSemi channels (O1, P1–P3, F1/F2, FC1/FC2, etc.).
+**Filter rule: exclude any electrode where raw NC == 0.** Note FCz is still the primary
+electrode of interest for Phase 6 (MMN oddball), where the time-locked deviant response will
+produce high cross-subject agreement and non-zero NC.
+
+---
+
+### Next steps (pick up here — 2026-06-07)
+
+**1. Results analysis / visualization** ✅ Done (2026-06-07)
+
+| Script | Output | What it shows |
+|---|---|---|
+| `scripts/plot_temporal_scores.py` | `outputs/figures/whisper_base_temporal_scores.png` | scores[T] time-course per layer × 8 electrodes (smoothed + raw) |
+| `scripts/plot_score_distributions.py` | `outputs/figures/whisper_base_score_distributions.png` | Violin distributions of scores[T] vs. zero, with t-test annotations |
+| — | `outputs/figures/score_distribution_summary.json` | Full statistical summary (mean, SE, t, p, fraction>0 per layer × electrode) |
+
+Key finding: blocks.2 is unambiguously the best layer (2–5× larger mean than any other).
+All other layers hover near zero at speech-sensitive electrodes; see statistical validation above.
+
+**2. Dataset validation (do before scaling to more models)**
+
+Before investing in other models, check that whisper-base blocks.2 results generalise:
+
+- Does a *different* naturalistic speech EEG dataset give similar goodness-of-fit and the same
+  best layer? (pick one dataset; discuss with Gokce which is most accessible)
+- Does pooling Broderick + a second dataset improve scores, or are returns quickly diminishing?
+
+If generalisation holds: Broderick alone is a sufficient training set → scale to more models.
+If not: understand why before scaling (dataset-specific artefact, very different electrode
+coverage, etc.)
+
+**3. Scale to other audio models (Whisper variants first)**
+
+Priority order (from easiest to most involved):
+
+1. **Whisper tiny / small / medium / large** — same feature extraction code, only configs and
+   SLURM scripts need to be changed. Run Phase 4a (mean-pool) first for a quick cross-size
+   comparison, then Phase 4b (temporal) for the winner.
+2. **wav2vec2-base / wav2vec2-large** — different input format (raw waveform) and different
+   time grid (499 bins at ~20ms, aligned with EEG), but otherwise the same pipeline.
+   More setup: a new EEG HDF5 reformatted to 10s windows is needed.
+3. **AST** — mean-pool only (no temporal resolution). Lowest priority.
+
+**VGGish: excluded from temporal evaluation.** Its output is 10 bins at 1s resolution —
+far too coarse to predict EEG at 20ms. Can be included in mean-pool comparisons as a baseline.
+
+**4. In-silico MMN analysis via trained Ridge mapping (no new data needed)**
+
+This is the key step connecting the encoding model to Sophie's schizophrenia pipeline. The
+idea: the trained linear mapping (Ridge weights from Phase 4b, Broderick 2018) can predict
+electrode-level EEG responses to *any* audio, including MMN stimuli — without collecting new
+EEG.
+
+Steps:
+1. Feed Sophie's MMN stimuli (standard + deviant tone sequences) through whisper-base to get
+   Delta_T features at blocks.2.
+2. Apply the trained Ridge weights → get predicted electrode-level EEG time courses.
+3. Compute the deviant-minus-standard difference wave at Fz (in the predicted responses).
+4. Does the model show an MMN-like component at 100–200ms? If yes: the model's internal
+   representations contain MMN-relevant information, consistent with it predicting naturalistic
+   speech EEG.
+5. Once multiple models are available (step 3 above): compare the in-silico MMN across
+   architectures — does a model with "schizophrenia-like" properties show a reduced/absent MMN?
+
+This approach does not require patient EEG and can be run as soon as the Ridge mapping exists.
+Patient EEG (Phase 6b in the project plan) is the follow-up to validate the predictions
+against real data.
+
+**Summary of priorities:**
+
+| # | Task | Blocker | Estimated effort |
+|---|---|---|---|
+| 1 | Dataset validation (Step 2 above) | Need to identify a second naturalistic speech EEG dataset | 1–2 days formatting + 1 SLURM job |
+| 2 | Whisper family (tiny/small/medium/large) Phase 4a | None | 1–2 days configs + SLURM submission |
+| 3 | In-silico MMN on whisper-base mapping | Sophie needs her MMN stimuli as audio files | 1 day scripting |
+| 4 | wav2vec2 integration | 10s window EEG HDF5 not yet created | 2–3 days |
+| 5 | Real patient MMN comparison | MMN EEG dataset (patient + control) | TBD |

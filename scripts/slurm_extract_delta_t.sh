@@ -14,13 +14,16 @@
 #   sbatch --array=0-19 scripts/slurm_extract_delta_t.sh
 #
 # After all tasks finish, merge + evaluate:
+#   File names are globally unique (encoded stim_start_idx), so a flat cp works:
 #   mkdir -p outputs/features/whisper-base-delta-t/merged/
 #   cp outputs/features/whisper-base-delta-t/chunk_*/feats*.h5 \
 #      outputs/features/whisper-base-delta-t/merged/
-#   python -m mbs.evaluation.evaluate_features_temporal \
+#   mbs-evaluate-temporal \
+#     --model_id whisper-base \
+#     --target_feature_layers configs/extraction/audio/whisper_base_layers.json \
 #     --features_dir outputs/features/whisper-base-delta-t/merged/ \
-#     --neural_data   outputs/neural_data/broderick2018_30s.h5 \
-#     --output_dir    outputs/results/whisper-base-delta-t/
+#     --data_hdf5_path outputs/neural_data/broderick2018_30s.h5 \
+#     --output_dir outputs/results/whisper-base-delta-t/
 # =============================================================================
 
 # ── SBATCH directives (must be before any executable code) ───────────────────
@@ -36,7 +39,7 @@
 
 # ── Mode switch ───────────────────────────────────────────────────────────────
 # Set to "pilot" for the first 3-stimulus test job, "full" for the real run.
-MODE="pilot"   # "pilot" | "full"
+MODE="full"   # "pilot" | "full"
 
 # ── Config ────────────────────────────────────────────────────────────────────
 PROJECT_DIR="/work/upschrimpf1/mehrer/code/20260601_multimodal_brain_scaling_schizophrenia/multimodal-brain-scaling"

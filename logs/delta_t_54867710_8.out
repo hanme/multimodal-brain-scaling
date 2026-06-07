@@ -1,0 +1,41 @@
+========================================================================
+DELTA-T FEATURE EXTRACTION  (mode=full)
+Array task 8 / Job 54867719
+Node: jst371   CPUs: 1
+Start: mar 02 jun 2026 07:17:31 CEST
+========================================================================
+Python: /work/upschrimpf1/mehrer/code/20260601_multimodal_brain_scaling_schizophrenia/multimodal-brain-scaling/.venv/bin/python
+
+Stimuli: start=128  count=16
+Output:  outputs/features/whisper-base-delta-t/chunk_8
+
+Arguments: {'model_id': 'whisper-base', 'data_root': '/work/upschrimpf1/mehrer/datasets/Broderick_2018_EEG_The_old_man_and_the_sea/stimuli', 'target_feature_layers': 'configs/extraction/audio/whisper_base_layers.json', 'output_dir': 'outputs/features/whisper-base-delta-t/chunk_8', 'window_duration': 30.0, 'window_stride': 10.0, 'batch_t': 4, 't_stride': 1, 'stim_start_idx': 128, 'n_stimuli': 16, 'save_every': 8, 'model_cache_dir': 'cache/model_weights', 'seed': 42, 'overwrite': False}
+Device: cpu
+Stimuli: 16 (idx 128..143 of 314)  |  Time bins: 1500 (t_stride=1)  |  batch_t: 4
+Layers: ['blocks.0', 'blocks.1', 'blocks.2', 'blocks.3', 'blocks.4', 'blocks.5']
+  stim 129/16: 1097.1s  ETA -0.3h  (423 stim/hr)
+  stim 130/16: 1083.4s  ETA -0.5h  (215 stim/hr)
+  stim 131/16: 1050.6s  ETA -0.8h  (146 stim/hr)
+  stim 132/16: 1090.7s  ETA -1.1h  (110 stim/hr)
+  stim 133/16: 1057.5s  ETA -1.3h  (89 stim/hr)
+  stim 134/16: 1146.5s  ETA -1.6h  (74 stim/hr)
+  stim 135/16: 1255.5s  ETA -1.9h  (62 stim/hr)
+  stim 136/16: 1252.5s  ETA -2.2h  (54 stim/hr)
+  stim 137/16: 1270.5s  ETA -2.5h  (48 stim/hr)
+  stim 138/16: 1269.5s  ETA -2.8h  (43 stim/hr)
+  stim 139/16: 1122.3s  ETA -3.1h  (39 stim/hr)
+  stim 140/16: 1658.1s  ETA -3.5h  (35 stim/hr)
+  stim 141/16: 1661.3s  ETA -3.9h  (32 stim/hr)
+  stim 142/16: 1674.5s  ETA -4.4h  (29 stim/hr)
+  stim 143/16: 1667.1s  ETA -4.8h  (27 stim/hr)
+  stim 144/16: 1661.3s  ETA -5.2h  (25 stim/hr)
+
+Done. 2 HDF5 files written to outputs/features/whisper-base-delta-t/chunk_8
+Feature shape per stimulus: [T_out=1500, d_model] per layer
+
+SUCCESS  task=8  stim_start=128
+Files written:
+total 126M
+-rw-r--r-- 1 mehrer upschrimpf1-unit 64M  2 jun 09:49 feats_delta_t-bs_8-batch_0-seed_42.h5
+-rw-r--r-- 1 mehrer upschrimpf1-unit 64M  2 jun 13:09 feats_delta_t-bs_8-batch_1-seed_42.h5
+End: mar 02 jun 2026 13:09:10 CEST

@@ -142,10 +142,15 @@ def extract_delta_t(
 # ---------------------------------------------------------------------------
 
 def _write_batch(output_dir: Path, batch_idx: int, batch_size: int,
+                 stim_start_idx: int,
                  stim_features: list, stim_ids: list, model_id: str,
                  backbone_source: str, target_layers: list, config: dict):
-    """Write one HDF5 batch file from accumulated stimuli."""
-    path = output_dir / f"feats_delta_t-bs_{batch_size}-batch_{batch_idx}-seed_42.h5"
+    """Write one HDF5 batch file from accumulated stimuli.
+
+    Filename encodes stim_start_idx (global offset for this SLURM task) and
+    batch_idx (within-task batch counter), ensuring uniqueness across parallel tasks.
+    """
+    path = output_dir / f"feats_delta_t-start_{stim_start_idx:05d}-batch_{batch_idx}-seed_42.h5"
     with h5py.File(path, "w") as hf:
         # stim_features: list of dicts  alias -> [T_out, d]
         layer_aliases = list(stim_features[0].keys())
@@ -234,12 +239,14 @@ def main(args):
         accum_feats.append(feats)
         accum_ids.append(stim_id)
 
-        # Flush to disk when we've collected save_every stimuli or reached the end
-        if len(accum_feats) == args.save_every or stim_idx == total - 1:
+        # Flush to disk when we've collected save_every stimuli or reached the end.
+        # Compare against end-1 (not total-1) so this works when stim_start_idx > 0.
+        if len(accum_feats) == args.save_every or stim_idx == end - 1:
             _write_batch(
                 output_dir=output_dir,
                 batch_idx=file_idx,
                 batch_size=args.save_every,
+                stim_start_idx=args.stim_start_idx,
                 stim_features=accum_feats,
                 stim_ids=accum_ids,
                 model_id=args.model_id,

@@ -1,0 +1,124 @@
+Layers:   0%|          | 0/6 [00:00<?, ?it/s]
+Loading features for layer blocks.0:   0%|          | 0/39 [00:00<?, ?it/s][A
+Loading features for layer blocks.0:   3%|▎         | 1/39 [00:00<00:07,  4.98it/s][A
+Loading features for layer blocks.0:   5%|▌         | 2/39 [00:00<00:08,  4.48it/s][A
+Loading features for layer blocks.0:   8%|▊         | 3/39 [00:00<00:07,  5.08it/s][A
+Loading features for layer blocks.0:  10%|█         | 4/39 [00:00<00:06,  5.01it/s][A
+Loading features for layer blocks.0:  13%|█▎        | 5/39 [00:00<00:06,  5.18it/s][A
+Loading features for layer blocks.0:  15%|█▌        | 6/39 [00:01<00:06,  5.12it/s][A
+Loading features for layer blocks.0:  18%|█▊        | 7/39 [00:01<00:06,  4.63it/s][A
+Loading features for layer blocks.0:  21%|██        | 8/39 [00:01<00:06,  4.82it/s][A
+Loading features for layer blocks.0:  23%|██▎       | 9/39 [00:01<00:06,  4.75it/s][A
+Loading features for layer blocks.0:  26%|██▌       | 10/39 [00:02<00:06,  4.73it/s][A
+Loading features for layer blocks.0:  28%|██▊       | 11/39 [00:02<00:05,  5.15it/s][A
+Loading features for layer blocks.0:  31%|███       | 12/39 [00:02<00:05,  5.03it/s][A
+Loading features for layer blocks.0:  33%|███▎      | 13/39 [00:02<00:05,  5.01it/s][A
+Loading features for layer blocks.0:  36%|███▌      | 14/39 [00:02<00:05,  4.66it/s][A
+Loading features for layer blocks.0:  38%|███▊      | 15/39 [00:03<00:04,  4.91it/s][A
+Loading features for layer blocks.0:  41%|████      | 16/39 [00:03<00:04,  5.12it/s][A
+Loading features for layer blocks.0:  44%|████▎     | 17/39 [00:03<00:04,  5.27it/s][A
+Loading features for layer blocks.0:  46%|████▌     | 18/39 [00:03<00:03,  5.25it/s][A
+Loading features for layer blocks.0:  49%|████▊     | 19/39 [00:03<00:03,  5.02it/s][A
+Loading features for layer blocks.0:  51%|█████▏    | 20/39 [00:04<00:03,  4.96it/s][A
+Loading features for layer blocks.0:  54%|█████▍    | 21/39 [00:04<00:03,  5.05it/s][A
+Loading features for layer blocks.0:  56%|█████▋    | 22/39 [00:04<00:03,  4.91it/s][A
+Loading features for layer blocks.0:  59%|█████▉    | 23/39 [00:04<00:03,  4.70it/s][A
+Loading features for layer blocks.0:  62%|██████▏   | 24/39 [00:04<00:03,  4.48it/s][A
+Loading features for layer blocks.0:  64%|██████▍   | 25/39 [00:05<00:02,  4.89it/s][A
+Loading features for layer blocks.0:  67%|██████▋   | 26/39 [00:05<00:02,  4.92it/s][A
+Loading features for layer blocks.0:  69%|██████▉   | 27/39 [00:05<00:02,  5.06it/s][A
+Loading features for layer blocks.0:  72%|███████▏  | 28/39 [00:05<00:02,  4.95it/s][A
+Loading features for layer blocks.0:  74%|███████▍  | 29/39 [00:05<00:01,  5.11it/s][A
+Loading features for layer blocks.0:  77%|███████▋  | 30/39 [00:06<00:01,  4.98it/s][A
+Loading features for layer blocks.0:  79%|███████▉  | 31/39 [00:06<00:01,  4.89it/s][A
+Loading features for layer blocks.0:  82%|████████▏ | 32/39 [00:06<00:01,  4.37it/s][A
+Loading features for layer blocks.0:  85%|████████▍ | 33/39 [00:06<00:01,  4.70it/s][A
+Loading features for layer blocks.0:  87%|████████▋ | 34/39 [00:06<00:01,  4.89it/s][A
+Loading features for layer blocks.0:  90%|████████▉ | 35/39 [00:07<00:00,  4.67it/s][A
+Loading features for layer blocks.0:  92%|█████████▏| 36/39 [00:07<00:00,  4.91it/s][A
+Loading features for layer blocks.0:  95%|█████████▍| 37/39 [00:07<00:00,  5.10it/s][A
+Loading features for layer blocks.0:  97%|█████████▋| 38/39 [00:07<00:00,  5.07it/s][A
+Loading features for layer blocks.0: 100%|██████████| 39/39 [00:07<00:00,  4.89it/s][A
+                                                                                    [ALayers:  17%|█▋        | 1/6 [3:00:00<15:00:02, 10800.59s/it]
+Loading features for layer blocks.1:   0%|          | 0/39 [00:00<?, ?it/s][A
+Loading features for layer blocks.1:   3%|▎         | 1/39 [00:00<00:12,  3.12it/s][A
+Loading features for layer blocks.1:   5%|▌         | 2/39 [00:00<00:11,  3.24it/s][A
+Loading features for layer blocks.1:   8%|▊         | 3/39 [00:00<00:11,  3.19it/s][A
+Loading features for layer blocks.1:  10%|█         | 4/39 [00:01<00:10,  3.23it/s][A
+Loading features for layer blocks.1:  13%|█▎        | 5/39 [00:01<00:09,  3.44it/s][A
+Loading features for layer blocks.1:  15%|█▌        | 6/39 [00:01<00:09,  3.47it/s][A
+Loading features for layer blocks.1:  18%|█▊        | 7/39 [00:02<00:09,  3.37it/s][A
+Loading features for layer blocks.1:  21%|██        | 8/39 [00:02<00:08,  3.70it/s][A
+Loading features for layer blocks.1:  23%|██▎       | 9/39 [00:02<00:08,  3.49it/s][A
+Loading features for layer blocks.1:  26%|██▌       | 10/39 [00:03<00:09,  2.95it/s][A
+Loading features for layer blocks.1:  28%|██▊       | 11/39 [00:03<00:09,  2.94it/s][A
+Loading features for layer blocks.1:  31%|███       | 12/39 [00:03<00:08,  3.20it/s][A
+Loading features for layer blocks.1:  33%|███▎      | 13/39 [00:03<00:07,  3.29it/s][A
+Loading features for layer blocks.1:  36%|███▌      | 14/39 [00:04<00:07,  3.20it/s][A
+Loading features for layer blocks.1:  38%|███▊      | 15/39 [00:04<00:07,  3.15it/s][A
+Loading features for layer blocks.1:  41%|████      | 16/39 [00:04<00:06,  3.55it/s][A
+Loading features for layer blocks.1:  44%|████▎     | 17/39 [00:05<00:06,  3.20it/s][A
+Loading features for layer blocks.1:  46%|████▌     | 18/39 [00:05<00:06,  3.35it/s][A
+Loading features for layer blocks.1:  49%|████▊     | 19/39 [00:05<00:05,  3.62it/s][A
+Loading features for layer blocks.1:  51%|█████▏    | 20/39 [00:05<00:04,  3.88it/s][A
+Loading features for layer blocks.1:  54%|█████▍    | 21/39 [00:06<00:05,  3.59it/s][A
+Loading features for layer blocks.1:  56%|█████▋    | 22/39 [00:06<00:04,  3.40it/s][A
+Loading features for layer blocks.1:  59%|█████▉    | 23/39 [00:06<00:04,  3.43it/s][A
+Loading features for layer blocks.1:  62%|██████▏   | 24/39 [00:07<00:04,  3.44it/s][A
+Loading features for layer blocks.1:  64%|██████▍   | 25/39 [00:07<00:04,  3.32it/s][A
+Loading features for layer blocks.1:  67%|██████▋   | 26/39 [00:07<00:04,  2.87it/s][A
+Loading features for layer blocks.1:  69%|██████▉   | 27/39 [00:08<00:03,  3.05it/s][A
+Loading features for layer blocks.1:  72%|███████▏  | 28/39 [00:08<00:03,  3.38it/s][A
+Loading features for layer blocks.1:  74%|███████▍  | 29/39 [00:08<00:02,  3.38it/s][A
+Loading features for layer blocks.1:  77%|███████▋  | 30/39 [00:08<00:02,  3.72it/s][A
+Loading features for layer blocks.1:  79%|███████▉  | 31/39 [00:09<00:02,  3.92it/s][A
+Loading features for layer blocks.1:  82%|████████▏ | 32/39 [00:09<00:01,  3.66it/s][A
+Loading features for layer blocks.1:  85%|████████▍ | 33/39 [00:09<00:01,  3.75it/s][A
+Loading features for layer blocks.1:  87%|████████▋ | 34/39 [00:09<00:01,  3.84it/s][A
+Loading features for layer blocks.1:  90%|████████▉ | 35/39 [00:10<00:01,  3.97it/s][A
+Loading features for layer blocks.1:  92%|█████████▏| 36/39 [00:10<00:00,  3.85it/s][A
+Loading features for layer blocks.1:  95%|█████████▍| 37/39 [00:10<00:00,  3.77it/s][A
+Loading features for layer blocks.1:  97%|█████████▋| 38/39 [00:11<00:00,  3.61it/s][A
+Loading features for layer blocks.1: 100%|██████████| 39/39 [00:11<00:00,  3.69it/s][A
+                                                                                    [ALayers:  33%|███▎      | 2/6 [5:46:29<11:28:13, 10323.42s/it]
+Loading features for layer blocks.2:   0%|          | 0/39 [00:00<?, ?it/s][A
+Loading features for layer blocks.2:   3%|▎         | 1/39 [00:00<00:11,  3.27it/s][A
+Loading features for layer blocks.2:   5%|▌         | 2/39 [00:00<00:14,  2.63it/s][A
+Loading features for layer blocks.2:   8%|▊         | 3/39 [00:01<00:12,  2.78it/s][A
+Loading features for layer blocks.2:  10%|█         | 4/39 [00:01<00:11,  2.92it/s][A
+Loading features for layer blocks.2:  13%|█▎        | 5/39 [00:01<00:11,  2.89it/s][A
+Loading features for layer blocks.2:  15%|█▌        | 6/39 [00:02<00:11,  2.88it/s][A
+Loading features for layer blocks.2:  18%|█▊        | 7/39 [00:02<00:11,  2.78it/s][A
+Loading features for layer blocks.2:  21%|██        | 8/39 [00:02<00:11,  2.72it/s][A
+Loading features for layer blocks.2:  23%|██▎       | 9/39 [00:03<00:10,  2.82it/s][A
+Loading features for layer blocks.2:  26%|██▌       | 10/39 [00:03<00:10,  2.73it/s][A
+Loading features for layer blocks.2:  28%|██▊       | 11/39 [00:04<00:10,  2.59it/s][A
+Loading features for layer blocks.2:  31%|███       | 12/39 [00:04<00:10,  2.62it/s][A
+Loading features for layer blocks.2:  33%|███▎      | 13/39 [00:04<00:09,  2.66it/s][A
+Loading features for layer blocks.2:  36%|███▌      | 14/39 [00:05<00:09,  2.72it/s][A
+Loading features for layer blocks.2:  38%|███▊      | 15/39 [00:05<00:08,  2.97it/s][A
+Loading features for layer blocks.2:  41%|████      | 16/39 [00:05<00:07,  3.15it/s][A
+Loading features for layer blocks.2:  44%|████▎     | 17/39 [00:06<00:07,  2.99it/s][A
+Loading features for layer blocks.2:  46%|████▌     | 18/39 [00:06<00:07,  2.93it/s][A
+Loading features for layer blocks.2:  49%|████▊     | 19/39 [00:06<00:07,  2.80it/s][A
+Loading features for layer blocks.2:  51%|█████▏    | 20/39 [00:07<00:06,  2.98it/s][A
+Loading features for layer blocks.2:  54%|█████▍    | 21/39 [00:07<00:06,  2.80it/s][A
+Loading features for layer blocks.2:  56%|█████▋    | 22/39 [00:07<00:06,  2.74it/s][A
+Loading features for layer blocks.2:  59%|█████▉    | 23/39 [00:08<00:05,  2.84it/s][A
+Loading features for layer blocks.2:  62%|██████▏   | 24/39 [00:08<00:05,  2.67it/s][A
+Loading features for layer blocks.2:  64%|██████▍   | 25/39 [00:08<00:05,  2.78it/s][A
+Loading features for layer blocks.2:  67%|██████▋   | 26/39 [00:09<00:04,  2.83it/s][A
+Loading features for layer blocks.2:  69%|██████▉   | 27/39 [00:09<00:04,  2.88it/s][A
+Loading features for layer blocks.2:  72%|███████▏  | 28/39 [00:09<00:03,  2.90it/s][A
+Loading features for layer blocks.2:  74%|███████▍  | 29/39 [00:10<00:03,  2.93it/s][A
+Loading features for layer blocks.2:  77%|███████▋  | 30/39 [00:10<00:02,  3.01it/s][A
+Loading features for layer blocks.2:  79%|███████▉  | 31/39 [00:10<00:02,  2.86it/s][A
+Loading features for layer blocks.2:  82%|████████▏ | 32/39 [00:11<00:02,  2.86it/s][A
+Loading features for layer blocks.2:  85%|████████▍ | 33/39 [00:11<00:01,  3.04it/s][A
+Loading features for layer blocks.2:  87%|████████▋ | 34/39 [00:11<00:01,  3.02it/s][A
+Loading features for layer blocks.2:  90%|████████▉ | 35/39 [00:12<00:01,  2.99it/s][A
+Loading features for layer blocks.2:  92%|█████████▏| 36/39 [00:12<00:01,  3.00it/s][A
+Loading features for layer blocks.2:  95%|█████████▍| 37/39 [00:12<00:00,  2.97it/s][A
+Loading features for layer blocks.2:  97%|█████████▋| 38/39 [00:13<00:00,  3.00it/s][A
+Loading features for layer blocks.2: 100%|██████████| 39/39 [00:13<00:00,  2.67it/s][A
+                                                                                    [Aslurmstepd: error: *** JOB 54913812 ON jst368 CANCELLED AT 2026-06-04T17:43:17 DUE TO TIME LIMIT ***

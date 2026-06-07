@@ -197,14 +197,17 @@ cython_debug/
 /checkpoints/
 /data/
 /features/
-/logs/
-/outputs/
 /results/
 *.ckpt
 *.h5
 *.hdf5
 *.parquet
 *.pdf
+
+# outputs/ — exclude large generated data, keep figures and JSON summaries
+outputs/features/
+outputs/neural_data/
+# (*.h5 rule above already excludes outputs/results/*.h5 and any other HDF5 files)
 
 # OS cruft
 .DS_Store
