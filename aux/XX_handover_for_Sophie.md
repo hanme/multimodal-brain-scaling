@@ -19,6 +19,74 @@ electrode signals. Once trained, such a model can tell us:
 
 ---
 
+## ⭐ UPDATE 2026-06-11/12 — method change (per-bin Ridge → mTRF) + first de-confounded results
+
+**Read this first — it supersedes the Phase 4b per-time-bin approach (§2b, §3e below) for
+continuous speech, and overturns the old "blocks.2 is best" conclusion.** Triggered by a
+conversation with Kadir (2026-06-11) and a clean re-analysis. Full running log:
+`aux/project_plan_20260611.md`.
+
+### Why the method changed
+The old temporal evaluator (`evaluate_features_temporal.py`) fit an *independent* Ridge at each
+20 ms bin, `feature[t] → EEG[t]`, scored by correlating across stimuli at a fixed within-window
+offset. Three problems for continuous speech:
+1. **Zero lag** — predicts EEG[t] from the model feature at the *same* instant, but auditory
+   cortex lags the stimulus ~50–200 ms.
+2. **No weight sharing** — 1500 separate fits; noisy and wasteful.
+3. **Wrong score axis** — correlating across overlapping 30 s segments at a fixed offset mixes
+   unrelated moments; the field standard correlates *along time*.
+
+### New method: mTRF (lagged shared-weight Ridge) — "Workstream A"
+`src/mbs/evaluation/evaluate_features_mtrf.py`
+(`python -m mbs.evaluation.evaluate_features_mtrf`). One Ridge shared across all (stimulus, time),
+predicting `EEG[t]` from features at an explicit lag `feature[t-lag]`, scored *along time*.
+`single_lag` mode sweeps lags → an encoding-vs-latency curve; `fir` mode is the full multi-lag
+mTRF (one r/channel, literature-comparable). This is the standard method of the Broderick/Lalor
+lab whose data we use. All electrodes fit at once with `alpha_per_target=True` (per-channel
+regularization — no low-SNR contamination — and ~67× faster). Tests:
+`tests/test_evaluate_features_mtrf.py` (11, incl. a synthetic lag-recovery test).
+
+These three are points on ONE spectrum: per-bin (old) → **mTRF (linear, Workstream A)** →
+learned temporal probe (Kadir's MIRAGE / the `attn_probe/` package = Workstream B target;
+gradient-trained shared trunk + per-subject heads). See `aux/project_plan_20260611.md` §0–§3.
+
+### Key finding: the lag curve was FLAT — a slow-drift confound, fixed by high-pass
+On raw EEG the encoding-vs-lag curve is flat (~0.48 at every lag): both the model features and
+the group-averaged EEG are dominated by slow envelope structure autocorrelated over >400 ms, so
+any lag predicts equally. **High-passing the EEG and features removes the drift and reveals a
+proper auditory TRF.** ⚠️ This *fitting/scoring* high-pass is a DIFFERENT issue from the
+significance-test n_eff autocorrelation correction in §"Phase 4b results" (`plot_score_distributions.py`)
+— keep them distinct.
+
+### De-confounded results (whisper-base × Broderick, uncorrected r; jobs 55037406 + 55039297)
+High-pass cutoff sweep 0.5 / 1 / 2 Hz × 6 layers (all electrodes):
+- **Latency ~120–140 ms** at temporal electrodes (TP7/T7/FT7/T8) — classic N1-like auditory
+  response — robust across all cutoffs. Frontal (Fz/AF3) later and weaker.
+- **0.5 Hz** retains the most signal (peak r ~0.12 mean over auditory electrodes, up to 0.18 at
+  FT7); 2 Hz over-filters.
+- **Best layer = mid-depth (blocks-3), robust across cutoffs.** Layers 2–5 are ~tied and clearly
+  beat the early layers; this **overturns** the old per-bin "blocks-2" and the confounded
+  no-highpass metric (which favored the earliest layer).
+- Figures: `outputs/figures/mtrf_highpass_diagnostic.png` (flat vs high-passed),
+  `outputs/figures/mtrf_cutoff_layer_summary.png` (layer comparison + spatial latency).
+
+### Recommended config, caveats, open items
+- **Config:** 0.5 Hz high-pass, `single_lag`, uncorrected r, mid-depth (~blocks-3).
+- **NC under high-pass:** the stored NC was computed on raw EEG and is invalid for high-passed
+  data, so we report **uncorrected r** (Kadir explicitly OK'd this). Recomputing NC on
+  high-passed EEG is an optional later refinement.
+- **Caveats:** whisper-base only; Broderick only (not yet replicated on a 2nd dataset); the
+  mid-depth layer differences are small.
+- **Next:** in-silico MMN (feed Sophie's stimuli through whisper blocks-3, apply the ridge, look
+  for a deviant−standard response at ~120–200 ms); scale to other whisper sizes / wav2vec2; or
+  start Workstream B (learned probe) and compare to this mTRF baseline.
+
+### New files (this update)
+- `src/mbs/evaluation/evaluate_features_mtrf.py`, `tests/test_evaluate_features_mtrf.py`
+- `scripts/slurm_mtrf.sh` (cutoff×layer sweep), `scripts/plot_mtrf_scores.py`
+
+---
+
 ## 1. The original repo (Kadir Gokce / epflneuroailab)
 
 **Repository:** `epflneuroailab/multimodal-brain-scaling` (we work on fork `hanme/multimodal-brain-scaling`)
@@ -112,6 +180,10 @@ In the temporal mode, a Ridge is fit independently for each time step t:
 `X[:, t, :] → y[:, t, :]`. This produces a prediction score time series at each electrode —
 analogous to an ERP but measuring how well the model predicts the EEG at each latency.
 For the MMN, the key question is whether the score peaks at ~100–200ms at Fz.
+
+> ⚠️ **SUPERSEDED for continuous speech (2026-06-12).** This independent-per-bin, zero-lag,
+> across-stimulus-at-fixed-offset scoring is replaced by the mTRF (`evaluate_features_mtrf.py`).
+> See the "UPDATE 2026-06-11/12" section above.
 
 ### 2c. HDF5 feature format (unchanged)
 
@@ -338,7 +410,9 @@ or that the continuous-speech paradigm is simply weak there relative to an oddba
 **Recommend inspecting FCz channel in the raw data before drawing conclusions about that ROI.**
 
 ### 3e. `src/mbs/evaluation/evaluate_features_temporal.py` — temporal evaluator
-*(Phase 4b, status: **Done** — CLI + full implementation)*
+*(Phase 4b, status: **Done**, but **SUPERSEDED for continuous speech (2026-06-12)** by the mTRF
+— `src/mbs/evaluation/evaluate_features_mtrf.py`; see "UPDATE 2026-06-11/12" above. Still valid
+only for discrete ERP/MMN epochs, where per-latency-across-stimuli IS the evoked waveform.)*
 
 New CLI `mbs-evaluate-temporal`. For each (layer, electrode) pair it fits **T separate Ridge
 regressions**, one per time step, and stores the resulting prediction score curve `scores[T]`.
@@ -799,6 +873,10 @@ This gives a lower bound on the ceiling compared to within-subject split-half.
 | 4b | Delta_T features: whisper-base × ds004408 (312/314 stimuli) | **Done** — job 54867710; merged at `outputs/features/whisper-base-delta-t/merged/` |
 | 4b | Temporal evaluation: whisper-base × ds004408 (67 ROIs) | **Done** — job 54930384, ~31.5 h; results at `outputs/results/whisper-base-delta-t-full/` |
 | 4b-sweep | Window/stride sweep infrastructure for whisper-small | **Done** (2026-06-04) — see `scripts/submit_whisper_small_sweep.sh` |
+| WA | mTRF evaluator `evaluate_features_mtrf.py` + 11 tests | **Done** (2026-06-12) — replaces per-bin eval for continuous speech |
+| WA | mTRF full sweep + high-pass cutoff sweep (whisper-base) | **Done** (2026-06-12) — jobs 55037406, 55039297; mid-depth (~blocks-3) best, latency ~120–140 ms at 0.5 Hz HP |
+| WA | `scripts/slurm_mtrf.sh`, `scripts/plot_mtrf_scores.py` | **Done** (2026-06-12) |
+| WB | Learned temporal probe (adapt `attn_probe/` to time) | TODO — Workstream B (MIRAGE-style) |
 | 5 | `configs/extraction/audio/whisper_small_layers.json` (12 blocks) | **Done** (2026-06-04) |
 | 5 | `load_wav2vec2`, `load_vggish`, `load_ast` in `audio_models.py` | TODO |
 | 5 | Scale runs: wav2vec2 (temporal), AST + VGGish (mean-pool) | TODO |

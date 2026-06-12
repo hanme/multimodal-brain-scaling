@@ -1,0 +1,191 @@
+Summary of EEG Datasets Literature Review 
+Spreadsheet Link with dataset list: https://docs.google.com/spreadsheets/d/1d-Bw7NkL7MCyKQLO5DnArSnaWeZbFiDlh2cYTkCH6qw/edit?usp=sharing
+Overview:
+Search aimed to identify public EEG datasets that contained audio/audio-visual stimuli, EEG recordings, and metadata to map events to EEG
+To identify datasets I manually reviewed Zenodo, OpenNeuro, OSF, PhysioNet, Dryad, Google Search, Nature Scientific Data, and some public lists, as well as performed LLM-assisted search 
+Inclusion criteria:
+EEG was recorded while subjects listened to audio/audio-visual stimuli passively
+The original audio stimuli are available, either as .wav, etc. or through manual creation via a description and a presentation software
+EEG responses are available as BrainVision or .mat
+Metadata exists to link align EEG response to corresponding stimulus at a fine-grained level
+Stimuli must not include spatial/synthetic manipulation, competing sound streams, different sounds to each ear, attention switching instructions.
+Datasets collected using instructions not involving attention, such as imagery or imagination, were acceptable when needed
+Preferred stimuli were naturalistic, such as speech, music, tones, natural sounds and did not include a visual component
+Main findings (addressing your criteria):
+Naturalistic stimuli: are available as speech, music, natural sounds (e.g. dog bark), and ERP paradigms (e.g oddball)
+Auditory vs. audio-visual: Since there are several high-quality datasets for audio-only stimuli, I did not include audio-visual stimuli 
+Subjects: 
+~50 subjects: 
+EEG Datasets for Naturalistic Listening to "Alice in Wonderland" (ID = 1)
+Ds004718: Le Petit Prince Hong Kong (LPPHK): Naturalistic fMRI and EEG data from older Cantonese speakers (ID = 3)
+ERP CORE – MMN Paradigms (ID = 13, 40 subjects)
+~10-20 subjects for majority of remaining datasets
+Time per subject:
+Ranges between 10 and ~100min per subject, majority ~45 min
+Repetitions per stimuli: Most provide 1 repetition with few exceptions, e.g.,
+Marion et al. "Music of Silence" (ID = 14) – 4 reps per music stimuli across different imagery instruction conditions
+EEG-Based Classification of Natural Sounds (ID = 22)
+2 minute continuous recordings of mixed 2s natural sounds, providing ~40 reps per 2s stimuli (e.g dog bark for 2s, horn honk for 2s)
+Best Available Datasets:
+Naturalistic speech:
+1. EEG Datasets for Naturalistic Listening to "Alice in Wonderland" (ID = 1)
+English audiobooks
+49 subjects x ~12.4 min EEG/subject =  ~588 min total EEG
+1 rep per stimuli
+60 channel EEG
+largest subject count 
+2. DS004408: EEG Responses to Continuous Naturalistic Speech (ID = 2) 
+English audiobooks
+19 subjects x ~60 min EEG/subject =  ~1140 min total EEG
+1 rep per stimuli
+128 channel EEG
+Long per-subject duration 
+3. Cortical Tracking of Surprisal during Continuous Speech (ID = 5)
+English audiobooks
+13 subjects x ~45 min/subject = ~585 min EEG
+1 rep per stimuli
+64 channel EEG
+Music:
+1. Di Liberto Bach melodic expectations (ID = 15)
+monophonic Bach (piano-synthesized) pieces
+20 subjects (10 musician / 10 non-musician) x ~75 min/subject = 1500 min total EEG
+3 reps per stimuli
+64 channel EEG
+Audio stimuli only available as .mid files, which I would need to reliably convert to .wav
+2. OpenMIIR (ID = 18)
+12 short music fragments (10sec)
+10 subjects x ~42 min/subject x (2/4) conditions = 210 min total EEG
+5 reps per condition x 4 conditions per stimuli
+use perception and imagination conditions only
+64 channel EEG
+EEG only via BitTorrent, may be a problem
+Natural sounds / tones / oddball paradigms:
+1. EEG-Based Classification of Natural Sounds (ID = 22)
+2-sec natural sounds (speech, music, natural) that create ~2 min sound tracks
+15 subjects x  ~93–108 min/subject = ~1500 min total EEG
+43–50 reps per sound (2s) but 1 rep per 2 minute track combination
+128-channel EEG
+Strongest dataset for repetitions
+2. Auditory oddball comparison (Optimum-1 / Learning-oddball / local-global) (ID = 21)
+tones/oddball paradigms
+15 subjects x ~40–45 min/subject = ~600-675 min EEG
+many trials per paradigm, depending on paradigm and participant
+64 channel EEG
+3. TSS (Tones/Sweeps/Syllables) Attention Dataset (ID = 20)
+tones, FM sweeps, syllables + distractors sounds (natural)
+27 subjects x ~29 min/subject x up to 3 reps per distractor = ~780 min EEG
+63 channel EEG
+Proposed Plan for Creation of EEG Encoding Models 
+Models list: Whisper-tiny, base, small, medium, large; AST, Wav2vec2 base, large, VGGish
+1. Select dataset(s) from dataset list and pre-process/segment the datasets
+Preprocess the EEGs using EEG standardization
+Use metadata to segment EEG and audio such that stimuli (e.g. words) are not cut across segments, such that the segments are under the temporal bin size for the model 
+Two segmentations: target segment size of 10’’ (non-whisper), 30’’ (whisper)
+2.  Create audio + EEG set of pairs:
+(Audio sample A_i, Corresponding EEG Segment Y_i) for each original Audio stimuli A, EEG sample Y, where i = time index
+E.g. a 2 min Audio / EEG recording may be split into 12 x ~10’’ segments and 4 x 30’’ segments
+3. For each model in the model list, retrieve final embedding X_i for each audio stimuli sample A_i creating the dataset of pairs: (X_i, Y_i) 
+4. For each model in the models list above, train a separate ridge regression model M to predict Y_i from X_i (results in 9 models)
+5. Evaluate the encoding performance for each model M on a held-out set of the stimuli (~10%)
+Then proceed with process as before to select electrodes as the new “MMN Unit Set”:
+For each model in the models list:
+For each audio stimuli pair A = (A_std, A_dev) in the MMN literature set:
+Retrieve the predicting EEG Y across all electrodes using the linear mapping model M established above for the given model
+Then the difference of the EEGs can be computed D_A = Y_dev-Y_std where D_A is matrix of dimension electrodes x time
+For each electrode, compute its response r to a stimuli by using the baseline normalized negative peak metric on D_A discussed before, producing a vector of all the responses of each electrode with the dimension # of electrodes
+Join the vectors for each electrode to get a matrix of dim electrodes  x number of stimuli
+each row represents the electrodes responses r to all the literature stimuli
+Perform a 1–sided 1 sample t-test with null hypothesis of mean(r) = 0 on each row of the matrix to obtain a corresponding p-value for each electrode
+Perform multiple testing correction on all p-values (number of tests = number of electrodes)
+This is probably not even necessary now since before had thousands of units 
+Take the top 5% of electrodes as MMN set and/or set a threshold for p-value to be included
+Would be ideal if these electrodes are the MMN electrodes in human studies!
+3. Questions 
+temporal bin size for training
+If chopping audio and EEG into many samples, how do we control for prior audio affecting future EEG, and sound artifacts if cutting in the middle of word/tone?
+I suggest we use the available metadata and cut the audio / EEG before the latest possible word that is under the bin size, creating many segments that are close to the maximum model audio window size
+E.g. If the speech is “The cat crossed the road…” with words beginning at 9.2, 9.4, 9.6, 9.8 and 10.1 secs respectively, then the stimuli would be split as “The cat crossed the “, “ road …” with the silence between ‘the’ and ‘road’ evenly split between segments
+Keep general for now (10’’/30”)
+Music datasets, if used, just cut into time based segments of 10’’ / 30’’ since tones are continuous
+Audio stimuli, if used, under temporal bin size (e.g tone series, melody) are preceded by silence to fill the model window, and the corresponding EEG in this time is null/0’s 
+Chop into two datasets 10’’/ 30’’ segments
+How many different datasets do we use?
+EEG contains different # of channels → If using multiple datasets, we must have datasets that are the same number of channels, unless there is a way to downsample EEG?
+Are 64-channel electrodes essentially the same across experiments? That is, is an electrode in the same place relatively, or not? If not, we would be limited to one dataset? 
+We have 4 types of stimuli: Speech, natural sounds, ERP paradigms, and music. Which stimuli should we prioritize for mapping? 
+Many models are trained with speech (e.g. whisper) so may yield a better performing mapping function, and speech datasets seem most popular.
+However, tone-like sounds are more specific to our use case.  Perhaps a combination?
+What quantity of samples do we need?
+Whisper models have 30’’ sample size instead of 10’’ which reduces train set by factor of ⅓ 
+linear layer - ridge? 
+if reps of stimuli available: average first, then fit?
+What EEG pre-processing steps?
+Many datasets offer pre-processing scripts, should we use these or should we implement uniform processing script(s) for our case?
+Do we introduce delay to account for cortical processing in between ear drum and cortical responses?
+Create the audio-EEG pairs A_{i-delay}, Y_i where delay is the time for EEG lag?
+BIDS-EEG - other good EEG data standardization?
+
+Immediate next steps? Notes ahead of June 3 meeting (Sophie)
+0. Discuss highlights above
+0. Merge delta_T features; run the temporal evaluation code for phase 4b, interpret results, commit layers
+Primary output: score[t, n_ch] = held-out Pearson r between Ridge-predicted and actual EEG at each time bin (optionally ÷ noise ceiling).
+Thus we can have table of ranking  model, t, ROI, layer, score
+This enables use to see for every model, every t which layer activations best predicts EEG component 
+Plot Fz vs time, one curve per layer.
+Compare ranking vs 4a
+1. Update audio_models.py to include wav2vec2 large/base, ast, vggish + Update extract_features_delta_T.py to include wav2vec2
+2. Run Phase 4b on all models. run temporal evaluation, interpret results
+3. Integration of EEG mapping with current pipeline? Obviously can try all
+Use to select electrodes: Select a layer that best predicting EEG, then select EEG electrodes using the previous approach (t-test, top 5% of corrected p-values) – described above
+Best predicting EEG → ROI’s offered by Kadir’s package: Fz, FCz, frontal, temporal, whole brain, etc.; what ROI do we use?
+And what time point do we use? 
+Average, Single t, etc. This is equivalent to Q window in current WIP pipeline
+
+
+
+
+
+
+
+
+
+
+Questions for Kadir - Jun 10, 2026
+EEG Standardization: We have been investigating the effect of increasing training set size for the mapping function performance between model features and EEG, by combining multiple datasets (D1+D2 → D3). D1 and D2 differ in # channels/subjects/stimuli.
+Initially, D2's EEG had already been normalized to near-0 scale, while D1's EEG was on a raw-amplitude scale. When concatenated for D3, this scale mismatch created a confound rather than increase in encoding performance. 
+Model essentially trivially predict "which dataset is this trial from" from the target values themselves, grossly inflating D3's correlations without any corresponding change in the noise ceiling.
+I’ve attempted to fix this by per-channel z-scoring both D1's and D2's EEG using each dataset's own training-split mean/std before concatenation (doesn't change the noise ceiling or each dataset's standalone Pearson r). Result:
+D3's overall statistics are back in the normal range (similar medians to D1/D2 alone), so there's no conclusive "more data = better encoding" effect
+On the curated high-noise-ceiling electrode set, the not much more promising:
+ Fz appeared to improve with D3 (effect size 0.53→0.59 for whisper-base, 0.49→0.63 for whisper-small).
+However, a follow-up check (scoring the D3 RR model separately on each dataset's own test set) showed this was partly attributed to a pooled-test-set: when scored within-dataset only, Fz's "improvement" disappears (D3 ≈0.50, same as D1-alone =0.49–0.53).. 
+One electrode (TP7) showed a large new effect (0.60) not present in either dataset alone, only D3. But when conducting the same test as above, TP7's effect is reduced (~0.33, not 0.60).
+So combining datasets did not produce significant improvement in encoding performance yet.
+I am unsure how to properly standardize EEG datasets and enable pooling of data across data sources.
+For multi-source datasets do you have recommendations for: feature/EEG standardization? Test set construction? for computing noise ceiling corrected values?
+
+2. Noise correction:
+For our dataset, there are no repeated trials per subject. Right now, I compute NC by splitting the 19 subjects into two groups, averaging EEG within each group, and correlating the two group-level averages (ie. cross-subject reliability), then applying the Spearman-Brown + sqrt(NC/100) correction as was done originally.
+For this paper, is  the NC within-subject (repeated presentations) or also across-subject?
+If within-subject (I assume this) we'd expect our cross-subject NC to be a more conservative ceiling than within-subject NC in general, which would inflate our NC-corrected scores relative to the visual benchmarks' scale.
+Is the across-subject implementation an appropriate moderating factor for noisy data rather than within-subject? Would you recommend a different approach for noise correction in datasets with 1-rep-per-stimuli-per-subject?
+If the above is too complex, would it be possible to use non-corrected r values?
+
+
+3. Temporal EEG manipulation: If he has experience working with temporal stimuli-to-EEG models:
+should we introduce a delay to account for cortical processing in between ear drum and cortical responses when establishing features to EEG mapping?
+Create the audio-EEG pairs A_{i-delay}, Y_i where delay is the time for EEG lag?
+I understand that not including this in the establishment of the features-to-EEG mapping with natural speech might have a universal effect on performance across conditions, and thus not matter too much when evaluating questions such as effect of dataset size on encoding performance. 
+But, this is relevant for the MMN pipeline, where we desire to show MMN-like responses in the model would be convincing if ~100-200ms after deviant/final tone, we had high encoding performance
+Do you have recommendations for collapsing a temporal score curve over time (scores[T]) into a single number (peak, window-average, or mean) for layer comparison/selection purposes?
+
+4. Potential failure modes: 
+Given Whisper's Delta_T features for an MMN paradigm (heavily zero-padded near 30s) will look very different from features for natural-speech segments at the same nominal index: 
+Do we suspect significant failure when applying a linear readout trained on one stimulus distribution to a much different one?
+
+
+
+
+
+
+

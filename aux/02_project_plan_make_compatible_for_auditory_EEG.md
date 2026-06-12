@@ -1,5 +1,14 @@
 # Project Plan: Adapting mbs for Auditory EEG Encoding Models
 
+> ⚠️ **PARTIALLY SUPERSEDED (2026-06-12).** The *encoding method* and its layer conclusion in
+> **Phase 4b** below (per-time-bin Ridge; "blocks.2 is best") are **superseded** by
+> `aux/project_plan_20260611.md` (Workstream A: mTRF lagged shared-weight Ridge). The old
+> per-bin lag curve was a slow-autocorrelation confound; the de-confounded answer is a proper
+> auditory TRF (~120–140 ms) with **mid-depth (~blocks-3)** layers best, not blocks-2.
+> Everything else here — Phases 0–3 infrastructure, the Delta_T decision, the Phase 5 model-spec
+> table, and the Phase 6 MMN/in-silico plan — **remains canonical.** See the handover's
+> "UPDATE 2026-06-11/12" section for the summary.
+
 **Goal:** Use the `mbs` ridge regression pipeline (originally built for visual brain-model alignment) to
 train auditory EEG encoding models — i.e., linear readouts from audio model layers to EEG electrode
 responses. The immediate scientific goal is to identify which layer of which audio model (Whisper
