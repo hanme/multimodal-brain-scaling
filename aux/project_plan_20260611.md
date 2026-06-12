@@ -157,6 +157,15 @@ does the learned temporal encoder beat ridge, as MIRAGE claims).
 
 ## 4. Noise ceiling
 
+- ⚠️ **FLAG (2026-06-12, raised by Hannes): the exact NC definition still needs to be discussed.**
+  The current implementation ([format_eeg_hdf5.py:223](../src/mbs/data_prep/format_eeg_hdf5.py#L223))
+  splits the **19 subjects** (not stimulus repeats) into two halves, averages EEG within each half,
+  then correlates the two half-group averages **across the 30 s windows at each fixed within-window
+  time-bin** (per channel), Spearman-Brown corrected. Two points to settle later: (a) the unit being
+  halved is subjects — fine for 1-rep continuous speech, but worth stating explicitly vs. the visual
+  benchmarks' (likely within-subject) ceiling; (b) correlating *across windows at a fixed latency*
+  is a defensible but specific choice — confirm it's the quantity we want. **For now this is fine;
+  we proceed with it and revisit before any NC-corrected numbers are reported.**
 - **Keep** the current per-time-point, per-channel **cross-subject** split-half ceiling — it is
   the correct fallback for 1-rep-per-subject data (Kadir confirmed).
 - **Caveat for comparability:** the visual benchmarks may use a *within-subject* (repeats)
@@ -202,6 +211,9 @@ does the learned temporal encoder beat ridge, as MIRAGE claims).
 4. **Scalar collapse for ranking:** peak vs window-average over 50–800 ms.
 5. **Probe scope (B):** one trunk across subjects (yes) and across ROIs (?); probe capacity.
 6. **Loss (B):** Pearson-over-time vs MSE; output window length.
+7. **Exact NC definition** (⚠️ flagged in §4): subject-split vs other unit; across-window-at-fixed-
+   latency correlation vs alternatives; comparability scale vs visual benchmarks. *Fine for now;
+   discuss before reporting NC-corrected numbers.*
 
 ---
 

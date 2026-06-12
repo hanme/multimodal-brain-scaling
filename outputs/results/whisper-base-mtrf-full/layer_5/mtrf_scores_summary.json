@@ -1,0 +1,710 @@
+{
+  "model_id": "whisper-base",
+  "mode": "single_lag",
+  "lags_bins": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40
+  ],
+  "lags_ms": [
+    0.0,
+    20.0,
+    40.0,
+    60.0,
+    80.0,
+    100.0,
+    120.0,
+    140.0,
+    160.0,
+    180.0,
+    200.0,
+    220.0,
+    240.0,
+    260.0,
+    280.0,
+    300.0,
+    320.0,
+    340.0,
+    360.0,
+    380.0,
+    400.0,
+    420.0,
+    440.0,
+    460.0,
+    480.0,
+    500.0,
+    520.0,
+    540.0,
+    560.0,
+    580.0,
+    600.0,
+    620.0,
+    640.0,
+    660.0,
+    680.0,
+    700.0,
+    720.0,
+    740.0,
+    760.0,
+    780.0,
+    800.0
+  ],
+  "config": {
+    "model_id": "whisper-base",
+    "target_feature_layers": "configs/extraction/audio/whisper_base_layers.json",
+    "data_hdf5_path": "outputs/neural_data/broderick2018_30s.h5",
+    "features_dir": "outputs/features/whisper-base-delta-t/merged/",
+    "output_dir": "outputs/results/whisper-base-mtrf-full/layer_5",
+    "mode": "single_lag",
+    "lag_min_ms": 0.0,
+    "lag_max_ms": 800.0,
+    "lag_step_ms": 20.0,
+    "highpass_hz": 0.0,
+    "n_train_time_samples": 200,
+    "test_time_stride": 1,
+    "feature_pca": 0,
+    "standardize_features": true,
+    "nc_threshold": 0.0,
+    "noise_ceiling_correct": true,
+    "use_wide_range_alphas": false,
+    "roi_allowlist": "",
+    "exclude_whole_brain": true,
+    "layer_id": 5,
+    "overwrite": true,
+    "seed": 42
+  },
+  "entries": [
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "AF3",
+      "n_ch": 1,
+      "best_lag_ms": 60.0,
+      "best_score": 0.3127489387989044,
+      "mean_score": 0.30251622200012207
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "AF4",
+      "n_ch": 1,
+      "best_lag_ms": 140.0,
+      "best_score": 0.654610812664032,
+      "mean_score": 0.6198199987411499
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "AF7",
+      "n_ch": 1,
+      "best_lag_ms": 300.0,
+      "best_score": 0.3489917814731598,
+      "mean_score": 0.2647421658039093
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "AF8",
+      "n_ch": 1,
+      "best_lag_ms": 340.0,
+      "best_score": 256.4457092285156,
+      "mean_score": 243.85739135742188
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "AFz",
+      "n_ch": 1,
+      "best_lag_ms": 60.0,
+      "best_score": 0.35145360231399536,
+      "mean_score": 0.33666694164276123
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "C1",
+      "n_ch": 1,
+      "best_lag_ms": 560.0,
+      "best_score": 329.1080627441406,
+      "mean_score": 321.7318420410156
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "C2",
+      "n_ch": 1,
+      "best_lag_ms": 480.0,
+      "best_score": 337.01904296875,
+      "mean_score": 324.7339782714844
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "C3",
+      "n_ch": 1,
+      "best_lag_ms": 60.0,
+      "best_score": 3.4267594814300537,
+      "mean_score": 3.2927844524383545
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "C4",
+      "n_ch": 1,
+      "best_lag_ms": 560.0,
+      "best_score": 330.5695495605469,
+      "mean_score": 322.9310302734375
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "C5",
+      "n_ch": 1,
+      "best_lag_ms": 60.0,
+      "best_score": 0.40578165650367737,
+      "mean_score": 0.3935926556587219
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "C6",
+      "n_ch": 1,
+      "best_lag_ms": 40.0,
+      "best_score": 295.2757873535156,
+      "mean_score": 285.543701171875
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "CP1",
+      "n_ch": 1,
+      "best_lag_ms": 200.0,
+      "best_score": 76.53083038330078,
+      "mean_score": 62.45029067993164
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "CP2",
+      "n_ch": 1,
+      "best_lag_ms": 720.0,
+      "best_score": 186.7236785888672,
+      "mean_score": 163.6951446533203
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "CP3",
+      "n_ch": 1,
+      "best_lag_ms": 600.0,
+      "best_score": 271.81378173828125,
+      "mean_score": 258.841064453125
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "CP4",
+      "n_ch": 1,
+      "best_lag_ms": 60.0,
+      "best_score": 296.8622131347656,
+      "mean_score": 286.86431884765625
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "CP5",
+      "n_ch": 1,
+      "best_lag_ms": 60.0,
+      "best_score": 281.2821350097656,
+      "mean_score": 269.7175598144531
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "CP6",
+      "n_ch": 1,
+      "best_lag_ms": 40.0,
+      "best_score": 0.6301387548446655,
+      "mean_score": 0.6019296646118164
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "CPz",
+      "n_ch": 1,
+      "best_lag_ms": 600.0,
+      "best_score": -68.38145446777344,
+      "mean_score": -89.13601684570312
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "Cz",
+      "n_ch": 1,
+      "best_lag_ms": 140.0,
+      "best_score": 0.9800910949707031,
+      "mean_score": 0.8995298147201538
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "F1",
+      "n_ch": 1,
+      "best_lag_ms": 60.0,
+      "best_score": 274.76519775390625,
+      "mean_score": 263.85882568359375
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "F2",
+      "n_ch": 1,
+      "best_lag_ms": 440.0,
+      "best_score": 353.36187744140625,
+      "mean_score": 344.13720703125
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "F3",
+      "n_ch": 1,
+      "best_lag_ms": 60.0,
+      "best_score": 0.6330121755599976,
+      "mean_score": 0.612315833568573
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "F4",
+      "n_ch": 1,
+      "best_lag_ms": 440.0,
+      "best_score": 0.1369149088859558,
+      "mean_score": 0.10199178010225296
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "F5",
+      "n_ch": 1,
+      "best_lag_ms": 60.0,
+      "best_score": 296.68975830078125,
+      "mean_score": 283.7836608886719
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "F6",
+      "n_ch": 1,
+      "best_lag_ms": 380.0,
+      "best_score": 314.8255310058594,
+      "mean_score": 303.9608459472656
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "F7",
+      "n_ch": 1,
+      "best_lag_ms": 60.0,
+      "best_score": 0.3978361487388611,
+      "mean_score": 0.38631948828697205
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "F8",
+      "n_ch": 1,
+      "best_lag_ms": 60.0,
+      "best_score": 0.8594264984130859,
+      "mean_score": 0.8257909417152405
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "FC1",
+      "n_ch": 1,
+      "best_lag_ms": 420.0,
+      "best_score": 195.9840087890625,
+      "mean_score": 177.7129364013672
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "FC2",
+      "n_ch": 1,
+      "best_lag_ms": 60.0,
+      "best_score": 318.691162109375,
+      "mean_score": 310.63079833984375
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "FC3",
+      "n_ch": 1,
+      "best_lag_ms": 40.0,
+      "best_score": 0.37013253569602966,
+      "mean_score": 0.3584555685520172
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "FC4",
+      "n_ch": 1,
+      "best_lag_ms": 160.0,
+      "best_score": 0.12200893461704254,
+      "mean_score": 0.09391126036643982
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "FC5",
+      "n_ch": 1,
+      "best_lag_ms": 60.0,
+      "best_score": 271.2120361328125,
+      "mean_score": 259.9029846191406
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "FC6",
+      "n_ch": 1,
+      "best_lag_ms": 0.0,
+      "best_score": 347.59356689453125,
+      "mean_score": 335.5075988769531
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "FCz",
+      "n_ch": 1,
+      "best_lag_ms": 300.0,
+      "best_score": 138.69717407226562,
+      "mean_score": 121.63412475585938
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "FT7",
+      "n_ch": 1,
+      "best_lag_ms": 60.0,
+      "best_score": 0.32065311074256897,
+      "mean_score": 0.3112567067146301
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "FT8",
+      "n_ch": 1,
+      "best_lag_ms": 440.0,
+      "best_score": 300.46783447265625,
+      "mean_score": 287.85687255859375
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "Fp1",
+      "n_ch": 1,
+      "best_lag_ms": 60.0,
+      "best_score": 0.45515796542167664,
+      "mean_score": 0.43919888138771057
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "Fp2",
+      "n_ch": 1,
+      "best_lag_ms": 300.0,
+      "best_score": 0.3363713026046753,
+      "mean_score": 0.3161229193210602
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "Fpz",
+      "n_ch": 1,
+      "best_lag_ms": 60.0,
+      "best_score": 0.3441108167171478,
+      "mean_score": 0.33413684368133545
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "Fz",
+      "n_ch": 1,
+      "best_lag_ms": 440.0,
+      "best_score": 0.4394172132015228,
+      "mean_score": 0.420951247215271
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "O1",
+      "n_ch": 1,
+      "best_lag_ms": 60.0,
+      "best_score": 312.04766845703125,
+      "mean_score": 300.4227294921875
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "O2",
+      "n_ch": 1,
+      "best_lag_ms": 40.0,
+      "best_score": 0.3691761791706085,
+      "mean_score": 0.35646766424179077
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "Oz",
+      "n_ch": 1,
+      "best_lag_ms": 60.0,
+      "best_score": 0.5179352164268494,
+      "mean_score": 0.5011114478111267
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "P1",
+      "n_ch": 1,
+      "best_lag_ms": 60.0,
+      "best_score": 309.90203857421875,
+      "mean_score": 299.2267150878906
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "P10",
+      "n_ch": 1,
+      "best_lag_ms": 220.0,
+      "best_score": 0.12347117811441422,
+      "mean_score": 0.1149323508143425
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "P2",
+      "n_ch": 1,
+      "best_lag_ms": 360.0,
+      "best_score": -222.20457458496094,
+      "mean_score": -234.0770721435547
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "P3",
+      "n_ch": 1,
+      "best_lag_ms": 60.0,
+      "best_score": 304.5617980957031,
+      "mean_score": 293.9813232421875
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "P4",
+      "n_ch": 1,
+      "best_lag_ms": 40.0,
+      "best_score": 199.00096130371094,
+      "mean_score": 186.09010314941406
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "P5",
+      "n_ch": 1,
+      "best_lag_ms": 40.0,
+      "best_score": 294.13677978515625,
+      "mean_score": 283.7839050292969
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "P6",
+      "n_ch": 1,
+      "best_lag_ms": 40.0,
+      "best_score": 0.41438719630241394,
+      "mean_score": 0.39732179045677185
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "P7",
+      "n_ch": 1,
+      "best_lag_ms": 60.0,
+      "best_score": 0.31901416182518005,
+      "mean_score": 0.3070548474788666
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "P8",
+      "n_ch": 1,
+      "best_lag_ms": 40.0,
+      "best_score": 0.7604077458381653,
+      "mean_score": 0.7161135673522949
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "P9",
+      "n_ch": 1,
+      "best_lag_ms": 60.0,
+      "best_score": 0.32266998291015625,
+      "mean_score": 0.3117527961730957
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "PO3",
+      "n_ch": 1,
+      "best_lag_ms": 60.0,
+      "best_score": 312.0067138671875,
+      "mean_score": 301.622314453125
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "PO4",
+      "n_ch": 1,
+      "best_lag_ms": 60.0,
+      "best_score": 0.3984691798686981,
+      "mean_score": 0.384859561920166
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "POz",
+      "n_ch": 1,
+      "best_lag_ms": 60.0,
+      "best_score": 1.1963175535202026,
+      "mean_score": 1.154267430305481
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "Pz",
+      "n_ch": 1,
+      "best_lag_ms": 60.0,
+      "best_score": 0.35952502489089966,
+      "mean_score": 0.3465522825717926
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "T7",
+      "n_ch": 1,
+      "best_lag_ms": 60.0,
+      "best_score": 0.3421824276447296,
+      "mean_score": 0.3297918438911438
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "T8",
+      "n_ch": 1,
+      "best_lag_ms": 40.0,
+      "best_score": 0.3672293424606323,
+      "mean_score": 0.35488641262054443
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "TP7",
+      "n_ch": 1,
+      "best_lag_ms": 40.0,
+      "best_score": 0.32322531938552856,
+      "mean_score": 0.31307923793792725
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "TP8",
+      "n_ch": 1,
+      "best_lag_ms": 40.0,
+      "best_score": 0.46233680844306946,
+      "mean_score": 0.44052213430404663
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "central_cluster",
+      "n_ch": 3,
+      "best_lag_ms": 560.0,
+      "best_score": 111.59378051757812,
+      "mean_score": 109.04012298583984
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "frontal_cluster",
+      "n_ch": 4,
+      "best_lag_ms": 300.0,
+      "best_score": 34.960227966308594,
+      "mean_score": 30.692068099975586
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "occipital_cluster",
+      "n_ch": 3,
+      "best_lag_ms": 60.0,
+      "best_score": 104.30960083007812,
+      "mean_score": 100.42584991455078
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "parietal_cluster",
+      "n_ch": 5,
+      "best_lag_ms": 40.0,
+      "best_score": 100.86286926269531,
+      "mean_score": 96.28729248046875
+    },
+    {
+      "layer": "blocks.5",
+      "subject": "group",
+      "roi": "temporal_cluster",
+      "n_ch": 2,
+      "best_lag_ms": 40.0,
+      "best_score": 0.3542404770851135,
+      "mean_score": 0.3423389196395874
+    }
+  ]
+}

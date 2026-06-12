@@ -179,9 +179,54 @@ I understand that not including this in the establishment of the features-to-EEG
 But, this is relevant for the MMN pipeline, where we desire to show MMN-like responses in the model would be convincing if ~100-200ms after deviant/final tone, we had high encoding performance
 Do you have recommendations for collapsing a temporal score curve over time (scores[T]) into a single number (peak, window-average, or mean) for layer comparison/selection purposes?
 
-4. Potential failure modes: 
-Given Whisper's Delta_T features for an MMN paradigm (heavily zero-padded near 30s) will look very different from features for natural-speech segments at the same nominal index: 
+4. Potential failure modes:
+Given Whisper's Delta_T features for an MMN paradigm (heavily zero-padded near 30s) will look very different from features for natural-speech segments at the same nominal index:
 Do we suspect significant failure when applying a linear readout trained on one stimulus distribution to a much different one?
+
+
+========================================================================
+WHAT WE ARE WAITING FOR -- in-silico MMN frequency sweep (Hannes, 2026-06-12)
+========================================================================
+Goal: show the in-silico MMN (predicted dev-std EEG from whisper-base features via the
+Broderick FIR mTRF mapping) is NOT an artifact of the one 600->1000 Hz pair (method_09),
+by sweeping frequency-pair size AND deviance direction, across model layers and parcels.
+
+Jobs running on SLURM (submitted ~15:xx, ETA ~40 min):
+  - 7 feature-extraction arrays (whisper-base delta_T) for the new methods:
+      55052735 m37, 36 m12, 37 m44, 38 m55, 39 m12_counter, 40 m44_counter, 41 m55_counter
+      (method_09 features already existed; 16 stimuli each = 1 standard + 15 deviants)
+  - 1 fit+plot layer scan: 55052742_[0-5] (afterok dependency on all 7 extractions).
+      Each task fits the Broderick->parcel mapping ONCE for one whisper layer (blocks.0-5)
+      and loops all 8 methods -> 48 figures total at
+      outputs/figures/insilico_mmn/insilico_mmn__<method>__<layer>.png
+
+8 methods, ALL identity-MMN design (final/critical tone PHYSICALLY IDENTICAL in standard
+and deviant; deviance lives in the preceding context frequency):
+   DOWNWARD deviants (regular set): m37 1050->1000 (~4%), m12 1200->1000 (~17%),
+                                    m44 1000->633 (~37%), m09 1000->600 (~40%),
+                                    m55 2000->1000 (~50%)
+   UPWARD deviants (counter set):   m12c 1000->1200 (~20%), m44c 633->1000 (~58%),
+                                    m55c 1000->2000 (octave)
+   -> m12/m44/m55 appear in BOTH directions = matched up/down mirror pairs (artifact control).
+   Stimuli copied (not symlinked) from sigfstea/scz_updated_pipeline_071226/.../whisper/.
+
+Analysis choices made this round (see also the NC discussion below / Q2 to Kadir):
+  - NC-based CHANNEL exclusion before fitting (Kadir precedent: drop channels with
+    reliability r <= threshold; committed_layers uses r>0.1). We use r>0.2 -- doesn't
+    matter exactly, there is a hard gap (every Broderick channel is r>=0.34 or r<=0.16).
+  - Rows = coarse 10-20 parcels, RAW-averaged over NC-surviving member channels:
+      frontal[Fz,F3,F4], temporal[T7,T8], parietal[Pz,P7,P8], occipital[Oz,O2].
+      central_cluster DROPS OUT entirely (Cz/C3/C4 all r<0.2) -> Broderick has no reliable
+      central EEG. So 4 parcels, not 5.
+  - The earlier Cz "MMN" blowup was a junk channel (raw std~19000, NC r~0.16), NOT an
+    NC-normalization artifact -- the stored EEG is not NC-normalized.
+  - Each figure row has its OWN y-scale (so a big-amplitude channel can't hide others).
+
+What we are checking once figures land:
+  (a) Does the MMN survive now that Cz is excluded?
+  (b) Does it appear on the HIGH-NC parcels (temporal r=0.86, parietal, frontal)?
+  (c) Does MMN magnitude scale with deviance size, and flip sign between up/down mirror pairs?
+  (d) Is it consistent across whisper layers blocks.0-5?
 
 
 

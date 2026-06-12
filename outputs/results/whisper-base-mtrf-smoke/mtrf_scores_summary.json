@@ -1,0 +1,82 @@
+{
+  "model_id": "whisper-base",
+  "mode": "single_lag",
+  "lags_bins": [
+    0,
+    2,
+    4,
+    6,
+    8,
+    10,
+    12,
+    14,
+    16,
+    18,
+    20
+  ],
+  "lags_ms": [
+    0.0,
+    40.0,
+    80.0,
+    120.0,
+    160.0,
+    200.0,
+    240.0,
+    280.0,
+    320.0,
+    360.0,
+    400.0
+  ],
+  "config": {
+    "model_id": "whisper-base",
+    "target_feature_layers": "configs/extraction/audio/whisper_base_layers.json",
+    "data_hdf5_path": "outputs/neural_data/broderick2018_30s.h5",
+    "features_dir": "outputs/features/whisper-base-delta-t/merged/",
+    "output_dir": "outputs/results/whisper-base-mtrf-smoke/",
+    "mode": "single_lag",
+    "lag_min_ms": 0.0,
+    "lag_max_ms": 400.0,
+    "lag_step_ms": 40.0,
+    "n_train_time_samples": 150,
+    "test_time_stride": 5,
+    "feature_pca": 0,
+    "standardize_features": true,
+    "nc_threshold": 0.0,
+    "noise_ceiling_correct": true,
+    "use_wide_range_alphas": false,
+    "roi_allowlist": "Fz,T7,T8,AF3,FT7",
+    "exclude_whole_brain": true,
+    "layer_id": 2,
+    "overwrite": true,
+    "seed": 42
+  },
+  "entries": [
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "AF3",
+      "n_ch": 1,
+      "best_lag_ms": 240.0,
+      "best_score": 0.5209065079689026,
+      "mean_score": 0.5081214904785156
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "FT7",
+      "n_ch": 1,
+      "best_lag_ms": 0.0,
+      "best_score": 0.5476789474487305,
+      "mean_score": 0.5370646715164185
+    },
+    {
+      "layer": "blocks.2",
+      "subject": "group",
+      "roi": "Fz",
+      "n_ch": 1,
+      "best_lag_ms": 160.0,
+      "best_score": 0.6805019378662109,
+      "mean_score": 0.6650654077529907
+    }
+  ]
+}
