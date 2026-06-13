@@ -1,7 +1,7 @@
 # Handover: Auditory EEG Encoding Models — Sophie
 
 **Status: living document, updated as plan executes.**
-Last updated: 2026-06-07
+Last updated: 2026-06-13
 See `02_project_plan_make_compatible_for_auditory_EEG.md` for the full technical roadmap.
 See `00_schizophrenia_pipeline_Sophie_2026.md` for the MMN unit-selection pipeline this feeds into.
 
@@ -16,6 +16,177 @@ electrode signals. Once trained, such a model can tell us:
 - Which layer of which audio model best predicts human EEG responses to sound
 - Whether that model-to-brain alignment differs between healthy controls and schizophrenia patients
 - Which layer Sophie's MMN unit selection should target, grounded in actual neural data
+
+---
+
+## ⭐ UPDATE 2026-06-12 — in-silico MMN sweep + per-PARCEL prediction data for your MMN metric
+
+**Read this first if you want the model's predicted EEG to run your MMN-detection metric on.**
+This is the in-silico MMN: we feed your literature MMN stimuli through whisper-base, apply the
+Broderick→EEG mTRF mapping (from the update below), and get a **predicted EEG time course** for
+each stimulus. The deliverable for you is a set of HDF5 files with those predictions at the
+**coarse 10-20 parcel level** (Kadir's clusters), spanning the full clip — i.e. a long flat
+pre-stimulus baseline plus the post-onset response — so you can compute "does this show an MMN?"
+exactly as you did at the model-unit level (baseline-normalised negative peak on deviant−standard,
+flat before onset, dip ~200 ms after).
+
+### What we ran
+- **8 MMN methods, all identity-design** (the final/critical tone is *physically identical* in
+  standard and deviant; the deviance is in the preceding **context** frequency). They span
+  deviance size and BOTH directions, with three matched up/down mirror pairs:
+
+  | method dir | context→final | direction | |Δ| |
+  |---|---|---|---|
+  | `method_37` | 1050→1000 Hz | DOWN | ~4% |
+  | `method_12` | 1200→1000 Hz | DOWN | ~17% |
+  | `method_44` | 1000→633 Hz | DOWN | ~37% |
+  | `method_09` | 1000→600 Hz | DOWN | ~40% |
+  | `method_55` | 2000→1000 Hz | DOWN | ~50% |
+  | `method_12_counter` | 1000→1200 Hz | UP | ~20% |
+  | `method_44_counter` | 633→1000 Hz | UP | ~58% |
+  | `method_55_counter` | 1000→2000 Hz | UP | octave |
+
+  (m12/m44/m55 appear in both directions = artifact control: does the MMN scale with deviance
+  and flip/behave consistently across direction?) Stimuli are copies (not symlinks) of your
+  pre-generated whisper set under `…/scz_updated_pipeline_071226/data/audio_outputs_literature/`.
+- **6 whisper-base layers** (blocks.0–5). Mapping fit once per layer, applied to all 8 methods.
+
+### Parcels, not single electrodes — and NC-based channel exclusion (important)
+We aggregate electrodes to **Kadir's coarse clusters** and exclude unreliable channels first
+(precedent: Kadir's `evaluate_features_committed_layers.py` drops units with reliability `r ≤ 0.1`
+before fitting). We use **r > 0.2** — but it doesn't matter exactly, because Broderick has a hard
+reliability gap (every channel is either r ≥ 0.34 or r ≤ 0.16). Each parcel = **raw average of its
+surviving channels**:
+
+| parcel | channels kept (r>0.2) | dropped |
+|---|---|---|
+| frontal | Fz, F3, F4 | FCz |
+| temporal | T7, T8 | — |
+| parietal | Pz, P7, P8 | P3, P4 |
+| occipital | Oz, O2 | O1 |
+| ~~central~~ | **none** (Cz=0.16, C3=0.09, C4=0.00) | **parcel dropped** |
+
+So you get **4 parcels**. Central drops out entirely — Broderick has no reliable central EEG under
+passive audiobook listening. (Note: the earlier huge "Cz MMN" was a junk channel, raw std ~19,000,
+r ~0.16 — NOT an NC-normalisation artifact; the EEG is not NC-normalised.) ⚠️ The exact NC
+definition for our cross-subject (no-repetition) data is still an open question — see your Q2 to
+Kadir in `aux/sophies_questions_20260611.txt`. For now this is fine; selection is robust to it here.
+
+### ⭐ Where the prediction data is (this is what you asked for)
+```
+outputs/insilico_mmn_predictions/predictions__blocks.{0,1,2,3,4,5}.h5
+```
+One file per layer. Each file (RAW = NOT baseline-corrected; you choose the baseline window):
+```
+attrs: layer, highpass_hz (0.5), lag_max_ms, fs (50), time_step_ms (20), nc_r_threshold (0.2), note,
+       heldout_test_windows, heldout_n_samples           (held-out eval, see section below)
+parcels          [4]            (e.g. b'frontal' b'temporal' b'parietal' b'occipital')
+parcel_members   [4]            (e.g. b'Fz+F3+F4')
+parcel_nc_r      [4]            (cross-subject reliability of the parcel, r-scale)
+heldout_r        [4]            out-of-sample Pearson r of the mapping on held-out TEST runs
+heldout_r_nc     [4]            same, divided by parcel_nc_r (noise-ceiling-normalised)
+<method>/                       (one group per method, names as in the table above)
+   time_ms       [n_t]          0 = final/critical-tone onset; NEGATIVE = before onset (the baseline)
+   standard      [n_t, 4]       raw predicted EEG, standard clip,  columns = parcels
+   deviant_mean  [n_t, 4]       mean over the 15 deviant variants
+   deviants      [15, n_t, 4]   per-variant (N3/N5/N7 × 5), if you want trial-level stats
+   deviant_ids   [15]           variant ids
+   attrs: context_final, direction, final_tone_onset_s, n_deviants
+```
+`n_t` ≈ 1474 bins (the whole ~29.4 s clip minus the lag margin), so `time_ms` runs from roughly
+−29,000 ms up to ~+200 ms — i.e. a very long flat baseline before onset, then the response.
+
+**Compute the MMN metric (parcel × method):**
+```python
+import h5py, numpy as np
+with h5py.File("outputs/insilico_mmn_predictions/predictions__blocks.3.h5") as h:
+    parcels = [p.decode() for p in h["parcels"][:]]          # ['frontal','temporal',...]
+    g = h["method_09"]
+    t   = g["time_ms"][:]                                    # [n_t]
+    mmn = g["deviant_mean"][:] - g["standard"][:]            # [n_t, 4]  (= your D_A)
+# baseline-normalise on the pre-onset window, then negative-peak in the MMN band
+base = (t >= -150) & (t < 0)
+mmn_bc = mmn - mmn[base].mean(0, keepdims=True)
+band = (t >= 100) & (t <= 250)
+neg_peak = mmn_bc[band].min(0)                               # most-negative value per parcel
+# 'shows an MMN' ≈ neg_peak << 0 with a flat (mmn_bc[base] ≈ 0) baseline
+for p, v in zip(parcels, neg_peak):
+    print(f"{p:9s} 100–250 ms negative peak = {v:+.3f}")
+```
+This mirrors your unit-level pipeline: `D_A = Y_dev − Y_std`, baseline-normalised negative-peak
+metric per row, then (across the 8 methods / 24 deviants) a one-sample t-test per parcel if you
+want significance. With only 4 parcels the old "top-5% of units" selection becomes "which parcels
+show the effect" — and the high-NC ones (temporal r≈0.86, parietal/frontal) are the ones to trust.
+
+### ⭐ NEW (2026-06-13) — held-out validation: is the mapping actually any good?
+
+Until now we *fit* the Broderick→EEG mapping but never reported an out-of-sample score, so there
+was no number telling us the predicted EEG is faithful rather than overfit. We now do exactly what
+Kadir does in `multimodal-brain-scaling_Kadir_orig/.../evaluate_features_committed_layers.py`
+(fit on `train`, predict on a held-out `test`, report Pearson r).
+
+- **The split is built into the data, by audiobook run.** `broderick2018_30s.h5` already carries
+  `splits=['train','test']` with `test_runs=[2,9,13,14]`: 252 train windows (16 runs) vs **62 test
+  windows from 4 entirely separate runs** (audio02/09/13/14). Because train/test are different runs,
+  there is **zero acoustic overlap** — no leakage, and no need to shave a buffer around a cut point.
+  (Windows are 30 s with 10 s stride, so they overlap *within* the train set, but never reach test.)
+- **No leakage in preprocessing:** test features are standardised with the **train** mean/std, and
+  the MMN forward model is still fit on the **full** train set (the eval doesn't shrink it).
+- **What we report:** per-parcel out-of-sample Pearson r between predicted and recorded EEG, pooled
+  along time over the test windows (`heldout_r`), plus the noise-ceiling-normalised version
+  `heldout_r_nc = heldout_r / parcel_nc_r`. Stored as top-level datasets in each `predictions__<layer>.h5`.
+
+**Results — out-of-sample r per parcel × layer** (62 test windows, 24,800 pooled time samples;
+all 6 layers complete, job 55104689). Each cell is `heldout_r` (and `heldout_r_nc` below it):
+
+| layer | frontal | temporal | parietal | occipital |
+|---|---|---|---|---|
+| blocks.0 | +0.134 | +0.186 | +0.099 | +0.109 |
+| blocks.1 | +0.131 | +0.179 | +0.088 | +0.104 |
+| blocks.2 | +0.139 | +0.181 | +0.088 | +0.106 |
+| blocks.3 | +0.123 | +0.167 | +0.070 | +0.086 |
+| blocks.4 | +0.134 | +0.174 | +0.071 | +0.090 |
+| blocks.5 | +0.140 | +0.172 | +0.073 | +0.089 |
+
+NC-normalised (`heldout_r_nc = r / parcel_nc_r`), same layout:
+
+| layer | frontal | temporal | parietal | occipital |
+|---|---|---|---|---|
+| blocks.0 | +0.245 | +0.216 | +0.142 | +0.156 |
+| blocks.1 | +0.239 | +0.207 | +0.126 | +0.149 |
+| blocks.2 | +0.254 | +0.210 | +0.126 | +0.151 |
+| blocks.3 | +0.224 | +0.193 | +0.100 | +0.123 |
+| blocks.4 | +0.245 | +0.202 | +0.101 | +0.128 |
+| blocks.5 | +0.255 | +0.199 | +0.105 | +0.127 |
+
+All values are **positive across every parcel and layer** — the mapping generalises to unseen runs
+rather than overfitting — and modest, as expected for group-level EEG encoding. Auditory-sensible
+ordering: **temporal** strongest in raw r (≈0.17–0.19), **frontal** strongest after NC-normalisation
+(≈0.24–0.26, since frontal's noise ceiling is lower so its r counts for more); parietal/occipital
+weakest. Layer differences are small and flat across blocks.0–5 (slight early-layer edge in raw r) —
+consistent with the encoding-quality curve being shallow for whisper-base on this data. Treat these
+as the credibility weight on each parcel's MMN: an MMN in **temporal** (high NC r≈0.86 *and* the best
+raw held-out r) or **frontal** is far more trustworthy than one in a parcel that barely predicts
+held-out EEG.
+
+To re-read them yourself: `h5["heldout_r"][:]` / `h5["heldout_r_nc"][:]` (same parcel order as
+`h5["parcels"]`). Toggle with `--eval_heldout false`; sampling density via `--n_eval_time_samples`.
+
+### Figures (visual version of the same data)
+`outputs/figures/insilico_mmn/insilico_mmn__<method>__blocks.<L>.png` — 48 figures (8 methods × 6
+layers), rows = the 4 parcels (each its **own y-scale**, annotated with NC + member channels),
+columns = deviant / standard / deviant−standard, shaded 100–250 ms band, x = time from final-tone
+onset. Some already show the expected ~200 ms negative dip. **Read the high-NC parcels** (temporal,
+parietal, frontal); ignore raw amplitude on low-NC ones.
+
+### Code / how to regenerate
+- `scripts/insilico_mmn.py` — fits NC-masked parcels, loops methods, writes both the figures and
+  the `predictions__<layer>.h5`. Mapping is fit once per layer (depends only on layer+parcels, not
+  on method) and applied to all 8 methods.
+- `scripts/slurm_insilico_mmn.sh` — `sbatch --array=0-5` = the 6-layer scan.
+- `scripts/slurm_mmn_extract.sh` — `sbatch --export=ALL,MMN_METHOD=method_XX --array=0-15` extracts
+  the whisper-base delta_T features for a method's 16 stimuli.
+- The `.h5`/`.wav`/`.png` outputs are gitignored (data, not code); they live on disk at the paths above.
 
 ---
 

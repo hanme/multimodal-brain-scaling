@@ -36,6 +36,7 @@ from mbs.evaluation.utils.evaluation_helpers import (
 )
 from mbs.evaluation.evaluate_features_mtrf import (
     lags_in_bins, build_lagged_design, highpass_along_time, sample_time_indices,
+    pearson_along_time,
 )
 
 FS = 50.0          # EEG / feature grid (Hz)
@@ -112,32 +113,42 @@ def detect_final_tone_onset_s(wav_path):
     return float(starts[-1] / sr) if len(starts) else None
 
 
-def fit_mapping(args, lags, parcels):
-    """Fit FIR mTRF on Broderick for one layer -> (model, feat_mu, feat_sd).
+def load_split_parcels(neural_h5, feats_all, id_map, parcels, split):
+    """Build (parcel-target EEG, aligned raw features) for one Broderick split.
 
-    Target columns are the parcels (raw average over NC-surviving member channels).
+    Returns (eeg [n, T, n_parcel], feats [n, T, d]) restricted to stimuli whose ids exist
+    in id_map. Same id alignment for every channel; parcels are raw averages over members.
     """
-    feats, id_map = load_layer_features(args.layer, features_folder=Path(args.broderick_features))
-    feats = feats.astype(np.float32)  # [n_stim, T, d]
-
-    # align EEG stimulus ids to feature rows once (same id_map for every channel)
-    tr_fi = tr_keep = None
+    fi = keep = None
     parcel_cols = []
     for _, members, _ in parcels:
         chan_stack = []
         for ch in members:
-            ids, eeg_ch, _ = load_neural_data(Path(args.broderick_neural), "group", ch, "train")
-            if tr_fi is None:
+            ids, eeg_ch, _ = load_neural_data(Path(neural_h5), "group", ch, split)
+            if fi is None:
                 ids = decode(ids)
                 raw = [id_map.get(s) for s in ids]
-                tr_keep = [i for i, v in enumerate(raw) if v is not None]
-                tr_fi = [v for v in raw if v is not None]
-            chan_stack.append(eeg_ch[tr_keep][:, :, 0])          # [n, T]
+                keep = [i for i, v in enumerate(raw) if v is not None]
+                fi = [v for v in raw if v is not None]
+            chan_stack.append(eeg_ch[keep][:, :, 0])             # [n, T]
         parcel_cols.append(np.mean(chan_stack, axis=0)[:, :, None])  # raw avg -> [n, T, 1]
     eeg = np.concatenate(parcel_cols, axis=2).astype(np.float32)     # [n, T, n_parcel]
-    feats = feats[tr_fi]
+    return eeg, feats_all[fi]
 
-    # high-pass both, standardize features (save stats for the MMN side)
+
+def fit_mapping(args, lags, parcels):
+    """Fit FIR mTRF on Broderick TRAIN for one layer -> (model, feat_mu, feat_sd, eval_metrics).
+
+    Target columns are the parcels (raw average over NC-surviving member channels). If
+    --eval_heldout, also predicts the built-in held-out TEST split (separate audiobook runs)
+    and returns per-parcel out-of-sample Pearson r (raw and NC-normalized); else eval=None.
+    """
+    feats_all, id_map = load_layer_features(args.layer, features_folder=Path(args.broderick_features))
+    feats_all = feats_all.astype(np.float32)  # [n_stim, T, d]
+
+    eeg, feats = load_split_parcels(args.broderick_neural, feats_all, id_map, parcels, "train")
+
+    # high-pass both, standardize features (save stats for the MMN + eval sides)
     feats = highpass_along_time(feats, FS, args.highpass_hz)
     eeg = highpass_along_time(eeg, FS, args.highpass_hz)
     mu = feats.reshape(-1, feats.shape[-1]).mean(0)
@@ -157,7 +168,42 @@ def fit_mapping(args, lags, parcels):
           f"chosen={np.array2string(chosen, formatter={'float_kind': lambda v: f'{v:.0f}'})}")
     if np.any(chosen >= alphas.max() * 0.999) or np.any(chosen <= alphas.min() * 1.001):
         print("  WARNING: a chosen alpha is at a grid edge -> widen --alpha_log_min/max.")
-    return model, mu, sd
+
+    eval_metrics = None
+    if args.eval_heldout:
+        eval_metrics = evaluate_heldout(args, lags, parcels, model, mu, sd, feats_all, id_map)
+    return model, mu, sd, eval_metrics
+
+
+def evaluate_heldout(args, lags, parcels, model, mu, sd, feats_all, id_map):
+    """Score the fitted mapping on the built-in held-out TEST split (separate runs).
+
+    No leakage: features are standardized with TRAIN mu/sd; test windows come from audiobook
+    runs absent from train. Returns dict with per-parcel out-of-sample Pearson r (raw + NC-norm).
+    """
+    eeg, feats = load_split_parcels(args.broderick_neural, feats_all, id_map, parcels, "test")
+    if eeg.shape[0] == 0:
+        print(f"  held-out eval [{args.layer}]: TEST split empty -> skipped")
+        return None
+    feats = highpass_along_time(feats, FS, args.highpass_hz)
+    eeg = highpass_along_time(eeg, FS, args.highpass_hz)
+    feats = (feats - mu) / sd
+
+    rng = np.random.default_rng(1)
+    t_idx = sample_time_indices(feats.shape[1], int(lags.max()), args.n_eval_time_samples, rng)
+    X, Y = build_lagged_design(feats, eeg, lags, t_idx)
+    Yhat = model.predict(X.astype(np.float32))
+    r = pearson_along_time(Y, Yhat)                              # [n_parcel]
+    nc_r = np.array([p[2] for p in parcels], np.float32)         # parcel reliability (r-scale)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        r_nc = np.where(nc_r > 0, r / nc_r, np.nan).astype(np.float32)
+    names = [p[0] for p in parcels]
+    n_test = eeg.shape[0]
+    print(f"  held-out eval [{args.layer}] on {n_test} TEST windows ({X.shape[0]} samples):")
+    for nm, rr, rn in zip(names, r, r_nc):
+        print(f"    {nm:<10} r={rr:+.3f}   r/NC={rn:+.3f}")
+    return dict(parcels=names, r=r, r_nc=r_nc, nc_r=nc_r,
+                n_test_windows=int(n_test), n_samples=int(X.shape[0]))
 
 
 def predict_timecourse(feat_1stim, model, mu, sd, lags, highpass_hz):
@@ -171,23 +217,29 @@ def predict_timecourse(feat_1stim, model, mu, sd, lags, highpass_hz):
 
 
 def analyze_method(method, feat_dir, stim_dir, model, mu, sd, lags, parcels, args):
-    """Predict + time-lock one method; return (rel_ms, dev_b, std_b, diff_b) or None."""
+    """Predict + time-lock one method. Returns a dict with both the baseline-corrected
+    arrays (for plotting) and the RAW full time courses (for downstream MMN metrics), or None.
+
+    All arrays span the full valid window (the entire ~29 s pre-final-tone baseline + post-onset),
+    columns = parcels (same order as `parcels`). rel_ms = 0 is the final/critical-tone onset.
+    """
     mfeats, mid_map = load_layer_features(args.layer, features_folder=Path(feat_dir))
     mfeats = mfeats.astype(np.float32)
     id_by_row = {v: k for k, v in mid_map.items()}
 
-    std_pred, dev_preds, t_idx = None, [], None
+    std_raw, dev_preds, dev_ids, t_idx = None, [], [], None
     for row in range(mfeats.shape[0]):
-        sid = str(id_by_row[row]).lower()
+        sid = str(id_by_row[row])
         t_idx, pred = predict_timecourse(mfeats[row], model, mu, sd, lags, args.highpass_hz)
-        if "standard" in sid:
-            std_pred = pred
-        elif "deviant" in sid:
-            dev_preds.append(pred)
-    if std_pred is None or not dev_preds:
+        if "standard" in sid.lower():
+            std_raw = pred
+        elif "deviant" in sid.lower():
+            dev_preds.append(pred); dev_ids.append(sid)
+    if std_raw is None or not dev_preds:
         print(f"  {method}: missing standard or deviants -> skipped")
         return None
-    dev_pred = np.mean(dev_preds, axis=0)
+    dev_stack = np.stack(dev_preds, 0)              # [n_dev, n_t, n_parcel], RAW
+    dev_raw = dev_stack.mean(0)                     # [n_t, n_parcel], RAW
 
     std_wav = sorted(glob.glob(f"{stim_dir}/*standard*.wav"))[0]
     final_s = detect_final_tone_onset_s(std_wav)
@@ -196,13 +248,15 @@ def analyze_method(method, feat_dir, stim_dir, model, mu, sd, lags, parcels, arg
 
     def bc(sig):
         return sig - sig[base].mean(0, keepdims=True)
-    dev_b, std_b = bc(dev_pred), bc(std_pred)
+    dev_b, std_b = bc(dev_raw), bc(std_raw)
     print(f"  {method}: {len(dev_preds)} deviants avg; final tone ~{final_s:.2f}s")
-    return rel_ms, dev_b, std_b, (dev_b - std_b)
+    return dict(rel_ms=rel_ms.astype(np.float32), dev_b=dev_b, std_b=std_b, diff_b=(dev_b - std_b),
+                std_raw=std_raw.astype(np.float32), dev_raw=dev_raw.astype(np.float32),
+                dev_stack=dev_stack.astype(np.float32), dev_ids=dev_ids, final_s=final_s)
 
 
 def plot_method(method, label, direction, res, parcels, args, out_path):
-    rel_ms, dev_b, std_b, diff_b = res
+    rel_ms, dev_b, std_b, diff_b = res["rel_ms"], res["dev_b"], res["std_b"], res["diff_b"]
     win = (rel_ms >= -args.win_pre_ms) & (rel_ms <= args.win_post_ms)
     x = rel_ms[win]
     n = len(parcels)
@@ -248,12 +302,18 @@ def main():
     p.add_argument("--highpass_hz", type=float, default=0.5)
     p.add_argument("--lag_max_ms", type=float, default=500.0)
     p.add_argument("--n_train_time_samples", type=int, default=120)
+    p.add_argument("--eval_heldout", type=lambda s: s.lower() not in ("0", "false", "no"),
+                   default=True, help="score the mapping on the built-in held-out TEST runs")
+    p.add_argument("--n_eval_time_samples", type=int, default=400,
+                   help="output time bins sampled per held-out window for the eval correlation")
     p.add_argument("--alpha_log_min", type=float, default=1.0)
     p.add_argument("--alpha_log_max", type=float, default=7.0)
     p.add_argument("--alpha_n", type=int, default=25)
     p.add_argument("--win_pre_ms", type=float, default=150.0)
     p.add_argument("--win_post_ms", type=float, default=500.0)
     p.add_argument("--out_dir", default="outputs/figures/insilico_mmn")
+    p.add_argument("--data_dir", default="outputs/insilico_mmn_predictions",
+                   help="where to write the parcel-level raw prediction HDF5 (one per layer)")
     args = p.parse_args()
 
     lags = lags_in_bins(0.0, args.lag_max_ms, TIME_STEP_MS, TIME_STEP_MS)
@@ -263,7 +323,7 @@ def main():
     assert parcels, "no parcels survived the NC threshold"
 
     # fit the Broderick->EEG mapping ONCE for this layer, apply to every method
-    model, mu, sd = fit_mapping(args, lags, parcels)
+    model, mu, sd, eval_metrics = fit_mapping(args, lags, parcels)
 
     if args.methods == "all":
         run = METHODS
@@ -273,6 +333,27 @@ def main():
         run = [reg.get(w, (w, w, "")) for w in want]
 
     out_dir = Path(args.out_dir)
+    data_path = Path(args.data_dir) / f"predictions__{args.layer}.h5"
+    data_path.parent.mkdir(parents=True, exist_ok=True)
+    h5 = h5py.File(data_path, "w")
+    h5.attrs.update(dict(
+        layer=args.layer, highpass_hz=args.highpass_hz, lag_max_ms=args.lag_max_ms,
+        fs=FS, time_step_ms=TIME_STEP_MS, nc_r_threshold=args.nc_r_threshold,
+        note=("Parcel-level RAW (NOT baseline-corrected) predicted EEG. time_ms=0 is the "
+              "final/critical-tone onset (negatives = before onset); identity-MMN design: the "
+              "final tone is physically identical in standard and deviant. Parcels = raw average "
+              "over channels passing NC r>threshold. Compute MMN as deviant_mean - standard.")))
+    h5.create_dataset("parcels", data=np.array([p[0] for p in parcels], dtype="S12"))
+    h5.create_dataset("parcel_members", data=np.array(["+".join(p[1]) for p in parcels], dtype="S40"))
+    h5.create_dataset("parcel_nc_r", data=np.array([p[2] for p in parcels], np.float32))
+    if eval_metrics is not None:
+        # out-of-sample mapping quality on the built-in held-out TEST runs (separate audiobook
+        # runs, never in train); same parcel order. heldout_r = raw Pearson r, heldout_r_nc = NC-normalized.
+        h5.create_dataset("heldout_r", data=eval_metrics["r"])
+        h5.create_dataset("heldout_r_nc", data=eval_metrics["r_nc"])
+        h5.attrs["heldout_test_windows"] = eval_metrics["n_test_windows"]
+        h5.attrs["heldout_n_samples"] = eval_metrics["n_samples"]
+
     for method, label, direction in run:
         feat_dir = Path(args.mmn_features_root) / f"mmn-{method}-delta-t"
         stim_dir = Path(args.stimuli_root) / method
@@ -284,6 +365,17 @@ def main():
             continue
         out_path = out_dir / f"insilico_mmn__{method}__{args.layer}.png"
         plot_method(method, label, direction, res, parcels, args, out_path)
+
+        g = h5.create_group(method)
+        g.attrs.update(dict(context_final=label, direction=direction,
+                            final_tone_onset_s=res["final_s"], n_deviants=len(res["dev_ids"])))
+        g.create_dataset("time_ms", data=res["rel_ms"])
+        g.create_dataset("standard", data=res["std_raw"], compression="gzip", compression_opts=4)
+        g.create_dataset("deviant_mean", data=res["dev_raw"], compression="gzip", compression_opts=4)
+        g.create_dataset("deviants", data=res["dev_stack"], compression="gzip", compression_opts=4)
+        g.create_dataset("deviant_ids", data=np.array(res["dev_ids"], dtype="S40"))
+    h5.close()
+    print(f"Wrote parcel predictions -> {data_path}")
 
 
 if __name__ == "__main__":
