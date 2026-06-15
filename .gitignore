@@ -234,3 +234,5 @@ __marimo__/
 # SLURM job logs (*.log is ignored above; these are SLURM's stdout/stderr)
 logs/*.out
 logs/*.err
+# our SLURM scripts use --error=*.error (not .err); ~13 MB of tqdm spam otherwise
+logs/*.error

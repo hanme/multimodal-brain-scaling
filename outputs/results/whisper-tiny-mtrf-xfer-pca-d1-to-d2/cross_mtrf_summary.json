@@ -1,0 +1,105 @@
+{
+  "source": "d1",
+  "target": "d2",
+  "config": {
+    "model_id": "whisper-tiny",
+    "target_feature_layers": "configs/extraction/audio/whisper_tiny_layers.json",
+    "source_tag": "d1",
+    "source_data_hdf5": "outputs/neural_data/broderick2018_30s.h5",
+    "source_features_dir": "/work/upschrimpf1/sigfstea/multimodal-brain-scaling/outputs/features/whisper-tiny-delta-t/merged",
+    "target_tag": "d2",
+    "target_data_hdf5": "outputs/neural_data/surprisal_30s.h5",
+    "target_features_dir": "/work/upschrimpf1/sigfstea/multimodal-brain-scaling/outputs/features/whisper-tiny-delta-t-surprisal/merged",
+    "output_dir": "outputs/results/whisper-tiny-mtrf-xfer-pca-d1-to-d2/",
+    "parcels_from": "outputs/neural_data/broderick2018_30s.h5",
+    "lag_min_ms": 0.0,
+    "lag_max_ms": 800.0,
+    "lag_step_ms": 20.0,
+    "highpass_hz": 0.5,
+    "nc_threshold": 0.2,
+    "n_train_time_samples": 200,
+    "pca_var": 0.95,
+    "use_wide_range_alphas": false,
+    "layer_id": null,
+    "overwrite": true,
+    "seed": 42
+  },
+  "entries": [
+    {
+      "layer": "blocks.0",
+      "in_domain": {
+        "d1_test": [
+          0.13208739459514618,
+          0.17501674592494965,
+          0.12023915350437164,
+          0.09988953918218613
+        ]
+      },
+      "transfer": {
+        "d2_test": [
+          0.05734192579984665,
+          0.021618513390421867,
+          -0.012036772444844246,
+          -0.007358094677329063
+        ]
+      }
+    },
+    {
+      "layer": "blocks.1",
+      "in_domain": {
+        "d1_test": [
+          0.12598958611488342,
+          0.17957809567451477,
+          0.11027973145246506,
+          0.0955914705991745
+        ]
+      },
+      "transfer": {
+        "d2_test": [
+          0.06656618416309357,
+          0.03048369474709034,
+          0.0012056337436661124,
+          -0.010034594684839249
+        ]
+      }
+    },
+    {
+      "layer": "blocks.2",
+      "in_domain": {
+        "d1_test": [
+          0.12069371342658997,
+          0.16773802042007446,
+          0.07403507083654404,
+          0.09048505872488022
+        ]
+      },
+      "transfer": {
+        "d2_test": [
+          0.05971599370241165,
+          0.02858128771185875,
+          0.013159729540348053,
+          0.00261264038272202
+        ]
+      }
+    },
+    {
+      "layer": "blocks.3",
+      "in_domain": {
+        "d1_test": [
+          0.12466711550951004,
+          0.15365692973136902,
+          0.0730815976858139,
+          0.08821552991867065
+        ]
+      },
+      "transfer": {
+        "d2_test": [
+          0.0453249029815197,
+          0.01146634016185999,
+          -0.006628654897212982,
+          -0.004832516890019178
+        ]
+      }
+    }
+  ]
+}

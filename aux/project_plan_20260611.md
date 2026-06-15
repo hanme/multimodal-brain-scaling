@@ -1,6 +1,6 @@
 # Temporal EEG Encoding — Project Plan (2026-06-11)
 
-Author: drafted with Claude for H. Mehrer, after the 2026-06-11 conversation with Kadir Gökce.
+Author: H. Mehrer, after the 2026-06-11 conversation with Kadir Gökce.
 Scope: how to predict EEG from audio-model features over time in `multimodal-brain-scaling`
 (auditory adaptation of Kadir's vision pipeline). This plan supersedes the ad-hoc per-time-bin
 approach currently in `evaluate_features_temporal.py`.
@@ -15,13 +15,15 @@ features and differ only in how the **time axis of the readout** is handled:
 
 | | Readout weights | Lookback (lags) | Fit | Score axis | Status here |
 |---|---|---|---|---|---|
-| **(1) Per-bin Ridge** | separate per time bin | none (zero-lag) | closed-form | across stimuli @ fixed offset | current `evaluate_features_temporal.py` |
-| **(2) mTRF** | one set, shared across time | window (e.g. 50–800 ms) | closed-form ridge | along time | **target baseline** |
-| **(3) Learned temporal probe** | shared trunk + subject heads | window | gradient (SGD) | along time | `attn_probe/` (vision-shaped today) = **target method** |
+| **(1) Per-bin Ridge** | separate per time bin | none (zero-lag) | closed-form | across stimuli @ fixed offset | retired (ERP/MMN-only) |
+| **(2) mTRF** | one set, shared across time | window (e.g. 50–800 ms) | closed-form ridge | along time | ✅ **DONE** — `evaluate_features_mtrf.py`, held-out-validated (2026-06-13) |
+| **(3) Learned temporal probe** | shared trunk + subject heads | window | gradient (SGD) | along time | ✅ built + benchmarked (2026-06-13) — **loses to mTRF at this data scale**; §11 |
 
-**Decision:** retire (1) as a primary metric; build (2) as a fast, literature-comparable
-baseline; then adapt the existing `attn_probe/` into (3), which is Kadir's current method
-(MIRAGE, Gökce/Al-Khamissi 2026) and reportedly beats ridge.
+**Decision:** retire (1) as a primary metric; (2) mTRF is **built and validated** (the current
+method); now adapt the existing `attn_probe/` into (3), Kadir's current method (MIRAGE,
+Gökce/Al-Khamissi 2026), which reportedly beats ridge. The three methods we will compare and
+make **selectable** are: **(2) mTRF (current), (3a) probe / per-subject heads (Kadir individual),
+(3b) probe / single group head (Kadir group)**. See §3.
 
 Why (1) is wrong for continuous speech:
 - **Zero-lag.** It fits `feature[t] → EEG[t]` at the same bin; auditory cortex lags the
@@ -85,73 +87,169 @@ Why (1) is wrong for continuous speech:
 
 ---
 
-## 2. Workstream A — closed-form mTRF baseline (do first)
+## 2. Workstream A — closed-form mTRF baseline ✅ DONE
 
-Goal: a fast, defensible, literature-comparable number this week. New file
-`src/mbs/evaluation/evaluate_features_mtrf.py` (leave `evaluate_features_temporal.py` in place,
-re-scoped to ERP/MMN only).
-
-**Design matrix (lagged / FIR).** For each stimulus segment and each output time `t`, stack
-features over a lag window `L = {l_min … l_max}` (start 50–800 ms; at 50 Hz that's lags ~3–40
-bins). Predict `EEG[t]` from `[feature[t−l] for l in L]`. One **shared** `RidgeCV` across all
-`(segment, t)` rows → one weight set per (layer, subject, ROI). This is the mTRF / Crosse-style
-forward model.
-
-**Scoring.** Predict held-out runs, **concatenate predictions over time**, correlate vs actual
-EEG **along the time axis**, per channel. Optionally NC-correct via `sqrt(nc/100)` after
-averaging NC over the scored window.
-
-**Housekeeping (apply here and in B):**
-- Mask channels with NC below a threshold *before* fitting (mirror Kadir's `> 0.1`; expose as a
-  flag). Operate on the curated high-NC electrode set.
-- Restrict lags/latencies to the 50–800 ms window.
-- Collapse `score` to a scalar for layer ranking by **window-average or peak over latency**, not
-  a flat mean over all 1500 bins.
-- Keep the existing run-level train/test split.
-
-**Decisions to confirm before coding (see §7):** exact lag window and step; whether to z-score
-features per dimension; ridge alpha grid (reuse `ALPHA_LIST_SHORT`); single-output-per-channel
-vs joint multi-output ridge.
-
-**Deliverable:** `temporal_mtrf_scores.h5` (`score[lag-or-window, n_ch]` per layer/subject/ROI)
-+ summary JSON; one figure: held-out r vs latency for Fz, one curve per layer; layer ranking
-table vs the Phase-4a (mean-pooled) ranking.
+`src/mbs/evaluation/evaluate_features_mtrf.py` (the old `evaluate_features_temporal.py` is
+re-scoped to ERP/MMN only). For each output time `t`, stack features over a lag window
+`L={l_min…l_max}` and predict `EEG[t]` from `[feature[t−l] for l in L]` with one **shared**
+`RidgeCV(alpha_per_target=True)` across all `(segment, t)` rows. Score: predict held-out runs,
+concatenate over time, correlate **along time** per channel. NC-mask channels before fitting;
+random time-point subsampling per segment; 0.5 Hz high-pass to de-confound slow drift. Built,
+tested (`tests/test_evaluate_features_mtrf.py`, 11 tests), run across cutoffs × 6 layers, and
+**held-out-validated** (built-in run-level split; `insilico_mmn.py:evaluate_heldout`, 2026-06-13).
+Full results and design log in §11. The reusable pure functions (`lags_in_bins`,
+`sample_time_indices`, `build_lagged_design`, `pearson_along_time`, `mask_channels`,
+`highpass_along_time`, `_standardize`) are imported directly by Workstream B (§3).
 
 ---
 
-## 3. Workstream B — learned temporal probe (target method)
+## 3. Workstream B — learned temporal probe (DETAILED PLAN, locked 2026-06-13)
 
-Adapt the existing `attn_probe/` from vision (one vector per stimulus) to time-resolved EEG.
-This is method (3) / MIRAGE-style. Three concrete edits, smallest-first:
+Adapt the existing `attn_probe/` (vision: one vector per stimulus) to time-resolved EEG =
+method (3) / MIRAGE-style. **Decisions locked with Hannes (2026-06-13):**
+1. Build **per-subject heads first** (Kadir individual level), **then** the single-group-head
+   variant (closer to the mTRF, fully comparable) — in that order. The three methods
+   {mTRF / probe-individual / probe-group} must be **easily selectable** (see §3.6).
+2. Predict the **same 4 NC-parcels** as Method A (frontal/temporal/parietal/occipital).
+3. **Encoding comparison only** for now; MMN integration is planned but deferred (§3.7).
+4. **Run all 6 whisper-base layers.**
 
-**B1. Time-resolved target in `dataset.py`.**
-- `SingleRoiSubjectDataset` currently returns `y = [N_subject]`. Change to return the EEG over a
-  short output window `y = [T_out, N_subject]` (or per-time-point samples; see B3).
-- Keep stimulus→feature alignment by ID (`align_feature_indices`) unchanged.
-- Carry per-(time, channel) NC `[T, N_subject]` through for masking + NC-correction.
+### 3.0 The core reframing (why this is cheap)
 
-**B2. Tokens = time, in `model.py`.**
-- Feed `feats = [T_window, C]` (already produced by `delta_t`) so `TokenAdapter` (ndim==3 path)
-  tokenizes over **time**; enable a temporal position encoding (`pos_mode="sin"` or `"learned"`
-  already exist; MIRAGE uses learned absolute + rotary).
-- Trunk attends over the lookback window → reads out across time. `SubjectHeadBank` stays
-  (one linear head per subject; "one head per subject" = as-is).
+Method A predicts `EEG[t]` from a **flattened** lag stack `[feature[t−l] for l in L]` → `[L·d]`
+→ linear Ridge. Method B predicts the same `EEG[t]` from the **same lookback window kept as a
+sequence** `[L, d]` → attention trunk → head. **The lookback window IS the token sequence**
+(tokens = lag/time positions). This maps onto existing infrastructure with almost no new
+architecture:
+- `TokenAdapter` 3-D path ([model.py:61-62](../src/mbs/evaluation/attn_probe/model.py#L61))
+  passes `(B,N,C)` straight through as tokens → set `N = lookback length`, `C = d_feature`.
+- `SinusoidalPosEnc` / `LearnedPosEnc` ([model.py:96-135](../src/mbs/evaluation/attn_probe/model.py#L96))
+  become the temporal position encoding over lag positions (MIRAGE uses learned absolute).
+- `LatentAttentionTrunk` ([model.py:205](../src/mbs/evaluation/attn_probe/model.py#L205)):
+  window → latents → flatten. **Unchanged.**
+- `LinearHead` → `n_parcel`; `SubjectHeadBank`
+  ([model.py:319](../src/mbs/evaluation/attn_probe/model.py#L319)) is the per-subject mechanism
+  (group variant = a single `"group"` head). **Unchanged.**
 
-**B3. Loss + autocorrelation handling in `engine.py`.**
-- Switch loss from plain MSE to **Pearson-over-time** (or `1 − corr`) to match the scoring
-  objective and MIRAGE (paper line 113). `RunningPearson` already gives the eval metric.
-- **Randomly sample time points** per batch (Kadir's key trick) instead of feeding contiguous,
-  highly autocorrelated frames — sample a set of output times `t` and their lag windows.
-- Evaluate by correlating predicted vs actual **along time** on held-out runs, NC-corrected,
-  averaged over channels then subjects (the engine already averages r over subjects).
+So Method B = Method A with the linear FIR replaced by a learned attention-over-lags. The real
+work is the **dataset** (windowed samples), the **engine** (Pearson-over-time loss + along-time
+eval + our EEG loader), and a **driver** that mirrors `evaluate_features_mtrf.py:main` so outputs
+are directly comparable.
 
-**Decisions to confirm (see §7):** output window length `T_out` and lookback length;
-shared-trunk-across-subjects vs per-subject; probe capacity (`d_model`, `num_latents`,
-`cross_attn_layers`); whether to also share one trunk across ROIs.
+### 3.1 Reuse vs. build
 
-**Deliverable:** trained probe per (layer, ROI); held-out r-vs-latency and scalar ranking,
-compared against the Workstream A mTRF baseline (this comparison is the scientific payoff:
-does the learned temporal encoder beat ridge, as MIRAGE claims).
+**Reuse unchanged** — from `attn_probe/model.py`: `LatentAttentionTrunk`, `TokenAdapter`,
+`Sinusoidal/LearnedPosEnc`, `LinearHead`/`LowRankHead`, `SubjectHeadBank`, `SingleRoiProbeSystem`,
+`ProbeConfig`. From `attn_probe/engine.py`: `set_seed`, `build_lr_scheduler`, the
+AdamW/AMP/grad-accum skeleton. From `attn_probe/metrics.py`: `RunningPearson`. From
+`evaluate_features_mtrf.py`: `lags_in_bins`, `sample_time_indices`, `highpass_along_time`,
+`pearson_along_time`, `mask_channels`, `_standardize`. Parcel construction + NC loading from
+`insilico_mmn.py:load_split_parcels`.
+
+**Build new (4 files + 1 SLURM):**
+1. `attn_probe/dataset_temporal.py` — windowed temporal dataset (see §3.3).
+2. `attn_probe/engine_temporal.py` — train + along-time eval; 1−r loss; random-time sampling.
+3. `evaluation/evaluate_features_attn_probe_temporal.py` — CLI driver, structured to mirror
+   `evaluate_features_mtrf.py:main` so the output h5 is parallel.
+4. `tests/test_attn_probe_temporal.py` — synthetic lag-recovery + shape/causality/leakage asserts.
+5. `scripts/slurm_attn_probe_temporal.sh` — GPU array (one task/layer), `--array=0-5`.
+
+### 3.2 Data prep prerequisite — per-subject EEG (NEW, gates 3a)
+
+The current `outputs/neural_data/broderick2018_30s.h5` stores **only** `subjects=['group']`
+(19-subject average, each ROI `[n_stim, T, 1]`). The **per-subject (Kadir individual)** variant
+needs per-subject EEG + per-subject NC stored. Step **B-data**: extend
+`format_eeg_hdf5.py` with a `--store_subjects` mode that writes `neural_data/<sub-XXX>/<roi>` for
+all 19 subjects (keep `group` too), plus a per-subject NC (cross-subject NC is undefined per
+individual → use that subject's own split-half across its runs if available, else fall back to
+the group NC for masking only; settle in §3.6/§4). Group variant (3b) needs **no** re-extraction.
+*Confirm the formatter's current averaging path before coding this.*
+
+### 3.3 Data flow (concrete shapes)
+
+Per layer, reusing the mTRF / insilico loaders:
+```
+feats  [n_stim, T=1500, d=512]   delta_T whisper-base, standardized w/ TRAIN mu/sd
+eeg    [n_stim, T=1500, P=4]     NC-masked parcels, high-passed 0.5 Hz   (per subject OR group)
+```
+Windowing (in the dataset; mirrors `build_lagged_design` but **keeps the lag axis**):
+```
+sample (stimulus s, output-time t):  X = feats[s, t−L+1 : t+1, :]  → [L, d]   (window = tokens)
+                                      Y = eeg[s, t, :]              → [P]
+```
+- `L` = lookback length in bins (0–800 ms → 40 bins; matches Method A's window).
+- **Causality preserved:** look back only; `delta_T` features are already causal.
+- **Random time sampling:** `sample_time_indices(T, L, n_train_time_samples, rng)` per stimulus
+  per epoch (Kadir's autocorrelation fix — already implemented).
+- **Batching:** flatten (stimulus × sampled-times) → `[B, L, d]` → trunk → `[B, P]`.
+
+### 3.4 Eval (along time, Kadir-style — identical metric to A)
+
+For each held-out window predict all valid `t` in order, concatenate predictions over time across
+the test windows, `pearson_along_time(Y, Yhat)` per parcel → **the same `heldout_r` Method A
+reports.** Per-subject variant: average r over subjects (engine already does this). This is the
+apples-to-apples comparison.
+
+### 3.5 Output — parallel to Method A
+
+`attn_probe_temporal_scores.h5`, schema deliberately parallel to `mtrf_scores.h5` /
+`predictions__<layer>.h5`:
+```
+attrs: layer, readout_level {individual|group}, lookback_ms, highpass_hz, fs, nc_threshold,
+       loss, probe_cfg_json, n_params, equivalent_linear_params
+parcels      [4]    parcel_nc_r [4]
+heldout_r    [4]    heldout_r_nc [4]          ← SAME metric as mTRF/insilico
+per-subject (3a):  heldout_r_persubj [n_subj, 4]   (then averaged → heldout_r)
++ summary JSON: {layer, readout_level, parcel, heldout_r, heldout_r_nc}
+```
+Deliverable = a **third/fourth column** beside Method A in the handover tables: mTRF r vs.
+probe-individual r vs. probe-group r, per parcel × layer. That comparison is the scientific
+payoff ("does the learned temporal encoder beat ridge, as MIRAGE claims").
+
+### 3.6 Method selectability (a first-class requirement)
+
+The eventually-selected method (mTRF / probe-individual / probe-group) must be trivially
+switchable for everything downstream (handover tables, and later the in-silico MMN). Design:
+- **Within the probe:** a single `--readout_level {individual, group}` flag toggles
+  `SubjectHeadBank` over 19 subjects vs. one `"group"` head — same code path, same output schema.
+- **Across methods:** keep the **output contract identical** (`heldout_r`/`heldout_r_nc` per the 4
+  parcels, same parcel order). Then a thin `--method {mtrf, probe_individual, probe_group}`
+  selector at the *consumer* layer (handover/figure scripts now; `insilico_mmn.py` later) reads
+  whichever h5 without branching on internals. No unified fit-API needed (closed-form vs gradient
+  genuinely differ) — unify the **interface and the output**, not the solver.
+
+### 3.7 MMN integration (PLANNED, deferred — do not build yet)
+
+Once a method is selected, wire it into `insilico_mmn.py` as an alternative **mapping** behind the
+existing parcel/forward-model interface:
+- `insilico_mmn.py` currently calls `fit_mapping()` → a RidgeCV; refactor so the mapping is one of
+  `{mtrf_ridge, probe}` chosen by `--method`. The probe path loads a trained
+  `SingleRoiProbeSystem` (per layer) and, at inference, slides the lookback window over each MMN
+  stimulus to produce the predicted parcel-EEG time course (`standard`, `deviant_mean`, `deviants`)
+  exactly as the ridge does now — the downstream MMN metric (baseline-normalised negative peak,
+  deviant−standard) is unchanged.
+- Deliverable then: the 8-frequency-pair in-silico MMN re-run through the selected probe, compared
+  to the mTRF MMN. **Gate:** only worth doing if the probe clearly beats/ties the mTRF in §3.4.
+- Keep the probe **causal at MMN inference** (lookback only) — same guardrail as training.
+
+### 3.8 Phasing
+
+- **B-data:** add per-subject EEG to the h5 (`--store_subjects`). Gates 3a only.
+- **B0 (smoke):** synthetic lag-recovery test + blocks.2 overfit-a-tiny-subset on GPU. Confirms
+  window/trunk/head wiring and that 1−r loss trains.
+- **B1 = 3a (Kadir individual):** per-subject heads, 4 parcels, all 6 layers → held-out r.
+- **B2 = 3b (Kadir group):** single group head, 4 parcels, all 6 layers → held-out r. Direct
+  apples-to-apples vs mTRF (both on group EEG).
+- **B3:** comparison table {mTRF, probe-individual, probe-group} × 6 layers × 4 parcels into the
+  handover; pick the method.
+- **B4 (later, gated):** MMN integration (§3.7).
+
+### 3.9 Compute
+
+Gradient-trained → **GPU** (Hannes can switch clusters; the CPU `standard` partition has no GRES).
+One small probe per (layer, readout_level); 252 train windows × ~200 sampled times is tiny.
+Expect minutes/layer on a single GPU. `scripts/slurm_attn_probe_temporal.sh` requests 1 GPU,
+`--array=0-5`.
 
 ---
 
@@ -202,29 +300,36 @@ does the learned temporal encoder beat ridge, as MIRAGE claims).
 
 ---
 
-## 7. Open decisions (resolve before coding each workstream)
+## 7. Open decisions
 
-1. **Lag window & resolution** for the mTRF / lookback: 50–800 ms confirmed by Kadir; step size
-   (every bin = 20 ms? every 2nd?) and whether to taper.
-2. **Feature standardization:** per-dimension z-score features before ridge? (likely yes.)
-3. **Channel set:** NC threshold value and whether to fit only the curated high-NC electrodes.
-4. **Scalar collapse for ranking:** peak vs window-average over 50–800 ms.
-5. **Probe scope (B):** one trunk across subjects (yes) and across ROIs (?); probe capacity.
-6. **Loss (B):** Pearson-over-time vs MSE; output window length.
-7. **Exact NC definition** (⚠️ flagged in §4): subject-split vs other unit; across-window-at-fixed-
-   latency correlation vs alternatives; comparability scale vs visual benchmarks. *Fine for now;
-   discuss before reporting NC-corrected numbers.*
+**Resolved (A):** lags 0–800 ms @ 20 ms; per-dim feature z-score on train stats; NC-mask before
+fit; 0.5 Hz high-pass; uncorrected r reported (Kadir-sanctioned). **Resolved (B, 2026-06-13):**
+4 NC-parcels; per-subject heads first then group; loss = 1−r; all 6 layers; encoding-only first;
+selectable methods (§3.6).
+
+**Still open:**
+1. **Probe capacity (B):** `d_model`, `num_latents`, `cross_attn_layers`, `pos_mode`
+   (`learned` vs `sin`), lookback `L`. Start small (the data is tiny: 252 windows); tune in B0.
+2. **Per-subject NC (3a):** no cross-subject NC exists per individual — use that subject's
+   own within-subject split-half if runs allow, else group NC for masking only (§3.2/§4).
+3. **Exact NC definition** (⚠️ §4): across-window-at-fixed-latency correlation vs alternatives;
+   comparability vs visual benchmarks. *Fine for now; settle before reporting NC-corrected numbers.*
 
 ---
 
 ## 8. Milestones
 
-- **M1 (this week):** Workstream A mTRF baseline runs on Broderick/Whisper-base, produces
-  r-vs-latency for Fz + layer ranking. Sanity vs literature (Broderick/Lalor numbers).
-- **M2:** `evaluate_features_temporal.py` re-scoped/documented as ERP/MMN-only; A is the default
-  continuous-speech metric.
-- **M3:** Workstream B B1–B3 implemented; probe trains on one (layer, ROI); beats or matches A.
-- **M4:** scale B across layers/models (after §6 backbone time-alignment); MMN endpoint.
+- **M1 ✅** Workstream A mTRF baseline on Broderick/Whisper-base — de-confounded r-vs-latency +
+  layer ranking (mid-depth ~blocks-3 raw; blocks.2 adopted for downstream after the in-silico
+  MMN + held-out eval, 2026-06-13).
+- **M2 ✅** `evaluate_features_temporal.py` re-scoped to ERP/MMN-only; mTRF is the default
+  continuous-speech metric; held-out validation added.
+- **M3 ✅ (2026-06-13)** Workstream B (§3): probe built + 17 tests + B0 sweep + B2 group probe on
+  all 6 layers. Comparison done — **mTRF beats the probe in 23/24 cells; method selected = mTRF.**
+  B1 (probe-individual) and B4 (probe MMN) deferred (probe doesn't beat ridge at this data scale).
+  See §11 (2026-06-13 GPU-node entry). **Encoding only.**
+- **M4** MMN integration of the selected method (§3.7); then scale B across whisper sizes /
+  wav2vec2 (after §6 backbone time-alignment).
 
 ---
 
@@ -379,13 +484,394 @@ cutoff |   L0          L1          L2          L3          L4          L5
    (N1-like), strong (r up to 0.16-0.18 at 0.5 Hz); frontal (AF3/Fz) later and weaker.
 
 **Status:** Workstream A is now a working, de-confounded, literature-coherent encoding model
-with recoverable auditory latencies. Layer-selection question answered for whisper-base
-(mid-depth, ~blocks-3). Recommended config: 0.5 Hz high-pass, uncorrected r, single_lag.
+with recoverable auditory latencies. Recommended config: 0.5 Hz high-pass, uncorrected r,
+single_lag.
 
-**Pick up here:**
-1. Optional rigor: recompute NC on 0.5 Hz-high-passed EEG → NC-corrected latency numbers
-   (or keep uncorrected r per Kadir). The `fir` mode for a single literature-comparable r.
-2. **In-silico MMN** (the payoff): feed Sophie's MMN stimuli through whisper blocks-3, apply the
-   trained ridge, test for a deviant-minus-standard response at ~120-200 ms at Fz/FCz.
-3. Scale: other whisper sizes / wav2vec2 (needs the §6 time-alignment for non-whisper).
-4. Or start Workstream B (learned probe) and compare against this mTRF baseline.
+### 2026-06-13 — in-silico MMN + held-out validation done; Workstream B planned
+
+- **In-silico MMN** built (`scripts/insilico_mmn.py`): 8 identity-MMN frequency pairs ×
+  6 layers, 4 NC-parcels, predicted parcel-EEG time courses for Sophie
+  (`outputs/insilico_mmn_predictions/predictions__<layer>.h5`).
+- **Held-out validation** added (`insilico_mmn.py:evaluate_heldout`): fits on the built-in
+  run-level train split, scores the held-out TEST runs (62 windows) → per-parcel out-of-sample
+  Pearson r. All parcels/layers positive (generalises); temporal best raw r, frontal best
+  NC-normalised; layer curve flat. Did **not** overturn layer choice — **blocks.2 adopted**
+  downstream (best-justified early layer; frontal = where MMN lives).
+- **Workstream B plan locked** (§3, this doc): per-subject probe first → group probe →
+  selectable {mTRF, probe-ind, probe-grp}; same 4 parcels; all 6 layers; encoding-only;
+  MMN integration deferred (§3.7). GPU. **Next: implement B-data → B0 → B1 → B2.**
+
+### 2026-06-13 (later) — ⭐ HANDOVER to a GPU node: Workstream B code written, TDD
+
+**Why this note:** the probe is gradient-trained → wants a GPU. Development started on the
+**CPU login node**, where the full-size probe training test got CPU-starved (>11 min, killed).
+All pure/unit tests pass on CPU; the one training (integration) test needs a real compute/GPU
+node. A fresh session on the GPU server should pick up from here.
+
+**Approach = test-driven.** Tests were written FIRST (they define the API), then the modules.
+
+**Files created (committed to working tree, NOT git-committed yet):**
+- `tests/test_attn_probe_temporal.py` — 17 tests. **16 pass on CPU** (`pytest -m "not slow"`,
+  ~66 s, dominated by torch import + model builds). 1 is `@pytest.mark.slow`
+  (`test_probe_learns_planted_lag`) — the end-to-end learning/lag-recovery proof; **pending a
+  GPU/compute node.** (`slow` marker is unregistered → harmless pytest warning; optionally add
+  to `pyproject.toml [tool.pytest.ini_options] markers`.)
+- `src/mbs/evaluation/attn_probe/dataset_temporal.py` — windowed dataset + parcel loading.
+  Key fns: `build_windowed_design` (lookback window kept as token axis; token `L-1-lag` = lag
+  `lag`, consistent with mTRF `build_lagged_design`), `sampled_windowed_design`,
+  `load_parcel_eeg` (per-subject parcel mean), `WindowedTemporalDataset`, and the shared
+  `CLUSTERS`/`channel_r`/`build_parcels` (defines the SAME 4 parcels from group NC).
+- `src/mbs/evaluation/attn_probe/engine_temporal.py` — `corr_loss` (1−Pearson, differentiable,
+  matches `pearson_along_time`), `build_probe_system` (readout selectable purely by `subjects`
+  list: `["group"]` → 1 head; 19 ids → 19 heads, shared trunk), `predict_concat` / `score_heldout`
+  (along-time r = the Method-A-comparable metric), `train_temporal_probe`, `TemporalTrainConfig`.
+  **Reuses `SingleRoiProbeSystem`/`LatentAttentionTrunk` UNCHANGED** — the window feeds straight
+  through `TokenAdapter`'s 3-D path, so there is *no new model code*.
+- `src/mbs/evaluation/evaluate_features_attn_probe_temporal.py` — the CLI driver, mirrors
+  `evaluate_features_mtrf.py:main`. `--readout_level {group,individual}`, all 6 layers via
+  `--layer_id`, writes `attn_probe_temporal_scores.h5` (parallel schema:
+  `<layer>/heldout_r,heldout_r_nc,parcels,parcel_nc_r`, +`heldout_r_persubj` for individual)
+  + summary JSON. Imports verified clean on the login node.
+
+**What the GPU instance should do, in order:**
+1. **Run the unit suite on the node** to confirm the env: `pytest tests/test_attn_probe_temporal.py
+   -m "not slow" -q` → expect 16 passed.
+2. **Run the learning test (B0 smoke):** `pytest tests/test_attn_probe_temporal.py -m "slow" -q`
+   → must pass (trained held-out r ≫ init, and >0.5). If it's flaky, the knobs are in the test
+   (epochs/lr/n_train_time_samples) — it uses the DEFAULT-size probe; fine on GPU. This proves
+   the window captures the planted lag and `corr_loss` training works end-to-end.
+3. **B2 group probe (do FIRST end-to-end — needs no new data):** run the driver on the existing
+   `outputs/neural_data/broderick2018_30s.h5` (only has `group`):
+   ```
+   python -m mbs.evaluation.evaluate_features_attn_probe_temporal \
+     --model_id whisper-base \
+     --target_feature_layers configs/extraction/audio/whisper_base_layers.json \
+     --features_dir outputs/features/whisper-base-delta-t/merged/ \
+     --data_hdf5_path outputs/neural_data/broderick2018_30s.h5 \
+     --output_dir outputs/results/whisper-base-probe-group/ \
+     --readout_level group --layer_id 2 --device cuda
+   ```
+   Smoke on blocks.2 first, then loop `--layer_id 0..5`. Compare `heldout_r` to Method A's
+   blocks.2 row (frontal +0.139, temporal +0.181, parietal +0.088, occipital +0.106).
+4. **B-data → B1 individual (NOT yet implemented):** the `individual` variant needs per-subject
+   EEG in the h5, which `format_eeg_hdf5.py` does NOT yet write (only `group`). **TODO: add a
+   `--store_subjects` mode** to `src/mbs/data_prep/format_eeg_hdf5.py` that writes
+   `<split>/neural_data/sub-XXX/<roi>` for all 19 subjects (+`noise_ceilings/sub-XXX/<roi>`),
+   keeping `group`. The driver already consumes that layout (`load_parcel_eeg(subject=…)`), and
+   the synthetic-h5 fixture in the test documents the exact contract. Per-subject NC fallback is
+   still open (§4/§7-2): the parcel *definition* uses group NC (fine); for masking/NC-norm of an
+   individual, use that subject's own split-half if available, else group NC. Then run the driver
+   with `--readout_level individual`.
+5. **TODO: `scripts/slurm_attn_probe_temporal.sh`** — GPU array `--array=0-5` (one layer/task),
+   `--gres=gpu:1`, mirror `scripts/slurm_mtrf.sh` header but on the GPU partition. Not written yet.
+6. **B3:** drop the three columns {mTRF, probe-group, probe-individual} × 6 layers × 4 parcels
+   into `aux/XX_handover_for_Sophie.md` and pick the method. MMN integration stays deferred (§3.7).
+
+**Gotchas:** (a) don't develop training on the login node — CPU-starved; (b) `train_temporal_probe`
+auto-falls back to CPU if `cuda` unavailable; (c) features are identical across subjects (all heard
+all runs) so the driver preprocesses features ONCE and only varies the EEG target per subject;
+(d) EEG is left raw+high-passed (not z-scored) because `corr_loss` is scale-invariant.
+
+### 2026-06-13 (GPU node) — ⭐ Workstream B EXECUTED: B0 + B2 done; **ridge wins, mTRF is the method**
+
+Picked up the handover above on an L40S node (Sinteract, `l40s` partition). Workstream B is now
+run and benchmarked. **Conclusion: the learned temporal probe does NOT beat the linear mTRF on
+Broderick at this data scale; M3's method selection resolves to mTRF (Workstream A).**
+
+**Env fix first (logged for reuse, also in the Sophie handover "⚠️ ENV NOTE"):** the venv torch was
+a `+cu130` build but the L40S driver is 560.35.03 = CUDA 12.6 → `torch.cuda.is_available()` was
+False (silent CPU fallback) even on a good GPU. Fixed by reinstalling matched cu126 builds via
+`uv pip` (the venv is uv-managed, no internal pip): `torch==2.12.0+cu126`,
+`torchvision==0.27.0+cu126`, `--extra-index-url .../whl/cu126 --index-strategy unsafe-best-match`.
+Then `cuda True | NVIDIA L40S`.
+
+**Tests:** all 17 in `tests/test_attn_probe_temporal.py` pass on GPU (the `@slow` planted-lag
+learning proof reaches held-out r > 0.5 in ~24 s, vs >11 min CPU-starved on the login node).
+
+**B0 capacity/regularization sweep (group head, blocks.2)** — the default probe overfit hard
+(train r ≈ 0.75, held-out r ≈ 0.06; ~0.69 gap). Sweeping capacity showed a clean monotonic
+relationship — smaller model → higher train loss (less memorization) → **higher** held-out r:
+
+| config (d_model/latents/layers, wd, dropout) | train loss | heldout r (front/temp/par/occ) |
+|---|---|---|
+| 256/16/2, 1e-4, 0.1 (default) | 0.246 | .056 / .094 / .056 / .048 |
+| 128/8/1, 1e-3, 0.2 | 0.352 | .050 / .126 / .080 / .070 |
+| **64/4/1, 1e-2, 0.3 (adopted)** | **0.426** | **.079 / .141 / .084 / .070** |
+| 256/16/2, 1e-2, 0.3 | 0.197 | .043 / .073 / .046 / .040 |
+| 32/2/1, 3e-2, 0.3 | (higher) | .088 / .122 / .077 / .059 |
+
+**Capacity, not weight decay, is the dominant lever** (full-size + heavy reg = worst). 64/4/1 is the
+sweet spot; 32/2/1 starts underfitting the high-SNR temporal/parietal parcels (but helps low-SNR
+frontal). Even the best probe keeps a large train/val gap and lands below ridge. AMP off
+(`--amp false`) throughout the sweep to remove fp16 as a confound.
+
+**B2 — group probe vs mTRF, all 6 layers × 4 parcels (held-out r, probe / mTRF; bold = winner):**
+
+| layer | frontal | temporal | parietal | occipital |
+|---|---|---|---|---|
+| blocks.0 | .065 / **.134** | .119 / **.186** | .075 / **.099** | .060 / **.109** |
+| blocks.1 | .062 / **.131** | .119 / **.179** | .069 / **.088** | .058 / **.104** |
+| blocks.2 | .079 / **.139** | .141 / **.181** | **.084 / .088** | .070 / **.106** |
+| blocks.3 | .053 / **.123** | .119 / **.167** | **.074 / .070** | .064 / **.086** |
+| blocks.4 | .056 / **.134** | .116 / **.174** | .067 / **.071** | .063 / **.090** |
+| blocks.5 | .066 / **.140** | .116 / **.172** | .060 / **.073** | .056 / **.089** |
+
+**mTRF ≥ probe in 23/24 cells.** Probe ties only on parietal (blocks.2/3); trails ~25–35 % on
+temporal, ~50 % on frontal. Both layer-flat; probe best at blocks.2 (matches adopted mTRF layer).
+Consistent with §9 risk: RidgeCV's closed-form L2 out-regularizes a learned nonlinear model at
+252 train windows. MIRAGE's gains over ridge need much more data + multi-stream fusion.
+
+**Decisions:**
+- **M3 resolved → method = mTRF.** Probe built/validated/benchmarked but not the reportable encoder.
+- **B1 (per-subject `individual`) deferred** — needs the unbuilt `format_eeg_hdf5.py --store_subjects`
+  and only multiplies a method that already loses.
+- **B4 (MMN integration of the probe) dropped** — §3.7 gated it on "probe clearly beats mTRF"; it
+  doesn't. The in-silico MMN stays on the mTRF mapping (2026-06-13 entry above).
+- **Re-open only with more data** — the harness is apples-to-apples and the code is ready, so it's a
+  cheap re-run if/when we pool datasets or add multi-stream features (§6).
+
+**Artifacts:** `outputs/results/whisper-base-probe-group-r2-all/attn_probe_temporal_scores.h5`
+(6 layers, group); sweep dirs `whisper-base-probe-group{,-r1,-r2,-r3,-r4}/`.
+
+**Minor TODO (non-blocking):** `engine_temporal.py:144,167` use deprecated `torch.cuda.amp.{GradScaler,
+autocast}` (FutureWarning under torch 2.12) — should migrate to `torch.amp.*('cuda', ...)`.
+`scripts/slurm_attn_probe_temporal.sh` was never needed (interactive node sufficed) — skip unless B reopens.
+
+---
+
+## 12. Discussion — would the learned probe (Workstream B) benefit from multi-source data?
+
+*This is a discussion, not a committed plan. Prompted by Hannes (2026-06-13): Sophie reported that
+combining data from multiple sources "didn't work well." The question is whether the learned
+temporal probe — which lost to the mTRF (§11) — would be the thing that benefits from more/combined
+data, and under what conditions. Captured here so a future "if B reopens" decision is informed.*
+
+### The asymmetry that makes this worth considering
+The probe didn't lose because the architecture is wrong; it lost to **overfitting at 252 windows**
+(train r ≈ 0.75, held-out ≈ 0.06). That gap is a data-starvation signature. The mTRF (RidgeCV) is
+already near its regularized ceiling, so extra data buys it little; a high-capacity gradient model's
+ceiling, by contrast, rises with data. So the **marginal value of more data is asymmetric — it
+favours the probe**, and this is precisely MIRAGE's premise (its gains over ridge appear at scale,
+not at n=252). The probe also has the architecture pooling wants — a **shared trunk + per-source
+heads**: the trunk can learn the dataset-invariant feature→neural mapping while each head absorbs
+source-specific scale/montage. Ridge is a single linear map and cannot pool this way without either
+no sharing (fit separately) or inheriting the confound (stack).
+
+### Two very different senses of "multiple sources"
+1. **Multi-*stream* fusion (same dataset, several model backbones — whisper + wav2vec2 + AST over
+   the same Broderick EEG).** This is a large part of where MIRAGE's gains actually came from, and it
+   **sidesteps Sophie's problem entirely**: same subjects, montage, paradigm → no cross-dataset
+   confound, just complementary input signal + nonlinear cross-stream structure for the trunk to
+   exploit that a per-stream ridge can't. **Lower risk; the better first test if B reopens.** (Gated
+   on §6's per-model time-alignment, since wav2vec2/AST have different native rates.)
+2. **Multi-*dataset* pooling (several EEG datasets).** This is what bit Sophie, and the failure mode
+   is exactly §6's **dataset-identity confound**: different amplifiers/references/units → amplitude
+   scale differs → a flexible model learns "which dataset" instead of "feature→brain." The
+   uncomfortable corollary: **a learned probe is *more* vulnerable to this than ridge, not less** —
+   its flexibility is also what lets it take the shortcut. Naive pooling could hurt the probe *worse*
+   than it hurt Sophie's linear analysis. More rows help only if they carry *transferable* signal;
+   pooling incompatible montages/paradigms mostly adds nuisance variance.
+
+### Conditions under which multi-dataset pooling would actually help the probe
+Essentially §6's harmonization checklist, all of which the probe needs:
+- **Per-dataset, per-channel z-scoring on train stats** — neutralizes the amplitude confound (most
+  likely culprit in Sophie's case).
+- **A common time grid** — resample all streams + EEG to one rate, or windows aren't comparable.
+- **Harmonized parcels/channels** — map heterogeneous montages onto canonical ROIs (or source space)
+  so the heads share a target space.
+- **Shared trunk + per-dataset/per-subject heads** — push source-specific scale into the head, keep
+  the trunk invariant; optionally a dataset-confusion/adversarial penalty to actively block shortcut
+  learning.
+- **Within-dataset scoring** — score each dataset on its own held-out runs, never pool the metric, or
+  the confound inflates the number (a likely reason naive pooling can "look" fine then fail).
+- **Same modality/paradigm ideally** (auditory continuous speech) — pooling speech with oddball-MMN
+  shares little of the mapping.
+
+### Honest expectation
+Even done correctly, multi-*dataset* pooling would plausibly bring the probe **to parity** with the
+mTRF rather than to a decisive win, *unless* the added data carries nonlinear/temporal-context
+structure ridge fundamentally can't capture. Multi-*stream* fusion has the better shot at a real win
+because it adds complementary signal without the confound. Separately, adding a **repeats dataset**
+(§4) is worth doing regardless — not to beat ridge, but for a proper within-subject noise ceiling on
+the visual-benchmark scale. **Bottom line: the probe *is* the method that benefits from more data and
+its shared-trunk/per-head design is purpose-built for pooling — but Sophie's experience is the correct
+prior that the benefit is conditional on harmonization, and the flexible model is the one most likely
+to cheat if harmonization is skipped. If B reopens, test multi-stream fusion on Broderick before
+multi-dataset pooling.**
+
+---
+
+## 13. Plan — train the encoder on D2 and D3, both methods, and compare (committed 2026-06-13)
+
+*Operationalizes §12 for the two datasets that already exist. Goal = the two questions Hannes wants
+answered: (Q1) does the **mTRF** encoding **replicate** on an independent dataset (D2)? (Q2) does the
+**probe** close the gap to / beat the mTRF when given **more data** (D3, 409 train windows vs D1's
+252)? Encoding-r only; no MMN. Decisions locked with Hannes 2026-06-13 — see end of section.*
+
+### 13.1 Datasets (verified to exist + readable in Sophie's tree, 2026-06-13)
+| set | neural h5 | train / test windows | note |
+|---|---|---|---|
+| D1 Broderick | `outputs/neural_data/broderick2018_30s.h5` (ours) | 252 / 62 | done (mTRF + probe) |
+| D2 Surprisal | `…/sigfstea/…/surprisal_30s.h5` (139 MB) | 157 / 43 | Weissbart Cortical Surprisal, 13 subj, 63-ch native 10-20 |
+| D3 combined | `…/sigfstea/…/d3_combined_30s.h5` (233 MB) | 409 / `test_d1`=62 + `test_d2`=43 | D1∪D2, **already per-channel z-scored on train stats** (Fz std=1) |
+
+All 10 parcel channels (Fz,F3,F4,T7,T8,Pz,P7,P8,Oz,O2) are present in D2 and D3 → the **same 4
+parcels** transfer; only `parcel_nc_r` is recomputed per dataset. D2 whisper-base features exist at
+`…/whisper-base-delta-t-surprisal/merged/` (1.6 GB), config **identical** to ours (whisper-base,
+delta_t, blocks.0–5, [n,1500,512]) → reuse, do not re-extract.
+
+### 13.2 The three confounds and their three (orthogonal) fixes
+- **Amplitude/scale leak** (D1 std≈1357 vs D2 std≈0.0003): fixed by **per-dataset z-scoring on train
+  stats** — already baked into `d3_combined_30s.h5`. Verify on load; do NOT re-standardize.
+- **Pooled-test inflation**: fixed by **scoring `test_d1` and `test_d2` separately, never pooled**
+  (§12). This is the one real code change (13.3).
+- **Montage mismatch** (BioSemi128→10-20 vs native 63-ch): mitigated by **parcels** (region averages,
+  same 4). Not the same problem as the other two.
+
+### 13.3 Required code change — per-dataset held-out scoring (both drivers)
+Both `insilico_mmn.py`/`evaluate_features_mtrf` (held-out path) and
+`evaluate_features_attn_probe_temporal.py` currently score a single `test` split. Add: when the
+neural h5 has `test_d1`/`test_d2` groups, score **each separately** and write
+`heldout_r__d1` / `heldout_r__d2` (+ `_nc`). For D1/D2-alone runs the existing single-`test` path is
+unchanged. TDD: extend `tests/test_attn_probe_temporal.py` with a synthetic 2-subgroup h5 asserting
+the per-subgroup r is computed within-group only (a planted between-group scale offset must NOT
+inflate it). Minor: D3 features = D1∪D2; D1/D2 chunk filenames collide → rename-on-copy into a single
+`whisper-base-delta-t-d3/merged/` OR teach `load_layer_features` to accept multiple folders.
+
+### 13.4 Steps
+1. **Copy (~2 GB)** Sophie's `surprisal_30s.h5`, `d3_combined_30s.h5`, and
+   `whisper-base-delta-t-surprisal/merged/` into our `outputs/` (copy, not symlink). Assemble the D3
+   feature dir from D1∪D2 (handle filename collision).
+2. **Verify torch/CUDA on the GPU node** (handover ENV NOTE): `cuda True | NVIDIA L40S` before any
+   probe run. mTRF is CPU.
+3. **Q1 — D2 standalone:** mTRF (6 layers, 4 parcels, held-out r on D2 test) + probe (best config
+   `d_model=64,num_latents=4,1 layer`, group). Compare to D1. *Expectation: mTRF replicates if
+   parcel-level r is positive and temporal-led; probe likely worse than on D1 (157 < 252 windows).*
+4. **Q2 — D3 pooled:** mTRF + probe trained on the 409-window pool, **scored on `test_d1` and
+   `test_d2` separately**. Key contrasts: (a) does D3-trained beat D1-trained on D1-test and
+   D2-trained on D2-test (does pooling help)? (b) **does the probe's gap to the mTRF shrink vs the
+   23/24-cell loss at D1's 252 windows** — the actual "more data" re-test.
+5. **Comparison tables** into `aux/XX_handover_for_Sophie.md`: train{D1,D2,D3} × method{mTRF,probe} ×
+   test{D1,D2} × 4 parcels × 6 layers, held-out r (+ NC-norm). Headline = Q1 (replication) and Q2
+   (probe gap vs data scale).
+
+### 13.5 Compute / method notes
+- mTRF: CPU, minutes. Probe: GPU (Kuma L40S, cu126 torch), minutes/run.
+- Probe `corr_loss` is scale-invariant per batch, but a **mixed D1+D2 batch with residual scale gap
+  could still let it predict dataset identity** → rely on D3's pre-z-scoring AND per-dataset scoring;
+  if any inflation persists, fall back to per-dataset batches or a shared-trunk + per-dataset-head
+  setup (the `individual`-style mechanism, here keyed on dataset).
+- Keep everything else identical to the D1 runs (0.5 Hz HP, 0–800 ms lookback, same parcels) so the
+  only moving part is the dataset.
+
+### 13.6 Decisions locked (Hannes, 2026-06-13)
+(1) Score `test_d1`/`test_d2` separately, never pooled. (2) Copy data into our repo (~2 GB; reuse
+features = whisper activations, NOT her mapping/results — re-extraction would reproduce identical
+numbers). (3) Same 4 parcels, per-dataset NC. (4) Clean slate vs Sophie's per-bin numbers. Scope =
+the two questions above; D1 already in hand, not re-run.
+
+### 13.7 Risks
+- D2's lower reliability / fewer windows may make even the mTRF weak → Q1 could read "partial
+  replication"; report honestly. Per §12, the realistic Q2 outcome is the probe reaching **parity**,
+  not a decisive win — a clean parity-at-2×-data result is still informative.
+
+---
+
+## 14. ⚠️ Verification agenda — the "probe wins on D2" result is suspicious (2026-06-14)
+
+**The result.** whisper-base, blocks.2, held-out r (full table in `XX_handover_for_Sophie.md`):
+the learned probe **loses** to the mTRF on D1 (temporal 0.141 vs 0.162) but **beats it ~1.9× on D2**
+(temporal **0.363** vs 0.195), and holds high on D2-test under pooling (0.300). This **flips** the
+earlier "ridge wins" conclusion (which was D1-only) and is **not** a data-quantity effect — D2 has
+*fewer* train windows than D1 (157 vs 252). Either D2 has genuinely more nonlinear/temporal
+structure the probe can exploit, or it's an artifact. **Verify before reporting.**
+
+**Leading hypothesis = split-structure asymmetry.** D1 is split **by run** (`test_runs`, entirely
+separate ~3-min audiobook segments → zero acoustic overlap between train and test). D2
+(`format_eeg_hdf5_surprisal.py`) is split **by story part, holding out one part per audiobook** — so
+each test part shares the *same audiobook* (speaker, recording, prosody) as the train parts. With
+30 s / 10 s overlapping windows, D2's held-out set is plausibly "closer" to train than D1's, and a
+high-capacity probe can exploit that proximity far more than a rigid ridge → inflates the probe's D2
+edge specifically. (Note the mTRF *also* scores higher on D2 than D1, consistent with an easier
+split, but the flexible probe amplifies it.)
+
+**Tests, in priority order:**
+
+1. **Inspect the D2 split (cheap, do first).** Read `format_eeg_hdf5_surprisal.py` split logic and the
+   actual train vs test stimulus IDs in `surprisal_30s.h5`: do test parts come from the **same
+   audiobooks** as train parts? Are any test windows temporally adjacent to / overlapping train
+   windows (same audiobook, neighbouring offsets)? If yes → the split is "easier" than D1's and the
+   confound is real. Also confirm **no identical window** appears in both splits.
+2. **Disjoint-audiobook re-split of D2 (the decisive test).** Re-format D2 holding out **entire
+   audiobooks** (not parts within an audiobook) so train/test are fully disjoint recordings — the D1
+   analogue. Re-run mTRF + probe. **If the probe's D2 advantage collapses → it was split structure;
+   if it survives → it's real D2 structure.** This is the single most informative check.
+3. **Seed stability of the probe on D2.** Re-run probe D2 with 2–3 seeds (`--seed`). Is temporal
+   ≈0.36 stable, or is it a high-variance draw? (The probe is gradient-trained; one run only so far.)
+4. **Model-size consistency (already in flight).** tiny/small/medium probe-D2 jobs are running. If
+   "probe ≫ mTRF on D2" holds across sizes, it's far less likely a fluke; if it's base-only, suspect
+   the run.
+5. **NC sanity.** D2 temporal NC ≈ 0.50, so probe r 0.363 ⇒ r/NC ≈ 0.73 — high. Sanity-check against
+   a within-subject ceiling if obtainable; an r/NC near or above 1 would flag leakage.
+6. **(lower priority) Confirm the mTRF transfer near-failure is real**, not a feature-standardisation
+   / parcel-alignment bug across datasets: spot-check that D1→D2 transfer uses D1 train mu/sd on D2
+   features and the same 4 parcels (it should, via `cross_score_dataset`).
+
+**Decision rule.** If test 2 shows the probe's D2 win survives a disjoint-audiobook split → the probe
+becomes a real candidate method (at least for D2-like data) and Workstream B reopens for the MMN.
+If it collapses → keep the mTRF as the reportable method and treat D2's by-part split as the cause;
+document it and move on. Until test 2 is done, **report the mTRF as primary and flag the probe-D2
+result as preliminary.**
+
+## 15. mTRF segfault on wide models — eigen fix + PCA option (2026-06-14)
+
+**Symptom.** The whisper-family mTRF sweep: `tiny`/`base` completed all of D1/D2/D3+transfer, but
+`small` and `medium` **segfaulted** (`Segmentation fault (core dumped)`) on every task that *fits on
+D1 or D3* — D1 mtrf, D3 mtrf, and the d1→d2 transfer all produced empty (96-byte / 1176-byte) h5s.
+The D2-side tasks (`_1`) ran fine. Deterministic, not OOM (`sacct` = FAILED, not OUT_OF_MEMORY).
+
+**Root cause — LAPACK int32 overflow in the GCV SVD.** `RidgeCV` (GCV) chooses its solver by shape:
+`n_samples > n_features` → **SVD of the full design X**. The D1 design is 252 windows × 200 samples
+= **50,400 rows**; columns = 41 lags × `d_model`. The `gesdd` workspace integer scales as ~`4·min²`
+(2³¹ ≈ 2.1e9):
+- tiny `d=384` → 15,744 cols → 4·min² ≈ 9.9e8 ✅
+- base `d=512` → 20,992 cols → ≈ 1.76e9 ✅ (just under)
+- small `d=768` → 31,488 cols → ≈ 3.96e9 ❌ overflow → segfault
+- medium `d=1024` → 41,984 cols → ≈ 7.05e9 ❌ overflow → segfault
+
+D2 has fewer rows (31,400) than features → RidgeCV auto-switches to the *eigen* (Gram) path → never
+hits `gesdd` → survives. Exactly why every `_1` task ran and every D1/D3 task crashed.
+
+**Fix applied (Hannes' choice).** Force `gcv_mode='eigen'` in `fit_parcel_mtrf`
+(`evaluate_features_mtrf_parcels.py`; reused by the cross-dataset driver). Eigen computes the
+**numerically identical** GCV ridge solution via the n×n Gram matrix `X Xᵀ` — so **tiny/base results
+are unchanged** (no re-run needed) and only `small`/`medium` are re-run. SLURM bumped to
+`--cpus-per-task=32`, `--time=48:00:00` (jed `standard` is infinite-wall, 72c / 504 GB) because eigen
+is heavier than svd: cost is an O(n³) eigendecomposition of the Gram, `n = n_windows·200` (D1 ≈
+50,400; **D3 ≈ 81,800**, Gram ≈ 50 GB in float64). D3 for the deep models is the slowest case and the
+most likely to need the full 48 h — if a D3 task still times out, that is the trigger to switch to PCA.
+
+**Why eigen is not enough, and PCA (IMPLEMENTED 2026-06-14).** The eigen fix dodges the *width*
+overflow (svd of a wide design) but **not** the *n* overflow: pooled **D3 has n ≈ 81,800 rows**, so
+the eigen path's n×n Gram (81,800²) overflows int32 in the LAPACK symmetric eigensolver workspace
+(~2n²) and in 32-bit BLAS indexing of the 6.7e9-element Gram → small/medium **D3 segfaulted in ~90 s
+even with eigen**. Both exact-GCV paths are therefore dead for D3 at wide feature dims.
+
+**Fix: PCA the features before lagging (`--pca_var`, Hannes' choice = 0.95).** Fit `PCA(n_components=
+0.95)` on the standardised TRAIN features per layer (PC count is **variance-driven → varies by
+model/layer**, e.g. medium keeps however many PCs reach 95 %), lag the projection, store the PCA and
+re-apply it to held-out/transfer features. The design width becomes `n_PCs · n_lags` —
+**model-independent and small** — so `n_samples > n_features` and the cheap `svd` GCV path is used (no
+width overflow, and no n×n Gram → no D3 overflow). Bonus: arguably a **fairer scaling comparison**
+(comparable mapping capacity per layer regardless of raw width). Selectable + separate outputs so it
+doesn't clobber the raw-feature runs:
+- code: `fit_parcel_mtrf(..., pca_var=0.95)` returns `{model, mu, sd, pca}`; `score_parcel_mtrf`
+  applies the stored PCA; `--pca_var` on both drivers; `gcv_mode='auto'` when PCA is on, else `'eigen'`.
+  Provenance: `pca_var` h5 attr + per-layer `n_pcs`. Tests:
+  `test_fit_score_parcel_mtrf_with_pca_reduces_and_recovers`, `test_fit_parcel_mtrf_no_pca_by_default`.
+- run: `PCA_VAR=0.95 MODEL_ID=... sbatch --export=ALL scripts/slurm_mtrf_parcels.sh` → writes to
+  `…-mtrf-parcels-pca-<tag>/` (raw-feature dirs untouched). Same `PCA_VAR` knob on `slurm_cross_mtrf.sh`.
+
+The raw-feature (eigen) D1/D2 numbers stay as the non-PCA reference; the PCA set is the consistent
+all-sizes pipeline that *also* covers D3. If we ever want to revisit the variance fraction, 256 fixed
+PCs or a different % are one-flag changes.

@@ -1,0 +1,122 @@
+{
+  "model_id": "whisper-base",
+  "readout_level": "group",
+  "lookback_ms": 800.0,
+  "config": {
+    "model_id": "whisper-base",
+    "target_feature_layers": "configs/extraction/audio/whisper_base_layers.json",
+    "data_hdf5_path": "outputs/neural_data/broderick2018_30s.h5",
+    "features_dir": "outputs/features/whisper-base-delta-t/merged/",
+    "output_dir": "outputs/results/whisper-base-probe-group-r2-all/",
+    "readout_level": "group",
+    "lookback_ms": 800.0,
+    "highpass_hz": 0.5,
+    "nc_threshold": 0.2,
+    "d_model": 64,
+    "num_latents": 4,
+    "cross_attn_layers": 1,
+    "nhead": 8,
+    "dropout": 0.3,
+    "pos_mode": "learned",
+    "epochs": 200,
+    "lr": 0.001,
+    "weight_decay": 0.01,
+    "batch_size": 512,
+    "n_train_time_samples": 200,
+    "device": "cuda",
+    "amp": false,
+    "layer_id": null,
+    "overwrite": false,
+    "seed": 42
+  },
+  "entries": [
+    {
+      "layer": "blocks.2",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "heldout_r": [
+        0.07941602915525436,
+        0.1409887820482254,
+        0.08359194546937943,
+        0.06996619701385498
+      ],
+      "heldout_r_nc": [
+        0.14502371847629547,
+        0.1635565161705017,
+        0.11978843808174133,
+        0.0998511016368866
+      ],
+      "n_subjects": 1
+    },
+    {
+      "layer": "blocks.3",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "heldout_r": [
+        0.05308227613568306,
+        0.11912674456834793,
+        0.07438409328460693,
+        0.06377211958169937
+      ],
+      "heldout_r_nc": [
+        0.09693495184183121,
+        0.13819506764411926,
+        0.10659345239400864,
+        0.09101133048534393
+      ],
+      "n_subjects": 1
+    },
+    {
+      "layer": "blocks.4",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "heldout_r": [
+        0.055612511932849884,
+        0.11586064100265503,
+        0.06704091280698776,
+        0.06336086988449097
+      ],
+      "heldout_r_nc": [
+        0.1015554815530777,
+        0.1344061642885208,
+        0.09607057273387909,
+        0.09042441844940186
+      ],
+      "n_subjects": 1
+    },
+    {
+      "layer": "blocks.5",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "heldout_r": [
+        0.06620155274868011,
+        0.11597277224063873,
+        0.05974377319216728,
+        0.05584423243999481
+      ],
+      "heldout_r_nc": [
+        0.12089241296052933,
+        0.1345362514257431,
+        0.0856136679649353,
+        0.07969717681407928
+      ],
+      "n_subjects": 1
+    }
+  ]
+}

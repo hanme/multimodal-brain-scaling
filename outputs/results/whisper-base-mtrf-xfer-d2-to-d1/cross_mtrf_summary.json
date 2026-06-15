@@ -1,0 +1,142 @@
+{
+  "source": "d2",
+  "target": "d1",
+  "config": {
+    "model_id": "whisper-base",
+    "target_feature_layers": "configs/extraction/audio/whisper_base_layers.json",
+    "source_tag": "d2",
+    "source_data_hdf5": "outputs/neural_data/surprisal_30s.h5",
+    "source_features_dir": "outputs/features/whisper-base-delta-t-surprisal/merged/",
+    "target_tag": "d1",
+    "target_data_hdf5": "outputs/neural_data/broderick2018_30s.h5",
+    "target_features_dir": "outputs/features/whisper-base-delta-t/merged/",
+    "output_dir": "outputs/results/whisper-base-mtrf-xfer-d2-to-d1/",
+    "parcels_from": "outputs/neural_data/broderick2018_30s.h5",
+    "lag_min_ms": 0.0,
+    "lag_max_ms": 800.0,
+    "lag_step_ms": 20.0,
+    "highpass_hz": 0.5,
+    "nc_threshold": 0.2,
+    "n_train_time_samples": 200,
+    "use_wide_range_alphas": false,
+    "layer_id": null,
+    "overwrite": false,
+    "seed": 42
+  },
+  "entries": [
+    {
+      "layer": "blocks.0",
+      "in_domain": {
+        "d2_test": [
+          0.17391064763069153,
+          0.2094697505235672,
+          0.12523268163204193,
+          0.13657024502754211
+        ]
+      },
+      "transfer": {
+        "d1_test": [
+          0.037047259509563446,
+          0.005131353158503771,
+          0.0101053761318326,
+          0.016967132687568665
+        ]
+      }
+    },
+    {
+      "layer": "blocks.1",
+      "in_domain": {
+        "d2_test": [
+          0.16638608276844025,
+          0.19964781403541565,
+          0.12470252066850662,
+          0.13083472847938538
+        ]
+      },
+      "transfer": {
+        "d1_test": [
+          0.0390232615172863,
+          0.03245450556278229,
+          0.013325849547982216,
+          0.012147397734224796
+        ]
+      }
+    },
+    {
+      "layer": "blocks.2",
+      "in_domain": {
+        "d2_test": [
+          0.15837441384792328,
+          0.19452083110809326,
+          0.12032993882894516,
+          0.12730935215950012
+        ]
+      },
+      "transfer": {
+        "d1_test": [
+          0.06907830387353897,
+          0.05331224575638771,
+          0.017584318295121193,
+          0.015472684055566788
+        ]
+      }
+    },
+    {
+      "layer": "blocks.3",
+      "in_domain": {
+        "d2_test": [
+          0.14183907210826874,
+          0.18621774017810822,
+          0.14001044631004333,
+          0.14676468074321747
+        ]
+      },
+      "transfer": {
+        "d1_test": [
+          0.04468899592757225,
+          0.017567329108715057,
+          -0.003541467245668173,
+          0.006547439843416214
+        ]
+      }
+    },
+    {
+      "layer": "blocks.4",
+      "in_domain": {
+        "d2_test": [
+          0.1685444563627243,
+          0.1594652682542801,
+          0.12809596955776215,
+          0.1319618821144104
+        ]
+      },
+      "transfer": {
+        "d1_test": [
+          0.05372878909111023,
+          0.017975997179746628,
+          0.0023725570645183325,
+          0.0018261420773342252
+        ]
+      }
+    },
+    {
+      "layer": "blocks.5",
+      "in_domain": {
+        "d2_test": [
+          0.1511787623167038,
+          0.172490656375885,
+          0.09236732125282288,
+          0.0970856249332428
+        ]
+      },
+      "transfer": {
+        "d1_test": [
+          0.043900344520807266,
+          0.019695067778229713,
+          -0.005257868207991123,
+          0.0018098580185323954
+        ]
+      }
+    }
+  ]
+}

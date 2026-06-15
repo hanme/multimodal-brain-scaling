@@ -1,0 +1,141 @@
+ANSWERS TO SOPHIE'S QUESTIONS  (source: sophies_questions_20260611.txt)
+Compiled 2026-06-15 (Hannes), after the Kadir conversation and the mTRF /
+multi-dataset / model-scaling work.
+
+LEGEND
+  [ANSWERED]  resolved by the scripts/results we built — "how" given.
+  [PENDING ]  the approach is built and running; the number lands when a job finishes.
+  [OPEN    ]  not yet addressed, or needs a Kadir/Sophie decision (not a script).
+Cross-refs:  H = aux/XX_handover_for_Sophie.md ,  P = aux/project_plan_20260611.md
+
+TL;DR — of her 13 pre-Kadir questions, essentially all are settled for THIS project: ~10
+answered, 1 pending a finishing job, 2 resolved by our data constraints (no tone EEG; only
+1 rep), leaving exactly ONE genuinely open item — QK2, the noise-ceiling definition, which is
+the one we may want to raise with Kadir and/or Aude.
+Separately, the non-whisper models (AST/wav2vec2/VGGish) and whisper-large are not done.
+
+
+================================================================================
+A) "3. Questions" — June-3 prep, written before the Kadir talk
+================================================================================
+
+Q3.1  Temporal bin size; how to stop prior audio bleeding into future EEG; mid-word cuts.
+[ANSWERED]  Windows = 30 s (whisper grid, 1500 bins @ 50 Hz), 10 s stride. Splits are by
+  RUN (D1) / by story-part (D2), so train and test never share acoustic material — no need
+  to shave buffers at cut points. Crucially, "prior audio affecting future EEG" is no longer
+  a contaminant but the MODEL: the mTRF predicts EEG[t] from LAGGED features feature[t-lag]
+  over 0-800 ms, i.e. we explicitly model that cortex reflects recent past audio. Within-window
+  overlap is harmless because scoring is along-time inside held-out windows.  (H: method change;
+  P §1-§3.)
+
+Q3.2  How many datasets? Channel-count mismatch; are 64-ch montages comparable; stuck with one?
+[ANSWERED]  We ran D1 (Broderick, 128 ch), D2 (Cortical Surprisal, 64 ch) and D3 = D1+D2.
+  The channel mismatch is solved by NOT requiring equal channel counts: we map every dataset
+  to the SAME 4 canonical PARCELS keyed on shared 10-20 electrode names (frontal[Fz,F3,F4],
+  temporal[T7,T8], parietal[Pz,P7,P8], occipital[Oz,O2]); NC is recomputed per dataset.
+  Electrodes ARE comparable by name across montages (an Fz is an Fz). Empirical answer to
+  "should we combine?": pooling does NOT help here — cross-dataset transfer largely fails and
+  D3 does not beat within-dataset (see Q3.4 / QK1).  (H: RESULTS + WHISPER FAMILY RESULTS.)
+
+Q3.3  Which stimuli to prioritize — speech vs tones vs a mix?
+[ANSWERED — settled by the data we have]  The question answers itself: we have no NON-speech EEG
+  dataset in hand to train on, so training is SPEECH (both datasets are audiobooks, which also
+  matches Whisper's domain → best mapping). Tones appear ONLY as the in-silico MMN target (apply
+  the speech-trained mapping to tone stimuli). So "prioritize speech" is not a preference but a
+  constraint. (Our transfer finding does warn that this speech->tones step is a real extrapolation.)
+  IF we ever want a non-speech mapping, the concrete candidates already in Sophie's list are:
+  MUSIC — Di Liberto Bach melodic expectations (ID 15; but audio is .mid → needs MIDI->wav) or
+  OpenMIIR (ID 18; EEG only via BitTorrent); TONES/ODDBALL — ERP-CORE MMN (ID 13), the oddball
+  set (ID 21), TSS tones/sweeps (ID 20); NATURAL SOUNDS — ID 22. None acquired/processed yet.
+  DECISION (2026-06-15): we will NOT pursue the music datasets for now. Reasons: (1) Whisper is
+  speech-trained, so it would likely encode music poorly — music is a fairer test only once the
+  NON-whisper models (AST, VGGish = general audio) are wired; (2) music is not the MMN target
+  (tones are), so it's a generalization arm, not critical path; (3) both have access friction
+  (Bach = MIDI->wav rendering; OpenMIIR = BitTorrent). If revisited, Bach (ID 15) is the better
+  candidate (more subjects/reps, only the MIDI->wav step).
+
+Q3.4  What quantity of samples do we need? Whisper's 30 s cuts the train set ~3x.
+[PENDING]  Concrete counts: D1 = 252 train windows, D2 = 157, D3 = 409. This IS the scaling
+  question, and the answer so far is "we are already saturated": bigger Whisper does not predict
+  EEG better (D1 best-layer r ~0.135 for tiny=base=small=medium) and more data (D3) does not help.
+  The full tiny/base/small/medium table is complete except whisper-MEDIUM, which is re-running
+  now (covariance_eigh fix) — that finishes the curve.  (H: FAMILY RESULTS; P §15.)
+
+Q3.5  Linear layer = ridge?
+[ANSWERED]  Yes. The committed method is the mTRF = lagged shared-weight RidgeCV. We also
+  benchmarked a learned non-linear "attention encoder" (Workstream B); ridge/mTRF stays the
+  reportable method.  (H: RESULTS, Workstream B section.)
+
+Q3.6  If repetitions exist: average first, then fit?
+[N/A — does not apply here]  Not an open item for us: D1 and D2 have 1 repetition per stimulus
+  per subject, so there is nothing to average within subject. Our analog is averaging across
+  SUBJECTS (group-level EEG), which is what we fit. The avg-then-fit choice would only become a
+  real question in a DIFFERENT project that uses a repeated-stimulus dataset. The candidates with
+  reps in Sophie's list are: Di Liberto Bach (ID 15, 3 reps), OpenMIIR (ID 18, 5 reps × 4
+  conditions), and the natural-sounds set (ID 22, ~40 reps per 2 s sound) — Di Liberto Bach is the
+  most natural place to test "average reps, then fit" if it ever comes up. Not this project.
+
+Q3.7  EEG preprocessing — reuse each dataset's scripts, or one uniform pipeline?
+[ANSWERED]  Hybrid: dataset-native preprocessing into the mbs HDF5, THEN a uniform fit-time
+  0.5 Hz high-pass (this removed the slow-drift confound that had flattened the lag curve), plus
+  per-dataset z-scoring before any pooling (Q3.2/QK1). So: native cleaning + uniform high-pass +
+  uniform standardization.  (H: method change "lag curve was FLAT".)
+
+Q3.8  Introduce a cortical-processing delay (pairs A_{i-delay}, Y_i)?
+[ANSWERED]  Yes — and this is the central method choice. Rather than shifting pairs by a single
+  delay, the mTRF feeds the ridge the WHOLE lag window (0-800 ms @ 20 ms) and lets it learn the
+  response function. The de-confounded lag curve is a sensible auditory TRF (peak in the expected
+  ~50-200 ms range), confirming the delay is captured.  (H: method change; P §2-§3.)
+
+Q3.9  BIDS-EEG, or another standardization?
+[ANSWERED]  We ingest BIDS via format_eeg_hdf5.py / format_eeg_hdf5_surprisal.py into the mbs
+  HDF5 schema (the format Kadir's evaluators read). Works for both datasets; no deeper format
+  exploration was needed.
+
+
+================================================================================
+B) "Questions for Kadir" (Jun 10) — status after the talk + our work
+================================================================================
+
+QK1  Multi-source pooling: how to standardize EEG/features, build test sets, get NC-corrected
+     values without a dataset-identity confound?
+[ANSWERED]  Built and unit-tested. (a) z-score each dataset's EEG per channel using its OWN
+  train mean/std BEFORE pooling — kills the leak where the model trivially predicts "which dataset"
+  from raw scale (D1 Fz std ~1357 vs D2 ~0.0003). (b) Score each dataset's test split SEPARATELY,
+  never pool test_d1/test_d2 — a pooled correlation is spuriously high (we have a regression test
+  that demonstrates exactly this). (c) NC recomputed per dataset on the shared parcels. Net result:
+  with the leak removed, pooling shows no real encoding gain.  (H: RESULTS finding 2; P §13.2.)
+
+QK2  Noise ceiling — within-subject vs across-subject; 1-rep-per-stimulus data; is uncorrected r OK?
+[OPEN — the one to raise with Kadir and/or Aude]  This is the SINGLE genuinely open item. We use
+  CROSS-SUBJECT NC (split the subjects into two halves, average EEG in each, correlate the two group
+  means, then Spearman-Brown + sqrt(NC/100)), because there are no within-subject repeats. We report
+  BOTH raw r and NC-normalized r. What is still unresolved (a judgement call, not a script): is
+  cross-subject the appropriate ceiling, and does it inflate our NC-corrected numbers relative to the
+  visual-benchmark scale? Pragmatic fallback: raw (uncorrected) r is always safe to report.
+  [Hannes to add context on what specifically to ask.]  (H: in-silico MMN "NC-based channel exclusion".)
+
+QK3  Delay; and how to collapse a temporal score curve scores[T] into one number?
+[ANSWERED]  Delay -> mTRF lags (see Q3.8). Collapsing: we fit the full MULTI-LAG (FIR) mTRF, which
+  already yields ONE r per channel over the whole 0-800 ms window — so there is no per-lag curve to
+  collapse for encoding/selection. For layer selection we use best-layer mean-parcel r; for the MMN
+  we use the baseline-normalized negative peak in the 100-250 ms band.  (H: method change; in-silico
+  MMN metric snippet.)
+
+QK4  Failure mode: a speech-trained linear readout applied to heavily zero-padded MMN TONE features?
+[PENDING / partial]  Risk confirmed and partly evidenced. Transfer between two SPEECH corpora
+  already largely fails (D1->D2 temporal +0.017), so speech->tones is a strictly bigger extrapolation
+  — we should expect degradation. We cannot score it directly (no tone-EEG ground truth), but the
+  in-silico MMN sweep (8 identity-MMN methods x 6 whisper layers x 4 parcels) tests whether an
+  MMN-like dev-std response survives despite the distribution shift; those predictions + figures
+  exist for you to run your MMN metric on.  (H: in-silico MMN section + the deliverable HDF5s.)
+
+
+================================================================================
+C) Gaps beyond her explicit list (implied by the model-list plan)
+================================================================================
+- NON-WHISPER models (AST, wav2vec2 base/large, VGGish): NOT done. They sit on different time
+  grids and need the §6 time-alignment work; only the Whisper family is wired end-to-end. The
+  "9 models" plan is Whisper-only so far.
+- whisper-LARGE: features not extracted yet (no merged feature dir).
+(Training on tones is NOT a gap to fill — see Q3.3: we have no tone EEG, so it's out of scope.)

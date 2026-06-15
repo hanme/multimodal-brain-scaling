@@ -1,0 +1,164 @@
+{
+  "model_id": "whisper-medium",
+  "data_hdf5_path": "outputs/neural_data/surprisal_30s.h5",
+  "splits": [
+    "test"
+  ],
+  "config": {
+    "model_id": "whisper-medium",
+    "target_feature_layers": "configs/extraction/audio/whisper_medium_layers.json",
+    "data_hdf5_path": "outputs/neural_data/surprisal_30s.h5",
+    "features_dir": "/work/upschrimpf1/sigfstea/multimodal-brain-scaling/outputs/features/whisper-medium-delta-t-surprisal/merged",
+    "output_dir": "outputs/results/whisper-medium-mtrf-parcels-pca-d2/",
+    "parcels_from": "outputs/neural_data/broderick2018_30s.h5",
+    "lag_min_ms": 0.0,
+    "lag_max_ms": 800.0,
+    "lag_step_ms": 20.0,
+    "highpass_hz": 0.5,
+    "nc_threshold": 0.2,
+    "n_train_time_samples": 200,
+    "standardize_features": true,
+    "pca_var": 0.95,
+    "use_wide_range_alphas": false,
+    "layer_id": null,
+    "overwrite": true,
+    "seed": 42
+  },
+  "entries": [
+    {
+      "layer": "blocks.0",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "n_pcs": 369,
+      "splits": {
+        "test": {
+          "heldout_r": [
+            0.10470760613679886,
+            0.11894578486680984,
+            0.07064520567655563,
+            0.0766444206237793
+          ],
+          "heldout_r_nc": [
+            0.16539709270000458,
+            0.23972652852535248,
+            0.11043724417686462,
+            0.1521274596452713
+          ],
+          "n_test": 43
+        }
+      }
+    },
+    {
+      "layer": "blocks.1",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "n_pcs": 396,
+      "splits": {
+        "test": {
+          "heldout_r": [
+            0.14001964032649994,
+            0.16643960773944855,
+            0.13196852803230286,
+            0.13653649389743805
+          ],
+          "heldout_r_nc": [
+            0.22117629647254944,
+            0.335446834564209,
+            0.20630191266536713,
+            0.2710040807723999
+          ],
+          "n_test": 43
+        }
+      }
+    },
+    {
+      "layer": "blocks.2",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "n_pcs": 425,
+      "splits": {
+        "test": {
+          "heldout_r": [
+            0.13552172482013702,
+            0.15748833119869232,
+            0.12857241928577423,
+            0.13164186477661133
+          ],
+          "heldout_r_nc": [
+            0.2140713483095169,
+            0.31740620732307434,
+            0.2009928971529007,
+            0.26128897070884705
+          ],
+          "n_test": 43
+        }
+      }
+    },
+    {
+      "layer": "blocks.3",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "n_pcs": 453,
+      "splits": {
+        "test": {
+          "heldout_r": [
+            0.13686391711235046,
+            0.16333001852035522,
+            0.09354938566684723,
+            0.09489481896162033
+          ],
+          "heldout_r_nc": [
+            0.21619148552417755,
+            0.32917970418930054,
+            0.14624257385730743,
+            0.18835170567035675
+          ],
+          "n_test": 43
+        }
+      }
+    },
+    {
+      "layer": "blocks.4",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "n_pcs": 473,
+      "splits": {
+        "test": {
+          "heldout_r": [
+            0.11758765578269958,
+            0.13090145587921143,
+            0.10954312235116959,
+            0.11117161810398102
+          ],
+          "heldout_r_nc": [
+            0.18574252724647522,
+            0.2638223171234131,
+            0.1712450385093689,
+            0.22065865993499756
+          ],
+          "n_test": 43
+        }
+      }
+    }
+  ]
+}

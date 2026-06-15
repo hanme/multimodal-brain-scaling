@@ -1,0 +1,143 @@
+{
+  "source": "d2",
+  "target": "d1",
+  "config": {
+    "model_id": "whisper-base",
+    "target_feature_layers": "configs/extraction/audio/whisper_base_layers.json",
+    "source_tag": "d2",
+    "source_data_hdf5": "outputs/neural_data/surprisal_30s.h5",
+    "source_features_dir": "outputs/features/whisper-base-delta-t-surprisal/merged",
+    "target_tag": "d1",
+    "target_data_hdf5": "outputs/neural_data/broderick2018_30s.h5",
+    "target_features_dir": "outputs/features/whisper-base-delta-t/merged",
+    "output_dir": "outputs/results/whisper-base-mtrf-xfer-pca-d2-to-d1/",
+    "parcels_from": "outputs/neural_data/broderick2018_30s.h5",
+    "lag_min_ms": 0.0,
+    "lag_max_ms": 800.0,
+    "lag_step_ms": 20.0,
+    "highpass_hz": 0.5,
+    "nc_threshold": 0.2,
+    "n_train_time_samples": 200,
+    "pca_var": 0.95,
+    "use_wide_range_alphas": false,
+    "layer_id": null,
+    "overwrite": true,
+    "seed": 42
+  },
+  "entries": [
+    {
+      "layer": "blocks.0",
+      "in_domain": {
+        "d2_test": [
+          0.17102576792240143,
+          0.2099350094795227,
+          0.12292303144931793,
+          0.134874165058136
+        ]
+      },
+      "transfer": {
+        "d1_test": [
+          0.03974511846899986,
+          0.022137973457574844,
+          0.008534161373972893,
+          0.01563229411840439
+        ]
+      }
+    },
+    {
+      "layer": "blocks.1",
+      "in_domain": {
+        "d2_test": [
+          0.1605939269065857,
+          0.19252248108386993,
+          0.11903884261846542,
+          0.1279374212026596
+        ]
+      },
+      "transfer": {
+        "d1_test": [
+          0.04391110688447952,
+          0.029319746419787407,
+          0.007471579592674971,
+          0.006141829304397106
+        ]
+      }
+    },
+    {
+      "layer": "blocks.2",
+      "in_domain": {
+        "d2_test": [
+          0.15267117321491241,
+          0.18697862327098846,
+          0.13999594748020172,
+          0.15120919048786163
+        ]
+      },
+      "transfer": {
+        "d1_test": [
+          0.06695406883955002,
+          0.044968076050281525,
+          0.012445611879229546,
+          0.014287839643657207
+        ]
+      }
+    },
+    {
+      "layer": "blocks.3",
+      "in_domain": {
+        "d2_test": [
+          0.16712069511413574,
+          0.2098991572856903,
+          0.13649356365203857,
+          0.14313460886478424
+        ]
+      },
+      "transfer": {
+        "d1_test": [
+          0.04960324987769127,
+          0.023410694673657417,
+          -0.0018737822538241744,
+          0.007808937691152096
+        ]
+      }
+    },
+    {
+      "layer": "blocks.4",
+      "in_domain": {
+        "d2_test": [
+          0.16542214155197144,
+          0.18816976249217987,
+          0.12380910664796829,
+          0.12847445905208588
+        ]
+      },
+      "transfer": {
+        "d1_test": [
+          0.05522753670811653,
+          0.028941446915268898,
+          0.001811712863855064,
+          0.0015754790510982275
+        ]
+      }
+    },
+    {
+      "layer": "blocks.5",
+      "in_domain": {
+        "d2_test": [
+          0.15158240497112274,
+          0.17262744903564453,
+          0.09481684118509293,
+          0.09923194348812103
+        ]
+      },
+      "transfer": {
+        "d1_test": [
+          0.04361410066485405,
+          0.02109212428331375,
+          -0.006018230691552162,
+          0.0007891874411143363
+        ]
+      }
+    }
+  ]
+}

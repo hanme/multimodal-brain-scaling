@@ -1,0 +1,56 @@
+{
+  "model_id": "whisper-base",
+  "readout_level": "group",
+  "lookback_ms": 800.0,
+  "config": {
+    "model_id": "whisper-base",
+    "target_feature_layers": "configs/extraction/audio/whisper_base_layers.json",
+    "data_hdf5_path": "outputs/neural_data/broderick2018_30s.h5",
+    "features_dir": "outputs/features/whisper-base-delta-t/merged/",
+    "output_dir": "outputs/results/whisper-base-probe-group-r3/",
+    "readout_level": "group",
+    "lookback_ms": 800.0,
+    "highpass_hz": 0.5,
+    "nc_threshold": 0.2,
+    "d_model": 256,
+    "num_latents": 16,
+    "cross_attn_layers": 2,
+    "nhead": 8,
+    "dropout": 0.3,
+    "pos_mode": "learned",
+    "epochs": 200,
+    "lr": 0.001,
+    "weight_decay": 0.01,
+    "batch_size": 512,
+    "n_train_time_samples": 200,
+    "device": "cuda",
+    "amp": false,
+    "layer_id": 2,
+    "overwrite": false,
+    "seed": 42
+  },
+  "entries": [
+    {
+      "layer": "blocks.2",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "heldout_r": [
+        0.04347766935825348,
+        0.07338863611221313,
+        0.046043429523706436,
+        0.03954166918992996
+      ],
+      "heldout_r_nc": [
+        0.07939572632312775,
+        0.08513577282428741,
+        0.06598088145256042,
+        0.05643124133348465
+      ],
+      "n_subjects": 1
+    }
+  ]
+}

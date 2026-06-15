@@ -1,0 +1,340 @@
+{
+  "model_id": "whisper-small",
+  "data_hdf5_path": "outputs/neural_data/broderick2018_30s.h5",
+  "splits": [
+    "test"
+  ],
+  "config": {
+    "model_id": "whisper-small",
+    "target_feature_layers": "configs/extraction/audio/whisper_small_layers.json",
+    "data_hdf5_path": "outputs/neural_data/broderick2018_30s.h5",
+    "features_dir": "/work/upschrimpf1/sigfstea/multimodal-brain-scaling/outputs/features/whisper-small-delta-t/merged",
+    "output_dir": "outputs/results/whisper-small-mtrf-parcels-d1/",
+    "parcels_from": "outputs/neural_data/broderick2018_30s.h5",
+    "lag_min_ms": 0.0,
+    "lag_max_ms": 800.0,
+    "lag_step_ms": 20.0,
+    "highpass_hz": 0.5,
+    "nc_threshold": 0.2,
+    "n_train_time_samples": 200,
+    "standardize_features": true,
+    "use_wide_range_alphas": false,
+    "layer_id": null,
+    "overwrite": true,
+    "seed": 42
+  },
+  "entries": [
+    {
+      "layer": "blocks.0",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "splits": {
+        "test": {
+          "heldout_r": [
+            0.11897570639848709,
+            0.15253418684005737,
+            0.1014898493885994,
+            0.0969017818570137
+          ],
+          "heldout_r_nc": [
+            0.21726469695568085,
+            0.17694996297359467,
+            0.1454363912343979,
+            0.13829177618026733
+          ],
+          "n_test": 62
+        }
+      }
+    },
+    {
+      "layer": "blocks.1",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "splits": {
+        "test": {
+          "heldout_r": [
+            0.11196340620517731,
+            0.1605454981327057,
+            0.10273582488298416,
+            0.09632193297147751
+          ],
+          "heldout_r_nc": [
+            0.20445933938026428,
+            0.18624362349510193,
+            0.1472218781709671,
+            0.1374642550945282
+          ],
+          "n_test": 62
+        }
+      }
+    },
+    {
+      "layer": "blocks.2",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "splits": {
+        "test": {
+          "heldout_r": [
+            0.11245040595531464,
+            0.1484169363975525,
+            0.061615608632564545,
+            0.06807653605937958
+          ],
+          "heldout_r_nc": [
+            0.2053486704826355,
+            0.17217367887496948,
+            0.08829603344202042,
+            0.09715430438518524
+          ],
+          "n_test": 62
+        }
+      }
+    },
+    {
+      "layer": "blocks.3",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "splits": {
+        "test": {
+          "heldout_r": [
+            0.11879279464483261,
+            0.14542663097381592,
+            0.06892011314630508,
+            0.07459906488656998
+          ],
+          "heldout_r_nc": [
+            0.21693067252635956,
+            0.16870471835136414,
+            0.09876349568367004,
+            0.10646282881498337
+          ],
+          "n_test": 62
+        }
+      }
+    },
+    {
+      "layer": "blocks.4",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "splits": {
+        "test": {
+          "heldout_r": [
+            0.1421831250190735,
+            0.17606014013290405,
+            0.1097075566649437,
+            0.10547071695327759
+          ],
+          "heldout_r_nc": [
+            0.25964438915252686,
+            0.20424166321754456,
+            0.15721248090267181,
+            0.15052080154418945
+          ],
+          "n_test": 62
+        }
+      }
+    },
+    {
+      "layer": "blocks.5",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "splits": {
+        "test": {
+          "heldout_r": [
+            0.11645067483186722,
+            0.15376350283622742,
+            0.09301549941301346,
+            0.07859441637992859
+          ],
+          "heldout_r_nc": [
+            0.21265366673469543,
+            0.17837604880332947,
+            0.1332925260066986,
+            0.11216472834348679
+          ],
+          "n_test": 62
+        }
+      }
+    },
+    {
+      "layer": "blocks.6",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "splits": {
+        "test": {
+          "heldout_r": [
+            0.11520639061927795,
+            0.17734786868095398,
+            0.08994972705841064,
+            0.08776985108852386
+          ],
+          "heldout_r_nc": [
+            0.21038144826889038,
+            0.20573550462722778,
+            0.1288992315530777,
+            0.12525929510593414
+          ],
+          "n_test": 62
+        }
+      }
+    },
+    {
+      "layer": "blocks.7",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "splits": {
+        "test": {
+          "heldout_r": [
+            0.12183833122253418,
+            0.15215277671813965,
+            0.09372607618570328,
+            0.08277573436498642
+          ],
+          "heldout_r_nc": [
+            0.22249220311641693,
+            0.17650750279426575,
+            0.134310781955719,
+            0.11813202500343323
+          ],
+          "n_test": 62
+        }
+      }
+    },
+    {
+      "layer": "blocks.8",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "splits": {
+        "test": {
+          "heldout_r": [
+            0.11594899743795395,
+            0.18603092432022095,
+            0.09029482305049896,
+            0.07328247278928757
+          ],
+          "heldout_r_nc": [
+            0.21173754334449768,
+            0.2158084362745285,
+            0.12939375638961792,
+            0.10458387434482574
+          ],
+          "n_test": 62
+        }
+      }
+    },
+    {
+      "layer": "blocks.9",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "splits": {
+        "test": {
+          "heldout_r": [
+            0.11546394973993301,
+            0.1792139858007431,
+            0.10369522124528885,
+            0.09633802622556686
+          ],
+          "heldout_r_nc": [
+            0.2108517736196518,
+            0.20790033042430878,
+            0.14859671890735626,
+            0.1374872326850891
+          ],
+          "n_test": 62
+        }
+      }
+    },
+    {
+      "layer": "blocks.10",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "splits": {
+        "test": {
+          "heldout_r": [
+            0.11438396573066711,
+            0.18466821312904358,
+            0.08733147382736206,
+            0.06841733306646347
+          ],
+          "heldout_r_nc": [
+            0.20887959003448486,
+            0.2142276018857956,
+            0.1251472383737564,
+            0.09764067083597183
+          ],
+          "n_test": 62
+        }
+      }
+    },
+    {
+      "layer": "blocks.11",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "splits": {
+        "test": {
+          "heldout_r": [
+            0.11444766074419022,
+            0.1585816591978073,
+            0.10373866558074951,
+            0.07572456449270248
+          ],
+          "heldout_r_nc": [
+            0.20899590849876404,
+            0.18396544456481934,
+            0.14865897595882416,
+            0.10806906223297119
+          ],
+          "n_test": 62
+        }
+      }
+    }
+  ]
+}

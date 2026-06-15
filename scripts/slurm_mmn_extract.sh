@@ -22,20 +22,26 @@
 
 PROJECT_DIR="/work/upschrimpf1/mehrer/code/20260601_multimodal_brain_scaling_schizophrenia/multimodal-brain-scaling"
 METHOD="${MMN_METHOD:-method_09}"
+MODEL_ID="${MODEL_ID:-whisper-base}"
 DATA_ROOT="${PROJECT_DIR}/outputs/mmn_stimuli/${METHOD}"
-LAYERS_CONFIG="configs/extraction/audio/whisper_base_layers.json"
-OUTPUT_DIR="outputs/features/mmn-${METHOD}-delta-t"
+LAYERS_CONFIG="configs/extraction/audio/${MODEL_ID//-/_}_layers.json"
+# whisper-base keeps its historical path (outputs/features/mmn-<method>-delta-t); any other model
+# gets a model-scoped root so its MMN features don't collide. Point insilico_mmn.py's
+# --mmn_features_root at the dir that CONTAINS mmn-<method>-delta-t (printed below).
+if [ "$MODEL_ID" = "whisper-base" ]; then MMN_ROOT="outputs/features"; else MMN_ROOT="outputs/features/${MODEL_ID}-mmn"; fi
+OUTPUT_DIR="${MMN_ROOT}/mmn-${METHOD}-delta-t"
 
 cd "$PROJECT_DIR" || { echo "cannot cd"; exit 1; }
 source env.sh
 mkdir -p logs "$OUTPUT_DIR"
 
 TASK_ID=${SLURM_ARRAY_TASK_ID:-0}
-echo "MMN extract: stimulus index ${TASK_ID} of $(ls ${DATA_ROOT}/*.wav | wc -l)"
+echo "MMN extract: $MODEL_ID / $METHOD  stimulus index ${TASK_ID} of $(ls ${DATA_ROOT}/*.wav | wc -l)"
+echo "  -> $OUTPUT_DIR   (insilico --mmn_features_root $MMN_ROOT)"
 
 # window_duration 30 / stride 30 -> exactly one 30 s segment per clip (matches Broderick training window)
 OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-2} python -m mbs.extraction.extract_features_delta_t \
-    --model_id              whisper-base \
+    --model_id              "$MODEL_ID" \
     --data_root             "$DATA_ROOT" \
     --target_feature_layers "$LAYERS_CONFIG" \
     --output_dir            "$OUTPUT_DIR" \

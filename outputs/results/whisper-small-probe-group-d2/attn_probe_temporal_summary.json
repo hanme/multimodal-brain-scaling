@@ -1,0 +1,347 @@
+{
+  "model_id": "whisper-small",
+  "readout_level": "group",
+  "lookback_ms": 800.0,
+  "config": {
+    "model_id": "whisper-small",
+    "target_feature_layers": "configs/extraction/audio/whisper_small_layers.json",
+    "data_hdf5_path": "outputs/neural_data/surprisal_30s.h5",
+    "features_dir": "/work/upschrimpf1/sigfstea/multimodal-brain-scaling/outputs/features/whisper-small-delta-t-surprisal/merged",
+    "output_dir": "outputs/results/whisper-small-probe-group-d2/",
+    "readout_level": "group",
+    "parcels_from": "outputs/neural_data/broderick2018_30s.h5",
+    "lookback_ms": 800.0,
+    "highpass_hz": 0.5,
+    "nc_threshold": 0.2,
+    "d_model": 64,
+    "num_latents": 4,
+    "cross_attn_layers": 1,
+    "nhead": 8,
+    "dropout": 0.3,
+    "pos_mode": "learned",
+    "epochs": 200,
+    "lr": 0.001,
+    "weight_decay": 0.01,
+    "batch_size": 512,
+    "n_train_time_samples": 200,
+    "device": "cuda",
+    "amp": false,
+    "layer_id": null,
+    "overwrite": true,
+    "seed": 42
+  },
+  "entries": [
+    {
+      "layer": "blocks.0",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "n_subjects": 1,
+      "splits": {
+        "test": {
+          "heldout_r": [
+            0.25861090421676636,
+            0.3177698850631714,
+            0.2259189337491989,
+            0.20588165521621704
+          ],
+          "heldout_r_nc": [
+            0.4085041284561157,
+            0.6404419541358948,
+            0.35317137837409973,
+            0.40864360332489014
+          ]
+        }
+      }
+    },
+    {
+      "layer": "blocks.1",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "n_subjects": 1,
+      "splits": {
+        "test": {
+          "heldout_r": [
+            0.25102996826171875,
+            0.3199383318424225,
+            0.21066516637802124,
+            0.20432500541210175
+          ],
+          "heldout_r_nc": [
+            0.3965292274951935,
+            0.644812285900116,
+            0.32932567596435547,
+            0.4055539071559906
+          ]
+        }
+      }
+    },
+    {
+      "layer": "blocks.2",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "n_subjects": 1,
+      "splits": {
+        "test": {
+          "heldout_r": [
+            0.2643814980983734,
+            0.316043496131897,
+            0.21062378585338593,
+            0.18798792362213135
+          ],
+          "heldout_r_nc": [
+            0.41761940717697144,
+            0.6369625329971313,
+            0.32926100492477417,
+            0.373127281665802
+          ]
+        }
+      }
+    },
+    {
+      "layer": "blocks.3",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "n_subjects": 1,
+      "splits": {
+        "test": {
+          "heldout_r": [
+            0.1931140422821045,
+            0.22492985427379608,
+            0.140333890914917,
+            0.13417260348796844
+          ],
+          "heldout_r_nc": [
+            0.30504468083381653,
+            0.4533296525478363,
+            0.21937920153141022,
+            0.2663120925426483
+          ]
+        }
+      }
+    },
+    {
+      "layer": "blocks.4",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "n_subjects": 1,
+      "splits": {
+        "test": {
+          "heldout_r": [
+            0.372022420167923,
+            0.48024821281433105,
+            0.32821527123451233,
+            0.3191927373409271
+          ],
+          "heldout_r_nc": [
+            0.5876500010490417,
+            0.9679051041603088,
+            0.5130877494812012,
+            0.6335487961769104
+          ]
+        }
+      }
+    },
+    {
+      "layer": "blocks.5",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "n_subjects": 1,
+      "splits": {
+        "test": {
+          "heldout_r": [
+            0.2758274972438812,
+            0.35016241669654846,
+            0.2467622458934784,
+            0.23927302658557892
+          ],
+          "heldout_r_nc": [
+            0.43569961190223694,
+            0.7057267427444458,
+            0.3857550323009491,
+            0.4749203622341156
+          ]
+        }
+      }
+    },
+    {
+      "layer": "blocks.6",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "n_subjects": 1,
+      "splits": {
+        "test": {
+          "heldout_r": [
+            0.2736661732196808,
+            0.32747700810432434,
+            0.25135818123817444,
+            0.23193463683128357
+          ],
+          "heldout_r_nc": [
+            0.4322855770587921,
+            0.6600059270858765,
+            0.3929396867752075,
+            0.4603548049926758
+          ]
+        }
+      }
+    },
+    {
+      "layer": "blocks.7",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "n_subjects": 1,
+      "splits": {
+        "test": {
+          "heldout_r": [
+            0.17942838370800018,
+            0.19551053643226624,
+            0.13937102258205414,
+            0.12456483393907547
+          ],
+          "heldout_r_nc": [
+            0.2834267020225525,
+            0.3940371870994568,
+            0.2178739756345749,
+            0.24724215269088745
+          ]
+        }
+      }
+    },
+    {
+      "layer": "blocks.8",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "n_subjects": 1,
+      "splits": {
+        "test": {
+          "heldout_r": [
+            0.21979209780693054,
+            0.3092181384563446,
+            0.20585910975933075,
+            0.19241121411323547
+          ],
+          "heldout_r_nc": [
+            0.34718558192253113,
+            0.6232065558433533,
+            0.32181254029273987,
+            0.3819068372249603
+          ]
+        }
+      }
+    },
+    {
+      "layer": "blocks.9",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "n_subjects": 1,
+      "splits": {
+        "test": {
+          "heldout_r": [
+            0.17865021526813507,
+            0.18835566937923431,
+            0.14160461723804474,
+            0.13249030709266663
+          ],
+          "heldout_r_nc": [
+            0.282197505235672,
+            0.3796170651912689,
+            0.22136567533016205,
+            0.26297301054000854
+          ]
+        }
+      }
+    },
+    {
+      "layer": "blocks.10",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "n_subjects": 1,
+      "splits": {
+        "test": {
+          "heldout_r": [
+            0.31547677516937256,
+            0.370552659034729,
+            0.24777700006961823,
+            0.24229958653450012
+          ],
+          "heldout_r_nc": [
+            0.4983299672603607,
+            0.7468217611312866,
+            0.38734135031700134,
+            0.48092764616012573
+          ]
+        }
+      }
+    },
+    {
+      "layer": "blocks.11",
+      "parcels": [
+        "frontal",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "n_subjects": 1,
+      "splits": {
+        "test": {
+          "heldout_r": [
+            0.2264588326215744,
+            0.2719462513923645,
+            0.18312540650367737,
+            0.17761267721652985
+          ],
+          "heldout_r_nc": [
+            0.35771644115448,
+            0.5480877757072449,
+            0.286273717880249,
+            0.3525339961051941
+          ]
+        }
+      }
+    }
+  ]
+}

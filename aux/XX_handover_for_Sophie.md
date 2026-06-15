@@ -1,9 +1,162 @@
 # Handover: Auditory EEG Encoding Models — Sophie
 
-**Status: living document, updated as plan executes.**
-Last updated: 2026-06-13
-See `02_project_plan_make_compatible_for_auditory_EEG.md` for the full technical roadmap.
-See `00_schizophrenia_pipeline_Sophie_2026.md` for the MMN unit-selection pipeline this feeds into.
+_Living doc, newest material on top. Last updated 2026-06-15._
+Feeds the MMN pipeline (`00_schizophrenia_pipeline_Sophie_2026.md`); full technical log in
+`aux/project_plan_20260611.md`.
+
+## 📍 Quick map
+
+**Current state (2026-06-15):** mTRF EEG-encoders across the Whisper family. PCA@95 % pipeline
+**complete for tiny/base/small** (D1/D2/D3 + transfer); **medium re-running**. Headline: **scaling is
+flat** — a bigger Whisper does *not* predict EEG better. The **attention encoder** (a learned
+non-linear readout; the code calls it `attn_probe`/"probe", Workstream B) is done; "linear mTRF vs
+attention encoder" flips by dataset (D2 looks suspiciously easy — see §14 of the plan).
+
+**Where to find what:**
+- **Latest results** → right here: *Family results* (scaling table) + *Results (whisper-base)* (per-parcel detail).
+- **For your MMN** → *in-silico MMN + per-parcel predictions* — the HDF5 deliverable and how to score it.
+- **GPU gotcha** → *ENV NOTE* (torch cu126 build) just below.
+- **Why the method is what it is** → *method change (per-bin → mTRF)* and *Workstream B (learned probe)*.
+- **Overflow / PCA saga** → the ⚠️ box in this section (+ `project_plan §15`).
+- **Reference manual** (repo layout, datasets, how to run) → numbered §1–§6 at the bottom.
+
+---
+
+## ⚠️ ENV NOTE — GPU / PyTorch CUDA build (read before running anything on a GPU node)
+
+**Workstream B (the learned temporal probe) is gradient-trained and wants a GPU.** When you move
+onto a GPU node you may have to fix the PyTorch install first — this bit me on 2026-06-13:
+
+- **The venv is `uv`-managed and has NO `pip` inside it.** `pip list` / `python -m pip list` show
+  the *base module's* environment, not the venv (they'll look empty / wrong for torch). Use
+  **`uv pip ...`** for everything, and query installed versions with
+  `python -c "import importlib.metadata as m; print([f'{d.metadata[\"Name\"]}=={d.version}' for d in m.distributions() if 'torch' in d.metadata['Name'].lower()])"`.
+- **The torch in the venv was a `+cu130` build (compiled for CUDA 13.0).** The GPU nodes here are
+  **NVIDIA L40S with driver 560.35.03 = CUDA 12.6**, which is *too old* for a cu130 build. Symptom:
+  `torch.cuda.is_available()` returns **False on a node with a perfectly good idle GPU**, and torch
+  silently trains on CPU (you'll see a `UserWarning: CUDA initialization: The NVIDIA driver on your
+  system is too old (found version 12060)`). The unit tests still pass on CPU, so this is easy to miss.
+- **Fix — reinstall torch + torchvision with the matching cu126 build** (pin the same versions so
+  nothing else churns; torchvision has its own compiled CUDA ops so it must match torch's CUDA):
+  ```bash
+  source env.sh
+  uv pip install "torch==2.12.0+cu126" "torchvision==0.27.0+cu126" \
+    --extra-index-url https://download.pytorch.org/whl/cu126 \
+    --index-strategy unsafe-best-match \
+    --reinstall-package torch --reinstall-package torchvision
+  python -c "import torch, torchvision; print('torch', torch.__version__, '| cuda', torch.cuda.is_available(), '|', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'NO GPU')"
+  ```
+  Expected: `cuda True | NVIDIA L40S`. (Adjust the version pins to whatever is currently in the
+  venv; the cu126 index also serves cu124/cu121 if 12.6 ever changes — any cu12x build works with
+  the 12.6 driver.) **Sanity rule: if `torch.cuda.is_available()` is False on a GPU node, check the
+  torch build tag vs `nvidia-smi`'s CUDA version before debugging anything else.**
+
+---
+
+## ⭐ RESULTS (2026-06-14) — multi-dataset encoding D1/D2/D3 + transfer (whisper-base)
+
+The two encoders we compare:
+- **mTRF** — linear lagged ridge (closed-form, CPU).
+- **attention encoder** — a learned, non-linear attention readout over the lookback window (GPU,
+  gradient-trained, best config d_model=64). *(This is what the code/output dirs call `attn_probe` /
+  "probe" — same thing, clearer name.)*
+
+Parcel-level held-out r, **blocks.2**, same canonical 4 parcels everywhere (D1 membership, NC
+recomputed per dataset), 0.5 Hz HP, 0–800 ms lags. D3 scored on `test_d1`/`test_d2` **separately**
+(never pooled).
+
+| trained → tested | frontal | temporal | parietal | occipital |
+|---|---|---|---|---|
+| mTRF D1→D1 | +0.122 | +0.162 | +0.070 | +0.084 |
+| mTRF D2→D2 | +0.158 | +0.195 | +0.120 | +0.127 |
+| mTRF D3→D1 test (pooled) | +0.065 | +0.040 | +0.030 | +0.030 |
+| mTRF D3→D2 test (pooled) | +0.201 | +0.243 | +0.142 | +0.168 |
+| mTRF D1→D2 transfer | +0.037 | +0.017 | +0.008 | +0.005 |
+| mTRF D2→D1 transfer | +0.069 | +0.053 | +0.018 | +0.015 |
+| **attn-enc D1→D1** | +0.079 | +0.141 | +0.084 | +0.070 |
+| **attn-enc D2→D2** | **+0.295** | **+0.363** | +0.246 | +0.227 |
+| attn-enc D3→D1 test | +0.068 | +0.065 | +0.033 | +0.039 |
+| attn-enc D3→D2 test | +0.270 | +0.300 | +0.225 | +0.261 |
+
+**Findings (whisper-base):**
+1. **mTRF replicates** on the independent dataset (D2 ≥ D1 on every parcel). The encoder is not a
+   Broderick artifact.
+2. **Cross-dataset transfer essentially fails** (D1→D2 temporal +0.017, D2→D1 +0.053). The
+   speech→EEG mapping is largely **not shared** across corpora → pooling (D3) is zero-sum (helps D2,
+   craters D1). ⚠️ This is also a warning for the MMN: if speech→speech transfer breaks, speech→tones
+   (the in-silico MMN) is an even bigger extrapolation.
+3. **The "ridge wins" conclusion FLIPS by dataset.** On D1 the attention encoder loses to the mTRF
+   (0.141 vs 0.162, the old 23/24 result); on **D2 it crushes the mTRF** (temporal 0.363 vs 0.195,
+   ~1.9×) and holds under pooling (D3→D2 0.300). It is **not a data-quantity effect** — D2 has *fewer*
+   train windows than D1 (157 vs 252). Something about D2's structure suits the non-linear readout.
+
+> ⚠️ **#3 is suspicious — do not over-claim until verified.** Likely confound: the **splits differ
+> structurally**. D1 = split **by run** (separate audiobook segments, zero acoustic overlap). D2 =
+> split **by story part, one part held out per audiobook** → test shares the *same audiobook* as
+> train; with 10 s-stride overlapping windows the held-out set may be "closer" to training, which the
+> high-capacity attention encoder exploits far more than a rigid ridge. **Verification agenda in
+> `project_plan_20260611.md` §14.**
+
+**Whisper-family status (2026-06-15):**
+- **attention encoder d2/d3** (GPU; dirs `…-probe-group-…`): complete for tiny/base/small/medium.
+- **PCA mTRF** (the consistent all-sizes pipeline, incl. D3): **tiny/base/small COMPLETE**
+  (d1/d2/d3 + both transfers); **medium re-running** with the covariance_eigh fix (see ⚠️ c).
+- **Raw-feature mTRF** (eigen reference): tiny/base complete incl. d3; small d1/d2 done (raw d3
+  impossible); medium d2 done, raw d1+xfer still grinding (slow — redundant now, PCA≈raw).
+- All `MODEL_ID`-parameterized (large needs extraction): `slurm_mtrf_parcels.sh`,
+  `slurm_cross_mtrf.sh` (CPU), `kuma_probe_d2d3.sh` (GPU); features resolve local-else-Sophie's-tree
+  via `scripts/_whisper_features.sh`; reader `mbs.analysis.compare_encoders`. (Run details in §5.)
+
+### ⭐ FAMILY RESULTS — does a bigger audio model predict EEG better? (best-layer mean parcel r)
+
+| size | D1 | D2 | D3·test_d1 | D3·test_d2 |
+|------|------|------|------|------|
+| tiny   | 0.132 | **0.232** | 0.068 | **0.223** |
+| base   | 0.136 | 0.164 | 0.079 | 0.182 |
+| small  | 0.134 | 0.165 | 0.077 | 0.181 |
+| medium\*| 0.135 | 0.163 | 0.071 | 0.148 |
+
+\*medium = partial pre-fix run; winning D1/D2 layers are inside the computed range, full re-run in flight.
+
+**Findings (PCA@95%, all sizes):**
+1. **Scaling is FLAT.** D1 ≈ **0.135 for every size** (tiny = medium). A bigger Whisper does **not**
+   predict EEG better — the headline for the scaling question, and it's clean.
+2. **PCA ≈ raw.** Where both exist they match (small D2: PCA 0.165 vs raw 0.167; base D2 0.164 vs
+   0.161) — PCA@95% is a faithful, fairer substitute, not a confound. (So the slow raw-eigen medium
+   jobs are redundant.)
+3. **Best layer scales with depth** — D1 winner blocks-0(tiny)→4(small)→8(medium); D2 1→10→19. Always
+   ~the early third of the network.
+4. **tiny is the D2 outlier** (0.232 vs ~0.164) → *inverse* scaling on D2 only. With the
+   attention-encoder-wins-on-D2 result, this again points at D2's split being "easy" (§14) — treat
+   D2 cautiously.
+5. **Pooling (D3) doesn't help.** D3·test_d1 (~0.07) ≪ D1-alone (~0.135) — pooling *hurts* D1
+   prediction; D3·test_d2 ≈ D2-alone. (Consistent with the transfer near-failure: the two datasets
+   don't reinforce each other — a ⚠️ for any plan to pool speech datasets for the MMN.)
+
+> ⚠️ **mTRF segfault on wide models — three-stage fix (eigen → PCA → covariance_eigh PCA).** All the
+> same root cause: a **LAPACK workspace integer overflowing int32** at large dimensions.
+> (a) **Wide features** (41 lags × d_model: small 768→31k cols, medium 1024→42k) overflow the
+> *svd-of-X* GCV path → first fix `gcv_mode='eigen'` (Gram path; numerically identical, tiny/base
+> unchanged). (b) But **pooled D3** has n≈81,800 rows, so eigen's n×n Gram *also* overflows →
+> D3 still segfaulted → real fix `--pca_var 0.95`: PCA features to 95 % variance *before* lagging
+> (PC count varies by model/layer), shrinking the design to `n_PCs·lags` (model-independent, small) →
+> cheap svd path, no overflow on either axis, D3 works, **and a fairer cross-size comparison**.
+> (c) But PCA's own default `svd_solver='full'` SVDs the tall [n·T, d] matrix → **overflowed again for
+> medium** (d=1024, 378k–613k rows). Final fix: **`svd_solver='covariance_eigh'`** — eigendecompose
+> the d×d covariance instead (n-independent, can't overflow, faster). tiny/base/small unaffected
+> (identical result); only medium re-runs. Selectable via `PCA_VAR=0.95 sbatch …`; raw vs PCA in
+> separate dirs (`-mtrf-parcels[-pca]-<tag>`), each layer records `n_pcs`. Full write-up:
+> `project_plan §15`.
+
+**Code (built test-driven this session, NOT git-committed):**
+`evaluate_features_mtrf_parcels.py` (now with `--pca_var`; `fit_parcel_mtrf` returns
+`{model, mu, sd, pca}` and `score_parcel_mtrf` re-applies the stored PCA),
+`evaluate_cross_dataset_mtrf.py` (`--pca_var`, source PCA re-applied to target),
+`evaluate_features_attn_probe_temporal.py` (per-dataset), `analysis/compare_encoders.py`; helpers in
+`attn_probe/dataset_temporal.py`. Tests: `test_mtrf_parcels.py` (incl. 2 new PCA tests:
+reduces-&-recovers, no-PCA-by-default), `test_cross_dataset_mtrf.py`, `test_compare_encoders.py`,
+per-dataset probe test — all pass. ⚠️ disk quota bit us once (`errno 122`); drivers truncate the
+output h5 on `--overwrite`.
 
 ---
 
@@ -257,6 +410,81 @@ High-pass cutoff sweep 0.5 / 1 / 2 Hz × 6 layers (all electrodes):
 - `scripts/slurm_mtrf.sh` (cutoff×layer sweep), `scripts/plot_mtrf_scores.py`
 
 ---
+
+## ⭐ UPDATE 2026-06-13 — Workstream B: the attention encoder (MIRAGE-style): **ridge wins at this data scale**
+
+> _Terminology: "attention encoder" = the learned non-linear readout this section calls the
+> **probe** (its code package is `attn_probe`). Renamed for clarity; "probe" below = attention encoder._
+
+**Bottom line: the gradient-trained attention encoder does NOT beat the linear mTRF on Broderick
+(this was the D1-only conclusion — later flipped on D2, see the RESULTS section up top).
+The mTRF (Workstream A) stays the reportable method.** This closes the encoding-method comparison.
+
+### What we built and ran
+The probe is the MIRAGE-style counterpart to the mTRF: instead of a closed-form lagged Ridge, a
+shared `LatentAttentionTrunk` attends over the lookback window (kept as a token sequence) and a
+readout head predicts the same 4 NC-parcels. Trained with `1 − Pearson`, scored **along time on
+the same held-out runs** — i.e. **the identical `heldout_r` metric the mTRF reports**, so the two
+sit side by side. Code: `src/mbs/evaluation/evaluate_features_attn_probe_temporal.py` +
+`attn_probe/dataset_temporal.py` + `attn_probe/engine_temporal.py`; tests
+`tests/test_attn_probe_temporal.py` (17, incl. a synthetic planted-lag learning proof — all pass
+on GPU). The `--readout_level {group,individual}` flag toggles a single group head vs one head per
+subject over a shared trunk. We ran the **group** variant (group-averaged EEG, fully comparable to
+the mTRF).
+
+### Head-to-head — held-out r, probe (best config) vs mTRF, all 6 layers × 4 parcels
+Probe config after a small capacity/regularization sweep (see below): `d_model=64, num_latents=4,
+1 cross-attn layer, weight_decay=1e-2, dropout=0.3, 0.5 Hz high-pass, 0–800 ms lookback`. Each cell
+is **probe / mTRF**; **bold = winner**:
+
+| layer | frontal | temporal | parietal | occipital |
+|---|---|---|---|---|
+| blocks.0 | 0.065 / **0.134** | 0.119 / **0.186** | 0.075 / **0.099** | 0.060 / **0.109** |
+| blocks.1 | 0.062 / **0.131** | 0.119 / **0.179** | 0.069 / **0.088** | 0.058 / **0.104** |
+| blocks.2 | 0.079 / **0.139** | 0.141 / **0.181** | **0.084 / 0.088** (tie) | 0.070 / **0.106** |
+| blocks.3 | 0.053 / **0.123** | 0.119 / **0.167** | **0.074 / 0.070** | 0.064 / **0.086** |
+| blocks.4 | 0.056 / **0.134** | 0.116 / **0.174** | 0.067 / **0.071** | 0.063 / **0.090** |
+| blocks.5 | 0.066 / **0.140** | 0.116 / **0.172** | 0.060 / **0.073** | 0.056 / **0.089** |
+
+**mTRF ≥ probe in 23 of 24 cells.** The probe only reaches parity on **parietal** (tied at
+blocks.2, a hair ahead at blocks.3); it trails by ~25–35 % on temporal and ~50 % on frontal.
+Both methods are layer-flat; the probe's best layer is blocks.2, matching the adopted mTRF choice.
+
+### Why — it's overfitting, and it's a hard ceiling at 252 windows
+The default-size probe (`d_model=256, 16 latents, 2 layers`) reached **train r ≈ 0.75 but held-out
+r ≈ 0.06** — a ~0.69 train/val gap. A capacity×regularization sweep on blocks.2 showed a clean
+monotonic relationship (smaller model → higher train loss → **higher** held-out r):
+
+| config | train loss | held-out temporal r |
+|---|---|---|
+| 256/16/2 (default) | 0.20–0.25 | 0.07–0.09 |
+| 128/8/1 | 0.35 | 0.126 |
+| **64/4/1 (adopted)** | **0.43** | **0.141** |
+| 32/2/1 | higher | 0.122 (starts underfitting temporal/parietal) |
+
+Capacity — not weight decay — is the dominant lever (the full-size model with heavy reg was the
+*worst*). Even the best, smallest probe still has a large train/val gap and lands below ridge.
+This is the predicted outcome at this data scale (252 train windows): RidgeCV's strong closed-form
+L2 regularizes better than a learned nonlinear model can with this little data. MIRAGE's reported
+gains over ridge come with far more data + multi-stream fusion than we have on single-dataset
+Broderick.
+
+### Decision / scope
+- **Method selected: mTRF (Workstream A).** The probe is implemented, validated, and benchmarked,
+  but is not the reportable encoder here.
+- **Deferred (not worth it at this scale):** the per-subject `individual` variant (needs a
+  `--store_subjects` mode in `format_eeg_hdf5.py`, not built) and the MMN integration of the probe
+  (§3.7 of `project_plan_20260611.md` gated this on "probe clearly beats mTRF" — it doesn't).
+- **Re-open the probe only if** we add much more data (more datasets / multi-stream features) — the
+  code is ready and the comparison harness is apples-to-apples, so it's a cheap re-run later.
+- Results: `outputs/results/whisper-base-probe-group-r2-all/attn_probe_temporal_scores.h5`
+  (all 6 layers, group). See also `aux/project_plan_20260611.md` §11 (2026-06-13) for the full log.
+
+---
+
+<!-- ════════════ REFERENCE MANUAL (stable background; §1–§6) ════════════ -->
+_Everything above is the dated work log (newest first). Everything below is the stable reference:
+repo layout, datasets, the hook architecture, and how to run the pipeline._
 
 ## 1. The original repo (Kadir Gokce / epflneuroailab)
 
@@ -1047,7 +1275,7 @@ This gives a lower bound on the ceiling compared to within-subject split-half.
 | WA | mTRF evaluator `evaluate_features_mtrf.py` + 11 tests | **Done** (2026-06-12) — replaces per-bin eval for continuous speech |
 | WA | mTRF full sweep + high-pass cutoff sweep (whisper-base) | **Done** (2026-06-12) — jobs 55037406, 55039297; mid-depth (~blocks-3) best, latency ~120–140 ms at 0.5 Hz HP |
 | WA | `scripts/slurm_mtrf.sh`, `scripts/plot_mtrf_scores.py` | **Done** (2026-06-12) |
-| WB | Learned temporal probe (adapt `attn_probe/` to time) | TODO — Workstream B (MIRAGE-style) |
+| WB | Learned temporal probe (adapt `attn_probe/` to time) | **Done (group)** (2026-06-13) — built + 17 tests + 6-layer benchmark; **ridge wins, mTRF is the method** (see ⭐ UPDATE 2026-06-13 above). Individual variant + MMN integration deferred. |
 | 5 | `configs/extraction/audio/whisper_small_layers.json` (12 blocks) | **Done** (2026-06-04) |
 | 5 | `load_wav2vec2`, `load_vggish`, `load_ast` in `audio_models.py` | TODO |
 | 5 | Scale runs: wav2vec2 (temporal), AST + VGGish (mean-pool) | TODO |
