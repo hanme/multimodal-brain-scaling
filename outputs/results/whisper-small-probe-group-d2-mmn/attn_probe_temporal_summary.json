@@ -1,0 +1,65 @@
+{
+  "model_id": "whisper-small",
+  "readout_level": "group",
+  "lookback_ms": 800.0,
+  "config": {
+    "model_id": "whisper-small",
+    "target_feature_layers": "configs/extraction/audio/whisper_small_layers.json",
+    "data_hdf5_path": "outputs/neural_data/surprisal_30s.h5",
+    "features_dir": "/work/upschrimpf1/sigfstea/multimodal-brain-scaling/outputs/features/whisper-small-delta-t-surprisal/merged",
+    "output_dir": "outputs/results/whisper-small-probe-group-d2-mmn/",
+    "readout_level": "group",
+    "parcels_from": "outputs/neural_data/surprisal_30s.h5",
+    "lookback_ms": 800.0,
+    "highpass_hz": 0.5,
+    "nc_threshold": 0.2,
+    "d_model": 64,
+    "num_latents": 4,
+    "cross_attn_layers": 1,
+    "nhead": 8,
+    "dropout": 0.3,
+    "pos_mode": "learned",
+    "epochs": 200,
+    "lr": 0.001,
+    "weight_decay": 0.01,
+    "batch_size": 512,
+    "n_train_time_samples": 200,
+    "device": "cuda",
+    "amp": false,
+    "layer_id": 10,
+    "overwrite": true,
+    "seed": 42,
+    "save_model": true
+  },
+  "entries": [
+    {
+      "layer": "blocks.10",
+      "parcels": [
+        "frontal",
+        "central",
+        "temporal",
+        "parietal",
+        "occipital"
+      ],
+      "n_subjects": 1,
+      "splits": {
+        "test": {
+          "heldout_r": [
+            0.16335509717464447,
+            0.06296441704034805,
+            0.1797054409980774,
+            0.14357273280620575,
+            0.13111193478107452
+          ],
+          "heldout_r_nc": [
+            0.22597207129001617,
+            0.09118534624576569,
+            0.2094075083732605,
+            0.18603570759296417,
+            0.19047556817531586
+          ]
+        }
+      }
+    }
+  ]
+}

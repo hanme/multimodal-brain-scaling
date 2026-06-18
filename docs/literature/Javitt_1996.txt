@@ -1,0 +1,674 @@
+Proc.Natl.Acad.Sci.USA
+Vol.93,pp.11962-11967, October 1996
+Neurobiology
+Roleofcortical N-methyl-D-aspartate receptors inauditory
+sensory memory andmismatch negativity generation:
+Implications forschizophrenia
+(phencyclidine/monkey/intracortical/cognitive/event-related potential)
+DANIELC.JAVITT*t, MITCHELL STEINSCHNEIDERtt, CHARLES E.SCHROEDERtt, ANDJOSEPHC.AREZZOtt
+Departments of*Psychiatry, tNeuroscience, andtNeurology, JackandPearlResnick Campus, 1300MorrisParkAvenue, AlbertEinstein CollegeofMedicine,
+Bronx,NY10461
+Communicated byDominick P.Purpura, AlbertEinsteinCollegeofMedicine, Bronx,NY,July10,1996(received forreviewMarch28,1996)
+ABSTRACT Working memory referstotheabilityofthe
+braintostoreandmanipulate information overbrieftime
+periods, ranging fromseconds tominutes. Asopposed to
+long-term memory, whichiscritically dependent uponhip-
+pocampal processing, criticalsubstrates forworking memory
+aredistributed inamodality-specific fashion throughout
+cortex.N-methyl-D-aspartate (NMDA) receptors playacru-
+cialroleintheinitiation oflong-term memory. Neurochemical
+mechanisms underlying thetransient memory storage re-
+quiredforworking memory, however, remainobscure. Audi-
+torysensorymemory, whichreferstotheabilityofthebrain
+toretaintransient representations ofthephysical features
+(e.g.,pitch)ofsimpleauditory stimuliforperiods ofupto
+approximately 30sec,represents oneofthesimplest compo-
+nentsofthebrainworking memory system.Functioning ofthe
+auditory sensorymemory systemisindexedbythegeneration
+ofawell-defined event-related potential, termedmismatch
+negativity (MMN). MMNcanthusbeusedasanobjective
+indexofauditory sensorymemory functioning andaprobefor
+investigating underlying neurochemical mechanisms. Mon-
+keysgenerate corticalactivityinresponse todeviantstimuli
+thatcloselyresembles humanMMN.Thisstudyusesacom-
+bination ofintracortical recording andpharmacological mi-
+cromanipulations inawakemonkeys todemonstrate thatboth
+competitive andnoncompetitive NMDAantagonists blockthe
+generation ofMMNwithoutaffecting priorobligatory activity
+inprimary auditory cortex.Thesefindings suggestthat,ona
+neurophysiological level,MMNrepresents selective current
+flowthrough open,unblocked NMDAchannels. Furthermore,
+theysuggestacrucialroleofcortical NMDAreceptors inthe
+assessment ofstimulus familiarity/unfamiliarity, whichisa
+keyprocessunderlying working memory performance.
+Working memory referstotheabilityofthebraintostoreand
+manipulate information overbrieftimeperiods,rangingfrom
+seconds tominutes. Ascompared withlong-term memory,
+whichiscritically dependent uponhippocampal long-term
+potentiation, criticalsubstrates forworking memory aredis-
+tributedinamodality specificfashionthroughout cortex(1,2).
+Onaneurophysiological level,working memory hasbeen
+linkedtotransient, task-related alterations inthefiringrates
+ofneurons inmodality-specific brainregions,permitting the
+useofintracortical recordings toinvestigate neurochemical
+mechanisms underlying functioning ofthebrainworking mem-
+orysystem(3-5).
+Corticalinformation processing iscritically dependent upon
+theinterplay between glutamatergic andy-aminobutyric acid
+(GABA)ergic neurotransmission. Glutamate istheprimary
+excitatory aminotransmitter inmammalian cortex,beingpresentinapproximately 60%ofcorticalneurons and100%of
+corticalpyramidal neurons. Glutamatergic fibersmediate all
+thalamocortical andcorticortical projections withincortex,as
+wellascorticofugal projections fromcortextosubcortical
+structures. Withincortex,theinterplay ofexcitatory neuro-
+transmission isregulated bylocalcircuitGABAergic inhibitory
+neurons thatdefinethebordersandfunctioning ofindividual
+corticalcolumns. Glutamate mediates itsactionsatdistinct
+receptor typesthataredifferentiated basedupontheirsensi-
+tivitytothesynthetic glutamate derivative N-methyl-D-
+aspartate (NMDA). NMDAreceptor activation playsacritical
+roleinlearning andtheinitiation oflong-term memory
+formation (reviewed inref.6).Thisstudyinvestigates the
+hypothesis thatNMDAreceptors playacrucialroleincortical
+working memory aswell.
+Thisstudyfocusesonauditory sensory("echoic") memory,
+apreattentive component ofthebrainworking memory sys-
+tem,asamodelformorecomplex attention-dependent forms
+ofworking memory. Echoicmemory referstotheabilityofthe
+braintostorerepresentations ofthephysicalcharacteristics of
+simpleauditory stimuliforsecondstominutes evenwhensuch
+stimuliareignoredatthetimeofpresentation (7).Functioning
+oftheechoicmemory systemisindexedbythegeneration of
+aspecificauditory event-related potential component, termed
+mismatch negativity (MMN), whichcan,therefore, beusedas
+aprobeoftheauditory sensorymemory system(8,9).MMN
+iselicitedmostfrequently inanauditory oddballparadigm in
+whichasequence ofrepetitive standard stimuliisinterrupted
+infrequently byaphysically deviant"oddball" stimulus. Crit-
+icalsubstrates forechoicmemory andMMNgeneration reside
+intheregionofprimary auditory cortex(Al)(9-12),and
+intracortical recordings fromAlshowprominent contribu-
+tionstosurface-recorded MMNinbothcats(13)andmonkeys
+(14).Inhumans, MMNtopitchandintensity deviants occurs
+withanapproximate peaklatencyof150msec(9).Inmonkeys,
+comparable activityoccurswithanapproximate peaklatency
+of90msec(15),reflecting thesmallerbrainsizesandcorre-
+spondingly shorterconduction latencies.
+Toinvestigate neurochemical mechanisms underlying MMN
+generation inawakemonkeys, intracortical recordings through
+AIwerecombined withfocalinfusion ofNMDA andnon-
+NMDAantagonists intothemicroregion oftherecording elec-
+trode.Recordings wereobtained usinglineararray,multichannel
+electrodes acutelyinsertedintothecorticalregionofinterest.This
+studyshowsthatNMDAantagonists abolishlocalgeneration of
+MMNwithinAlwithoutalteringthegeneration ofprioroblig-
+atoryevent-related potential components, indicating thatNMDA
+receptors playacrucialroleintheneurophysiological operations
+underlying corticalworking memory.
+Abbreviations: NMDA, N-methyl-D-aspartate; GABA, y-aminobu-
+tyricacid;ERP,event-related potential; MMN,mismatch negativity;Al,primaryauditory cortex;PCP,phencyclidine; CSD,currentsource
+density.
+11962Thepublication costsofthisarticleweredefrayed inpartbypagecharge
+payment. Thisarticlemusttherefore beherebymarked"advertisement" in
+accordance with18U.S.C.§1734solelytoindicatethisfact.
+Downloaded from https://www.pnas.org by EPFL SISB BIBLIOTEQUE on June 17, 2026 from IP address 128.179.139.0.
+
+Proc.Natl.Acad.Sci.USA93(1996) 11963
+MATERIALS ANDMETHODS
+Subjects consisted offivecynomolgus monkeys (Macaca fas-
+cicularis), weighing between 2.5and4.0kg.Monkeys were
+prepared forintracortical studiesusingpreviously described
+surgical procedures (14).Briefly, undergeneral anesthesia
+(sodium pentobarbital) andusingaseptictechniques, portions
+oftheskullwereresected andmatrices ofadjacently placed
+epidural guidetubes wereimplanted, providing access to
+underlying brainstructures. Thematrices wereoriented ster-
+eotaxically totargetAlandwereembedded inamoundof
+dentalacrylicthatwasaffixed totheskullusingmachine
+screws.Plexiglas barswereincluded intheimplant topermit
+painless headfixationduringrecording sessions. Animals were
+housedinanAmerican Association fortheAccreditation of
+Laboratory Animal Careaccredited animalfacility, were
+monitored dailyforassessment oftheirwell-being, andwere
+allowed torecover fromsurgerypriortoinitiation ofexperi-
+ments.Also,priortoexperimentation, monkeys wereaccus-
+tomed tohandling andrestraint incustomized, individually
+fittedprimate chairs.Onthedayofexperiment, monkeys were
+placedinarecording chamber andelectrodes wereinserted
+acutely intoAlthrough theepidural guidetubes.Monkeys
+werenotgiven anysystemic agentspriortorecordings, and
+remained awakeandalertthroughout. Monkeys werefedwith
+preferred foods(e.g.,apples) atregular intervals duringthe
+recording sessions.
+Foreachexperiment, a14-16channel linear arraymulti-
+electrode with200,umofintercontact spacing andanattached
+30-gauge injection catheter wasinserted acutelybymicrodrive
+intoAl.Electrodes werecentered aboutthepointofinversion
+oftheinitialintracortical negativity (N8),whichhasbeen
+showntocorrespond tothebaseoflaminaIV(16).Subsequent
+laminaassignments weremaderelative tothisposition. Elec-
+trodelocation wasverified histologically foreachpenetration
+following thesacrifice ofeachmonkey.
+Recordings weremadeusingeitherintensity deviant orpitch
+deviant sequences. Forintensity deviants, infrequently occur-
+ringsoft[60-65dBsound pressure level(SPL)]clicks were
+interspersed among morefrequent loud(80-85dB)clicks.For
+pitchdeviants, infrequent 150-msec duration tones,chosen to
+correspond tothebestfrequency oftheareaofpenetration,
+werepresented against abackground ofmorefrequent tones
+ofeitherhigher orlowerpitch.Stimuli werepresented at
+interstimulus intervals of0.6-1 sec;deviant stimulioccurred
+every3-5sec(5-15% sequential probability). Difference
+profiles wereconstructed bysubtracting responses toastim-
+uluspresented asarepetitive standard fromresponses tothe
+samestimulus presented asadeviant inasubsequent "odd-
+ball"condition. Intheoddball condition, stimuli werepre-
+sentedinfrequently against abackground ofmorefrequent
+stimuliofdifferent intensity orpitch.Response profiles to
+25-100 separate standard ordeviant stimuli wereaveraged
+on-line. Responses greater than4+325,uVwereautomatically
+rejected. Laminar response profiles werethensubjected to
+one-dimensional current sourcedensity (CSD)analyses to
+differentiate locallygenerated fromvolume-conducted event-
+relatedpotential components. Summed, rectified CSD(SUM-
+REC)waveforms wereconstructed bycombining absolute
+CSDamplitudes acrosscontacts withineitherlamina IVor
+supragranular cortex.
+Within eachexperiment, theresponse tostandard and
+deviant stimuli wascharacterized priortopharmacological
+manipulation. Specific agent wasinfused through acanulla
+attached totherecording electrode. Forwithin-run statistics,
+responses werecombined inbins,eachreflecting theaverage
+of25-50 successive presentations. Forbetween-run statistics,
+meanpercentage change scores werecombined across runs.
+Separate repeated-measure ANOVAs wereconducted toan-
+alyzetheeffects ofNMDA antagonists onresponses tostandard stimuli, andonresponses tostimulus deviance as
+reflected intheamplitude ofthedeviant minusstandard
+difference waveform.
+RESULTS
+EffectsofNMDAblockers andcontrolagentsonintracortical
+MMNgeneration weredetermined inthecourseof14histo-
+logically verifiedpenetrations through Alinvolving 5separate
+monkeys. Duringeachpenetration, dataweresampled from15
+separate locations acrossthedepthofcortex.Anadditional
+10-20locations weresampled duringeachruntoposition the
+electrode andensureadequate sampling ofactivetissue.
+Intracortical profileselicitedbystandard anddeviantclicks
+(Fig.1)consisted ofaninitialbriefactivation withinlaminaIV
+duringthe5-15mseclatencyrange,followed byearlyandlate
+supragranular activation duringthe15-60and60-150 msec
+ranges.Theearlysupragranular activation occurred primarily
+withinlowersupragranular laminae andwasassociated with
+superficial currentreturn,whereas thelatersupragranular sink
+occurred withinhigherlaminae andwasassociated withdeep
+return.Deviant stimulielicited asimilardegreeofinitial
+laminaIVactivation asdidstandards, butelicited amarkedly
+increased degreeofsupragranular activation (Fig.1Middle).
+Intracortical MMNwasdefined asthedifference waveform
+obtained bysubtracting intracortical responses tostandard
+stimulifromresponses todeviants(Fig.1Bottom).
+Statistical comparisons wereperformed usingSUMREC
+waveforms, whichprovide atemporal indexoftotalcurrentflow
+withinidentified laminae(Fig.2).Separate SUMREC wave-
+formswereconstructed fromCSDprofiles tostandardstimuli,
+deviantstimuli,anddeviantminusstandard difference wave-
+forms(Figs.2and3).MMNamplitude wasdefined asthe
+integrated areaunderthedeviantminusstandardsupragranular
+SUMREC waveform duringthe15-200mseclatencyrange(Fig.
+3Inset).Pharmacological effectsofPCP,MK-801, andCGS-
+19755weredetermined bycomparing themeanamplitudes ofthe
+supragranular SUMREC waveform duringthe15-200 msec
+latencyrangepriortoandafterfocalmicroinfusions ofeachagent
+through acanullaattached totherecording electrode.
+Focalmicroinjection ofupto10,ugofPCPdidnotsignificantly
+altertheintracortical responseprofiletostandard stimuli(Fig.1
+Top).Thesedrugsalsodidnotaltertheinitialslopeofthe
+intracortical SUMREC waveform, whichprovides anindexof
+initialstimulus-induced corticalexcitation (14)(Fig.2).Incon-
+trast,PCPsignificantly reducedthememory-dependent enhance-
+mentinsupragranular activityelicitedbydeviantstimuli(Fig.1
+Middle), asreflected inadose-dependent reduction inthe
+differential activityobtainedbysubtracting theprofileelicitedby
+standard stimulifromtheprofileelicitedbydeviants(Fig.1
+Bottom). SUMREC analysisofthedifference protocol revealed
+asignificant reduction ofdeviance-related enhancement ofsu-
+pragranular activity toapproximately 50%ofcontrollevels
+following injection of10,ugofPCP(F1,2=23.0,P<0.05)across
+studies(Fig.3).Similarresultswereobtained withMK-801, which
+ledtoa32±7%decrease inintracortical MMNamplitude
+following injection ofanintracortical doseof0.5,ug(F1,3=18.2,
+P<0.025)andCGS-19755, whichledtoasignificant (F3,8=9.37,
+P<0.015)dose-dependent 49±6%decrease, following dosesof
+20-100,ug(Figs.4and5).Nosignificant effectoftheseagentswas
+observed oninitialcorticalactivation tostandard ordeviant
+stimuli, asreflected byintegrated SUMREC amplitude within
+laminaIVduringthe0-15-msec latencyrange,oronsupragranu-
+larresponse tostandard stimuli, asreflected byintegrated
+supragranular SUMREC activityduringthe15-200-msec range.
+Twocomparison agentswereemployed toassessthespec-
+ificityoftheNMDAeffect:(i)kynurenic acid,whichblocks
+non-NMDA aswellasNMDA-type glutamate receptors and
+(ii)bicuculline, whichblocksGABAA receptors. Injection of
+kynurenic acidsignificantly blockedlocalresponsegeneration
+tostandard stimuliwithinsupragranular laminae(F3,11 =33.7,Neurobiology: Javittetal.
+Downloaded from https://www.pnas.org by EPFL SISB BIBLIOTEQUE on June 17, 2026 from IP address 128.179.139.0.
+
+11964 Neurobiology: Javittetal.
+STANDARD
+Pre-PCP
+XIVlv
+iIIIII,IAIII
+0 120 240
+DEVIANT
+II/
+III
+EcIV
+V-v
+0 120 240
+DIFFERENCE
+(x2)
+II/
+-IVIII-MIV ------ v
+0120240JIlL!
+0 120 240Proc.Natl.Acad.Sci.USA93(1996)
+10[lgPCP
+_ _
+-_
+0IIII2I-I
+0 120 240
+0 120 240
+IIIIIIIII
+0 120 24()
+TIME(msec)
+P<0.0001)andshowed atendency toinducesuchinhibition
+withinlaminaIV(F3,11=2.71,P<0.1).Bicuculline hadan
+actionopposite tothatofkynurenic acidinthatitenhanced all
+locallygenerated activitywithinbothlaminaIVandsupra-
+granular laminae(Fig.6).Theincrease wasmostpronounced
+withinsupragranular laminae, andwasreversed bysystemic
+injection ofMK-801, ashasbeenreported previously forvisual
+responses withinVl(17).
+DISCUSSION
+NMDA-type glutamate receptors areuniqueamongchannel
+forming receptors inthatcurrentflowthrough NMDAchan-
+nelsisbothligand-andvoltage-dependent. Inallotheriden-
+tifiedchannel-forming receptors (e.g.,nicotinic, GABAA,
+a-amino-3-hydroxy-5-methyl-4-isoxazolepropionic acid/
+kainate), binding ofneurotransmitter leadsobligatorily to
+currentflowthrough theopenreceptor channel. Incontrast,
+NMDAchannels areblocked inavoltage-dependent fashion
+byphysiological concentrations ofMg2+.Asaconsequence of
+theMg2+blockade, presynaptic glutamate releasedoesnot
+leadtocurrentflowthrough postsynaptic NMDA channels
+unlessthepostsynaptic membrane issignificantly depolarized
+fromrestinglevels.Thepostsynaptic depolarization mayoccur
+eitherasaconsequence ofdecreased recurrent GABAergic
+inhibition orindependent depolarization viamodulatory neu-LtIIJIIIJ.iL..lL..
+0 120 240
+V
+FIG.1.Effectofthenoncompetitive
+NMDA antagonist phencyclidine (PCP)liiiIl111l IIllIon CSDprofiles fromAl.Profiles were
+0 120 240 obtained tosoft(65dBSPL)clickspre-
+sentedeitherasstandards (100%sequen-
+tialprobability, Top)orasdeviants (15%
+probability, Middle)againstabackground
+ofmorefrequent loud(85dB)clicksinan
+~------------- "oddball" paradigm. PCP(5,Lg/I,u)was
+-~--------~------~.-----------*-- infusedintothelocalregionofcortexin1
+,ulincrements viaacanullaattached tothe
+recording electrode. Eachinfusion oc-
+curredover2-3min.(Bottom) Difference
+CSDprofilesobtained bysubtracting the
+_______ CSDprofiletosoftclickspresented as
+standards fromtheCSDprofiletothe
+II1!I1J IIIIIsamestimulipresented asdeviants priorto
+0 120 240 andfollowing PCPinjection. Calibration
+barcorresponds to1mV/mm2 forstan-
+source dardanddeviant profiles, 0.5mV/mm2
+Slink |fordifference profiles.
+rotransmitters ornon-NMDA glutamate receptors. The
+uniquedualvoltage- andligand-sensitivity ofNMDA recep-
+torspermits themtofunction ina"Hebbian" fashion to
+integrate information frommultiple, independent inputpath-
+ways(reviewed inref.6).
+NMDA receptors havebeenmostextensively studied in
+relation tohippocampal long-term potentiation, whichisa
+criticalstepintheinitiation oflong-term memory formation.
+Neocortex contains NMDA-receptor densities similartothose
+observed inhippocampus. However, theroleplayedbycortical
+NMDA receptors innormal adultbrainfunctioning and
+information processing isrelatively unknown (18).Thisstudy
+indicates thatNMDAreceptors mayplayalimitedroleinthe
+processing ofrepetitive stimuli,butthatsuchreceptors are
+crucialforthe~processing oftherelationship between stimuli
+inaworking memory task.Theabilityofbicuculline toinduce
+MK-801-reversible epileptiform activityinthesamecortical
+laminae thatgenerate intracortical MMNindicates that
+NMDA receptors withintheselaminae aremaintained under
+tonicinhibition byGABAergic interneurons. WhenGABAA
+receptors areblocked, therefore, NMDA receptors arere-
+leasedfrominhibition givingrisetolarge-amplitude, spike-like
+discharges (17).
+Thefindings ofthisstudysuggestthat,likeothercompo-
+nentsofworking memory(19),auditory sensorymemory maylw
+lll---W-------...
+I
+Downloaded from https://www.pnas.org by EPFL SISB BIBLIOTEQUE on June 17, 2026 from IP address 128.179.139.0.
+
+Proc.Natl.Acad.Sci.USA93(1996) 11965
+SUMREC
+PCP(5ug) PCP(10ug)
+IV
+0120240 0120 241
+TIME(msec
+depend uponsynergism between excitatory andinhibitory
+processes incortex.Furthermore, aparticular modelthat
+couldaccount fortheeffectsofNMDA andGABAA antag-
+onists onmemory-related ensemble response withinauditory
+cortexisasfollows:First,repetitively presented stimuliofone
+pitchorintensity mayincrease theleveloftonicinhibition of
+supragranular neurons thataresensitive tothatpitch or
+intensity whilesimultaneously decreasing thelevelofinhibi-
+tionofneurons sensitive tootherpitches orintensity levels.
+Deviant stimuli,presented following asequence ofrepetitive
+standards, wouldthenactivate neurons thatarealready par-
+tiallydisinhibited andonwhichNMDA channels arealready
+partially unblocked. Activation ofsuchneurons, therefore,
+wouldrecruit greater levelsofpostsynaptic current flow
+through NMDA channels thanifthose samestimuli were
+presented without preceding standards. MMN,whichisde-
+finedasthedifferential response todeviantstimulicompared
+withstandards, wouldthusrepresent theadditional current
+flowmediated byopen,unblocked NMDA channels. The
+memory traceunderlying MMNgeneration appears topersist
+forapproximately 10-20 secfollowing stimulus presentation
+(9).GiventhatGABAA-mediated responses persistonlyonthe
+orderofmilliseconds, thisstudydoesnotaddressthemecha-
+nismsbywhichalterations intonicinhibition levels maybe
+maintained overperiodsoftensofseconds. Thepresentstudy
+does,however, suggestthatexpression ofworking memory, as
+reflected byexperience-dependent alterations inneuronal
+firingpatterns, depends uponthefunctional interaction be-
+tweenexcitatory andinhibitory processes withincortexmedi-
+atedbyNMDA andGABAA receptors, respectively.
+Ithasbeenreported thatMMNgeneration isdiminished in
+subjects withdorsolateral prefrontal lesions(20),suggesting
+thattheinterplay between auditory andprefrontal cortices
+maybeimportant forMMNgeneration. However, inthose
+studies,thedecrease inMMNamplitude wasassociated with
+anaccompanying increase intheamplitude ofP1,anearly
+corticalobligatory component. Moreover, theMMNdeficit
+wasgreatest whenstimuli werepresented ipsilateral tothe
+lesioned hemisphere, indicating thatthefrontallobemaybe
+primarily involved inthegatingofinformation entering the
+auditory cortex,ratherthanprocessing information withinthe
+auditory cortex.Inthatstudyalso,thelesion-related deficitin
+MMNgeneration wasaccompanied bydecreased response
+accuracy, supporting theconcept thatMMNindexes apreat-
+tentive process thatcontributes tosubsequent attention-
+dependent mnemonic performance.J FIG.2.EffectofPCPon
+_ SUMREC CSD profiles ob-
+tainedfromsupragranular
+laminae (II/III) andlamina
+~~0 120 240~~IV ofAIlto deviant (DEV)00120240 andstandard(STD)stimuli
+priortoandfollowing focal
+PCPinfusion.
+ThefindingthatNMDA receptors playacrucialrolein
+working memory isconsistent withbehavioral studiesof
+working memory inratsandmonkeys. Inmonkeys, NMDA
+antagonists fromavarietyofchemical classesimpairtheability
+toperform complex responses chains,whereas avarietyof
+compounds thatinteractwithdopaminergic, serotonergic, and
+opiateneurotransmitter systems areineffective (21,22).Im-
+pairedintracortical MMNgeneration induced byNMDA
+antagonists mayberelevant tothepathophysiology ofdisor-
+dersassociated withworking memory impairments, suchas
+schizophrenia (23).Schizophrenic subjects showsignificant
+deficitsinMMNgeneration (24-27), alongwithimpaired
+performance ofauditory sensory memory tasks(28).Ithas
+beensuggested thatimpairments inNMDA receptor activity
+(29)maycontribute significantly tothepathophysiology of
+schizophrenia. Furthermore, ithasbeenshownthatglycine, an
+NMDA augmenting agent, mayameliorate symptoms of
+schizophrenia whengivenatdosessufficient toincrease brain
+C.20~
+LU
+0Pre-PCP 5,.gg 1Ogg
+PRE-PCP
+PCP(10gg)
+0 120 240
+TIME(msec)
+FIG.3.EffectofPCPonsupergranular SUMREC waveforms
+obtained fromCSDdifference profilespriortoandafterfocalPCP
+infusion. Calibration barcorresponds to0.1mV/mm2. (Inset)Summed
+areaundertheSUMREC curveduringthe151-200-msec latency range,
+expressed inmsec*mV/mm2.11/111
+cuc
+._
+ctNeurobiology: Javittetal.
+h',
+Downloaded from https://www.pnas.org by EPFL SISB BIBLIOTEQUE on June 17, 2026 from IP address 128.179.139.0.
+
+Proc.Natl.Acad.Sci.USA93(1996)
+STANDARD
+Pre-CGS 20tg 60tg 100plg
+11c.
+E
+IV
+411LLLLLLI10120240
+DEVIANT
+LLX11I"-
+Iv
+.,LILIILLLLL.III
+0120240
+DIFFERENCE(X2)
+IV.11TIII,.A
+0120240:o;12L 240..1-1:1
+0120240
+-f>
+0LLLI 24I0I0120240
+0120240-AII-L[IJ IIII0120240
+.-B/
+.II11111-11.1Ad!0120240
+.120IIIIIII III
+01202I,dI!,IrL,.HJ.i.l,Ll,,
+0120240
+0Lu1.L 12I24I0III
+0120240
+LWIll"IIIIII
+2400120
+sourcesinkFIG.4.Effectofthecompetitive
+NMDAantagonist CGS-19755 onintra-
+corticalCSDprofilesto9kHz,150msec
+r"W', tonespresented eitherasstandards (100%
+_j1-4 sequential probability) orasdeviants
+(16.7%sequential probability) againsta
+background ofmorefrequent 7kHztones
+inan"oddball" paradigm. Interstimulus
+interval(ISI)of9kHztonesinthestan-
+240dardruns(4.8sec)wasmatchedtoISIofdeviants intheoddball run.CGS-19755
+1(10,tg/,ll) wasinfused atincrements of
+1-2,ulover2-3mineach.
+glycinelevels(30).Thisstudy,demonstrating schizophrenia-
+likeinhibition ofMMNgeneration byNMDA antagonists,
+provides important support tothePCP/NMDA modelof
+schizophrenia.
+Aswehavereported (14),theintracortical eventsunderlying
+MMNgeneration beginearlierthanisapparent insurface
+recordings (15).Thediscrepancy isduetothefactthatthe
+earlier(15-60msec)eventsoccurprimarily withindeepcor-
+ticallaminae. Furthermore, thepatternofcurrentreturnis
+variable acrosssites,sothatactivitycancelsacrossadjacent
+corticalcolumns andisnotapparent atsurfacerecording sites.
+Finally,themostcommon patternobserved duringthe15-
+60-msec rangeconsists ofadeepsinkandsuperficial source.
+Totheextentthatthisactivitydoespropogate tothesurface,
+itwouldbeexpected tocorrespond toasurfacepositivity,
+ratherthanasurfacenegativity. Smallpositivities preceding
+MMNarefrequently observed inhumanrecordings. Intracor-
+ticalactivityduringthelatencyrangeofsurfaceMMN(60-150
+msecinmonkeys) consists ofasuperficial currentsinkand
+deepersource.Thisconfiguration isconstant acrossrecording
+sites,andwouldbeexpected toproduce theobserved surface
+negativity. Animportant findingofthispaperisthatNMDA
+antagonists blockboththeearlyandlateintracortical re-
+sponses tostimulus deviance, indicating thatbothmaybe
+manifestations ofthesameunderlying process.Alimitation ofthisstudyisthatitdoesnotaddress the
+degreetowhichmodulatory neurotransmitters, suchasdopa-
+mine,serotonin, norepinephrine, acetylcholine orneuropep-
+tides,mightaffectmemory-dependent functioning withinau-
+ditorycortex.Injection ofDlantagonists impairsprefrontally
+mediated visuospatial working memory andrelatedalterations
+inneuronal firingrate,raisingthepossibility thatdopamine
+receptors mayplayasignificant roleinthefunctioning ofthe
+corticalworking memory system(31,32).However, MMN
+generation inschizophrenic subjects appears toberelatively
+unaffected byantipsychotic agents,whichworkbyblocking
+dopamine (D2)receptors (25).Similarly, MMNgeneration in
+children withattention-deficit disorder appearstoberelatively
+unaffected bymethylphenidate, adopamine-releasing agent,
+0la
+E
+(5m
+m100
+80
+60
+40
+0 FIG.5.Doseresponse of20406080100CGS-19755-induced inhibition020406080100ofsupragranular SUMREC ac-
+CGS-19755dose(pg)tivityacrossruns(n=4).TIME(msec)11966Neurobiology: Javittetal.
+Downloaded from https://www.pnas.org by EPFL SISB BIBLIOTEQUE on June 17, 2026 from IP address 128.179.139.0.
+
+Proc.Natl.Acad.Sci.USA93(1996) 11967
+~ -
+-Y\--
+ll2ll2l4l0 lll201202400120240
+source
+TIME(msec) sink
+FIG.6.EffectoftheGABAA antagonist bicuculline onintracor-
+ticalresponses torepetitive 0.1-msec clicks.Profiles wereobtained by
+preinfusion (A),following infusion ofcumulative dosesof0.2nmol
+(0.07,ug)each(BandC),andfollowing subsequent subcutaneous
+administration of0.1mg/kgMK-801 (D).Eachprofilerepresents the
+meanof2-4independent averages of75sweeps each.Treatment
+effects onsupragranular activation duringthe15-200-msec range were
+highlysignificant (F3,12 =25.2,P<0.0001), withStudent-Newman-
+Kealspost-hoc testsshowing significant (P<0.05)augmentation of
+activitybyhigh-dose bicuculline relative tobothcontrolandlow-dose
+conditions, andinhibition ofthisincrease byperipherally administered
+MK-801. There wasalesssignificant effectoftreatment oninitial
+lamina IVresponse (F3,12 =4.1,P<0.05)withnosignificant
+differences detectable bypost-hoc examination. Calibration represents
+1mV/mm2. Thisexperiment represents oneoftwosimilarstudies.
+indicating thatthedopaminergic systemprobably doesnotplay
+amajorroleinechoic memory (33).AIreceives relatively
+sparsedopaminergic input,compared withthefrontalregions
+thatmediate visuospatial memory (34).However, Aldoes
+receiveprominent serotonergic andnoradrenergic innervation
+(35).Agoaloffuturestudieswillbetoexamine therelative
+rolesofthesesystems incortical working memory perfor-
+mance. Asecond limitation ofthisstudyisthatittargets a
+preattentive working memory component usinguntrained
+monkeys. Desimone (36)hassuggested adivision ofworking
+memory intofourprototypic processes. Echoic memory is
+prototypic of"adaptive filter"typeworking memory inwhich
+presentation ofastimulus ofonetypealterstheresponse toa
+relatedbutdifferent stimulus. Futurestudieswilladdress the
+degree towhichNMDA receptors participate inothertypesof
+working memory andcontrolled corticalprocessing.
+Despite theabovelimitations, thisstudyhasseveralsignif-
+icantfindings. First,itdemonstrates thefeasibility ofusing
+intracortical ensemble recording, combined withfocalmicro-
+infusion, forthestudyofneurochemical mechanisms under-
+lyingcognitive processing. Useofsuchacombination of
+techniques hasonlyrecently beenaccomplished insingle-cell
+recordings ofmonkey cognitive functioning (32).Second, it
+demonstrates theutilityofCSDapproach fordetecting dif-
+ferential drugaffects onactivityderiving fromdistinct cortical
+laminae. Finally, itdemonstrates thattherelative contributionsofdifferent receptors tocorticalprocessing canbedifferen-
+tiatedinawake,behaving monkeys andthatthepatternof
+auditory dysfunction observed inschizophrenia canberepro-
+ducedbymicroinfusion ofNMDA receptor antagonists into
+Al.Amajorlimitation inschizophrenia research isthelackof
+appropriate animalmodels, especially forthecognitive dys-
+function domain ofsymptoms. Thepresent findings suggest
+thatanalysis ofintracortical mechanisms underlying MMN
+generation mayprovideimportant insightsintothepathophys-
+iologyofcognitive dysfunction inschizophrenia.
+Weacknowledge thetechnical assistance ofShirleySetoandMona
+Litwak.Theresearch wassupported byU.S.PublicHealthService
+GrantsR03MH46962 toD.C.J.andR01MH06723 toJ.C.A.,andby
+grantsfromtheScottish RiteResearch Foundation andZaraand
+BernadJakubovitz FundforBrainResearch toD.C.J.
+1.Goldman-Rakic, P.S.(1988)Annu.Rev.Neurosci. 11,137-156.
+2.Wilson,F.A.W.,O'Scalaidhe, S.P.&Goldman-Rakic, P.S.(1993)Science
+260,1955-1958.
+3.Funahashi, S.,Bruce,C.J.&Goldman-Rakic, P.S.(1989)J.Neurophysiol.
+61,331-349.
+4.Miller,E.K.,Li,L.&Desimone, R.(1993)J.Neurosci. 13,1460-1478.
+5.Goldman-Rakic, P.S.(1995)Neuron14,477-485.
+6.Cotman, C.W.,Monaghan, D.T.&Ganong, A.H.(1988)Annu.Rev.
+Neurosci. 11,61-80.
+7.Cowan,N.(1988)Psychol.Bull.104,163-191.
+8.Cowan,N.,Winkler, I.,Teder,W.&Naatanen, R.(1993)J.Exp.Psychol.
+Learning Memory Cognit.19,909-921.
+9.Naatanen, R.(1990)Behav.BrainSci.13,201-288.
+10.Scherg,M.,Vajsar,J.&Picton,T.W.(1989)J. Cognit.Neurosci. 1,336-355.
+11.Hari,R.,Hamalainen, M.,Ilmoniemi, R.,Kaukoranta, E.,Reinikainen, K.,
+Salminen, J.,Alho,K.,Naatanen, R.&Sams,M.(1984)Neurosci. Lett.50,
+127-132.
+12.Ritter,W.,Deacon, D.,Gomes, H.,Javitt,D.C.&Vaughan, H.G.,Jr.
+(1995)EarHear.16,51-66.
+13.Csepe,V.,Karmos, G.&Molnar, M.(1987)Electroencephalogr. Clin.
+Neurophysiol. 66,571-578.
+14.Javitt,D.C.,Steinschneider, M.,Schroeder, C.E.,Vaughan, H.G.,Jr.,&
+Arezzo, J.C.(1994)BrainRes.667,192-200.
+15.Javitt,D.C.,Schroeder, C.E.,Steinschneider, M.,Arezzo, J.C.&
+Vaughan, H.G.,Jr.(1992)Electroencephalogr. Clin.Neurophysiol. 83,
+87-90.
+16.Steinschneider, M.,Tenke,C.E.,Schroeder, C.E.,Javitt,D.C.,Simpson,
+G.V.,Arezzo,J.C.&Vaughan, H.G.,Jr.(1992)Electroencephalogr. Clin.
+Neurophysiol. 84,196-200.
+17.Schroeder, C.E.,Tenke,C.E.,Givre,S.J.,Arezzo,J.C.&Vaughan, H.G.,
+Jr.(1990)BrainRes.515,326-330.
+18.Daw,N.W.,Stein,P.S.&Fox,K.(1993)Annu. Rev.Neurosci. 16,207-222.
+19.Wilson, F.A.,O'Scalaidhe, S.P.&Goldman-Rakic, P.S.(1994)Proc.Natl.
+Acad.Sci.USA91,4009-4013.
+20.Alho,K.,Woods, D.L.,Algazi,A.,Knight, R.T.&Naatanen, R.(1994)
+Electroencephalogr. Clin.Neurophysiol. 91,353-362.
+21.Thompson, D.M.,Winsauer, P.J.&Mastropaolo, J.(1987)Pharmacol.
+Biochem. Behav.26,401-405.
+22.Moerschbaecher, J.M.&Thompson, D.M.(1980)Pharmacol. Biochem.
+Behav.13,887-894.
+23.Goldman-Rakic, P.S.(1994)J.Neuropsychiatry Clin.Neurosci. 6,348-357.
+24.Javitt,D.C.,Doneshka, P.,Zylberman, I.,Ritter,W.&Vaughan, H.G.,Jr.
+(1993)Biol.Psychiatry 33,513-519.
+25.Javitt,D.C.,Doneshka, P.,Grochowski, S.&Ritter,W.(1995)Arch.Gen.
+Psychiatry 52,550-558.
+26.Shelley, A.M.,Ward,P.B.,Catts,S.V.,Michie, P.T.,Andrews, S.&
+McConaghy, N.(1991)Biol.Psychiatry 30,1059-1062.
+27.Catts,S.V.,Shelley, A.M.,Ward,P.B.,Liebert, B.,McConaghy, N.,
+Andrews, S.&Michie, P.T.(1994)Am.J.Psychiatry 152,213-219.
+28.Strous,R.,Cowan,N.,Ritter,W.&Javitt,D.C.(1995)Am.J.Psychiatry
+152,1517-1519.
+29.Javitt,D.C.&Zukin,S.R.(1991)Am.J.Psychiatry 148,1301-1308.
+30.Javitt,D.C.,Zylberman, I.,Zukin,S.R.,Heresco-Levy, U.&Linden-
+mayer,J.P.(1994)Am.J.Psychiatry 151,1234-1236.
+31.Funahashi, S.,Bruce,C.J.&Goldman-Rakic, P.S.(1993)J.Neurosci. 13,
+1479-1497.
+32.Williams, G.V.&Goldman-Rakic, P.S.(1995)Nature(London) 376,
+572-575
+33.Winsberg, B.G.,Javitt,D.C.,Silipo,G.S.&Doneshka, P.(1993)Psycho-
+pharmacol. Bull.29,229-233.
+34.Lewis,D.A.,Campbell, M.J.,Foote,S.L.,Goldstein, M.&Morrison, J.H.
+(1987)J.Neurosci. 7,279-290.
+35.Campbell, M.J.,Lewis,D.A.,Foote,S.L.&Morrison, J.H.(1987)
+J.Comp.Neurol.261,209-220.
+36.Desimone, R.(1992)Science258,245-246.A B c D
+11
+III1--
+IVIE
+1b1i±L1LUJ1AJJ1J1l LUJJJJJIJJJ111l01202400120240Neurobiology: Javittetal.
+V-A-... -..-
+ --I
+Downloaded from https://www.pnas.org by EPFL SISB BIBLIOTEQUE on June 17, 2026 from IP address 128.179.139.0.
+

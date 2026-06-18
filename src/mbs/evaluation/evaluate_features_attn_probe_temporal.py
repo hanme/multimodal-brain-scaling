@@ -2,17 +2,21 @@
 
 The gradient-trained counterpart to ``evaluate_features_mtrf.py``: instead of a closed-form
 lagged Ridge, a shared ``LatentAttentionTrunk`` attends over the lookback window (kept as a
-token sequence) and a subject head reads out the parcel EEG. Trained with ``1 - Pearson`` and
-random time-point sampling; scored along time on the built-in held-out runs — the SAME
+token sequence) and a subject head reads out the target EEG. Trained with **MSE** (MIRAGE) and
+random time-point sampling, with MIRAGE-style checkpoint selection (best validation Pearson on
+a split carved from TRAIN); scored along time on the built-in held-out runs — the SAME
 ``heldout_r`` metric Method A reports, so the two sit side by side.
 
-Readout level is selectable and is the only structural difference between the two MIRAGE
-variants:
+Readout level selects the head structure:
   --readout_level individual   one head per subject over a shared trunk (Kadir individual)
   --readout_level group        a single 'group' head on the group-averaged EEG (Kadir group)
 
-Targets are the SAME 4 NC-parcels as Method A / the in-silico MMN (frontal/temporal/parietal/
-occipital), defined once from the group noise ceiling.
+Target level mirrors the §20 mTRF sweep (run each separately):
+  --target_level parcels       the 5 coarse 10-20 parcels (frontal/central/temporal/parietal/occipital)
+  --target_level electrodes    every electrode passing the NC floor (each its own target)
+
+EEG targets are z-scored per target on train stats (so MSE fits real amplitude); the scaling is
+stored in the checkpoint (``eeg_mu``/``eeg_sd``) so predictions invert to real units — see §16.
 
 Output (parallel to mtrf_scores.h5 / predictions__<layer>.h5):
   outputs/.../attn_probe_temporal_scores.h5
@@ -34,12 +38,14 @@ from mbs.core import str2bool
 from mbs.evaluation.utils.evaluation_helpers import load_layer_features, load_neural_metadata
 from mbs.evaluation.evaluate_features_mtrf import highpass_along_time
 from mbs.evaluation.attn_probe.dataset_temporal import (
-    build_parcels, recompute_parcel_nc, load_parcel_eeg, parcel_nc_vector, list_test_splits,
+    build_parcels, build_electrodes, recompute_parcel_nc, load_parcel_eeg, parcel_nc_vector,
+    list_test_splits,
 )
 from mbs.evaluation.attn_probe.engine_temporal import (
     TemporalTrainConfig, train_temporal_probe, score_heldout,
 )
 from mbs.evaluation.attn_probe.model import ProbeConfig
+from mbs.evaluation.attn_probe.checkpoint import save_probe_checkpoint
 
 FS = 50.0
 TIME_STEP_MS = 20.0
@@ -54,12 +60,22 @@ def parse_args():
     p.add_argument("--output_dir", type=str, required=True)
 
     p.add_argument("--readout_level", choices=["individual", "group"], default="group")
-    p.add_argument("--parcels_from", type=str, default="outputs/neural_data/broderick2018_30s.h5",
-                   help="dataset whose NC defines the canonical parcel membership (same parcels "
-                        "across D1/D2/D3 — decision C); NC is recomputed on --data_hdf5_path")
+    p.add_argument("--target_level", choices=["parcels", "electrodes"], default="parcels",
+                   help="prediction targets: the 5 coarse parcels, or every electrode passing the "
+                        "NC floor (each its own target). Mirrors the §20 mTRF sweep; run each "
+                        "level separately.")
+    p.add_argument("--parcels_from", type=str, default="outputs/neural_data/surprisal_30s.h5",
+                   help="dataset whose NC defines the canonical target membership; NC is "
+                        "recomputed on --data_hdf5_path. Default D2 (Cortical Surprisal).")
     p.add_argument("--lookback_ms", type=float, default=800.0)
     p.add_argument("--highpass_hz", type=float, default=0.5)
     p.add_argument("--nc_threshold", type=float, default=0.2)
+    p.add_argument("--val_frac", type=float, default=0.2,
+                   help="fraction of TRAIN stimuli held out as a validation split for checkpoint "
+                        "selection; the test split(s) are never touched during selection.")
+    p.add_argument("--eval_every", type=int, default=5,
+                   help="evaluate validation Pearson every N epochs and keep the best-scoring "
+                        "weights (MIRAGE-style). 0 disables selection (keep final epoch).")
 
     # probe capacity
     p.add_argument("--d_model", type=int, default=256)
@@ -81,6 +97,10 @@ def parse_args():
     p.add_argument("--layer_id", type=int, default=None, help="run only this layer index")
     p.add_argument("--overwrite", type=str2bool, default=False)
     p.add_argument("--seed", type=int, default=42)
+    p.add_argument("--save_model", type=str2bool, default=True,
+                   help="save a reusable checkpoint (state_dict + mu/sd + parcels + lookback) per "
+                        "layer as model__<layer>.pt, so the trained mapping can be applied to "
+                        "arbitrary new stimuli (in-silico MMN figure, Sophie's own stimuli).")
     return p.parse_args()
 
 
@@ -112,35 +132,56 @@ def run_layer(args, layer_name, parcels, subjects, lookback, out_h5):
     test_splits = list_test_splits(args.data_hdf5_path)   # ["test"] or ["test_d1","test_d2"]
 
     # Features are identical across subjects (all heard all runs); preprocess ONCE.
-    feats_tr, _ = _aligned_feats(args.data_hdf5_path, subjects[0], parcels, "train",
-                                 layer_feats, id_map, args.highpass_hz)
-    fd = feats_tr.shape[-1]
-    mu = feats_tr.reshape(-1, fd).mean(0)
-    sd = feats_tr.reshape(-1, fd).std(0)
+    feats_tr_all, _ = _aligned_feats(args.data_hdf5_path, subjects[0], parcels, "train",
+                                     layer_feats, id_map, args.highpass_hz)
+    n_tr = feats_tr_all.shape[0]
+
+    # Carve a validation split out of TRAIN for MIRAGE-style checkpoint selection; the held-out
+    # test split(s) are never touched during selection (matches the §20 mTRF CV-on-train rule).
+    val_frac = float(getattr(args, "val_frac", 0.2))
+    perm = np.random.default_rng(args.seed).permutation(n_tr)
+    n_val = int(round(val_frac * n_tr)) if n_tr > 1 else 0
+    val_idx, tr_idx = np.sort(perm[:n_val]), np.sort(perm[n_val:])
+    if tr_idx.size == 0:                                  # degenerate tiny-data guard
+        tr_idx, val_idx = np.arange(n_tr), np.array([], dtype=int)
+    has_val = val_idx.size > 0
+
+    # Feature z-score stats from the TRAIN PORTION only (no val/test leakage).
+    fd = feats_tr_all.shape[-1]
+    mu = feats_tr_all[tr_idx].reshape(-1, fd).mean(0)
+    sd = feats_tr_all[tr_idx].reshape(-1, fd).std(0)
     sd = np.where(sd > 1e-6, sd, 1.0)
-    feats_tr = (feats_tr - mu) / sd                       # train-stat z-score
-    # held-out features per split, standardized with the SAME train stats
+    feats_tr_all = (feats_tr_all - mu) / sd
     feats_te_by_split = {}
     for split in test_splits:
         f_te, _ = _aligned_feats(args.data_hdf5_path, subjects[0], parcels, split,
                                  layer_feats, id_map, args.highpass_hz)
         feats_te_by_split[split] = (f_te - mu) / sd
 
-    # Per-subject parcel EEG (only the target varies across subjects).
-    eeg_tr, eeg_te_by_split = {}, {split: {} for split in test_splits}
+    # Per-subject EEG targets, z-scored per target on the TRAIN-PORTION stats. We REMEMBER the
+    # scaling (eeg_mu/eeg_sd) so predictions can be read back in real units for the magnitude
+    # MMN criterion (plan §16). Pearson heldout_r is scale-invariant -> numbers stay comparable
+    # to the mTRF / 1-Pearson runs.
+    eeg_tr_all, eeg_te_by_split = {}, {split: {} for split in test_splits}
+    eeg_mu, eeg_sd = {}, {}
     for s in subjects:
         _, e_tr = _aligned_feats(args.data_hdf5_path, s, parcels, "train",
                                  layer_feats, id_map, args.highpass_hz)
-        eeg_tr[s] = e_tr
+        n_tgt = e_tr.shape[-1]
+        emu = e_tr[tr_idx].reshape(-1, n_tgt).mean(0)
+        esd = e_tr[tr_idx].reshape(-1, n_tgt).std(0)
+        esd = np.where(esd > 1e-6, esd, 1.0)
+        eeg_mu[s], eeg_sd[s] = emu.astype(np.float32), esd.astype(np.float32)
+        eeg_tr_all[s] = ((e_tr - emu) / esd).astype(np.float32)
         for split in test_splits:
             _, e_te = _aligned_feats(args.data_hdf5_path, s, parcels, split,
                                      layer_feats, id_map, args.highpass_hz)
-            eeg_te_by_split[split][s] = e_te
-    feats_train = {s: feats_tr for s in subjects}
-    # training-monitor val = the first held-out split (eval_every defaults off)
-    val_split = test_splits[0]
-    feats_val = {s: feats_te_by_split[val_split] for s in subjects}
-    eeg_te = eeg_te_by_split[val_split]
+            eeg_te_by_split[split][s] = ((e_te - emu) / esd).astype(np.float32)
+
+    feats_train = {s: feats_tr_all[tr_idx] for s in subjects}
+    eeg_train = {s: eeg_tr_all[s][tr_idx] for s in subjects}
+    feats_val = {s: feats_tr_all[val_idx] for s in subjects} if has_val else None
+    eeg_val = {s: eeg_tr_all[s][val_idx] for s in subjects} if has_val else None
 
     probe_cfg = ProbeConfig(
         in_dim=d, d_model=args.d_model, nhead=args.nhead, num_latents=args.num_latents,
@@ -151,11 +192,12 @@ def run_layer(args, layer_name, parcels, subjects, lookback, out_h5):
         device=args.device, epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay,
         batch_size=args.batch_size, n_train_time_samples=args.n_train_time_samples,
         amp=args.amp, seed=args.seed,
+        eval_every=int(getattr(args, "eval_every", 0)) if has_val else 0,
     )
 
     P = len(parcels)
     model, history = train_temporal_probe(
-        feats_train=feats_train, eeg_train=eeg_tr, feats_val=feats_val, eeg_val=eeg_te,
+        feats_train=feats_train, eeg_train=eeg_train, feats_val=feats_val, eeg_val=eeg_val,
         subjects=subjects, in_dim=d, n_parcel=P, lookback=lookback,
         train_cfg=train_cfg, probe_cfg=probe_cfg,
     )
@@ -195,6 +237,21 @@ def run_layer(args, layer_name, parcels, subjects, lookback, out_h5):
 
     if args.readout_level == "individual":
         g.create_dataset("subjects", data=np.array(subjects, dtype="S"))
+
+    if getattr(args, "save_model", True):
+        ckpt_path = Path(args.output_dir) / f"model__{layer_name}.pt"
+        save_probe_checkpoint(
+            ckpt_path, model=model, cfg=probe_cfg, mu=mu, sd=sd, lookback=lookback,
+            parcel_names=names, parcel_members=["+".join(p[1]) for p in parcels],
+            parcel_nc=[p[2] for p in parcels], subjects=subjects,
+            highpass_hz=args.highpass_hz, fs=FS, layer=layer_name,
+            eeg_mu=eeg_mu, eeg_sd=eeg_sd,
+            meta={"data_hdf5_path": args.data_hdf5_path, "features_dir": args.features_dir,
+                  "parcels_from": getattr(args, "parcels_from", ""),
+                  "target_level": getattr(args, "target_level", "parcels"),
+                  "readout_level": args.readout_level},
+        )
+        print(f"  saved checkpoint -> {ckpt_path}")
     return entry
 
 
@@ -205,11 +262,14 @@ def main(args):
     with open(args.target_feature_layers) as f:
         layer_list = [e["name"] if isinstance(e, dict) else e for e in json.load(f)]
 
-    print(f"Canonical parcels from {args.parcels_from} (NC r > {args.nc_threshold}), "
+    print(f"Canonical {args.target_level} from {args.parcels_from} (NC r > {args.nc_threshold}), "
           f"NC recomputed on {args.data_hdf5_path}:")
-    canonical = build_parcels(args.parcels_from, args.nc_threshold)
+    if args.target_level == "electrodes":
+        canonical = build_electrodes(args.parcels_from, args.nc_threshold)
+    else:
+        canonical = build_parcels(args.parcels_from, args.nc_threshold)
     parcels = recompute_parcel_nc(canonical, args.data_hdf5_path)   # same members, dataset NC
-    assert parcels, "No parcels survived the NC threshold."
+    assert parcels, f"No {args.target_level} survived the NC threshold."
 
     subjects_all, _, _, _ = load_neural_metadata(Path(args.data_hdf5_path))
     subjects_all = _decode(subjects_all)
@@ -233,6 +293,7 @@ def main(args):
     file_mode = "w" if args.overwrite else "a"      # truncate on overwrite (avoids corrupt leftovers)
     with h5py.File(scores_path, file_mode) as out_h5:
         out_h5.attrs["readout_level"] = args.readout_level
+        out_h5.attrs["target_level"] = args.target_level
         out_h5.attrs["lookback_ms"] = args.lookback_ms
         out_h5.attrs["lookback_bins"] = lookback
         out_h5.attrs["highpass_hz"] = args.highpass_hz

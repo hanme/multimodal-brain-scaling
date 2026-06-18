@@ -21,6 +21,7 @@ import torch
 from mbs.evaluation.attn_probe.dataset_temporal import (
     build_windowed_design,
     sampled_windowed_design,
+    build_electrodes,
     load_parcel_eeg,
     WindowedTemporalDataset,
 )
@@ -32,6 +33,12 @@ from mbs.evaluation.attn_probe.engine_temporal import (
     train_temporal_probe,
     TemporalTrainConfig,
 )
+from mbs.evaluation.attn_probe.checkpoint import (
+    save_probe_checkpoint,
+    load_probe_checkpoint,
+    predictions_to_units,
+)
+from mbs.evaluation.attn_probe.model import ProbeConfig
 from mbs.evaluation.evaluate_features_mtrf import (
     build_lagged_design,
     pearson_along_time,
@@ -314,6 +321,7 @@ def test_probe_driver_scores_each_dataset_split_separately(tmp_path):
         d_model=16, nhead=4, num_latents=4, cross_attn_layers=1, dropout=0.0, pos_mode="learned",
         device="cpu", epochs=2, lr=1e-3, weight_decay=1e-4, batch_size=64,
         n_train_time_samples=8, amp=False, seed=0, readout_level="group",
+        target_level="parcels", val_frac=0.2, eval_every=0, save_model=False,
     )
     with h5py.File(tmp_path / "out.h5", "w") as out_h5:
         entry = run_layer(args, layer, parcels, ["group"], lookback=4, out_h5=out_h5)
@@ -343,3 +351,99 @@ def test_windowed_dataset_yields_window_and_parcels(synthetic_neural_h5):
     item = ds[0]
     assert item["feats"].shape == (L, d)
     assert item["y"].shape == (len(parcels),)
+
+
+# ---------------------------------------------------------------------------
+# electrode-level targets (the §20 mTRF "all electrodes" granularity)
+# ---------------------------------------------------------------------------
+
+def test_build_electrodes_filters_and_sorts(tmp_path):
+    """Every NC-passing real electrode becomes a single-member target; pseudo-channels and
+    unknown-prefix names are dropped; output is sorted by descending reliability."""
+    path = tmp_path / "elec.h5"
+    # var% -> r=sqrt(v/100): Fz=0.84, T7=0.71, O1=0.55, P3 below floor; plus junk to be dropped.
+    ncs = {"Fz": 70.0, "T7": 50.0, "O1": 30.0, "P3": 1.0, "frontal_cluster": 99.0, "XYZ": 99.0}
+    with h5py.File(path, "w") as f:
+        g = f.create_group("noise_ceilings").create_group("group")
+        for ch, v in ncs.items():
+            g.create_dataset(ch, data=np.full((10, 1), v, np.float32))
+    elec = build_electrodes(path, threshold=0.2)
+    names = [e[0] for e in elec]
+    assert names == ["Fz", "T7", "O1"]                 # P3 below floor; cluster/XYZ dropped
+    assert all(len(members) == 1 and members[0] == nm for nm, members, _ in elec)
+    rs = [e[2] for e in elec]
+    assert rs == sorted(rs, reverse=True)              # sorted by descending r
+
+
+# ---------------------------------------------------------------------------
+# checkpoint stores EEG scaling -> predictions invert to real units (plan §16)
+# ---------------------------------------------------------------------------
+
+def test_checkpoint_round_trips_eeg_stats_and_inverts(tmp_path):
+    P, d = 3, 8
+    model = build_probe_system(in_dim=d, n_parcel=P, subjects=["group"])
+    cfg = ProbeConfig(in_dim=d, pos_mode="learned")
+    eeg_mu = {"group": np.array([1.0, -2.0, 0.5], np.float32)}
+    eeg_sd = {"group": np.array([2.0, 4.0, 0.25], np.float32)}
+    ckpt_path = tmp_path / "m.pt"
+    save_probe_checkpoint(
+        ckpt_path, model=model, cfg=cfg, mu=np.zeros(d, np.float32), sd=np.ones(d, np.float32),
+        lookback=5, parcel_names=["a", "b", "c"], parcel_members=["A", "B", "C"],
+        parcel_nc=[0.5, 0.5, 0.5], subjects=["group"], highpass_hz=0.5, fs=50.0, layer="blocks.1",
+        eeg_mu=eeg_mu, eeg_sd=eeg_sd,
+    )
+    _, ckpt = load_probe_checkpoint(ckpt_path)
+    np.testing.assert_allclose(ckpt["eeg_mu"]["group"], eeg_mu["group"])
+    np.testing.assert_allclose(ckpt["eeg_sd"]["group"], eeg_sd["group"])
+
+    pred_z = np.array([[0.0, 1.0, -2.0]], np.float32)         # z-units
+    real = predictions_to_units(pred_z, ckpt, subject="group")
+    np.testing.assert_allclose(real, pred_z * eeg_sd["group"] + eeg_mu["group"], atol=1e-6)
+
+
+def test_predictions_to_units_raises_for_legacy_checkpoint(tmp_path):
+    """A checkpoint saved without EEG stats (legacy 1-Pearson run) cannot invert to units."""
+    P, d = 2, 6
+    model = build_probe_system(in_dim=d, n_parcel=P, subjects=["group"])
+    cfg = ProbeConfig(in_dim=d, pos_mode="learned")
+    ckpt_path = tmp_path / "legacy.pt"
+    save_probe_checkpoint(
+        ckpt_path, model=model, cfg=cfg, mu=np.zeros(d, np.float32), sd=np.ones(d, np.float32),
+        lookback=4, parcel_names=["a", "b"], parcel_members=["A", "B"], parcel_nc=[0.5, 0.5],
+        subjects=["group"], highpass_hz=0.5, fs=50.0, layer="blocks.1",
+    )                                                          # no eeg_mu/eeg_sd
+    _, ckpt = load_probe_checkpoint(ckpt_path)
+    with pytest.raises(KeyError):
+        predictions_to_units(np.zeros((1, 2), np.float32), ckpt, subject="group")
+
+
+# ---------------------------------------------------------------------------
+# MIRAGE-style checkpoint selection: the returned model is the best-on-val one
+# ---------------------------------------------------------------------------
+
+@pytest.mark.slow
+def test_train_returns_best_val_checkpoint():
+    """With eval_every>0, the returned model's val score equals the recorded best_val_r (i.e.
+    the best-scoring weights were restored, not the final-epoch ones)."""
+    rng = np.random.default_rng(7)
+    n_stim, T, d, P, L = 20, 100, 5, 2, 8
+    lags = [2, 5]
+    feats = rng.normal(size=(n_stim, T, d)).astype(np.float32)
+    eeg = np.zeros((n_stim, T, P), np.float32)
+    for p, k in enumerate(lags):
+        w = rng.normal(size=(d,)).astype(np.float32)
+        eeg[:, k:, p] = feats[:, : T - k, :] @ w
+    eeg += 0.05 * rng.normal(size=eeg.shape).astype(np.float32)
+    ftr, fva, etr, eva = feats[:14], feats[14:], eeg[:14], eeg[14:]
+
+    cfg = TemporalTrainConfig(device="cpu", epochs=40, lr=1e-3, n_train_time_samples=30,
+                              batch_size=256, seed=0, eval_every=2)
+    model, history = train_temporal_probe(
+        feats_train={"group": ftr}, eeg_train={"group": etr},
+        feats_val={"group": fva}, eeg_val={"group": eva},
+        subjects=["group"], in_dim=d, n_parcel=P, lookback=L, train_cfg=cfg,
+    )
+    assert "selected_epoch" in history[-1] and "best_val_r" in history[-1]
+    best = history[-1]["best_val_r"]
+    r_now = score_heldout(model, fva, eva, lookback=L, subject="group", device="cpu").mean()
+    assert float(r_now) == pytest.approx(best, abs=1e-5)      # returned model IS the best one

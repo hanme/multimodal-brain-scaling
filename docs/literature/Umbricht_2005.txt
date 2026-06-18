@@ -1,0 +1,1155 @@
+Mismatch negativity in schizophrenia: a meta-analysis
+Daniel Umbrichta,*, Sanya Krljesb,c
+aUniversity of Zurich, Department of Psychiatric Research, Psychiatric University Hospital Zurich, PO Box 68, 8029 Zurich, Switzerland
+bSection of Neuroimaging, Division of Psychological Medicine, Institute of Psychiatry, De Crespigny Park, London SE5 8AF , UK
+cCentre for Brain and Cognitive Development, School of Psychology, Birkbeck College, Malet Street, London WC1E 7HX, UK
+Received 27 July 2004; received in revised form 1 December 2004; accepted 1 December 2004
+Available online 23 January 2004
+Abstract
+Background : Mismatch negativity (MMN) is an auditory event-related potential that provides an index of automatic context-
+dependent information processing and auditory sensory memory. Many studies have reported abnormalities in the generation ofMMN in schizophrenia. The objective of this study was to assess the magnitude of this deficit and associated factors.
+Method : Studies of MMN in schizophrenia were identified and included in a meta-analysis to estimate the mean effect size.
+Effects of duration of illness, gender ratio, age of patients, type of MMN (duration versus frequency MMN) and characteristicsof the test paradigms (deviant probability, magnitude of standard-deviant difference) on effect size were assessed.Results : Of 62 identified studies 32 met our inclusion criteria. The mean effect size was 0.99 (95% confidence intervals: 0.79,
+1.29). Overall, no specific factor was significantly associated with MMN deficits, although MMN to stimuli differing in
+duration appeared more impaired in schizophrenia than MMN to frequency deviants. In addition, effect sizes of frequencyMMN were significantly correlated with duration of illness.
+Conclusions : MMN deficits are a robust feature in chronic schizophrenia and indicate abnormalities in automatic context-
+dependent auditory information processing and auditory sensory memory in these patients. Reports of normal MMN in first-episode schizophrenia and the association of deficits in frequency MMN with illness duration suggest that MMN may index
+ongoing neuropathological changes in the auditory cortex in schizophrenia.
+D2004 Elsevier B.V . All rights reserved.
+Keywords: Schizophrenia; Mismatch negativity; Meta-analysis; Event-related potentials
+Cognitive deficits have increasingly been recog-
+nized over the last decade as important characteristic
+and core feature of schizophrenia ( Pantelis et al.,1998 ). However, cognitive deficits not only include
+deficient performance in higher cognitive domains but
+also extend to information processing at the sensory
+and preattentive level. For instance, abnormalitieshave repeatedly been demonstrated in P50 gating andprepulse inhibition (PPI) paradigms ( Braff and Geyer,
+1990; Freedman et al., 1991 )—both measures assess-
+0920-9964/$ - see front matter D2004 Elsevier B.V. All rights reserved.
+doi:10.1016/j.schres.2004.12.002* Corresponding author. Tel.: +41 1 384 255; fax: +41 1 384 3396.
+E-mail address: umbricht@bli.unizh.ch (D. Umbricht).Schizophrenia Research 76 (2005) 1–23
+www.elsevier.com/locate/schres
+ing gating mechanisms at an automatic level of
+information processing. An additional measure ofpreattentive information processing is the event-related potential mismatch negativity (MMN). MMNis an auditory event-related potential (ERP) that isgenerated when a stimulus violates the invariance orregularity of the recent auditory past. In the mostsimple paradigm this is the case when an infrequent
+stimulus (deviant) that differs in any physical
+characteristic such as frequency, duration, intensityor location is presented among repeatedly presentedstandard stimuli ( Na¨a¨ta¨nen, 1995 ). In addition,
+violations of more abstract regularities (repetitionof a stimulus in series of alternating tones, a lowertone in series of ascending tones) not directlyrelated to the physical characteristics of the stimuli
+generate MMN ( Alain et al., 1999; Na ¨a¨ta¨nen et al.,
+1993; Paavilainen et al., 1998; Schro ˜ger et al., 1996;
+Tervaniemi et al., 1994 ). Thus, MMN generation
+depends on the context in which a specific stimulusis presented. MMN is only generated when amemory trace of the regularity or invariance hasbeen established against which any incomingstimulus in being compared. MMN is therefore
+considered an index of the auditory sensory or
+bechoic Qmemory and of context-dependent informa-
+tion processing at the level of the primary andsecondary auditory cortices. MMN indexes the firststep in a chain of events leading to the consciousdetection of differences between auditory stimuliand variance in the auditory environment.
+MMN is best observed in the difference wave
+between the ERP responses to the standard and
+deviant stimuli (see Fig. 1 ) and usually peaks between
+100 and 240 ms after the presentation of the deviantstimulus. Its maximum is seen over fronto-centralelectrodes and it reverses its polarity over themastoids in a nose-referenced montage. Larger differ-ences–for instance in frequency–between standardsand deviants and lower probability of the deviant are
+associated with greater MMN amplitude ( Na¨a¨ta¨nen,
+1992 ). The latter effect is believed to reflect the
+strengthening of the memory trace of the standardstimulus, which is one factor determining MMNgeneration.
+The generation of MMN is considered to be a fully
+automatic process and therefore independent of thesubject’s attention ( Na¨a¨ta¨nen, 1992; Na ¨a¨ta¨nen et al.,1993 ); However, some studies have reported that
+under exceptional circumstances attention can indi-rectly modulate MMN ( Sussman et al., 1998; Trejo et
+al., 1995 ). The main MMN generators reside in the
+primary and secondary auditory cortices as indicatedby intracranial recordings in animals and humans(Cse´pe, 1995; Cse ´pe et al., 1995; Javitt et al., 1996;
+Kraus et al., 1994; Kropotov et al., 1995 ), magneto-
+encephalographic (MEG) recordings and source local-
+ization in humans ( Alho, 1995; Hari et al., 1984 ).
+Since the first report of abnormal MMN in
+schizophrenia by Shelley et al. in 1991 there have
+been at least 40 additional studies on MMN inschizophrenia. This review summarises all publishedandbin print Qreports on MMN in schizophrenia up
+to the end of 2003. It evaluates MMN findings in
+general and with regard to specific features of the
+samples investigated and the stimulation paradigmsused.
+1. Methods
+1.1. Literature search
+A literature search was conducted in MEDLINE
+(years 1990–2003) using the following key words:schizophrenia, mismatch negativity, MMN. Also, thereference lists of published papers were searched inorder to manually locate other relevant studies. Theinitial search identified 62 articles.
+1.2. Inclusion and exclusion criteria
+For inclusion in the meta-analysis a study had to
+meet following criteria: (1) MMN data were reportedeither as mean and standard deviation, or alternatively,ast-value of a t-test or as F-value representing the
+group effect when comparing patients with schizo-phrenia and controls; (2) patients were diagnosed
+according to established diagnostic systems (DSM-III,
+DSM-IV, ICD 9, ICD 10); (3) MMN values weremeasured from a difference wave (ERP to the deviantstimulus minus ERP to the standard stimulus). [Theonly study that did not fulfil this requirement, but wasincluded in the meta-analysis was the study by Javitt
+et al. (1993) . This exception was made because the
+rate of stimulus presentation was 20/s in which caseD. Umbricht, S. Krljes / Schizophrenia Research 76 (2005) 1–23 2
+the ERP generated by the standard stimulus is
+negligible.] (4) Only published studies were included,abstracts were ignored.
+1.3. Calculations
+The effect size (ES; Cohen’s d) between schizo-
+phrenic patients and healthy controls was calculated asd¼
+MMN c/C0MMN sz
+SDpooledwith MMN cas mean MMN in the
+normal control group, MMN szas mean in the patients
+with schizophrenia. Where means and standard devia-tions were not available the effect sizes were calculatedfrom F- and t-values according to standard formulas
+d¼
+2ﬃﬃﬃ ﬃ
+Fp
+ﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃ
+df errorðÞp andd¼2tﬃﬃﬃﬃﬃdfp , respectively. If in a
+study MMN was investigated with multiple stimula-
+tion paradigm the mean of all ES in each paradigm oralternatively the ES obtained from a group effect F-
+value was used. For studies that included two patientsamples each comparison between normal controlgroups and each patient group was treated as individ-ual study and the ES was calculated for eachcomparison separately. In all calculations the variance
+of the effects size was estimated with the formula:
+V¼ﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃ
+N
+cþNszÞ=Nc/C3NszÞþd2=2/C3NcþNszÞ ðÞð ð ðp
+.
+The standard error of the mean (S.E.M.) was calculatedas the square root of the variance and the 95%confidence intervals as ES FS.E.M.*1.96.
+We applied a random effects model to calculate the
+overall ES as well as the effect sizes for each level ofthe moderator variables investigated. Thus, for the
+calculation of mean effect sizes each effect size was
+weighed by the factor w¼1=VþrðÞ withrbeing
+the estimate of the variance across the effect sizes of
+Fig. 1. The main generators for MMN are located in the primary and secondary auditory cortices (red area). The red arrow represents the
+orientation of a hypothetical electrical dipole. When the reference electrode is attached to the nose, typical ERPs to standard stimuli (green line) ,
+frequency (red line) and duration deviants (blue line) are recorded at frontal (Fz) and right (RM) and left (LM) mastoid electrodes (upper panel
+in each graph). The red and blue shaded areas reflect the enhancement of the ERP by the respective deviant stimuli. The lower panel in eachgraph represents the difference waves (i.e. the shaded areas) and they are referred to as MMN. Please note the reversed polarity of the MMNpeaks at the mastoid electrodes. The data were obtained with standard stimuli of 1000 Hz and 100 ms duration, presented at an interstimulus
+interval of 200 ms. This explains the very small ERP to the standard. The duration deviant was 250. Hence the onset of the stimulus difference is
+100 ms, which explains the latency shift of the duration MMN by 100 ms.D. Umbricht, S. Krljes / Schizophrenia Research 76 (2005) 1–23 3
+Table 1
+Study characteristics
+Publication * Healthy controls Patients Comments Included in Reason for
+N m/f Age N m/f Age Duration
+of illnessmeta-analysis exclusion
+Shelley et al. (1991) 11 7/4 – 11 7/4 29.0 – Y
+Javitt et al. (1993) 12 7/5 38.3 ( F8) 14 14/0 36.5 ( F2.4) – Y
+Lembreghts and Timsit-
+Berthier (1993)20 12/8 31.0 ( F10.0) 20 12/8 31.0 ( F8.0) – Y
+O’Donnell et al. (1994) 20 20/0 37.7 ( F8.8) 20 20/0 36.9 ( F8.9) – N No difference waves
+were reported
+Catts et al. (1995) 22 – – 22 22/0 28.8 ( F8.3) – Y
+Javitt et al. (1995) a 11 6/5 38.3 ( F9.7) 20 – – – Medicated patients Y
+b 11 6/5 38.3 ( F9.7) 11 – – – Unmedicated patients Y
+Kathmann et al. (1995) 20 0/0 37.0 ( F10.0) 20 0/0 39.0 ( F11.0) 8.2 ( F5.0) Y
+Shutara et al. (1996) 25 17/8 30.1 ( F8.5) 25 12/13 29.4 ( F7.6) 0.0 ( F0.0) N Results were
+reported as Global
+Field Power
+Oades et al. (1997) 24 14/10 18.5 ( F0.0) 12 8/4 18.5 ( F0.0) Paranoid-
+hallucinatory patientsN No individual group
+comparisons reported
+12 6/6 18.9 ( F0.0) Non-paranoid patients
+13 9/4 16.3 ( F0.0) Obsessive compulsive
+patients
+Alain et al. (1998) 15 8/7 46.0 ( F9.0) 15 15/0 46.0 ( F7.0) 20.0 ( F11.0) Y
+Hirayasu et al. (1998) 23 23/0 40.2 ( F8.4) 23 23/0 43.6 ( F7.9) – Y
+Javitt et al. (1998) c 10 5/5 40.8 ( F3.2) 19 17/2 37.0 ( F1.5) – Group 1 Y
+d 15 8/7 33.9 ( F6.4) 15 14/2 36.2 ( F2.0) – Group 2 Y
+Schall et al. (1998) – – – 15 9/6 34.6 ( F9.1) 5.6 ( F4.5) Patients on typical
+antipsychoticsN No normal control
+group
+– – – 9 6/3 0.0 ( F8.7) 5.2 ( F5.6) Patients on clozapine
+Umbricht et al. (1998) 13 8/5 31.2 ( F8.9) 17 15/2 36.8 ( F8.2) 17.4 ( F9.1) Study investigated
+effects of clozapine
+and haloperidolon MMNY
+Kasai et al. (1999) 19 10/9 25.3 ( F5.3) 21 12/9 27.1 ( F6.5) 5.2 ( F2.9) Y
+Kirino and Inoue
+(1999b)30 20/10 28.5 ( F9.6) 30 20/10 28.4 ( F9.8) 6.3 ( F8.0) Y
+Kirino and Inoue
+(1999a)30 20/10 28.5 ( F9.6) 30 20/10 28.4 ( F9.8) 6.3 ( F8.0) N Same data as in
+Kirino and Inoue
+(1999)
+Schall et al. (1999) 21 13/8 25.5 ( F7.2) 25 15/9 36.7 ( F9.2) – Y
+Shelley et al. (1999) 17 11/6 37.4 ( F11.8) 15 12/3 39.3 ( F9.2) – YD. Umbricht, S. Krljes / Schizophrenia Research 76 (2005) 1–23 4
+Umbricht et al. (1999) 12 10/1 32.1 ( F5.2) 10 6/4 33.3 ( F8.7) – Study investigated
+effects of risperidoneon MMNY
+Javitt et al. (2000a) 12 7/5 32.0 ( F1.3) 12 11/1 35.7 ( F2.7) – Y
+Javitt et al. (2000b) e 20 8/7 36.3 ( F9.5) 17 15/2 37.3 ( F7.1) 10.0 Chronic patients Y
+f 13 10/3 27.4 ( F2.7) 10.0 Recent onset patients Y
+Michie et al. (2000) 17 14/3 37.4 ( F8.0) 14 11/3 36.5 ( F9.1) 12.6 Y
+Todd et al. (2000) 25 23/2 26.6 ( F0.0) 21 19/2 28.3 ( F0.0) 4.9 Y
+Grzella et al. (2001) 21 11/10 26.3 ( F7.6) 20 12/8 25.9 ( F9.9) – Y
+Jessen et al. (2001) 16 6/10 36.8 ( F14.1) 11 10/1 36.9 ( F6.9) – Y
+Todd et al. (2001) 22 19/3 32.0 ( F7.9) 20 17/3 31.5 ( F7.3) 10.7 Y
+Alain et al. (2002) 17 9/8 27.9 ( F7.6) 17 9/8 28.3 ( F6.9) 5.6 ( F2.9) N No difference waves
+were reported
+Baldeweg et al. (2002) 14 10/4 38.6 ( F13.8) 14 10/4 37.8 ( F14.2) 9.1 ( F7.6) Y
+Park et al. (2002) 14 9/5 24.6 ( F0.0) 14 9/5 26.5 ( F0.0) 5.4 N Investigated source
+of MMN, noamplitudes reported
+Kasai et al. (2002b) 23 16/7 28.1 ( F4.0) 7.5 ( F6.2) N No normal control
+group
+Kasai et al. (2002a) 28 18/10 26.2 ( F5.1) 23 16/7 28.1 ( F4.0) 7.8 ( F4.0) Y
+Michie et al. (2002) 21 15/6 34.0 22 20/1 34.0 – Y
+Murakami et al. (2002) – – – 14 5/2 29.3 ( F2.1) – N No normal control
+group
+Salisbury et al. (2002) g 27 20/7 24.2 ( F4.3) 21 18/3 24.9 ( F6.2) 0.0 First-episode patients Y
+h 13 13/0 33.2 ( F10.7) 16 16/0 38.7 ( F6.9) 14.3 ( F8.5) Chronic patients Y
+Shinozaki et al. (2002) 13 4/9 29.9 ( F13.3) 13 4/9 32.5 ( F15.0) 10.6 ( F12.6) Y
+Davalos et al. (2003) 11 – 38.5 ( F12.0) 10 – 40.9 ( F11.0) – Y
+Sato et al. (2003) 12 12/0 29.3 ( F9.2) 13 13/0 38.2 ( F11.1) 17.0 ( F11.4) Y
+Todd et al. (2003) 22 – 32.0 ( F7.9) 20 – 31.5 ( F7.3) 10.7 ( F8.0) Y
+Umbricht et al. (2003b) 25 14/11 35.0 ( F11.0) 26 19/17 36.0 ( F10.0) 11.0 ( F8.0) Y
+Youn et al. (2003) 15 9/6 28.6 ( F5.1) 15 9/6 27.8 ( F5.6) 5.3 ( F1.4) N Investigated source
+of MMN, noamplitudes reported
+Bramon et al. (2004) 20 4/16 40.0 ( F17.0) 25 20/5 36.0 ( F9.0) – Y
+Letters referring to patient groups in Fig. 1 .D. Umbricht, S. Krljes / Schizophrenia Research 76 (2005) 1–23 5
+all studies. The mean effect size was calculated as the
+sum of the weighed effect sizes divided by thesummed weights. S.E.M. and 95% CIs were calcu-lated as detailed above.
+The following moderator variables were eval-
+uated: type of deviant stimulus (frequency deviantversus duration deviant), probability of deviantstimulus, degree of deviance, sex ratio, age of
+patients and duration of illness. To evaluate effects
+of deviant probability, studies were grouped into fourgroups according to the deviant probability used(deviant probability of b10%, 10%, 15% and 20%
+and higher). Similarly, to evaluate the effects of thedegree of standard-deviant difference studies weregrouped as follows: for frequency differencesbetween deviant and standard stimulus: 10% and
+less, 10–20%, and 21% and above; for duration
+differences between deviant and standard stimulus:50%, 100% and 150%. To evaluate effects of sexratio, age of patients and duration of illness, mediansplits were used to create dichotomous moderatorvariables. In those studies that investigated varyinglevels of the moderator variables bMMN type Q,
+bstandard-deviant difference Qandbdeviant proba-
+bilityQa mean ES was calculated from all conditions
+that comprised the same level of the moderatorvariable. Each moderator level was then treated as aseparate study. For each level of a moderatorvariable weighted mean ES plus 95% CI werecalculated as described above. Differences significantat an alpha level of 5% were assumed if the meanES for each or one level of the moderator variables
+was lying outside the 95% CI of the other moderator
+variable(s).
+1.4. Publication bias
+To address potential publication bias we calculated
+thebfail-safe NQ(N
+fs)—the number of non-significant
+studies necessary in order to overturn the significant
+results of the published studies.
+We also applied the btrim and fill Qmethod, which
+provides an empirical approach to estimate the effectsize if supposedly unpublished studies with negativeresults had been published ( Duval and Tweedie,
+2000 ). Basically, this method estimates iteratively
+how many of the studies with the largest effect sizesshould be added to the sample as studies with equalbut opposite ES. Then the new btrueQoverall ES is
+recalculated. Thus, the result is an estimate of the trueES if the studies with the strongest ES were mirroredby studies of equal, but opposite ES.
+2. Results
+2.1. Study characteristics
+Our initial search identified 62 publications.
+Thirty-two fulfilled the aforementioned criteria ( Alain
+et al., 1998; Bramon et al., 2004; Baldeweg et al.,2002; Catts et al., 1995; Davalos et al., 2003; Grzellaet al., 2001; Hirayasu et al., 1998; Javitt et al., 1993,1995, 1998, 2000a,b; Jessen et al., 2001; Kasai et al.,
+1999, 2002a; Kathmann et al., 1995; Kirino and
+Inoue, 1999b; Lembreghts and Timsit-Berthier, 1993;Michie et al., 2000, 2002; Salisbury et al., 2002; Satoet al., 2003; Schall et al., 1998; Shelley et al., 1991,1999; Shinozaki et al., 2002; Todd et al., 2000, 2001,2003; Umbricht et al., 1998, 1999, 2003b ). Four of
+these included two patients samples ( Javitt et al.,
+1995, 1998, 2000b; Salisbury et al., 2002 ); thus a total
+of 36 individual studies were included in the meta-
+analysis. Of the excluded studies nine studies includedpatients with schizophrenia, but did not fulfil ourcriteria (see Table 1 ; of these nine studies two did not
+report difference waves ( Alain et al., 2002; O’Donnell
+et al., 1994 ), three did not include a healthy control
+group ( Kasai et al., 2002b; Murakami et al., 2002;
+Schall et al., 1998 ), two investigated source local-
+ization of MMN ( Park et al., 2002; Youn et al., 2003 ),
+one reported the same data published previously(Kirino and Inoue, 1999a ) and one, study the results
+of which were published in two papers, did not reportindividual group comparisons in a multigroup study(Oades et al., 1996, 1997) ); five studies measured
+MMN responses in patients with schizophrenia usingMEG or fMRI methods ( Kasai et al., 2003; Kircher et
+al., 2004; Kreitschmann-Andermahr et al., 1999;
+Pekkonen et al., 2002; Wible et al., 2001 ); one study
+included psychotic patients with different diagnoses(Valkonen-Korhonen et al., 2003 ); one study inves-
+tigated socially withdrawn children ( Bar-Haim et al.,
+2003 ); two studies evaluated MMN in subjects at high
+risk for schizophrenia ( Schreiber et al., 1992, 1996 );
+five publications reported on studies that evaluatedD. Umbricht, S. Krljes / Schizophrenia Research 76 (2005) 1–23 6
+psychopharmacological effects on MMN in healthy
+volunteers or animals ( Javitt et al., 1996; Kreitsch-
+mann-Andermahr et al., 2001; Oranje et al., 2000;Umbricht et al., 2000, 2003b ); five publications were
+reviews ( Csepe and Molnar, 1997; Gene-Cos et al.,
+1999; Javitt, 2000; Michie, 2001; Rosburg et al.,2004a ) and one paper was published in Japanese
+(Kirino and Shinomiya, 1996 ).
+Table 1 provides an overview of the studies
+included in the meta-analysis. The number ofsubjects in these studies ranged from 10 to 30 forcontrols (mean: 18.6 F5.4) and from 10 to 30 for
+patients (mean: 17.3 F4.9). The majority of patients
+investigated were male (mean 76% F19%). The
+mean age of the patients across all studies was31.5F5.1 years. The mean duration of illness was
+10.9F4.2 (this information was available for only
+17 studies!). The overwhelming majority of thestudies analyzed used frequency and/or durationdeviants to investigate MMN (see Table 2 ). One
+study employed differing vowel duration and differ-ing phonemes ( Kasai et al., 2002a ), and one varying
+interstimulus intervals as deviant stimuli ( Davalos et
+al., 2003 ).
+2.2. Effect sizes
+The individual effect sizes and their 95% con-
+fidence intervals (CI) for each study are plotted inFig. 2 . Further details are given in Table 2 . Overall,
+the effect size of the difference in MMN amplitudebetween patients and controls was 0.99 (lower 95% CI
+0.79; upper 95% CI 1.29; see Fig. 2 ) indicating that
+the MMN deficits are a robust feature in patients withschizophrenia. According to Cohen’s benchmark anES of 0.99 is classified as a large effect size ( Cohen,
+1988 ).
+2.3. Publication bias
+Inspection of the funnel plot suggested a possible
+publication bias (see Fig. 3 ). We thus applied the
+bTrim and Fill Qmethod ( Duval and Tweedie, 2000 ).
+This iterative method provides an estimate of thepotentially unpublished studies (variables L0 and R0,seeDuval and Tweedie, 2000 for details). In the case
+of our data L0 was zero, R0 was equal to 4 andremained at this level in further iterations. We thusadded the four studies with the largest ES, but with a
+negative sign to the original data and recalculated themean ES. The resulting mean ES was 0.65 (95% CI:0.37, 0.93, see Fig. 3 ). Thus, even after correcting for
+a potential publication bias the mean ES remainedsignificant and robust.
+The fail-safe Nfor this meta-analysis was 142.
+Thus, 142 studies with non-significant findings
+are required for the effect size of 0.99 to become
+non-significant.
+According to Cohen’s overlap statistics (OL%)
+(Cohen, 1988 ) the obtained effects size of 0.99 means
+that there is a 44% of overlap between schizophrenicpatients and healthy controls. This means that 56% ofschizophrenic patients have lower MMN amplitudesthan any healthy control.
+2.4. Moderator variables (see Table 3 )
+2.4.1. Type of deviant stimulus (frequency deviant
+versus duration deviant)
+There were 23 individual studies using frequency
+deviants and 14 studies using duration deviants toinvestigate MMN (see Table 3 andFig. 4 ). The mean
+ES for frequency MMN was smaller than the mean ES
+for duration MMN. This difference, however, failed toreach statistical significance. Three studies investi-gated MMN to both frequency and duration deviantsin the same sample of patients ( Javitt et al., 2000b;
+Michie et al., 2000; Umbricht et al., 2003b ) with one
+study including two different patient samples ( Javitt et
+al., 2000b ). In these studies the mean ES for MMN to
+duration deviants (ES=1.01; 95% CI: 95% CI: 0.34,
+1.68) was more than twice as large than for MMN tofrequency deviants (ES=0.47; 95%CI: /C00.20, 1.15).
+However, the difference failed to reach statisticalsignificance.
+2.4.2. Probability of deviant stimulus
+The mean ES were larger for studies using smaller
+deviant probabilities (see Table 3 ), but the differences
+in ES were not significant. There were two studiesfrom the same research group ( Javitt et al., 1998;
+Shelley et al., 1999 ) that varied the probability of a
+frequency deviant systematically. A correlationalanalysis of the unweighted ES and the actual deviantprobability demonstrated a significant correlation(r=/C00.6,p=0.02; see Fig. 5 ).D. Umbricht, S. Krljes / Schizophrenia Research 76 (2005) 1–23 7
+Table 2
+Stimulus parameters and individual effects sizes of studies included in meta-analysis
+Condition Stimulus characteristics ES 95% CI Comments
+Standard stimulus Deviant stimulusaISI/SOA Lower Upper
+Frequency Duration Frequency Duration Probability (%)
+Shelley et al. (1991) Duration 633 50 633 100 10 510 1.14 0.19 2.09
+633 100 633 50 10 510 0.54 /C00.36 1.43
+0.84 1.76 0.92 Across all conditions
+Javitt et al. (1993) Frequency 1000 25 1024 25 0.6 25 2.37 1.31 3.44
+Lembreghts and Timsit-
+Berthier (1993)Duration 800 40 800 80 20 1000 0.61 /C00.08 1.30
+Catts et al. (1995) Duration 100 50 10 510 0.74 0.11 1.36
+50 100 10 510 1.52 0.83 2.21
+1.13 1.78 0.65 Across all conditions
+Javitt et al. (1995) Frequency 1000 50 1024 50 15 1300 1.28 0.44 2.11 Medicated patients
+1000 50 1024 50 15 1300 0.90 /C00.02 1.82 Unmedicated patients
+Kathmann et al. (1995) Frequency 600 50 1000 50 20 580 /C00.17 /C00.81 0.47
+Alain et al. (1998) Frequency 1000 100 1122 100 3 200 0.83 0.05 1.60
+Pattern 100 3 200 0.76 /C00.01 1.53
+0.79 1.56 0.77 Across all conditions
+Hirayasu et al. (1998) Frequency 1000 100 1200 100 5 300 0.56 /C00.04 1.17
+Javitt et al. (1998) Frequency 1000 25 1850 25 0.56 25 0.91 0.07 1.74
+1000 25 1850 25 1.67 25 /C00.09 /C00.89 0.70
+1000 25 1850 25 5 25 /C00.11 /C00.90 0.69
+1000 25 1850 25 15 25 0.13 /C00.66 0.93
+1000 50 1850 50 1.67 150 1.10 0.25 1.95
+1000 50 1850 50 5 150 0.63 /C00.18 1.44
+1000 50 1850 50 15 150 0.56 /C00.25 1.37
+1000 50 1850 50 5 450 0.57 /C00.24 1.38
+1000 50 1850 50 15 450 0.28 /C00.52 1.08
+1000 50 1850 50 15 1300 /C00.24 /C01.04 0.56
+1.49 0.59 2.38 Across all conditions
+Javitt et al. (1998) Frequency 1000 50 1020–400 50 10 260 1.26 0.44 2.07
+Umbricht et al. (1998) Frequency 1000 50 1200 50 15 700–800 0.81 0.03 1.58
+Kasai et al. (1999) Duration 1000 100 1000 50 25 600 0.67 0.02 1.33
+Kirino and Inoue (1999b) Frequency 1000 90 2000 90 20 1500 0.42 /C00.10 0.94
+Schall et al. (1999) Frequency 1000 200 1064 200 10 700 0.67 0.06 1.28
+Shelley et al. (1999) Frequency 1000 100 1200 100 25 250 /C00.47 /C01.20 0.26
+1000 100 1200 100 10 250 0.78 0.06 1.501000 100 1200 100 5 250 1.25 0.49 2.01
+1000 100 1200 100 2.5 250 0.79 0.07 1.51
+1000 100 1200 100 10 250 0.45 /C00.26 1.15D. Umbricht, S. Krljes / Schizophrenia Research 76 (2005) 1–23 8
+1000 100 1200 100 10 500 0.71 0.00 1.43
+1000 100 1200 100 10 1000 /C00.07 /C00.76 0.62
+1000 100 1200 100 10 4000 0.19 /C00.51 0.88
+1.04 0.30 1.78 Across all probabilities
+0.24 /C00.46 0.93 Across all ISIs
+0.83 0.11 1.56 Across all conditions
+Umbricht et al. (1999) Frequency 1000 50 1200 50 15 700–800 1.04 0.10 1.98
+Javitt et al. (2000a) Frequency 1000 50 1050 50 10 260 3.14 1.86 4.42
+Javitt et al. (2000b) Frequency 1000 100 1100 100 25 666–769 0.27 /C00.52 1.06 Recent onset patients
+Duration 1000 100 1000 250 25 666–769 1.00 0.20 1.81
+0.64 1.43 0.79 Across all conditions
+Frequency 1000 100 1100 100 25 666–769 0.80 0.07 1.54 Chronic patientsDuration 1000 100 1000 250 25 666–769 0.98 0.21 1.74
+0.89 1.64 0.75 Across all conditions
+Michie et al. (2000) Duration 630 50 630 100 10 510
+b1.25 0.45 2.06
+Frequency 633 50 700 50 10 510b0.06 /C00.67 0.79
+Frequency 633 50 1000 50 10 510b0.39 /C00.35 1.13
+0.57 1.32 0.75 Across all conditions
+Todd et al. (2000) Duration 633 50 633 100 10 510 0.53 /C00.07 1.13
+Grzella et al. (2001) Novelty 1200 50 50 14 1100 0.24 /C00.39 0.87
+Jessen et al. (2001) Frequency 1000 50 1100 50 15 1250b0.37 /C00.44 1.17
+Baldeweg et al. (2002) Duration 975 25 975 50 14 300b2.69 1.61 3.77
+Kasai et al. (2002a) Duration 1000 100 1000 50 10 490–530 0.20 /C00.37 0.76
+V owel Duration 150 100 10 490–530 0.08 /C00.48 0.64
+Phoneme Change 10 490–530 0.63 0.05 1.20
+0.28 /C00.26 0.81 Across all conditions
+Michie et al. (2002) Duration 630 50 630 100 10 510b4.37 3.22 5.52
+Salisbury et al. (2002) Frequency 1000 100 1200 100 5 333b0.05 /C00.53 0.64 First-episode patients
+1000 100 1200 100 5 333b0.69 /C00.09 1.47 Chronic patients
+Shinozaki et al. (2002) Frequency 1000 50 2000 50 10 500b0.90 0.06 1.75
+Todd et al. (2001) Duration 1000 50 1000 125 8 510 1.49 0.78 2.19
+Davalos et al. (2003) Varying
+interstimulus
+interval1000 50 1000 50 8 400 1.49 /C00.01 1.90
+Sato et al. (2003) Frequency 1000 50 2000 50 30,20,10,5 500b2.22 1.14 3.30 ISI before deviant
+340 ms
+Todd et al. (2003) Duration 1000 50 1000 125 20 500b0.95 0.78 2.19
+Umbricht et al. (2003b) Frequency 1000 100 1500 100 10 300b0.59 0.02 1.17
+Duration 1000 100 1000 250 10 300b0.80 0.22 1.390.70 1.28 0.58 Across all conditions
+Bramon et al. (2004) Duration 1000 25 1000 50 15 300 0.41 /C00.19 1.02
+aISI=interstimulus interval, SOA=stimulus onset asynchrony.
+bSOA.D. Umbricht, S. Krljes / Schizophrenia Research 76 (2005) 1–23 9
+2.4.3. Degree of deviance
+In studies investigating frequency MMN the mean
+ES was largest and significantly different from zerofor studies employing differences of 10% or less. Inthe case of duration MMN a different pictureemerged: studies using larger duration differencesshowed larger ES. However, in both cases thedifferences between the various difference levelsfailed to reach statistical significance (see Table 3 ).
+2.4.4. Sex ratio
+The median percentage of male patients was 85%.
+There were 17 studies with less than 85% malepatients and 15 with more than 85%. There was as a
+non-significantly larger ES in studies with a higher
+percentage of male patients (see Table 3 ).
+2.4.5. Duration of illness
+Only 17 studies–one including two patients
+samples ( Salisbury et al., 2002 )–provided informa-
+tion about the duration of illness. The medianduration of illness was 10.60 years. The mean ES
+for studies with longer duration of illness was more
+than 40% larger than the ES for studies withshorter duration of illness. This difference did notreach statistical significance. Similarly, the correla--1 0Shelley et al, 1991
+Javitt et al, 1993
+Lembregths et al, 1991
+Catts et al, 1995
+Javitt et al, 1995 (a)
+Javitt et al, 1995 (b)
+Kathmann et al, 1995
+Alain et al, 1998
+Hirayasu et al, 1998
+Javitt et al, 1998 (c)
+Javitt et al, 1998 (d)
+Umbricht et al, 1998
+Kasai et al, 1999
+Kirino et al, 1999b
+Schall et al, 1999
+Shelley et al, 1999
+Umbricht et al, 1999
+Javitt et al, 2000b
+Javitt et al, 2000b (e)
+Javitt et al, 2000b (f)
+Michie et al, 2000
+Todd et al, 2000
+Grzella et al, 2001
+Jessen et al, 2001
+Baldeweg et al, 2002
+Kasai et al, 2002a
+Michie et al, 2002
+Salisbury et al, 2002 (g)
+Salisbury et al, 2002 (h)
+Sato et al, 2002
+Shinozaki et al, 2002
+Todd et al, 2002
+Umbricht et al, 2003b
+Davalon et al, 2003
+Todd et al, 2003
+Bramon et  al, 2004
+Weighted Mean, Random Effects Model
+Effect Size +/- 95% CI123456
+Fig. 2. Individual and mean ES of MMN deficits in schizophrenia. a=Medicated patients; b=unmedicated patients; c=Group 1; d=Group 2;
+e=chronic patients; f=recent onset patients; g=first-episode patients; h=chronic patients (see also Table 1 for further details).D. Umbricht, S. Krljes / Schizophrenia Research 76 (2005) 1–23 10
+tions between duration of illness and unweighted
+ES of each study were not significant (Pearsoncorrelations: r=0.26, pN0.1). However, inspection of
+the data suggested that MMN type (duration versus
+frequency MMN) was affecting this correlation. We
+thus calculated Pearson correlations separately forstudies investigating frequency MMN ( N=10) andfor those investigating duration MMN ( N=8). In the
+case of frequency MMN, this correlation wassignificant ( r=0.67, pb0.05), but not for studies
+investigating duration MMN ( r=0.37, pN0.1; see
+Fig. 6 ; however, after removal of the one outlier
+the correlation of illness duration and durationMMN was r=0.76, p=0.05).4.0
+3.53.02.5
+1.5
+-6 -4Estimated Weighted Mean ES
+after correction (+/- 95% Cl)Estimated Weighted Mean ES
+before correction (+/- 95% Cl)
+-2 0
+ESFunnel Plot1/SEM
+2462.0
+Fig. 3. Funnel plot with four potentially unpublished studies. The number was arrived at with the help of the bfill and trim Qmethod (see
+Methods). Mean ES before and after correction.
+Table 3Effect sizes of moderator variable levels
+Moderator variable Level Nstudies ES Lower 95% CI Upper 95% CI
+MMN type Frequency deviant 23 0.94 0.08 1.80
+Duration deviant 15 1.23 0.32 2.15
+Deviant probability b10% 10 1.09 0.51 1.68
+10% 12 1.44 0.35 2.53
+15% 7 0.70 /C00.13 1.53
+z20% 6 0.36 /C00.42 1.14
+Standard-deviant difference
+Frequency deviants V10% 8 1.23 0.13 2.32
+11–20% 8 0.61 /C00.13 1.35
+N20% 7 0.83 /C00.09 1.76
+Duration deviants 50% 4 0.54 /C00.11 1.18
+100% 8 1.57 0.34 2.79
+150% 5 1.15 0.45 1.85
+Sex ratio V85% Male 17 0.96 0.17 1.74
+N85% Male 15 1.36 0.32 2.40
+Duration of illness V10.6 9 0.74 /C00.14 1.61
+N10.6 8 1.09 0.26 1.93
+Age V36 18 1.05 0.15 1.95
+N36 16 1.06 0.17 1.95D. Umbricht, S. Krljes / Schizophrenia Research 76 (2005) 1–23 11
+2.4.6. Age of patients
+For 34 studies age of patients was provided. The
+median age was 36.0 years. The mean ES for studieswith higher and lower age of patients were almost equal(seeTable 3 ).2.4.7. Multiple regression
+Finally, we performed a multiple regression with
+type of deviant stimulus, probability of the deviantstimulus, degree of standard-deviant difference, sexratio and duration of illness as independent variableEffect Size +/- 95% CI-1 0 3 4Javitt et al, 1993
+Javitt et al, 1995 (a)
+Javitt et al, 1995 (b)
+Kathmann et al, 1995
+Alain et al, 1998
+Hirayasu et al, 1998
+Javitt et al, 1998 (c)
+Javitt et al, 1998 (g)
+Umbricht et al, 1998
+Kirino et al, 1999b
+Schall et al, 1999
+Shelley et al, 1999
+Umbricht et al, 1999
+Javitt et al, 2000a
+Javitt et al, 2000b (e)
+Javitt et al, 2000b (f)
+Michie et al, 2000
+Jessen et al, 2001
+Salisbury et al, 2002 (g)
+Salisbury et al, 2002 (h)
+Sato et al, 2002
+Shinozaki et al, 2002
+Umbricht et al, 2003b
+Shelley et al, 1991
+Lembreghts et al, 1993
+Catts et al, 1995
+Kasai et al, 1999
+Javitt et al, 2000b (e)
+Javitt et al, 2000b (f)
+Michie et al, 2000
+Todd et al, 2000
+Baldeweg et al, 2002
+Kasai et al, 2002
+Michie et al, 2002
+Todd et al, 2002
+Umbricht et al, 2003b
+Todd et al, 2003
+Bramon et al, 2004Weighted Mean, Frequency MMN
+Weighted Mean, Duration MMN
+12 56
+Fig. 4. Duration versus frequency MMN. ES of individual studies plus mean ES.D. Umbricht, S. Krljes / Schizophrenia Research 76 (2005) 1–23 12
+and the unweighted ES as the dependent variable. In
+contrast to the analysis described above we entered
+probability of the deviant stimulus, sex ratio and
+duration of illness as the actual values, i.e. continuousvariables, and not as categorical values. Type ofdeviant stimulus and degree of standard-deviantdifference were entered as categorical values. We
+entered all variables in step one and then removed
+variables with a significance of pN0.1 in a stepwise
+fashion. For 16 individual studies the values of thesevariables were available. The model including allvariables gave an R
+2=0.50, but was not significant.Shelley et al, 1999ES as a Function of Deviant Probability
+Probability of Deviant Stimulus (%)1.5
+1.0
+0.5
+0.0
+01 23 5 10 15 25-0.5ESJavitt et al, 1998
+Fig. 5. Correlation of ES with probability of the deviant stimulus in chronic patients.
+Frequency MMN3.0
+2.5
+1.52.0
+1.0
+05 1 0
+Duration of Illness (y)ES
+15 20 250.5
+0.0
+-0.5Duration MMN
+r=0.37, p > 0.15
+r=0.67, p < 0.05
+Fig. 6. Correlation of ES for frequency and duration MMN and duration of illness (after removal of the one outlier the correlation of illness
+duration and duration MMN was r=0.76, p=0.05).D. Umbricht, S. Krljes / Schizophrenia Research 76 (2005) 1–23 13
+Stepwise removal of single variables resulted in the
+retention of MMN type only ( R2=0.33, p=0.02; see
+Table 4 ).
+2.4.8. MMN and symptoms
+Twenty-two studies on MMN in schizophrenia
+reported on correlational analysis of MMN and
+symptoms. Only one study reported a significant
+correlation of the PANSS positive symptom factorand MMN over the left hemisphere ( Youn et al.,
+2003 ). Three studies found a correlation with MMN
+and ratings of hallucinations ( Hirayasu et al., 1998;
+Schall et al., 1999; Youn et al., 2003 ). Six studies
+found significant correlations between MMN andmeasures of negative symptoms ( Catts et al., 1995;
+Grzella et al., 2001; Hirayasu et al., 1998; Javitt et
+al., 2000a; Kasai et al., 2002a; Schall et al., 1999 ).
+Thus, the large majorities of studies did not findcorrelations with clinical symptomatology consistentwith the studies that did not observe any change inMMN despite clinical improvement of patients in
+studies investigating effects of medication on MMN(Schall et al., 1998; Umbricht et al., 1998, 1999 ) (see
+Table 5 ).
+2.4.9. Studies in the first-episode schizophrenia
+Only a few studies have investigated patients
+during or close to their first episode. Salisbury et al.
+(2002) found normal frequency MMN response in the
+first-episode patients when compared to healthycontrol and chronic schizophrenic patients. DurationMMN was not assessed in this study. However,Umbricht et al. (2003a) recently reported normal
+frequency and duration MMN in first-episode patientswhich was abnormal in recent onset (within 1.5 to 5
+years of first hospitalisation) and chronic patients. In
+the study by Javitt et al. (2000b) one patient group
+was within 3 years of initial presentation. Duration butnot frequency MMN was reduced in the recent onsetgroup when compared to healthy controls, suggestingTable 4
+Multiple regression
+Model Variables entered Variables removed R2ANOV A Variables b t Sig.
+1 Type of deviant 0.50 0.17 Constant /C00.27 0.79
+Deviant-standard difference
+Deviant probabilityDuration of illness
+Percentage male patients
+Type of deviant 0.72 3.03 0.01Duration of illness 0.36 1.47 0.17Percentage male patients /C00.18 /C00.54 0.60
+Deviant Probability /C00.29 /C00.93 0.38
+Deviant-standarddifference0.01 0.05 0.96
+2 Deviant-standard
+difference0.50 0.08 Constant /C00.35 0.73
+Type of deviant 0.72 3.18 0.01
+Duration of illness 0.37 1.61 0.14
+Percentage male patients /C00.19 /C00.70 0.50
+Deviant probability /C00.29 /C01.08 0.30
+3 Percentage male
+patients0.48 0.05 Constant /C01.12 0.28
+Type of deviant 0.71 3.19 0.01
+Duration of illness 0.34 1.55 0.15Deviant probability /C00.18 /C00.84 0.42
+4 Deviant probability 0.44 0.02 Constant /C01.47 0.16
+Type of deviant 0.68 3.13 0.01
+Duration of illness 0.36 1.67 0.12
+5 Duration of illness 0.33 0.02 Constant /C00.35 0.73
+Type of Deviant 0.57 2.60 0.02D. Umbricht, S. Krljes / Schizophrenia Research 76 (2005) 1–23 14
+that duration MMN deficit may be present at the early
+stages of illness and possibly represent a trait marker.
+3. Discussion
+The results of our meta-analysis indicate that
+MMN deficits are robust in patients with chronic
+schizophrenia. The estimate of the overall effect size
+was 0.99, which is considered large by acceptedstandards. Even after applying the so-called btrim and
+fillQmethod to correct for potentially unpublished data
+the ES remained robust. Given the evidence thatMMN deficits have not been observed in other majorpsychiatric disorders such as major depression andbipolar disorder ( Catts et al., 1995; Umbricht et al.,
+2003b ), the results of this meta-analysis indicate a
+strong association between chronic schizophrenia anddeficient MMN generation. Thus, the results of thismeta-analysis strongly suggest that the functioning ofthe auditory sensory memory and context-dependentinformation processing at the level of the primary andsecondary auditory cortices are significantly impairedin chronic schizophrenia. This supports the view that
+so-called cognitive deficits in schizophrenia not only
+include deficient performance in classical neuropsy-chological tasks, but also extend to early steps incortical information processing. Indeed, recent studieshave shown that MMN deficits are particularlypronounced in patients with severe cognitive deficits,particularly deficits in episodic memory ( Baldeweg
+et al., 2004; Umbricht et al., 2004; Krljes et al.,
+submitted for publication ). Thus, MMN deficits may
+index abnormalities at the cellular level that contributesimilarly to both deficits in bclassical Qepisodic
+memory as well as abnormal auditory sensorymemory.
+The exact reasons for MMN deficits in schizo-
+phrenia are not well understood. Since ERPs resultfrom EPSPs and IPSPs mostly in the dentritic arbour
+of simultaneously active neuronal ensembles, an
+obvious reason could lie in dentritic abnormalities,including loss of spines, previously described inschizophrenia. Indeed, emerging evidence supportsthis assumption ( Salisbury et al., 2004 ). In addition,
+there is considerable evidence from animal and humanstudies implicating deficient NMDA receptor func-tioning in MMN deficits. Javitt et al. (1996) found adose dependent reduction of intracortically recorded
+MMN by competitive and non-competitive NMDAreceptor antagonists in subhuman primates. Theseinitial findings have been extended to humans inwhom the NMDA receptor antagonist ketamine hasbeen found to reduce MMN similarly ( Kreitschmann-
+Andermahr et al., 2001; Umbricht et al., 2000, 2004 ).
+In addition, other compounds with NMDA antagonist
+properties such as alcohol and nitric oxide induce an
+MMN reduction ( Jaaskelainen et al., 1995; Pang and
+Fowler, 1999 ). In contrast, the administration in
+healthy volunteers of agonists and antagonists atvarious receptors did not reduce MMN generation:the tested drugs included psycilocybin, a psychotomi-metic acting as agonist at the 5-HT2a receptor(Umbricht et al., 2003c ), the alpha2-antagonist atipa-
+mezole ( Mervaala et al., 1993 ), the noradrenergic
+apha2-agonist clonidine ( Duncan and Kaye, 1987 ),
+the D2 antagonist haloperidol ( Kahkonen et al., 2002 ),
+the opioid antagonist naltrexone ( Jaaskelainen et al.,
+1998 ) and caffeine ( Rosburg et al., 2004b ). In
+addition, acute tryptophan depletion (ATD), whichdecreases 5-HT synthesis in the brain, did not reduceMMN amplitudes ( Ahveninen et al., 2002 ) nor did
+growth hormone responses to clonidine and apomor-
+pine challenges–as a proxy for noradrenergic anddopaminergic stimulation–correlate with MMNchanges ( Hansenne et al., 2003 ). The administration
+of scopolamine, a cholinergic antagonist, did reducefrequency, but not duration MMN rendering this effectquestionable ( Pekkonen et al., 2001 ). A possible
+involvement of the GABA receptor in MMN gen-
+eration is suggested by the reduction of MMN
+recorded in the morning following evening admin-istration of benzodiazepine triazolam ( Nakagome et
+al., 1998 ). However, the benzodiazepine antagonist
+flumazenil had no effect on MMN ( Smolnik et al.,
+1998 ) nor did MMN differ between patients on or off
+benzodiazepines ( Murakami et al., 2002 ) or on high
+versus low doses of benzodiazepines ( Kasai et al.,
+2002b ). In conclusion, the available evidence strongly
+suggests a pivotal role of the NMDA receptor inMMN generation. Interestingly, dendritic spines are aprimary location of NMDA receptors ( Nimchinsky et
+al., 2002 ). Thus, the described loss of spines in
+schizophrenia could easily result in a functionallydeficient signal transmission through NMDA recep-tors and associated MMN deficits. Furthermore, anD. Umbricht, S. Krljes / Schizophrenia Research 76 (2005) 1–23 15
+Table 5
+Studies investigating correlations of MMN with symptomatology
+Positive symptom Negative symptoms Comment Rating scalesa
+Shelley et al. (1991) NS NS SANS, SAPS, BPRS
+Catts et al. (1995) NS Short deviant MMN correlated
+with SANS Total Score ( r=/C00.4);
+short zdeviant MMN correlatedwith affective flattening ( r=/C00.5)SANS, SAPS, BPRS
+Kathmann et al. (1995) NS NS BPRS
+Shutara et al. (1996) NS NS BPRS
+Hirayasu et al. (1998) Hallucinations correlated
+with MMN at left frontal
+electrodesPassive-apathetic social withdrawal
+correlated with MMN at right and
+left frontal electrodesCorrelations not sig. after
+Bonferroni correctionPANSS
+Kasai et al. (1999) NS NS BPRS
+Schall et al. (1999) MMN correlated with SAPS
+item hallucination ( R
+2=0.44);
+Median split on SAPS Total
+Score: no difference in MMNMMN correlated with SANS factor
+avolition ( R2=0.53); Median Split
+on SANS Total Score: no MMN
+differenceBPRS
+Javitt et al. (2000a) NS MMN correlated with PANSS
+negative symptom factor ( rs=0.62)PANSS
+Todd et al. (2000) NS NS BPRS
+Grzella et al. (2001) NS Late component of MMN
+(140–300 ms) correlated with
+negative symptoms ( r=/C00.55)BPRS
+Alain et al. (2002) NS NS BPRS
+Baldeweg et al. (2002) NS NS BPRS
+Kasai et al. (2002a) NS Smaller MMN in phoneme
+duration condition correlated
+with negative symptoms ( r=0.61)BPRS
+Salisbury et al. (2002) Chronic sample Chronic sample Chronic sample
+NS NS MMN at F4 and retardation-
+withdrawal factor ( r=0.49)
+MMN at TCP1 and thinkingdisturbance factor ( r=0.54)
+MMN at T4 and hostility/
+suspiciousness factor ( r=0.49)
+No correction for multiplecorrelationsBPRSD. Umbricht, S. Krljes / Schizophrenia Research 76 (2005) 1–23 16
+First-episode sample First-episode sample FE Sample BPRS
+NS NS MMN at Fz and anxious-
+depression factor ( r=0.51)
+Larger MMN at frontal sites
+associated with greater
+BPRS total scoreMMN from parietal andoccipital site associated with
+thinking disturbance and
+hostile-suspiciousness factorsNo correlation for multiple
+correlations
+Shinozaki et al. (2002) Change in MMN at mastoid
+electrodes correlated with BPRStotal score reductionNS BPRS
+Sato et al. (2003) NS NS Correlation of MMN at
+lowest probability andnegative symptom ’lack ofvocal inflection’ ( r=/C00.61)BPRS, PANSS, SANS
+Youn et al. (2003) Left MMN correlated with PANSS
+Positive Symptom Factor(r=/C00.673)NS PANSS
+Left MMN correlated with
+hallucinations ( r=/C00.677)
+Bramon et al. (2004) NS NS PANSS
+NS=correlation between MMN and symptom domain not significant.
+aBPRS (Brief Psychiatric Rating Scale); PANSS=Positive and Negative Syndrome Scale; SANS (Scale for the Assessment of Negative Symptoms); SAPS (Sca le for the
+Assessment of Positive Symptoms).D. Umbricht, S. Krljes / Schizophrenia Research 76 (2005) 1–23 17
+NMDA receptor dysfunction–if it indeed contributes
+to MMN deficits–would also be expected to nega-tively impact many cognitive functions, particularlyepisodic memory, given the role of NMDA receptorsin learning and memory.
+In our evaluation of moderator variables none was
+associated with a significant effect. However, given theheterogeneity among the studies with regard to all the
+parameters affecting MMN it remains questionable if a
+meta-analysis can reveal more than extremely strongeffects. Nevertheless, some trends emerged which areworth discussing. The ES for MMN to durationdeviants was about 40% larger than the ES forfrequency MMN. For those studies investigating bothduration and frequency MMN this difference was even114%. Furthermore, in a multiple regression only
+MMN type (frequency versus duration MMN) was
+significantly associated with MMN ES. Thus, theseresults would support the hypothesis–originally putforward by Michie and colleagues ( Michie, 2001 )–that
+duration MMN is more deficient in schizophrenia thanfrequency MMN. This research group consistentlydemonstrated large deficits in duration MMN in theircohorts of schizophrenic patients and an association of
+MMN reduction and deficient performance on an
+interval discrimination task in chronic schizophrenia(Michie, 2001; Todd et al., 2003 ). Similar findings in
+schizophrenia patients were reported previously byother studies ( Rammsayer, 1990 ) examining the
+behavioral indices of temporal processing dysfunctionin schizophrenia. While the available evidence issuggestive of a more pronounced deficit in duration
+MMN in schizophrenia the proof will require studies in
+which frequency and duration differences have beenpsychophysically matched in the normal control group.
+Finally, our analysis suggests that MMN deficits
+become more pronounced with decreasing probabilityof the deviant stimulus. The effect of deviant proba-bility is assumed to reflect the efficiency by which thestandard stimulus is encoded. Hence the findings in
+schizophrenia could be interpreted as indicating defi-
+cient encoding—in line with various neuropsycholog-ical studies that reported deficits in encoding inschizophrenia ( Elvevag et al., 2000; Fleming et al.,
+1997; Javitt et al., 1999, 1997; Keefe et al., 1997;March et al., 1999; Tek et al., 2002; Wexler et al., 1998 ).
+MMN deficits in schizophrenia do not seem to be
+related consistently to symptom domains since themajority of the studies investigating this issue did not
+find significant correlations. In line with these findingsare the results of the few studies on medication effectsthat could not demonstrate any effect of typical oratypical antipsychotics on MMN despite symptomaticimprovement of patients ( Schall et al., 1998; Umbricht
+et al., 1998, 1999 ). Given the strong evidence from a
+multitude of studies by cognitive psychologist that
+MMN indexes auditory sensory memory and the
+operation of a bprimitive intelligence ( Na¨a¨ta¨nen et
+al., 2001 ), it is surprising that not much attention has
+been given to possible relationships of deficits inMMN to deficits in higher cognitive functions. Theonly laudable exception is a study by Baldeweg et al.
+(2004) who found a pronounced association of MMN
+deficits and memory impairment. A similar association
+of MMN deficits and impairments of episodic memory
+has recently been reported by Umbricht et al. (2004) .
+The issue if deficient MMN represent a trait marker
+or the result of an ongoing disease process resulting inabnormal MMN in chronic patients only remainscontroversial since two studies investigating MMNin first-episode patients failed to find abnormal MMN(Salisbury et al., 2002; Umbricht et al., 2003a ). In
+contrast, two of three studies investigating first-degree
+relatives found impaired MMN in these subjects(Michie et al., 2002; Bramon et al., 2004; Jessen et
+al., 2001 ). Besides differences in the specifics of the
+testing paradigms used in these studies, this discrep-ancy may result from a hidden sampling bias: first-episode samples may contain more patients with amore heterogeneous genetic background who show
+less neuropathology than chronic patients, go on to
+have a favorable outcome and are usually not includedin samples of chronic patients who may be morehomogeneous genetically. Thus, a sampling bias mayskew the results when comparing first-episode tochronic patients and could also explain abnormalitiesin relatives of chronic patients. Only truly prospectivestudies will be able to answer this question. Prelimi-
+nary evidence suggests that MMN indeed becomes
+abnormal in first-episode patients followed over time(Salisbury et al., 2003 ). Also, this meta-analysis found
+some evidence that the extent of deficits in frequencyMMN and possibly duration MMN deficits worsenswith illness progression. Thus, the current evidencesuggests that MMN may be less abnormal or evennormal close to illness onset in some or all patients.D. Umbricht, S. Krljes / Schizophrenia Research 76 (2005) 1–23 18
+Thus, on a more technical level, paradigms to
+investigate MMN in high-risk, prodromal or first-episode patients will also have to be optimized (seebelow) in order to capture potentially existing, butsubtle abnormalities in MMN generation.
+3.1. Conclusions and future directions
+Deficits in MMN generation are a robust feature in
+chronic schizophrenia. Abnormalities in NMDAreceptor dependent neurotransmission seem to playan important role in MMN deficits. It remainscontroversial, however, if MMN deficits represent atrait marker or develop with illness progression.
+Up to date most studies on MMN in schizophrenia
+have used paradigms investigating simple deviations
+of stimuli with regard to one or two features (i.e.
+frequency, duration). Very few studies have employedmore sophisticated stimulation paradigms that wouldallow the investigation of MMN as an index ofstimulus encoding, of processing of more abstractregularities or language related functions and itsrelationship to higher cognitive functions.
+Future studies should address:
+1. Longitudinal follow-up of prodromal and first-
+episode patients, examining the potential progres-sion of MMN deficit in schizophrenia and relatingit to clinical, cognitive, and functional factors.
+2. The exact relationship of MMN deficits to
+specific cognitive domains, particularly long-termmemory. In paradigms varying the probability of
+the deviant stimulus or the difference between
+standard and deviant stimulus MMN increases areassumed to reflect the efficiency and accuracy,respectively, of the processes encoding auditoryinformation. Thus, studies using such paradigmscombined with investigations of long-term mem-ory and other cognitive function could generateand test specific hypotheses about the abnormal-
+ities underlying specific aspects of higher cogni-
+tive functions. Such hypotheses can potentially betested in animal models of human MMN.
+3. Given the evidence for an important role of the
+NMDA receptor in MMN generation MMN deficitscould become an important endophenotype todefine more homogeneous subsamples of patientsand allow the investigation of potential abnormal-ities in genes coding for the various subunits of the
+NDMA receptor in these patient samples.
+In addition, it will be important to implement more
+sophisticated paradigms that have been tested in detailin healthy subjects. They should include:
+1. Paradigms that have been developed to simulta-
+neously assess MMN with regard to several feature
+dimensions ( Na¨a¨ta¨nen et al., 2004 ).
+2. Paradigms investigating short-term plasticity at the
+level of the auditory cortex providing insights intomechanisms of learning and memory ( Baldeweg et
+al., 2004; Sussman and Winkler, 2001 ).
+3. Paradigms assessing not only the processing of
+simple features of stimuli, but also of more
+complex regularities and language functions
+(Kujala et al., 2000; Na ¨a¨ta¨nen et al., 1993, 2001;
+Schro˜ger et al., 1996, 1997; Winkler et al., 1999 ).
+The goal of using such paradigms should be to
+obtain a profile or bsignature Qof MMN deficits in
+subjects that will allow to find more subtle abnormal-ities in patients and to obtain a more fine-grained
+insight into deficits in information processing at early
+cortical stages in schizophrenia. Given the fact that therecording of MMN is not dependent on behavioralperformance, the usual obstacles of matching taskdifficulties between patients and control subjects andcontrolling for potential attentional deficits do nothave to be dealt with. In addition, this advantage alsopermits studies of MMN in animals thus creating an
+opportunity to conduct truly translational research.
+Acknowledgment
+We would like to thank Sue Duvall and Stephan
+Leucht for their help with the statistical analyses.
+References
+Ahveninen, J., Kahkonen, S., Pennanen, S., Liesivuori, J.,
+Ilmoniemi, R.J., Jaaskelainen, I.P., 2002. Tryptophan depletion
+effects on EEG and MEG responses suggest serotonergicmodulation of auditory involuntary attention in humans. Neuro-Image 16, 1052–1061.D. Umbricht, S. Krljes / Schizophrenia Research 76 (2005) 1–23 19
+Alain, C., Hargrave, R., Woods, D.L., 1998. Processing of auditory
+stimuli during visual attention in patients with schizophrenia.Biol. Psychiatry 44, 1151–1159.
+Alain, C., Achim, A., Woods, D.L., 1999. Separate memory-related
+processing for auditory frequency and patterns. Psychophysiol-
+ogy 36, 737–744.
+Alain, C., Bernstein, L.J., Cortese, F., Yu, H., Zipursky, R.B., 2002.
+Deficits in automatically detecting changes in conjunction of
+auditory features in patients with schizophrenia. Psychophysi-ology 39, 599–606.
+Alho, K., 1995. Cerebral generators of mismatch negativity (MMN)
+and its magnetic counterpart (MMNm) elicited by sound
+changes. Ear Hear. 16, 38–51.
+Baldeweg, T., Klugman, A., Gruzelier, J.H., Hirsch, S.R., 2002.
+Impairment in frontal but not temporal components of mismatch
+negativity in schizophrenia. Int. J. Psychophysiol. 43, 111–122.
+Baldeweg, T., Klugman, A., Gruzelier, J., Hirsch, S.R., 2004.
+Mismatch negativity potentials and cognitive impairment in
+schizophrenia. Schizophr. Res. 69, 203–217.
+Bar-Haim, Y ., Marshall, P.J., Fox, N.A., Schorr, E.A., Gordon-
+Salant, S., 2003. Mismatch negativity in socially withdrawnchildren. Biol. Psychiatry 54, 17–24.
+Braff, D.L., Geyer, M.A., 1990. Sensorimotor gating and schizo-
+phrenia. Arch. Gen. Psychiatry 47, 181–188.
+Bramon, E., Croft, R.J., McDonald, C., Virdi, G.K., Gruzelier, J.G.,
+Baldeweg, T., Sham, P.C., Frangou, S., Murray, R.M., 2004.
+Mismatch negativity in schizophrenia: a family study. Schiz-
+ophr. Res. 67, 1–10.
+Catts, S.V., Shelley, A.M., Ward, P.B., Liebert, B., McConaghy, N.,
+Andrews, S., Michie, P.T., 1995. Brain potential evidence for an
+auditory sensory memory deficit in schizophrenia. Am. J.
+Psychiatry 152, 213–219.
+Cohen, J., 1988. (1988) Statistical Power Analysis for the
+Behavioral Sciences, 2nd edn. Lawrence Erlbaum, New Jersey.
+Cse´pe, V., 1995. On the origin and development of mismatch
+negativity. Ear Hear. 16, 91–104.
+Csepe, V., Molnar, M., 1997. Towards the possible clinical
+application of the mismatch negativity component of event-
+related potentials. Audiol. Neuro-otol. 2, 354–369.
+Cse´pe, V ., Pantev, C., Hampson, S., Ross, B., Hoke, M., 1995.
+Mismatch field to minor pitch changes in single and paired
+tones: neuromagnetic source localization from derived fields.
+Electroencephalogr. Clin. Neurophysiol., Suppl. 44, 204–210.
+Davalos, D.B., Kisley, M.A., Polk, S.D., Ross, R.G., 2003.
+Mismatch negativity in detection of interval duration deviation
+in schizophrenia. NeuroReport 14, 1283–1286.
+Duncan, C.C., Kaye, W.H., 1987. Effects of clonidine on event-
+related potential measures of information processing. In:
+Johnson, R., Rohrbaugh, J.W., Parasuraman, R. (Eds.), Current
+Trends in Event-related Potential Research (EEG Suppl. 40).Elsevier Science Publishers B.V, pp. 527–531.
+Duval, S., Tweedie, R., 2000. Trim and fill: a simple funnel-plot-
+based method of testing and adjusting for publication bias in
+meta-analysis. Biometrics 56, 455–463.
+Elvevag, B., Weinberger, D.R., Suter, J.C., Goldberg, T.E., 2000.
+Continuous performance test and schizophrenia: a test of
+stimulus-response compatibility, working memory, responsereadiness, or none of the above? Am. J. Psychiatry 157,
+772–780.
+Fleming, K., Goldberg, T.E., Binks, S., Randolph, C., Gold, J.M.,
+Weinberger, D.R., 1997. Visuospatial working memory in
+patients with schizophrenia. Biol. Psychiatry 41, 43–49.
+Freedman, R., Waldo, M., Bickford-Wimer, P.C., Nagamoto, H.,
+1991. Elementary neuronal dysfunctions in schizophrenia.
+Schizophr. Res. 4, 233–243.
+Gene-Cos, N., Ring, H.A., Pottinger, R.C., Barrett, G., 1999.
+Possible roles for mismatch negativity in neuropsychiatry.Neuropsychiatry Neuropsychol. Behav. Neurol. 12, 17–27.
+Grzella, I., Muller, B.W., Oades, R.D., Bender, S., Schall, U.,
+Zerbin, D., Wolstein, J., Sartory, G., 2001. Novelty-elicitedmismatch negativity in patients with schizophrenia on admissionand discharge. J. Psychiatry Neurosci. 26, 235–246.
+Hansenne, M., Pinto, E., Scantamburlo, G., Couvreur, A., Reggers,
+J., Fuchs, S., Pitchot, W., Ansseau, M., 2003. Mismatchnegativity is not correlated with neuroendocrine indicators of
+catecholaminergic activity in healthy subjects. Hum. Psycho-
+pharmacol. 18, 201–205.
+Hari, R., Hamalainen, M., Ilmoniemi, R., Kaukoranta, E., Reini-
+kainen, K., Salminen, J., Alho, K., Na ¨a¨ta¨nen, R., Sams, M.,
+1984. Responses of the primary auditory cortex to pitch changes
+in a sequence of tone pips: neuromagnetic recordings in man.Neurosci. Lett. 50, 127–132.
+Hirayasu, Y ., Potts, G.F., O’Donnell, B.F., Kwon, J.S., Arakaki, H.,
+Akdag, S.J., Levitt, J.J., Shenton, M.E., McCarley, R.W., 1998.
+Auditory mismatch negativity in schizophrenia: topographicevaluation with a high-density recording montage. Am. J.Psychiatry 155, 1281–1284.
+Jaaskelainen, I.P., Lehtokoski, A., Alho, K., Kujala, T., Pekkonen,
+E., Sinclair, J.D., Na ¨a¨ta¨nen, R., Sillanaukee, P., 1995. Low dose
+of ethanol suppresses mismatch negativity of auditory event-
+related potentials. Alcohol. Clin. Exp. Res. 19, 607–610.
+Jaaskelainen, I.P., Hirvonen, J., Kujala, T., Alho, K., Eriksson, C.J.,
+Lehtokoski, A., Pekkonen, E., Sinclair, J.D., Yabe, H.,Na¨a¨ta¨nen, R., Sillanaukee, P., 1998. Effects of naltrexone and
+ethanol on auditory event-related brain potentials. Alcohol 15,
+105–111.
+Javitt, D.C., 2000. Intracortical mechanisms of mismatch negativity
+dysfunction in schizophrenia. Audiol. Neuro-otol. 5, 207–215.
+Javitt, D.C., Doneshka, P., Zylberman, I., Ritter, W., Vaughan Jr.,
+H.G., 1993. Impairment of early cortical processing inschizophrenia: an event-related potential confirmation study.
+Biol. Psychiatry 33, 513–519.
+Javitt, D.C., Doneshka, P., Grochowski, S., Ritter, W., 1995.
+Impaired mismatch negativity generation reflects widespreaddysfunction of working memory in schizophrenia. Arch. Gen.
+Psychiatry. 52, 550–558.
+Javitt, D.C., Steinschneider, M., Schroeder, C.E., Arezzo, J.C.,
+1996. Role of cortical N-methyl- d-aspartate receptors in
+auditory sensory memory and mismatch negativity generation:
+implications for schizophrenia. PNAS 93, 11962–11967.
+Javitt, D.C., Strous, R.D., Grochowski, S., Ritter, W., Cowan, N.,
+1997. Impaired precision, but normal retention, of auditory
+sensory ( bechoic Q) memory information in schizophrenia.
+J. Abnorm. Psychology 106, 315–324.D. Umbricht, S. Krljes / Schizophrenia Research 76 (2005) 1–23 20
+Javitt, D.C., Grochowski, S., Shelley, A.M., Ritter, W., 1998.
+Impaired mismatch negativity (MMN) generation in schizo-phrenia as a function of stimulus deviance, probability, andinterstimulus/interdeviant interval. Electroencephalogr. Clin.
+Neurophysiol. 108, 143–153.
+Javitt, D.C., Liederman, E., Cienfuegos, A., Shelley, A.M., 1999.
+Panmodal processing imprecision as a basis for dysfunction of
+transient memory storage systems in schizophrenia. Schizophr.
+Bull. 25, 763–775.
+Javitt, D.C., Shelley, A., Ritter, W., 2000a. Associated deficits in
+mismatch negativity generation and tone matching in schizo-
+phrenia. Clin. Neurophysiol. 111, 1733–1737.
+Javitt, D.C., Shelley, A.M., Silipo, G., Lieberman, J.A., 2000b.
+Deficits in auditory and visual context-dependent processing inschizophrenia: defining the pattern. Arch. Gen. Psychiatry 57,
+1131–1137.
+Jessen, F., Fries, T., Kucharski, C., Nishimura, T., Hoenig, K.,
+Maier, W., Falkai, P., Heun, R., 2001. Amplitude reduction of
+the mismatch negativity in first-degree relatives of patients with
+schizophrenia. Neurosci. Lett. 309, 185–188.
+Kahkonen, S., Ahveninen, J., Pekkonen, E., Kaakkola, S., Huttunen,
+J., Ilmoniemi, R.J., Jaaskelainen, I.P., 2002. Dopamine modu-
+lates involuntary attention shifting and reorienting: an electro-
+magnetic study. Clin. Neurophysiol. 113, 1894–1902.
+Kasai, K., Okazawa, K., Nakagome, K., Hiramatsu, K., Hata, A.,
+Fukuda, M., Honda, M., Miyauchi, M., Matsushita, M., 1999.
+Mismatch negativity and N2b attenuation as an indicator for
+dysfunction of the preattentive and controlled processing fordeviance detection in schizophrenia: a topographic event-relatedpotential study. Schizophr. Res. 35, 141–156.
+Kasai, K., Nakagome, K., Itoh, K., Koshida, I., Hata, A., Iwanami,
+A., Fukuda, M., Kato, N., 2002a. Impaired cortical network forpreattentive detection of change in speech sounds in schizo-
+phrenia: a high-resolution event-related potential study. Am. J.
+Psychiatry 159, 546–553.
+Kasai, K., Yamada, H., Kamio, S., Nakagome, K., Iwanami, A.,
+Fukuda, M., Yumoto, M., Itoh, K., Koshida, I., Abe, O., Kato,
+N., 2002b. Do high or low doses of anxiolytics and hypnotics
+affect mismatch negativity in schizophrenic subjects? An EEGand MEG study. Clin. Neurophysiol. 113, 141–150.
+Kasai, K., Yamada, H., Kamio, S., Nakagome, K., Iwanami, A.,
+Fukuda, M., Yumoto, M., Itoh, K., Koshida, I., Abe, O., Kato,
+N., 2003. Neuromagnetic correlates of impaired automaticcategorical perception of speech sounds in schizophrenia.
+Schizophr. Res. 59, 159–172.
+Kathmann, N., Wagner, M., Rendtorff, N., Engel, R.R., 1995.
+Delayed peak latency of the mismatch negativity in schizo-phrenics and alcoholics. Biol. Psychiatry 37, 754–757.
+Keefe, R.S.E., Lees-Roitman, S.E., DuPre, R.L., 1997. Perform-
+ance of patients with schizophrenia on a pen and papervisuospatial working memory task with short delay. Schizophr.Res. 26, 9–14.
+Kircher, T.T., Rapp, A., Grodd, W., Buchkremer, G., Weiskopf,
+N., Lutzenberger, W., Ackermann, H., Mathiak, K., 2004.Mismatch negativity responses in schizophrenia: a combined
+fMRI and whole-head MEG study. Am. J. Psychiatry 161,
+294–304.Kirino, E., Inoue, R., 1999a. Relationship of mismatch negativity to
+background EEG and morphological findings in schizophrenia.Neuropsychobiology 40, 14–20.
+Kirino, E., Inoue, R., 1999b. The relationship of mismatch
+negativity to quantitative EEG and morphological findings in
+schizophrenia. J. Psychiatr. Res. 33, 445–456.
+Kirino, E., Shinomiya, M., 1996. ERP study of information
+processing disturbance on schizophrenia—from aspects of
+automatic processing and controlled processing. Seishin Shin-keigaku Zasshi 98, 807–821.
+Kraus, N., McGee, T., Carrell, T., King, C., Littman, T., Nicol, T.,
+1994. Discrimination of speech-like contrasts in the auditory
+thalamus and cortex. J. Acoust. Soc. Am. 96, 2758–2768.
+Kreitschmann-Andermahr, I., Rosburg, T., Meier, T., V olz, H.P.,
+Nowak, H., Sauer, H., 1999. Impaired sensory processing in
+male patients with schizophrenia: a magnetoencephalographic
+study of auditory mismatch detection. Schizophr. Res. 35,121–129.
+Kreitschmann-Andermahr, I., Rosburg, T., Demme, U., Gaser, E.,
+Nowak, H., Sauer, H., 2001. Effect of ketamine on theneuromagnetic mismatch field in healthy humans. Brain Res.Cogn. Brain Res. 12, 109–116.
+Krljes, S., Baldeweg, T., Hirsch, S.R., 2004. Mismatch negativity in
+schizophrenia: relationship to cognitive deficits and clinicalfeatures (submitted for publication).
+Kropotov, J.D., Na ¨a¨ta¨ n e n ,R . ,S e v o s t i a n o v ,A . V . ,A l h o ,K . ,
+Reinikainen, K., Kropotova, O.V ., 1995. Mismatch negativity
+to auditory stimulus change recorded directly from the humantemporal cortex. Psychophysiology 32, 418–422.
+Kujala, T., Myllyviita, K., Tervaniemi, M., Alho, K., Kallio, J.,
+Na¨a¨ta¨nen, R., 2000. Basic auditory dysfunction in dyslexia as
+demonstrated by brain activity measurements. Psychophysiol-ogy 37, 262–266.
+Lembreghts, M., Timsit-Berthier, M., 1993. The value of cognitive
+psychophysiological studies in a comprehensive approach toschizophrenia (treatment of information and attention capaci-ties in acute-stage schizophrenia) (French). Acta Psychiatr.
+Belg. 93 (Spec No.), 322–342.
+March, L., Cienfuegos, A., Goldbloom, L., Ritter, W., Cowan, N.,
+Javitt, D.C., 1999. Normal time course of auditory recognition inschizophrenia, despite impaired precision of the auditory sensory
+(bechoic Q) memory code. J. Abnorm. Psychology 108, 69–75.
+Mervaala, E., Alhainen, K., Helkala, E.L., Partanen, J., Jousmaki,
+V., Vayrynen, M., Heinonen, E., Riekkinen, P., 1993. Electro-
+physiological and neuropsychological effects of a central alpha
+2-antagonist atipamezole in healthy volunteers. Behav. BrainRes. 55, 85–91.
+Michie, P.T., 2001. What has MMN revealed about the auditory
+system in schizophrenia? Int. J. Psychophysiol. 42, 177–194.
+Michie, P.T., Budd, T.W., Todd, J., Rock, D., Wichmann, H.,
+Box, J., Jablensky, A.V., 2000. Duration and frequencymismatch negativity in schizophrenia. Clin. Neurophysiol.
+111, 1054–1065.
+Michie, P.T., Innes-Brown, H., Todd, J., Jablensky, A.V ., 2002.
+Duration mismatch negativity in biological relatives of patients
+with schizophrenia spectrum disorders. Biol. Psychiatry 52,
+749–758.D. Umbricht, S. Krljes / Schizophrenia Research 76 (2005) 1–23 21
+Murakami, T., Nakagom, K., Kamio, S., Kasai, K., Iwanami, A.,
+Hiramatsu, K., Fukuda, M., Hata, A., Honda, M., Watanabe, A.,Kato, N., 2002. The effects of benzodiazepines on event-relatedpotential indices of automatic and controlled processing in
+schizophrenia: a preliminary report. Prog. Neuro-psychophar-
+macol. Biol. Psychiatry 26, 651–661.
+Na¨a¨ta¨nen, R., 1992. Attention and Brain Function. Lawrence
+Erlbaum Associates, Hillsdale, NJ.
+Na¨a¨ta¨nen, R., 1995. The mismatch negativity: a powerful tool for
+cognitive neuroscience. Ear Hear. 16, 6–18.
+Na¨a¨ta¨nen, R., 2001. The perception of speech sounds by the human
+brain as reflected by the mismatch negativity (MMN) and its
+magnetic equivalent (MMNm). Psychophysiology 38, 1–21.
+Na¨a¨ta¨nen, R., Schro ¨ger, E., Karakas, S., Tervaniemi, M., Paavilai-
+nen, P., 1993. Development of a memory trace for a complex
+sound in the human brain. NeuroReport 4, 503–506.
+Na¨a¨ta¨nen, R., Tervaniemi, M., Sussman, E., Paavilainen, P.,
+Winkler, I., 2001. bPrimitive intelligence Qin the auditory cortex.
+Trends Neurosci. 24, 283–288.
+Na¨a¨ta¨nen, R., Pakarinen, S., Rinne, T., Takegata, R., 2004. The
+mismatch negativity (MMN): towards the optimal paradigm.Clin. Neurophysiol. 115, 140–144.
+Nakagome, K., Ichikawa, I., Kanno, O., Akaho, R., Suzuki, M.,
+Takazawa, S., Watanabe, H., Kazamatsuri, H., 1998. Overnighteffects of triazolam on cognitive function: an event-relatedpotentials study. Neuropsychobiology 38, 232–240.
+Nimchinsky, E.A., Sabatini, B.L., Svoboda, K., 2002. Structure and
+function of dendritic spines. Annu. Rev. Physiol. 64, 313–353.
+Oades, R.D., Zerbin, D., Dittmann-Balcar, A., Eggers, C., 1996.
+Auditory event-related potential (ERP) and difference-wave
+topography in schizophrenic patients with/without active hallu-
+cinations and delusions: a comparison with young obsessive-compulsive disorder (OCD) and healthy subjects. Int. J.
+Psychophysiol. 22, 185–214.
+Oades, R.D., Dittmann-Balcar, A., Zerbin, D., Grzella, I., 1997.
+Impaired attention-dependent augmentation of MMN in non-paranoid vs. paranoid schizophrenic patients: a comparison with
+obsessive-compulsive disorder and healthy subjects. Biol.
+Psychiatry 41, 1196–1210.
+O’Donnell, B., Hokama, H., McCarley, R.W., Smith, R.S., Salis-
+bury, D., Mondrow, E., Nestor, P.G., Shenton, M., 1994.
+Auditory ERPs to non-target stimuli in schizophrenia: relation-
+ship to probability, task-demands, and target ERPs. Int. J.Psychophysiol. 17, 219–231.
+Oranje, B., van Berckel, B.N.M., Kemner, C., van Ree, J.M., Kahn,
+R.S., Verbaten, M.N., 2000. The effects of a sub-anaestheticdose of ketamine on human selective attention. Neuropsycho-pharmacology 3, 293–302.
+Paavilainen, P., Jaramillo, M., Na ¨a¨ta¨nen, R., 1998. Binaural
+information can converge in abstract memory traces. Psycho-physiology 35, 483–487.
+Pang, E.W., Fowler, B., 1999. Dissociation of the mismatch
+negativity and processing negativity attentional waveforms with
+nitrous oxide. Psychophysiology 36, 552–558.
+Pantelis, C., Nelson, H.E., Barnes, T.R.E., 1998. Schizophrenia: A
+Neuropsychological Perspective, 1st edn. John Wiley & Sons,
+New York.Park, H.J., Kwon, J.S., Youn, T., Pae, J.S., Kim, J.J., Kim, M.S.,
+Ha, K.S., 2002. Statistical parametric mapping of LORETAusing high density EEG and individual MRI: application tomismatch negativities in schizophrenia. Hum. Brain Mapp. 17,
+168–178.
+Pekkonen, E., Hirvonen, J., Jaaskelainen, I.P., Kaakkola, S.,
+Huttunen, J., 2001. Auditory sensory memory and the chol-
+inergic system: implications for Alzheimer’s disease. Neuro-
+Image 14, 376–382.
+Pekkonen, E., Katila, H., Ahveninen, J., Karhu, J., Huotilainen, M.,
+Tiihonen, J., 2002. Impaired temporal lobe processing of
+preattentive auditory discrimination in schizophrenia. Schiz-
+ophr. Bull. 28, 467–474.
+Rammsayer, T., 1990. Temporal discrimination in schizophrenic and
+affective disorders: evidence for a dopamine-dependent internal
+clock. Int. J. Neurosci. 53, 111–120.
+Rosburg, T., Kreitschmann-Andermahr, I., Sauer, H., 2004a.
+Mismatch negativity in schizophrenia research. An indicator
+of early processing disorders of acoustic information. Nerve-
+narzt 75, 633–641.
+Rosburg, T., Marinou, V ., Haueisen, J., Smesny, S., Sauer, H.,
+2004b. Effects of lorazepam on the neuromagnetic mismatch
+negativity (MMNm) and auditory evoked field component
+N100m. Neuropsychopharmacology 29, 1723–1733.
+Salisbury, D.F., Shenton, M.E., Griggs, C.B., Bonner-Jackson, A.,
+McCarley, R.W., 2002. Mismatch negativity in chronic schiz-
+ophrenia and first-episode schizophrenia. Arch. Gen. Psychiatry
+59, 686–694.
+Salisbury, D.F., Kasai, K., Shenton, M.E., McCarley, R.W., 2003.
+Mismatch negativity amplitudes and Heschl’s gyrus volume in
+first-episode schizophrenia. Schizophr. Res. 60 (Suppl. 1), 259.
+Salisbury, D.F., Kuroki, N., Kasai, K., Shenton, M.E., McCarley,
+R.W., 2004. Mismatch negativity as an index of peri-onset
+cortical reduction in schizophrenia. Biol. Psychiatry 55 (Supple-
+ment 1), 221S.
+Sato, Y ., Yabe, H., Todd, J., Michie, P., Shinozaki, N., Sutoh, T.,
+Hiruma, T., Nashida, T., Matsuoka, T., Kaneko, S., 2003.
+Impairment in activation of a frontal attention-switch mecha-
+nism in schizophrenic patients. Biol. Psychol. 62, 49–63.
+Schall, U., Catts, S.V ., Chaturvedi, S., Liebert, B., Redenbach, J.,
+Karayanidis, F., Ward, P.B., 1998. The effect of clozapine
+therapy on frontal lobe dysfunction in schizophrenia: neuro-
+psychology and event-related potential measures. Int. J. Neuro-psychopharmacol. 1, 19–29.
+Schall, U., Catts, S.V ., Karayanidis, F., Ward, P.B., 1999. Auditory
+event-related potential indices of fronto-temporal informationprocessing in schizophrenia syndromes: valid outcome predic-tion of clozapine therapy in a three-year follow-up. Int. J.
+Neuropsychopharmcol. 2, 83–93.
+Schreiber, H., Stolz-Born, G., Kornhuber, H.H., Born, J., 1992.
+Event-related potential correlates of impaired selective attentionin children at high risk for schizophrenia. Biol. Psychiatry 32,
+634–651.
+Schreiber, H., Stolz-Born, G., Kornhuber, H.H., Born, J., 1996.
+Electrophysiologic correlates of selective attention in children
+and adolescents at increased risk of schizophrenia (German). Z.
+Kinder-Jugendpsychiatr. 24, 282–292.D. Umbricht, S. Krljes / Schizophrenia Research 76 (2005) 1–23 22
+Schrfger, E., 1997. On the detection of auditory deviations: a pre-
+attentive activation model. Psychophysiology 34, 245–257.
+Schrfger, E., Tervaniemi, M., Wolff, C., Na ¨a¨ta¨nen, R., 1996.
+Preattentive periodicity detection in auditory patterns as
+governed by time and intensity information. Brain Res. Cogn.
+Brain Res. 4, 145–148.
+Shelley, A.M., Ward, P.B., Catts, S.V., Michie, P.T., Andrews, S.,
+McConaghy, N., 1991. Mismatch negativity: an index of a
+preattentive processing deficit in schizophrenia. Biol. Psychiatry30, 1059–1062.
+Shelley, A.M., Silipo, G., Javitt, D.C., 1999. Diminished respon-
+siveness of ERPs in schizophrenic subjects to changes in
+auditory stimulation parameters: implication for the theories ofcortical dysfunction. Schizophr. Res. 37, 65–79.
+Shinozaki, N., Yabe, H., Sato, Y ., Hiruma, T., Sutoh, T., Nashida, T.,
+Matsuoka, T., Kaneko, S., 2002. The difference in mismatch
+negativity between the acute and post-acute phase of schizo-phrenia. Biol. Psychol. 59, 105–119.
+Shutara, Y ., Koga, Y ., Fujita, K., Takeuchi, H., Mochida, M.,
+Takemasa, K., 1996. An event-related potential study on theimpairment of automatic processing of auditory input inschizophrenia. Brain. Topogr. 8, 285–289.
+Smolnik, R., Pietrowsky, R., Fehm, H.L., Born, J., 1998. Enhanced
+selective attention after low-dose administration of the benzo-diazepine antagonist flumazenil. J. Clin. Psychopharmacol. 18,241–247.
+Sussman, E., Winkler, I., 2001. Dynamic sensory updating in the
+auditory system. Brain Res. Cogn. Brain Res. 12, 431–439.
+Sussman, E., Ritter, W., Vaughan Jr., H.G., 1998. Attention affects
+the organization of auditory input associated with the mismatch
+negativity system. Brain Res. 789, 130–138.
+Tek, C., Gold, J., Blaxton, T., Wilk, C., McMahon, R.P., Buchanan,
+R.W., 2002. Visual perceptual and working memory impair-
+ments in schizophrenia. Arch. Gen. Psychiatry 59, 146–153.
+Tervaniemi, M., Maury, S., Na ¨a¨ta¨nen, R., 1994. Neural re-
+presentations of abstract stimulus features in the human brainas reflected by the mismatch negativity. NeuroReport 5,
+844–846.
+Todd, J., Michie, P.T., Budd, T.W., Rock, D., Jablensky, A.V ., 2000.
+Auditory sensory memory in schizophrenia: inadequate traceformation? Psychiatry Res. 96, 99–115.
+Todd, J., Michie, P.T., Jablensky, A.V ., 2001. Do loudness cues
+contribute to duration mismatch negativity reduction in schiz-ophrenia? NeuroReport 12, 4069–4073.
+Todd, J., Michie, P.T., Jablensky, A.V ., 2003. Association between
+reduced duration mismatch negativity (MMN) and raisedtemporal discrimination thresholds in schizophrenia. Clin.Neurophysiol. 114, 2061–2070.
+Trejo, L.J., Ryan-Jones, D.L., Kramer, A.F., 1995. Attentional
+modulation of the mismatch negativity elicited by frequencydifferences between binaurally presented tone bursts. Psycho-physiology 32, 319–328.Umbricht, D., Javitt, D.C., Novak, G.P., Bates, J.A., Pollack, S.,
+Lieberman, J., Kane, J., 1998. Effects of clozapine on auditoryevent-related potentials in schizophrenia. Biol. Psychiatry 44,716–725.
+Umbricht, D., Javitt, D.C., Novak, G.P., Bates, J.A., Pollak, S.,
+Lieberman, J., Kane, J., 1999. Effects of risperidone on auditoryevent-related potentials in schizophrenia. Int. J. Neuropsycho-
+pharmacol. 2, 229–304.
+Umbricht, D., Schmid, L., Koller, R., V ollenweider, F.X., Hell, D.,
+Javitt, D.C., 2000. Ketamine-induced deficits in auditory andvisual context-dependent processing in healthy volunteers:
+implications for models of cognitive deficits in schizophrenia.
+Arch. Gen. Psychiatry 57, 1139–1147.
+Umbricht, D., Javitt, D.C., Bates, J., Kane, J., Lieberman, J.A.,
+2003a. Deficits in mismatch negativity in schizophrenia:
+predictor of outcome of result of illness progression? Schizophr.
+Res. 60 (Suppl. 1), 262.
+Umbricht, D., Koller, R., Schmid, L., Skrabo, A., Grubel, C., Huber,
+T., Stassen, H., 2003b. How specific are deficits in mismatch
+negativity generation to schizophrenia? Biol. Psychiatry 53,1120–1131.
+Umbricht, D., V ollenweider, F.X., Schmid, L., Grubel, C., Skrabo,
+A., Huber, T., Koller, R., 2003c. Effects of the 5-HT2A agonist
+psilocybin on mismatch negativity generation and AX-contin-uous performance task: implications for the neuropharmacologyof cognitive deficits in schizophrenia. Neuropsychopharmacol-
+ogy 28, 170–181.
+Umbricht, D., Koller, R., Bieber, K., 2004. Ketamine-induced
+deficits in encoding in healthy volunteers: comparison tocorresponding deficits in schizophrenia. Schizophr. Res. 76
+(Supplement 1), 21–22.
+Valkonen-Korhonen, M., Purhonen, M., Tarkka, I.M., Sipila, P.,
+Partanen, J., Karhu, J., Lehtonen, J., 2003. Altered auditory
+processing in acutely psychotic never-medicated first-episode
+patients. Brain Res. Cogn. Brain Res. 17, 747–758.
+Wexler, B.E., Stevens, A.A., Bowers, A.A., Sernyak, M.J., Gold-
+man-Rakic, P.S., 1998. Word and tone working memory deficits
+in schizophrenia. Arch. Gen. Psychiatry 55, 1093–1096.
+Wible, C.G., Kubicki, M., Yoo, S.S., Kacher, D.F., Salisbury, D.F.,
+Anderson, M.C., Shenton, M.E., Hirayasu, Y ., Kikinis, R.,Jolesz, F.A., McCarley, R.W., 2001. A functional magnetic
+resonance imaging study of auditory mismatch in schizophrenia.
+Am. J. Psychiatry 158, 938–943.
+Winkler, I., Lehtokoski, A., Alku, P., Vainio, M., Czigler, I., Cse ´pe,
+V., Aaltonen, O., Raimo, I., Alho, K., Lang, H., Iivonen, A.,
+Na¨a¨ta¨nen, R., 1999. Pre-attentive detection of vowel contrasts
+utilizes both phonetic and auditory memory representations.Brain Res. Cogn. Brain Res. 7, 357–369.
+Youn, T., Park, H.J., Kim, J.J., Kim, M.S., Kwon, J.S., 2003.
+Altered hemispheric asymmetry and positive symptoms inschizophrenia: equivalent current dipole of auditory mismatchnegativity. Schizophr. Res. 59, 253–260.D. Umbricht, S. Krljes / Schizophrenia Research 76 (2005) 1–23 23

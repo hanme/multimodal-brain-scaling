@@ -875,3 +875,295 @@ doesn't clobber the raw-feature runs:
 The raw-feature (eigen) D1/D2 numbers stay as the non-PCA reference; the PCA set is the consistent
 all-sizes pipeline that *also* covers D3. If we ever want to revisit the variance fraction, 256 fixed
 PCs or a different % are one-flag changes.
+
+## 16. Redo the attention encoder with MSE, not 1−Pearson (2026-06-17)
+
+**Decision: retrain the temporal attention encoder with MSE loss.** The temporal probe currently
+trains on `corr_loss` (1−Pearson, `attn_probe/engine_temporal.py:29`), and its docstring claims this
+"matches MIRAGE." **That claim is wrong.** MIRAGE (Gokce & AlKhamissi 2026, App. A.1) trains with
+**mean-squared error** and only uses Pearson for *checkpoint selection*; the paper explicitly reports
+that augmenting MSE with a Pearson-correlation term **did not outperform MSE alone**. Our own
+non-temporal probe (`attn_probe/engine.py:120`) already uses MSE — only the temporal path diverged.
+
+**Why it matters for the MMN.** `corr_loss` is scale- and shift-invariant, so the encoder's predicted
+amplitude is arbitrary — only the sign/shape of a deviant−standard deflection is interpretable, and
+magnitudes are not comparable across parcels or models. That blocks an amplitude-based MMN criterion
+for Method B and forces a sign-only rule. Training on **MSE fits the real EEG amplitude**, so:
+(1) predicted amplitudes become calibrated and the MMN criterion can use magnitude for *both* methods,
+(2) we faithfully match MIRAGE, (3) per the paper this costs nothing in fit quality.
+
+**Scope.** Swap `corr_loss` → `F.mse_loss` in the temporal training step (`engine_temporal.py`),
+re-standardise EEG targets as needed (note (d) above — raw+high-pass was chosen *because* corr_loss
+was scale-invariant; MSE wants z-scored or consistently-scaled targets), retrain the checkpoint
+(`outputs/results/whisper-small-probe-group-d2-mmn/model__blocks.10.pt`), and re-run the in-silico MMN.
+Until retrained, the mTRF stays the primary/reportable method (it already preserves amplitude).
+
+### 16.1 IMPLEMENTED + SUBMITTED (2026-06-17 PM) ✅
+
+All four scope items done, plus electrode-level targets to match the §20 mTRF sweep. Tests green
+(22/22 on a jed CPU node, job 56269622, incl. the two slow learning/selection tests that the
+login node timed out). Encoder sweep submitted to Kuma.
+
+**Code changes (4 files):**
+- `attn_probe/engine_temporal.py` — training loss `corr_loss` → `F.mse_loss`; added MIRAGE-style
+  **best-checkpoint selection** (keep the weights with best validation Pearson, restore at end;
+  gated by `TemporalTrainConfig.eval_every`). `corr_loss` kept (still unit-tested), no longer the
+  objective.
+- `attn_probe/dataset_temporal.py` — added `build_electrodes()` + `montage_pos()`, **mirroring
+  `scripts/eeg_targets.py`** so the encoder's electrode set is byte-for-byte the same as the §20
+  mTRF sweep (verified at run time: **47 electrodes**, **5 parcels** — identical counts).
+- `attn_probe/checkpoint.py` — persist per-subject `eeg_mu`/`eeg_sd`; new `predictions_to_units()`
+  inverts z-unit predictions back to real EEG amplitude (the additive μ cancels in deviant−standard,
+  so an MMN difference is exactly `z_diff * sd`). Legacy (1−Pearson) checkpoints raise on inversion.
+- `evaluate_features_attn_probe_temporal.py` — `--target_level {parcels,electrodes}`; D2
+  (`surprisal_30s.h5`) is now the default NC source; **EEG targets z-scored per target on
+  train-portion stats** and the scaling stored in the checkpoint; **validation split carved from
+  TRAIN** (`--val_frac 0.2`, `--eval_every 5`) for checkpoint selection so the **test split is
+  never touched during selection** (the §20 CV-on-train discipline). Also fixed a pre-existing
+  crash where the driver read `args.save_model` that the unit-test namespace lacked.
+
+**Decisions locked here:**
+- *Validation = carved from train, not the test split.* Selecting the checkpoint on the reported
+  test split would bias it; 20 % of train is held out for selection instead.
+- *`heldout_r` stays comparable.* Pearson is scale-invariant, so z-scoring the EEG targets does not
+  change the reported r — new numbers sit beside the old mTRF / 1−Pearson ones, while the stored
+  predictions are now amplitude-calibrated.
+- *Did NOT touch* `scripts/eeg_targets.py` or any mTRF code — the concurrently-running mTRF sweep
+  (jed `eeg_sweep` 56149224) is unaffected.
+
+**New run scripts:**
+- `scripts/run_probe_d2_levels.sh` — one model, both target levels sequentially (D2 only).
+- `scripts/kuma_probe_d2_levels.sh` — sbatch wrapper of the above (single model).
+- `scripts/kuma_probe_d2_sweep.sh` — **array** twin of `slurm_eeg_mapping_sweep.sh`: 8 tasks =
+  {tiny,base,small,medium} × {parcels,electrodes}, one GPU each (`TASK/2`=model, `TASK%2`=level).
+- `scripts/jed_probe_tests.sh` — CPU sbatch running the full `test_attn_probe_temporal.py`.
+
+**Submitted (Kuma, job `3654194`, `--array=0-7`):** all 4 models × both target levels, group
+readout, layers 0..N each, MSE + selection, `--epochs 200 --d_model 64 --num_latents 4
+--cross_attn_layers 1 --dropout 0.3 --weight_decay 1e-2`. Outputs →
+`outputs/results/<model>-probe-group-d2-{parcels,electrodes}/attn_probe_temporal_scores.h5`
+(+ per-layer `model__<layer>.pt` checkpoints now carrying `eeg_mu`/`eeg_sd`).
+
+### 16.2 HOW TO ANALYZE TOMORROW (2026-06-18)
+
+1. **Confirm the sweep finished cleanly:**
+   ```bash
+   sacct -j 3654194 --format=JobID,State,ExitCode | grep -E "_[0-7] "   # want COMPLETED 0:0 ×8
+   ls outputs/results/whisper-*-probe-group-d2-*/attn_probe_temporal_scores.h5
+   ```
+   Each `attn_probe_temporal_scores.h5` has, per layer key: `heldout_r__test` [n_target],
+   `heldout_r_nc__test`, `parcels`/`parcel_nc_r`, and `final_train_loss`.
+
+2. **Encoder vs. mTRF, same (model × level).** The mTRF sweep wrote
+   `outputs/results/eeg_mapping/<model>__<level>__D2.json` (`test_r_chosen`, `cv_score_by_layer`,
+   `chosen_layer`). Compare the encoder's best-layer mean held-out r against the mTRF `test_r_chosen`
+   for each model × level. Headline question: **does MSE + selection close (or beat) the gap that
+   made "ridge wins" (log 2026-06-13)?** Plot the mTRF side with
+   `python scripts/plot_eeg_mapping.py --target_level {parcels,electrodes}`.
+
+3. **⚠️ Layer-selection caveat (do this honestly).** The mTRF picks its layer by **CV-on-train**;
+   the encoder run records only per-layer **test** `heldout_r` + `final_train_loss` in the h5 — the
+   per-layer *validation* score is NOT persisted (best-val selection happens *within* a layer, over
+   epochs, via `eval_every`). So picking the encoder's layer by `heldout_r__test` is a mild peek.
+   Two clean options before quoting a single number: (a) re-derive the per-layer val r offline (the
+   train-carved val split is reproducible from `--seed 42` + `--val_frac 0.2`) and select on that;
+   or (b) cheap follow-up — write `best_val_r` per layer into the h5 and re-run. For a first look,
+   report the **whole per-layer test curve** (not just the max) so the choice is transparent.
+
+4. **Amplitude calibration sanity (unblocks the MMN).** Confirm the checkpoints carry the EEG stats
+   and that inversion works:
+   ```python
+   from mbs.evaluation.attn_probe.checkpoint import load_probe_checkpoint
+   _, c = load_probe_checkpoint("outputs/results/whisper-small-probe-group-d2-parcels/model__blocks.10.pt")
+   print(c["eeg_mu"]["group"], c["eeg_sd"]["group"])   # finite, per-target; sd>0
+   ```
+   With this in place the in-silico MMN can use a **magnitude** criterion (deviant−standard in real
+   units = `z_diff * sd`) for both Def-1 and Def-2 stimuli — the original motivation for §16.
+
+5. **Next step after the read-out (not tonight):** point the encoder MMN driver
+   (`scripts/insilico_mmn_attn.py`) at the chosen calibrated checkpoint and re-run the in-silico MMN
+   (§3.7 / §17), now using `predictions_to_units` for the amplitude verdict.
+
+## 17. The two ways to construct the MMN — physical control of the eliciting tone (2026-06-17)
+
+**The distinction (this is the one that matters, and it is NOT counterbalancing).** The MMN is always
+read **time-locked to the last (eliciting) tone** — the tone after whose onset you measure the
+deflection. The only question is what you subtract from it. There are two constructions:
+
+- **Definition 1 — uncontrolled.**
+  `standard = {1000, 1000, 1000, 1000}` vs `deviant = {1000, 1000, 1000, 1200}`.
+  The sequences are identical except for the last tone. The surprise in the deviant comes from the
+  1000→1200 shift; the standard has no shift, no surprise. **But the eliciting tones differ
+  physically** (1000 Hz in the standard, 1200 Hz in the deviant), so `deviant − standard` confounds
+  *surprise* with the *acoustic difference of the probe tone itself* (a 1200 Hz tone simply evokes a
+  different response than a 1000 Hz tone, surprise aside).
+
+- **Definition 2 — physically controlled.**
+  `standard = {1200, 1200, 1200, 1200}` vs `deviant = {1000, 1000, 1000, 1200}`.
+  Again no change (no surprise) in the standard, and the deviant's surprise is the 1000→1200 shift at
+  the final tone. **Now the eliciting tone is physically identical (1200 Hz) in both conditions** — so
+  `deviant − standard` isolates the surprise/prediction-error and holds the probe-tone acoustics fixed.
+  This is the clean, modern design.
+
+Counterbalancing is **one way to achieve Definition 2** (averaging each physical tone equally across
+the standard and deviant roles), not the distinction itself.
+
+**Who does which:**
+
+| | Construction | How |
+|---|---|---|
+| **Early MMN papers** (Sams 1985, Tiitinen 1994) | **Definition 1 (uncontrolled)** | Classic oddball: standard ERP = response to the frequent tone (1000 Hz), deviant ERP = response to the rarer *different* tone (1032 Hz etc.). Verbatim Tiitinen: *"MMN was obtained by subtracting the response to the standard tone from the response to the deviant tone."* The two eliciting tones differ physically. |
+| **Weber 2022** (eLife, TNU) | **Definition 2 (controlled)** | Counterbalanced roving/volatility oddball (440/528 Hz). Each physical tone serves equally as standard and as deviant, so for a given tone they compare it-as-deviant vs it-as-standard — *same physical probe tone*, only the preceding context differs. *"Both stimulus categories have, on average, the same physical properties."* |
+| **Us** (`insilico_mmn.py` `method_09`, identity-MMN) | **Definition 2 (controlled)** | The strictest form: the final/critical tone is **literally physically identical** in the standard and deviant clip (trial-level identity, not just average-matched); the deviance lives entirely in the preceding context frequency (1000→600 Hz). |
+
+**Bottom line: we and Weber both use the controlled Definition 2; the founding MMN papers used the
+uncontrolled Definition 1.** So our identity-MMN design matches modern best practice (Weber), *not*
+the classic Sams/Tiitinen oddball — which is the looser construction.
+
+**⚠️ Consequence for `mmn_screening_plan.md`.** The Sams/Tiitinen frequency *pairs* now listed in that
+plan's Step 2 come from a **Definition-1 classic oddball** (different standard vs deviant tones).
+Adopting those stimuli in a literal oddball would switch the screen to Definition 1 and reintroduce the
+physical confound — inconsistent with our Definition-2 `method_09`. The frequencies are still useful as
+a **deviance-size axis** for the parameterized check, but they must be embedded in a Definition-2
+(physically controlled / counterbalanced) paradigm, not a raw oddball. This is the "Paradigm match"
+flag in the screening plan; resolve it toward Definition 2.
+
+## 18. Durable cu126 torch pin (2026-06-17)
+
+**Problem.** The working `torch==2.12.0+cu126` build was only ever a **venv-level override** (installed
+via `uv pip install` — the §11 L40S fix — which never touches `uv.lock`). The lock pinned the generic
+`torch==2.12.0` from PyPI. So any `uv add`/`uv sync` re-synced the venv to the lock and silently
+clobbered the GPU build with the generic wheel, which fails at import (`libtorch_cuda.so: undefined
+symbol: ncclCommResume`). This bit us when `uv add PyPDF2` was run (the lock diff touched *only* pypdf2
+— torch wasn't in it — yet the venv torch broke, which is exactly the venv-override-lost signature).
+
+**Fix (in `pyproject.toml`).** Declare an explicit pytorch-cu126 index and route torch/torchvision to it
+via `[tool.uv.sources]`, so the **lock itself carries the `+cu126` build** and future `uv add`/`uv sync`
+keep it:
+```toml
+[[tool.uv.index]]
+name = "pytorch-cu126"
+url = "https://download.pytorch.org/whl/cu126"
+explicit = true                         # only used by packages that name it in [tool.uv.sources]
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cu126", marker = "sys_platform == 'linux'" }]
+torchvision = [{ index = "pytorch-cu126", marker = "sys_platform == 'linux'" }]
+```
+`explicit = true` keeps the cu126 index from polluting resolution of any other package. The
+`sys_platform == 'linux'` marker is required because the cu126 index has **no macOS wheels** — without
+it, the universal `uv lock` (the repo supports Darwin, cf. the `scikit-learn-intelex` Darwin marker)
+would fail to resolve torch for macOS; with it, non-Linux falls back to the default PyPI index.
+
+**Apply:** `uv lock` regenerates the lock with torch/torchvision sourced from `download.pytorch.org/whl/
+cu126` (version unchanged, 2.12.0+cu126). The venv already has that build, so no `uv sync` is needed now;
+the win is that the lock is now self-consistent and the build survives future dependency changes.
+
+## 19. Quick-run reference — fit-quality bars + electrode-level MMN (2026-06-17)
+
+Two ready-to-run drivers added this session. **Login node OOM-kills both — submit to a compute node.**
+All paths relative to the repo root; `source env.sh` is done inside each slurm script.
+
+**(a) Held-out fit-quality bars across the model size ladder (D2).** One figure, 4 panels
+(tiny/base/small/medium), 5 bars each (frontal/central/temporal/parietal/occipital), height = held-out
+TEST Pearson r, each model at its best D2 layer (tiny=blocks.1, base=blocks.5, small=blocks.10,
+medium=blocks.22). Parcels (incl. central) built from `surprisal_30s.h5`, NC floor r>0.2.
+```bash
+sbatch scripts/slurm_fit_quality_bars.sh
+# -> outputs/figures/fit_quality/fit_quality_bars__all_models__d2__mTRF.png
+grep -E "r=\+|DONE" logs/fq_bars_*.out
+```
+Generator: `scripts/plot_fit_quality_bars.py` (refits each model at its best layer; reuses
+`insilico_mmn.fit_mapping`). Best layers were read from `outputs/results/<model>-mtrf-parcels-d2/`;
+note base only ever had `blocks.5` evaluated (not a real sweep).
+
+> **In flight (submitted 2026-06-17 ~16:47, still running ~17:03, ≥16 min):** job **55914970**
+> (`fq_bars`, node jst184) is exactly run (a) above. It refits all four models sequentially
+> (tiny→base→small→medium; medium is slow — 13 G feature tree). When it finishes the figure lands at
+> `outputs/figures/fit_quality/fit_quality_bars__all_models__d2__mTRF.png` and the per-parcel `r=...`
+> values + `DONE` line are in `logs/fq_bars_55914970.out`. Check: `squeue -j 55914970` (empty = done),
+> then `ls -la outputs/figures/fit_quality/fit_quality_bars__all_models__d2__mTRF.png`.
+
+**(b) Electrode-level in-silico MMN — the MMN screen for Sophie.** Feeds MMN stimulus pairs through the
+frozen mTRF (per-electrode targets, ~30–47 channels passing NC r>0.2), writes **one 10-20 montage figure
+per pair** (each electrode's deviant−standard trace at its scalp position, fronto-central ROI in red,
+100–240 ms band shaded) plus a **simple auto-verdict** (ROI mean amp in 100–240 ms < 0 ⇒ MMN present)
+and an `N/M pairs show an MMN` summary.
+
+⚠️ **Train the mapping on D2, NOT Broderick.** Broderick/D1 has ~zero held-out r on the central
+electrodes (its central NC floor fails), which kills the fronto-central MMN ROI. D2 (Cortical
+Surprisal — also a human-speech audiobook EEG) has healthy fronto-central channels (FCz=0.99, C3=0.92,
+Cz=0.78), so it's the right training set for the MMN screen. **D2 is now the script default.**
+```bash
+sbatch scripts/slurm_insilico_mmn_electrodes.sh          # D2, whisper-small, blocks.10, all methods
+# -> outputs/figures/insilico_mmn_electrodes/insilico_mmn_electrodes__<method>__<layer>.png
+grep -E "MMN|pairs show|ROI used" logs/insilico_mmn_elec_*.out
+```
+Driver: `scripts/insilico_mmn_electrodes.py` (electrode counterpart of `insilico_mmn.py` — each
+electrode is a single-member "parcel", so `fit_mapping`/`analyze_method`/held-out eval are reused
+unchanged). The dataset to fit on is `--train_neural`/`--train_features` (the dataset-agnostic names;
+old `--broderick_*` kept as aliases). Runs against the 8 existing identity-MMN pairs (method_09/12/37/44/55 ±counter).
+
+> **TODO (long-term cleanup):** the original `scripts/insilico_mmn.py` (the parcel-level driver) still
+> carries the misnamed `--broderick_neural`/`--broderick_features` flags AND defaults to Broderick/D1.
+> Rename them to `--train_*` and switch its default to D2 there too, for the same central-electrode
+> reason — left untouched for now so the existing parcel figures keep reproducing. The electrode driver
+> already does the right thing; `insilico_mmn.py` is the remaining one.
+**Adding a new pair (Sophie):** drop the stimuli in `outputs/mmn_stimuli/<name>` and delta_T features in
+`outputs/features/mmn-<name>-delta-t`, then `--methods <name1>,<name2>,...`. Criterion knobs:
+`--mmn_lo_ms/--mmn_hi_ms/--mmn_thresh`. The auto-verdict is a first pass — keep the call visual until a
+few are eyeballed. Pair selection: ~10 from recent Def-2 studies (same eliciting tone), see
+`aux/mmn_screening_plan.md` and §17.
+
+## 20. ⭐ PICK UP HERE (2026-06-18 AM) — clean D2-only model→EEG mapping, from scratch
+
+**Decision (2026-06-17 PM).** Redo the model→EEG mapping cleanly. Supersedes the ad-hoc fq_bars +
+best-layer-from-old-results approach (§19a) and the scattered `*-mtrf-*` results. One honest pipeline:
+
+- **D2 only** (Cortical Surprisal; Broderick/D1 had ~zero held-out on central electrodes).
+- **Per model** (tiny/base/small/medium): **full layer sweep**; **k-fold CV *within the train split***
+  picks the layer (test split never touched during selection).
+- At the chosen layer, score the held-out **~20% test split** → per-target test r; **visualize like
+  fq_bars**.
+- **Two granularities**: the 5 parcels AND all electrodes passing NC r>0.2 (~47 on D2).
+
+**New files (built 2026-06-17, syntax-checked, not yet run):**
+- `scripts/eeg_targets.py` — shared, **broderick-free** target builders (parcels, electrodes, montage,
+  `load_split_targets`). The clean home the MMN drivers should import from too.
+- `scripts/eeg_mapping_sweep.py` — per (model × level): sweep layers → CV-on-train select → refit →
+  held-out test r. RidgeCV `gcv_mode='eigen'`; optional `--pca_var`. Writes one JSON per run to
+  `outputs/results/eeg_mapping/<model>__<level>__D2.json`.
+- `scripts/plot_eeg_mapping.py` — (A) layer-selection curves (CV solid, test dashed, chosen layer
+  circled) + (B) test-r bars (fq_bars-style, one panel/model), per level.
+- `scripts/slurm_eeg_mapping_sweep.sh` — array, 8 tasks = {tiny,base,small,medium}×{parcels,electrodes}.
+
+**RUN ORDER (compute node — login node OOMs):**
+```bash
+sbatch --array=1 scripts/slurm_eeg_mapping_sweep.sh            # smoke: base/parcels, local feats
+sbatch --array=0-7 scripts/slurm_eeg_mapping_sweep.sh          # full grid
+# when all 8 JSONs exist in outputs/results/eeg_mapping/:
+python scripts/plot_eeg_mapping.py --target_level parcels      # -> outputs/figures/eeg_mapping/*parcels*D2.png
+python scripts/plot_eeg_mapping.py --target_level electrodes
+```
+Long pole = **medium/electrodes** (24 layers × 5-fold CV, wide design). Escape hatch if it drags:
+`PCA_VAR=0.95 sbatch --array=6,7 --export=ALL scripts/slurm_eeg_mapping_sweep.sh`.
+
+**STILL TO DO when you pick up (in order):**
+1. **[done once fq_bars finished]** Hard-delete the superseded results — run:
+   `rm -rf outputs/results/*-mtrf-* outputs/results/mtrf_fitquality_d2_blocks10.json`
+   (matches only the old mTRF dirs; **keeps** `*-probe-group-*` and `*-delta-t*`). _If I already ran it,
+   skip._ Decide separately whether the probe-group (Workstream B) dirs also go.
+2. **broderick→`train_*`/D2 code rename** of the two kept MMN drivers (`insilico_mmn.py`,
+   `insilico_mmn_electrodes.py`) + dedupe them onto `eeg_targets.py`. The sweep code is already clean;
+   these are the remaining offenders (cf. §19 TODO).
+3. Submit the sweep (run order above); eyeball the two figures per level.
+4. Feed the **CV-chosen layer per model** into the electrode-MMN screen (the chosen layer replaces the
+   inherited `blocks.10` — that was the "isn't the layer assumed?" point; now it's derived on D2).
+
+**OPEN DECISION (default chosen, change if you disagree):** layer selection uses **5-fold CV** over
+train stimuli (mean r over targets). Robust but ~6× fits/layer = the main cost. Swap to a single
+held-out validation split for speed via fewer folds if the sweep is too slow.
+
+**Status at handoff (2026-06-17 ~18:00):** fq_bars (§19a, job 55914970) still running — 3/4 models done
+(tiny/base/small results in its log), grinding medium; figure not yet written. That run is the OLD
+approach and is now mostly superseded by this §20 pipeline — keep it only as a cross-check.

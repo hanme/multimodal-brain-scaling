@@ -1,9 +1,13 @@
 """Training + along-time evaluation for the temporal attention probe (Workstream B).
 
-Loss is ``1 - Pearson`` over the batch (matches the along-time scoring objective and MIRAGE),
-not MSE. Evaluation concatenates predictions over time on held-out runs and correlates along
-time per parcel (``pearson_along_time``) — the *same* metric Method A reports, so the numbers
-sit side by side.
+Loss is **MSE** (matches MIRAGE, Gokce & AlKhamissi 2026 App. A.1 — they train on MSE and use
+Pearson only for checkpoint selection; adding a Pearson term did not help). MSE fits real EEG
+amplitude, so predictions are amplitude-calibrated (needed for a magnitude-based in-silico MMN
+criterion) — see plan §16. The legacy ``corr_loss`` (1 - Pearson) is kept for reference/tests
+but is no longer the training objective. Evaluation concatenates predictions over time on
+held-out runs and correlates along time per parcel (``pearson_along_time``) — the *same* metric
+Method A reports, so the numbers sit side by side, and Pearson is what drives checkpoint
+selection during training.
 
 Readout level is selected purely by which subjects you pass to ``build_probe_system``:
 ``["group"]`` -> one head (Kadir group); the 19 subject ids -> one head each (Kadir individual).
@@ -11,11 +15,13 @@ The shared ``LatentAttentionTrunk`` is unchanged from the vision probe; the look
 fed straight through ``TokenAdapter``'s 3-D path as a token sequence.
 """
 
+import copy
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 
 from mbs.evaluation.evaluate_features_mtrf import pearson_along_time
 from .dataset_temporal import build_windowed_design, sampled_windowed_design
@@ -66,7 +72,7 @@ class TemporalTrainConfig:
     grad_clip: Optional[float] = 1.0
     amp: bool = True
     n_train_time_samples: int = 200
-    eval_every: int = 0          # 0 = no mid-training eval
+    eval_every: int = 0          # 0 = no mid-training eval / no checkpoint selection
     lr_schedule: str = "cosine"
     seed: int = 42
 
@@ -129,7 +135,12 @@ def train_temporal_probe(
     """Train one probe over the given subjects (group = single ``"group"`` subject).
 
     Each epoch: per subject, redraw ``n_train_time_samples`` random output times, build windowed
-    samples, and step ``corr_loss`` over shuffled minibatches. Returns (model, history).
+    samples, and step **MSE** over shuffled minibatches. When ``train_cfg.eval_every > 0`` and a
+    validation set is given, held-out Pearson r (mean over subjects+parcels) is evaluated every
+    ``eval_every`` epochs and the best-scoring weights are kept and restored at the end
+    (MIRAGE-style checkpoint selection). With ``eval_every == 0`` the final-epoch weights are
+    returned. Returns (model, history); ``history`` records ``val_r`` on eval epochs and the
+    final record carries ``selected_epoch`` / ``best_val_r`` when selection was active.
     """
     _set_seed(train_cfg.seed)
     device = torch.device(train_cfg.device if torch.cuda.is_available() else "cpu")
@@ -145,6 +156,9 @@ def train_temporal_probe(
 
     rngs = {s: np.random.default_rng(train_cfg.seed + i) for i, s in enumerate(subjects)}
     history: List[dict] = []
+
+    can_select = (train_cfg.eval_every and feats_val is not None and eeg_val is not None)
+    best_val_r, best_epoch, best_state = -np.inf, None, None
 
     for epoch in range(1, train_cfg.epochs + 1):
         model.train()
@@ -165,7 +179,7 @@ def train_temporal_probe(
                 yb = Yt[sel].to(device, non_blocking=True)
                 opt.zero_grad(set_to_none=True)
                 with torch.amp.autocast("cuda", enabled=use_amp):
-                    loss = corr_loss(model(xb, subject=s), yb)
+                    loss = F.mse_loss(model(xb, subject=s), yb)
                 scaler.scale(loss).backward()
                 if train_cfg.grad_clip is not None:
                     scaler.unscale_(opt)
@@ -178,11 +192,19 @@ def train_temporal_probe(
             sched.step()
 
         rec = {"epoch": epoch, "train_loss": running / max(1, n_running)}
-        if (train_cfg.eval_every and epoch % train_cfg.eval_every == 0
-                and feats_val is not None and eeg_val is not None):
+        if can_select and epoch % train_cfg.eval_every == 0:
             rs = [score_heldout(model, feats_val[s], eeg_val[s], lookback, s, device.type).mean()
                   for s in subjects]
-            rec["val_r"] = float(np.mean(rs))
+            val_r = float(np.nanmean(rs))
+            rec["val_r"] = val_r
+            if val_r > best_val_r:                       # MIRAGE-style: keep the best on val
+                best_val_r, best_epoch = val_r, epoch
+                best_state = copy.deepcopy(model.state_dict())
         history.append(rec)
+
+    if best_state is not None:                           # restore the best-scoring checkpoint
+        model.load_state_dict(best_state)
+        history[-1]["selected_epoch"] = best_epoch
+        history[-1]["best_val_r"] = best_val_r
 
     return model, history

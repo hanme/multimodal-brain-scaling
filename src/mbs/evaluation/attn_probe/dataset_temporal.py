@@ -38,6 +38,37 @@ CLUSTERS = {
     "occipital": ["O1", "Oz", "O2"],
 }
 
+# Electrode-level targets (mirror scripts/eeg_targets.py so the attention encoder's electrode
+# set is IDENTICAL to the §20 mTRF sweep): skip pseudo-channels and any name whose 10-20 prefix
+# we don't recognise.
+NON_ELECTRODE = ("_cluster", "whole_brain")
+PREFIX_Y = {"FP": 0.95, "AF": 0.78, "F": 0.55, "FC": 0.32, "FT": 0.32, "C": 0.0, "T": 0.0,
+            "CP": -0.22, "TP": -0.22, "P": -0.5, "PO": -0.72, "O": -0.92, "I": -1.0}
+
+
+def montage_pos(ch: str):
+    """Approximate 10-20 (x, y) for a channel name; None if the prefix is unknown.
+
+    Identical logic to scripts/eeg_targets.montage_pos — used only to decide whether a channel
+    is a recognised electrode (we keep it iff this returns non-None)."""
+    s = ch
+    if s and s[-1] in "zZ":
+        col, s = "z", s[:-1]
+    else:
+        i = len(s)
+        while i > 0 and s[i - 1].isdigit():
+            i -= 1
+        col, s = s[i:], s[:i]
+    y = PREFIX_Y.get(s.upper())
+    if y is None:
+        return None
+    if col == "z":
+        return 0.0, y
+    n = int(col)
+    mag = {1: 0.2, 2: 0.2, 3: 0.4, 4: 0.4, 5: 0.6, 6: 0.6, 7: 0.8, 8: 0.8,
+           9: 1.0, 10: 1.0}.get(n, 0.9)
+    return (-mag if n % 2 else mag), y
+
 
 def channel_r(neural_h5_path: Path, ch: str, nc_subject: str = "group") -> float:
     """Reliability (correlation scale) of one channel: sqrt(mean stored var% / 100)."""
@@ -65,6 +96,28 @@ def build_parcels(neural_h5_path: Path, threshold: float,
         out.append((name, kept, pr))
         print(f"  parcel '{name}': keep {kept} (r={pr:.2f}); "
               f"drop {[c for c in members if c not in kept]}")
+    return out
+
+
+def build_electrodes(neural_h5_path: Path, threshold: float,
+                     nc_subject: str = "group") -> List[Parcel]:
+    """Ordered [(channel, [channel], r)] for every real electrode passing NC r>threshold.
+
+    Each electrode is a single-member 'parcel', so the rest of the temporal pipeline
+    (``load_parcel_eeg``, scoring, checkpointing) is unchanged. Mirrors
+    ``scripts/eeg_targets.build_electrodes`` so the encoder targets the SAME electrode set as
+    the §20 mTRF sweep (skip pseudo-channels + unknown-prefix names; sort by descending r)."""
+    with h5py.File(Path(neural_h5_path), "r") as h:
+        chans = list(h["noise_ceilings"][nc_subject].keys())
+    out: List[Parcel] = []
+    for ch in chans:
+        if any(t in ch for t in NON_ELECTRODE) or montage_pos(ch) is None:
+            continue
+        r = channel_r(neural_h5_path, ch, nc_subject)
+        if r > threshold:
+            out.append((ch, [ch], float(r)))
+    out.sort(key=lambda e: -e[2])
+    print(f"  electrodes passing NC r>{threshold}: {len(out)}")
     return out
 
 

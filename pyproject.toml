@@ -14,6 +14,7 @@ dependencies = [
     "numpy",
     "pandas",
     "pyarrow",
+    "pypdf2>=3.0.1",
     "pyyaml",
     "scikit-learn",
     "scipy",
@@ -86,3 +87,16 @@ markers = [
 filterwarnings = [
     "ignore::DeprecationWarning",
 ]
+
+# Pin the CUDA 12.6 PyTorch build into the lock so `uv add`/`uv sync` can't silently
+# swap it for the generic (CPU/NCCL-broken) wheel. Linux-only marker keeps the
+# universal lock resolvable on macOS (the cu126 index has no Darwin wheels) — there
+# torch/torchvision fall back to the default PyPI index. See project_plan §18.
+[[tool.uv.index]]
+name = "pytorch-cu126"
+url = "https://download.pytorch.org/whl/cu126"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cu126", marker = "sys_platform == 'linux'" }]
+torchvision = [{ index = "pytorch-cu126", marker = "sys_platform == 'linux'" }]

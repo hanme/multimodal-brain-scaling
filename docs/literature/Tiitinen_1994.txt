@@ -1,0 +1,352 @@
+LETTERS TO NATURE 
+7 Ludw1g, D., Hilborn. R. & Walters. C. Science 260, 17. 36 (1993). 
+8. Redford, K. H. BioScience 42, 412-422 (1992). 
+9. Primack. R. B. Essentials of Conservation Biology (Smauer. Sunderland. MA. 1993). 
+10. Goombridge. B. (ed.) Global Biodiversity: Status of the Earth's Living Resources (Chapman 
+& Hall, New York, 1992). 
+11. Cumm1ng. D. H. M., Ou To1t. R. F. & Stuart. S. N. African Elephants and Rhmos. Status 
+Survey and Conservation Action Plans (International Union for the Conservation of Nature 
+and Natural Resources, Gland. Switzerland. 1990). 
+12 Miller. G. T. Jr Living in the Environment. An Introduction to Environmental Science 6th edn 
+(Wadsworth. Belmont, CA. 1990) 
+13. LeBoeuf. B. m The Natural History of Arlo Nuevo (eds LeBoeuf. B. & Kaza. S.) Ch. 7. 287-
+325 (Boxwood. Pac1f1c Grove. CA. 1981). 
+14. Halliday, T. Vanishing Birds: Their Natural History and Conservation (Pengum. Harmonds 
+worth. 1980). 
+15. Van Valen, L. Evol. Theory 1, 1-30 (19731 
+16. Jablonski. D. Science 231, 129-133 (1986). 
+17. Beddmgton. J. R. & May, R. M. Science 197, 463-465 (1977). 
+18. May, R. M .. Bedd1ngton. J. R .. Horwood, J. W. & Shepherd. J. G. Math. tiiOSCI. 42, 219-252 
+(1978). 
+19. Reed. W. J. Math. Biosc1. 41, 2 73-307 (19781. 
+20. Karlin. S. & Taylor. H. M. A Second Course in Stochastic Processes (Academtc. New York, 
+1981) 
+21 Lande, R .. Engen, S. & Saether. 8.-E. Am. Nat. {In the press). 
+22. Daley. H. E. & Cobb. J. 8. Jr For the Common Good. Redirecting the Economy Toward 
+Community, the Environment. and a Sustainable Future (Beacon. Boston. 1989). 
+23. Keller, H. B. Numerical Methods for Two-Point Boundary Value Problems (Biaisdale. New 
+York, 1968). 
+ACKNOWLEDGEMENTS. We thank W. E. Whitelaw for discussions. This work was supported by 
+grants from the US NSF {R.L.}. NINA and the Norwegian Research Council for Sctence and the 
+Humanities {S.E.). and the Norwegian Directorate for Nature Management (8.-E.S.). 
+AHentive novelty detection in 
+humans is governed by 
+pre-aHentive sensory memory 
+H. Tiitinen, P. May, K. Reinikainen 
+& R. Naatanen 
+Cognitive Psychophysiology Research Unit, Department of Psychology, 
+University of Helsinki, SF-00014 Helsinki, Finland 
+BEI:-IG able to detect unusual, possibly dangerous events in the 
+environment is a fundamental ability that helps ensure the survival 
+of biological organismsH. Novelty detection requires a memory 
+system that models (builds neural representations of) events in the 
+environment, so that changes are detected because they violate the 
+predictions of the model. The earliest physiologically measurable 
+brain response to novel auditory stimuli is the mismatch 
+negativity4, MMN, a component of the event-related potential. It 
+is elicited when a predictable series of unvarying stimuli is unex­
+pectedly followed by a deviating stimulus'. As the occurrence of 
+MMN is not usually affected by the direction of attentions.-\ 
+MMN reflects the operation of automatic sensory (echoic) 
+memory\ the earliest memory system that builds traces of the 
+acoustic environment against which new stimuli can be compared'. 
+The dependence of attentive novelty detection on earlier, pre-atten­
+tive processes, however, has remained elusive. Previous, related 
+studies9-12 seem to suggest a relationship between MMN and atten­
+tive processes, although no conclusive evidence has so far been 
+shown. Here we address novelty detection in humans both on a 
+physiological and behavioural level, and show how attentive novelty 
+detection is governed by a pre-attentive sensory memory 
+mechanism. 
+Ten subjects with normal hearing (mean age, 26 years; 5 
+males) were presented with I ,000-Hz 'standard' tones randomly 
+interspersed with 'deviant' tones differing in frequency. Novelty, 
+here defined as the magnitude of frequency deviance (the term 
+traditionally used to refer to the property of a stimulus causing 
+attentional, as opposed to arousal, effects2 '). namely the differ­
+ence in frequency between the standard and deviating stimulus. 
+was varied from 5 to 320Hz in eight steps. In the first part of 
+the experiment (the event-related potential (ERP) sessions), we 
+measured MMN, with the subject being instructed to read a self-
+90 selected book and to ignore auditory stimuli. In the second part 
+(the novelty detection sessions), we tested the subject's ability 
+to detect the novel stimuli. The subject attended to the same 
+stimuli as those presented in the ERP sessions, and responded 
+to the deviating tones by pressing a response key. Thus the novel 
+stimuli were subject to both pre-attentive and attentive novelty 
+detection. 
+In Fig. I, the MMN responses measured from the frontal 
+electrode Fz (Fig. Ia) and the right mastoid (Fig. ld) are 
+presented. The standard tones elicited only minute, invariant 
+responses (Fig. lh and c). The peak amplitude of MMN at Fz 
+increased linearly up to 3.5 J.!V as a function of the logarithm of 
+the frequency difference (Fig. 3e). MMN was most prominent 
+in the frontal and central scalp areas and it was reliably elicited 
+by frequency differences at 20Hz (for which one-tailed t(9) = 
+2.68. P < 0.03) and above. 
+The polarity reversal of MMN between frontal and mastoid 
+electrodes suggests that the response originated in the auditory 
+cortex''·'4
+. This was confirmed by magnetoencephalography 
+(MEG) measurements (Fig. 2), from which the sources ofactiv-
+NATURE · VOL 372 · 3 NOVEMBER 1994 
+..,. FIG. 1 The results of the ERP sessions. MMN from electrodes FZ (a) 
+and right mastoid (d) for deviance values 5-320 Hz, interpolated 
+between data points along deviance axis by the cubic spline method. 
+The MMN amplitude grew and its latency decreased with increasing 
+deviance. The invariant responses to the standard tones measured from 
+electrodes Fz and right mastoid are depicted in b and c, respectively. 
+METHODS. Measurements were carried out in an acoustically and elec­
+trically shielded room. The nose-referenced electroencephalogram 
+(EEG) (sample rate 250 Hz) was averaged and digitally filtered 
+(passband, 2-30 Hz) from 12 channels. One electrooculogram (EOG) 
+channel was used to control eye movements, and epochs with artefacts 
+whose absolute voltage exceeded 75 11V at any electrode were omitted. 
+Stimulus blocks (65 dB sound pressure level (SPL), duration 60 ms, 
+including 10 ms rise and fall times) consisting of standard (1,000 Hz, 
+P= 0.95) and deviant stimuli (P= 0.05) were presented in a random 
+order through earphones to the subject's left ear. The frequency of the 
+deviant stimulus in a block was either 1,005, 1,010, 1,020, 1,040, 
+1,080, 1,127, 1,202 or 1,320 Hz. The (onset-to-onset) interstimulus 
+interval was 200 ms. Each subject was presented with 6 blocks of 960 
+stimuli for each deviance (a total of 437,760 standard and 23,040 
+deviant tones). The presentation of blocks was counterbalanced. MMN 
+was obtained by subtracting the response to the standard tone from 
+the response to the deviant tone. MMN peak amplitude was measured 
+from grand-average data from Fz as the average voltage in a 20 ms 
+window around the peak, latency as the time of occurrence of the peak, 
+and duration as the time the voltage of the response exceeded -0.1~-LV. 
+em 
+Fz 
+5 ~ 
+-8 8 -+ ~ 4 
+N 
+3 
+-1 0 2 
+y (em) 
+FIG. 2 Localization of the MMN responses with magnetoencephalo­
+graphy (MEG) for a representative subject. The activated brain area, 
+estimated with equivalent current dipoles (ECDs, denoted by black dots, 
+with bars indicating 95% confidence limits for 100 stimulus presenta­
+tions per deviance), was in the approximate location of supratemporal 
+primary auditory cortex. Although it was highly localized, MMN source 
+location showed no systematicity as a function of deviance (5 to 10 Hz 
+deviations resulted in ECDs with largest confidence limits). The co­
+ordinate system origin is set at the preauricular point. The measurement 
+locations Fz, RM (right mastoid) of the main experiment are also shown. 
+Three subjects of the main experiment were studied, with no statistical 
+differences in response locations. 
+METHODS. Magnetic fields were recorded with a helmet-shaped whole­
+head Neuromag-122 SQUID magnetomete(1° (passband 0.03-90 Hz, 
+sample rate 297 Hz, stimulus delivery through a plastic tube and an 
+ear piece). The experimental arrangement is described in Fig. 11egend. 
+ity for the eight deviances were found to be highly localized in 
+an area ~2 em below the scalp and 3 em above the preauricular 
+point. Also, it is unlikely that the responses were contaminated 
+by other ERP components such as Nl or N2b, because Nl has 
+been shown to overlap MMN only when deviance values exceed 
+50 per cent15 and N2b is observed only when subjects attend to 
+stimuli, and its polarity does not reverse at the mastoids16• 
+NATURE · VOL 372 · 3 NOVEMBER 1994 LETTERS TO NATURE 
+a 
+~ 100r c • ! 
+J RT ·~ 50 " ! r ., 
+z 
+~ 0 
+~ 10 20 40 80 160 320 
+200 ~1001-d 
+~ 
+~ 50r 100- :E 
+20 40 80 160 320 20 40 80 160 320 
+,---bl > -4 
+~ 300f e 
+j 3 
+" -3 
+~ ., 
+:ij ' .E 
+~200r Q. -2 
+E " 
+~ 100 z -1 ::; 
+I .J ::; 
+20 40 80 160 320 20 40 80 160 320 
+Deviance (Hz) Deviance (Hz) 
+FIG. 3 Results of the main experiment. a, Both the MMN peak latency 
+from Fz, and behavioural reaction time (RT) decreased monotonically 
+as a function of change in tone frequency (data have been fitted with an 
+exponential decay function; bars indicate standard error of the mean). b, 
+MMN peak latency has been subtracted from behavioural RT, demon­
+strating that the difference was constant. With increasing deviance both 
+the MMN duration from Fz (c) and the behaviourally obtained hit rate 
+(d) increased until reaching a plateau (data fitted with a sigmoidal 
+function). Durations of responses to 5-and 10-Hz deviances are 
+denoted by open circles, with the former arbitrarily defined as zero. e, 
+MMN peak amplitude increased linearly as a function of the logarithm 
+of frequency deviance (bars indicate standard error of the mean). 
+METHODS. The subject was, on a separate day, presented with two 
+stimulus blocks per deviance (about 75 presentations per deviance) and 
+asked to respond accurately and rapidly to deviant tones by pressing a 
+response key. The time window for an acceptable response was defined 
+as 200-700 ms after stimulus onset, and the hit rate was defined as 
+the percentage of target tones found by the subject. This procedure 
+took into account 95% of all the responses. 
+Figure 3a shows that the peak latency of MMN decreased 
+monotonically (from 180 to 110 ms) and that the subject's 
+reaction time in the novelty detection sessions also decreased 
+monotonically (from 370 to 270 ms) as a function of frequency 
+difference. Reaction time changed at the same rate as MMN 
+latency, the two measures being highly correlated (Pearson r = 
+0.986, two-tailed P<O.OOl) and the difference between these two 
+being constant (Fig. 3b). 
+MMN duration increased and reached a plateau of 100 ms at 
+~40Hz frequency difference (Fig. 3c). The subject's ability to 
+detect novel stimuli, as reflected in the hit rate, also improved 
+until it reached a plateau at ~40 Hz frequency difference (Fig. 
+3d). Thus, the hit rate correlated with the MMN duration func­
+tion in asymptotic behaviour (Pearson r=0.934, two-tailed 
+P<O.Ol). 
+In conclusion, our main finding was that the latency of MMN 
+predicted the behavioural response latency extremely well. Thus, 
+attentive behavioural response latency changes can be explained 
+as originating from the pre-attentive sensory memory mechan­
+ism. Changes, due to task difficulty, in sensory-memory process­
+ing time seem then to be linearly transferred to subsequent 
+(perceptual, attentive, motor) processes of constant duration. 
+Whereas changes in reaction time as a function of task difficulty 
+are well established17, our results show systematically that 
+reaction time changes for the oddball paradigm are governed 
+91 
+LETTERS TO NATURE 
+solely by early sensory memory processes, which must therefore 
+be fundamental in determining the appropriate behaviour of the 
+organism. 
+The duration function (rarely addressed in ERP studies) of 
+MMN resembles the hit-rate function in that it rapidly reached 
+a plateau. This suggests that what determines whether a novel 
+stimulus is consciously detected might depend on the temporal 
+length of the neural signal generated by the sensory memory 
+mechanism; that is, stimulus deviance could be transformed into 
+a time code which is then broadcast to attentional mechanisms. 
+However in conditions of low discrimination, MMN duration 
+reaches a plateau slightly later, implying that some other mecha­
+nism is enhancing the hit rate. 
+MMN is reliably elicited by deviances at and above 20 Hz 
+and its amplitude is directly proportional to the logarithm of 
+frequency difference. As this relationship between frequency 
+difference and response amplitude parallels the previously 
+observed behavioural relationship between sound frequency 
+difference and perceived pitch difference18
+"19
+, the perception of 
+pitch differences might therefore be reflected in the physiological 
+measure of MMN amplitude. D 
+Amyloid-associated proteins 
+a1-antichymotrypsin and 
+apolipoprotein E promote 
+assembly of Alzheimer 
+p-protein into filaments 
+Jianyi Ma, Ann Yee, H. Bryan Brewer Jr*, 
+Saumya Das & Huntington Pottert 
+Department of Neurobiology, Harvard Medical School, 
+220 Longwood Avenue, Boston, Massachusetts 02115, USA 
+* National Heart and Blood Institute, National Institutes of Health, 
+Bethesda, Maryland 20892, USA 
+THE protease inhibitor a1-antichymotrypsin and the lipid transport 
+protein apolipoprotein E (apoE) are intimately associated with the 
+42-amino-acid P-peptide (Ap) in the filamentous amyloid deposits 
+of Alzheimer's disease1-3• We report here that these two amyloid­
+associated proteins serve a strong stimulatory role in the polymeri­
+zation of AP into amyloid filaments. Addition of either a.-anti­
+chymotrypsin or apoE to the AP peptide promoted a 10-to 20-
+fold increase in filament formation, with apoE-4, the isoform 
+recently linked to the development of late-onset Alzheimer's 
+disease, showing the highest catalytic activity. These and other 
+experiments suggest that Alzheimer amyloid deposits arise when 
+Ap is induced to form filaments by amyloid-promoting factors 
+(pathological chaperones) expressed in certain brain regions. 
+A number of lines of investigation have indicated that a1-
+antichymotrypsin (ACT) has a specific affinity for the A/3 
+peptideL4 9 and there are comparable data for apoE2•3·'0·''. 
+These results suggested that one or both of these amyloid-associ­
+ated proteins might play a direct role in the aetiology of Alzhei­
+mer's disease by functioning as a 'pathological chaperone' to 
+promote the formation of amyloid filaments3
+'7
+• Monomers of 
+the predominant amyloid protein found in neuritic plaques and 
+vascular amyloid, A/3 1 42 (refs 12, 13), assemble spontaneously 
+into high-molecular-mass amyloid-like structures, as monitored 
+by light scattering and by electron microscopy (Fig. I and refs 
+14, 15). Over the course of several days, filaments ~7 nm wide 
+t To whom correspondence should be addressed. 
+92 Received 28 July; accepted 20 September 1994. 
+1. James. W. The Principles of Psychology Vol. 1. 402-458 (Dover. New York. 1950). 
+2. Sokolov, E. N. & Vinogradova, 0. S. Neuronal Mechanisms of the Orienting Reflex 217-
+235 (Erlbaum, New York. 1975). 
+3. Kohonen, T. Self-Organization and Associative Memory 241-248 (Springer, Amsterdam, 
+1989). 
+4. Niiiitiinen, R .. Gaillard, A. W. K. & Mantysalo, S. Acta psychologica 42, 313-329 (1978). 
+5. Naatanen, R. Attention and Brain Function 136-199 (Erlbaum, New Jersey, 1992). 
+6. Woldorff. M., Hackley, S. A. & Hillyard, S. A. Psychophysiology 28, 30-42 (1991). 
+7. Niiiitiinen, R. Psychophysiology 28, 4 78-484 (1991). 
+8. Neisser, U. Cognitive Psychology 199-218 (Appleton Century Crofts, New York, 1967). 
+9. Sams, M. et al. Electroenceph. clin. Neurophys. 62, 437-448 (1985). 
+10. Winkler, 1., Reinikainen, K. & Niiiitiinen, R. Percept. Psychophys. 53, 443-449 (1993). 
+11. Novak, G., Ritter, W., Vaughan, H. G. Jr & Wiznitzer, M. L. Electroenceph. clin. Neurophys. 
+75, 255-275 (1990). 
+12. Novak, G., Ritter, W. & Vaughan, H. G. Jr Psychophysiology 29, 398-411 (1992). 
+13. Hari, R. et at. Neurosci. Lett 50, 127-132 (1984). 
+14. Tiitinen, H. et at. Psychophysiology 30, 537-540 (1993). 
+15. Scherg, M., Vajsar, J. & Picton, T. W. J. cogn. Neurosci. 2, 336-355 (1989). 
+16. Ritter, W. et a/. Electroenceph. clin. Neurophys. 83, 306-322 (1992). 
+17. Keele, S. in Handbook of Perception and Human Performance Vol. 2 {eds Boff, K. R., 
+Kaufman, L. & Thomas, J. P.) 30-1-30-60 (Wiley, New York, 1986). 
+18. Wier, C. C., Jesteadt. W. & Green, D. M. J. acoust. Soc. Am. 61, 178-184 (1977). 
+19. Stevens, S. S. & Davis, H. Hearing 69-109 (Wiley, New York, 1966). 
+20. Ahonen, A. I. et a/. in Proc. Sate//. Symp. Neurosci. Techno/. 14th int. Cont. IEEE Engng 
+Med. Bioi. Soc. (eds Dittmar, A. & Froment, J. C.) 16-20 (Lyon, 1992). 
+ACKNOWLEDGEMENTS. This work was supported by The Academy of Finland, The Finnish 
+Cultural Foundation and The Emil Aaltonen Foundation. We thank M. Huotilainen and J. Sink­
+konen for their help in preparing the manuscript, and the Low Temperature Laboratory of the 
+Helsinki University of Technology and Neuromag Ltd for the use of the magnetometer. 
+and up to many hundreds of nanometres long steadily increased 
+in number. 
+Although A/3 can assemble into amyloid-like filaments spon­
+taneously, the data shown in Figs 2 and 4 show that filaments 
+form much more rapidly in the presence of the amyloid-associ­
+ated protein ACT. Instead of days, filaments formed in a matter 
+of hours and grew to very great lengths, frequently traversing 
+an entire electron microscope grid square (100 ~-tm x 100 ~-tm). 
+Quantitative analysis done by counting random filament cross­
+overs (a measure of both filament number and length) indicated 
+that ACT accelerated the rate of filament formation at least 
+10-fold (Figs 2 and 4). 
+During the course of these studies, it became apparent that 
+apoE, like ACT, is a potential amyloid-promoting factor, or 
+pathological chaperone3. As in the case of ACT, apoE is both 
+02 
+0 -D- Al31·42 alone 0 ... :s 
+0> c: 
+-~ 0.1 "' "' :;; 
+:E 
+0> 
+::J 
+0.0 
+24 48 72 
+Time (h) 
+FIG. 1 The Alzheimer AfJ peptide forms amyloid filaments in vitro. 
+Biosynthetic Af31-42 was incubated at a concentration of 80 11M in 
+1001-11 of 10 11M Tris-HCI, pH 7.0, at 22 oc for the indicated times. 
+Assembly of AfJ into high-M, filamentous structures was monitored by 
+light scattering at 400 nm (left), which measures the total mass of 
+material in macromolecular form. At 18 h, filaments were applied to 
+carbon-coated Formvar on 200 mesh copper grids, washed, dried, 
+negatively stained with 3% uranyl acetate and visualized in a JEOL-
+100CX electron microscope. The filaments shown in the electron micro­
+graph (right) are representative of the few products of this polymeriza­
+tion reaction; magnification: top right, x18,000; bottom right, x84,000. 
+Because Af31-42 is prone to self-aggregation and because filtration fails 
+to remove small filaments, aliquots of each lyophilized preparation of 
+Af31-42 were tested by Hoffman-LaRoche and by us for the presence of 
+amyloid filaments. Only preparations devoid of filaments by electron 
+microscopy were used for experiments. 
+NATURE · VOL 372 · 3 NOVEMBER 1994 

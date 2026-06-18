@@ -1,7 +1,7 @@
 """In-silico MMN: predict parcel-level EEG for MMN tone stimuli via the mTRF mapping.
 
 Pipeline:
-  1. Fit a FIR mTRF on Broderick (EEG[t] = sum_lag W[lag] . feature[t-lag]) for ONE model
+  1. Fit a FIR mTRF on the training EEG (default D2; EEG[t] = sum_lag W[lag] . feature[t-lag]) for ONE model
      layer, with electrodes aggregated into coarse 10-20 parcels (Kadir-style clusters).
      Each parcel = raw average over its constituent channels that pass an NC floor
      (Gokce/Kadir precedent: drop channels with reliability r <= --nc_r_threshold before
@@ -31,25 +31,13 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from sklearn.linear_model import RidgeCV
 
-from mbs.evaluation.utils.evaluation_helpers import (
-    load_layer_features, load_neural_data,
-)
+from mbs.evaluation.utils.evaluation_helpers import load_layer_features
 from mbs.evaluation.evaluate_features_mtrf import (
     lags_in_bins, build_lagged_design, highpass_along_time, sample_time_indices,
     pearson_along_time,
 )
-
-FS = 50.0          # EEG / feature grid (Hz)
-TIME_STEP_MS = 20.0
-
-# Coarse 10-20 parcels (must match src/mbs/data_prep/format_eeg_hdf5.py cluster definitions).
-CLUSTERS = {
-    "frontal":   ["Fz", "F3", "F4", "FCz"],
-    "central":   ["Cz", "C3", "C4"],
-    "temporal":  ["T7", "T8"],
-    "parietal":  ["Pz", "P3", "P4", "P7", "P8"],
-    "occipital": ["O1", "Oz", "O2"],
-}
+# parcels/electrodes + dataset I/O live in the shared, dataset-agnostic module
+from eeg_targets import FS, TIME_STEP_MS, build_parcels, load_split_targets
 
 # MMN methods: (stimulus-dir name, "context->final" label, deviance direction). All are
 # identity-MMN designs (final tone identical in std & dev). m12/44/55 appear in both
@@ -66,40 +54,6 @@ METHODS = [
 ]
 
 
-def decode(xs):
-    return [x.decode() if hasattr(x, "decode") else x for x in xs]
-
-
-def channel_r(neural_h5, ch):
-    """Reliability (correlation scale) of one channel: sqrt(mean stored var% / 100)."""
-    try:
-        with h5py.File(neural_h5, "r") as h:
-            v = float(np.nanmean(h["noise_ceilings"]["group"][ch][:]))
-        return float(np.sqrt(max(v, 0.0) / 100.0))
-    except Exception:
-        return float("nan")
-
-
-def build_parcels(neural_h5, threshold):
-    """Return ordered list of (parcel, members_kept, parcel_r) for parcels with >=1 survivor.
-
-    parcel_r = mean reliability of the kept members (correlation scale).
-    """
-    out = []
-    for name, members in CLUSTERS.items():
-        rs = {c: channel_r(neural_h5, c) for c in members}
-        kept = [c for c in members if rs[c] > threshold]
-        if not kept:
-            print(f"  parcel '{name}': no channel passes r>{threshold} "
-                  f"({', '.join(f'{c}={rs[c]:.2f}' for c in members)}) -> DROPPED")
-            continue
-        pr = float(np.mean([rs[c] for c in kept]))
-        out.append((name, kept, pr))
-        print(f"  parcel '{name}': keep {kept} (r={pr:.2f}); "
-              f"drop {[c for c in members if c not in kept]}")
-    return out
-
-
 def detect_final_tone_onset_s(wav_path):
     """Onset time (s) of the LAST tone in the clip (the MMN-critical tone)."""
     x, sr = sf.read(wav_path)
@@ -113,40 +67,17 @@ def detect_final_tone_onset_s(wav_path):
     return float(starts[-1] / sr) if len(starts) else None
 
 
-def load_split_parcels(neural_h5, feats_all, id_map, parcels, split):
-    """Build (parcel-target EEG, aligned raw features) for one Broderick split.
-
-    Returns (eeg [n, T, n_parcel], feats [n, T, d]) restricted to stimuli whose ids exist
-    in id_map. Same id alignment for every channel; parcels are raw averages over members.
-    """
-    fi = keep = None
-    parcel_cols = []
-    for _, members, _ in parcels:
-        chan_stack = []
-        for ch in members:
-            ids, eeg_ch, _ = load_neural_data(Path(neural_h5), "group", ch, split)
-            if fi is None:
-                ids = decode(ids)
-                raw = [id_map.get(s) for s in ids]
-                keep = [i for i, v in enumerate(raw) if v is not None]
-                fi = [v for v in raw if v is not None]
-            chan_stack.append(eeg_ch[keep][:, :, 0])             # [n, T]
-        parcel_cols.append(np.mean(chan_stack, axis=0)[:, :, None])  # raw avg -> [n, T, 1]
-    eeg = np.concatenate(parcel_cols, axis=2).astype(np.float32)     # [n, T, n_parcel]
-    return eeg, feats_all[fi]
-
-
 def fit_mapping(args, lags, parcels):
-    """Fit FIR mTRF on Broderick TRAIN for one layer -> (model, feat_mu, feat_sd, eval_metrics).
+    """Fit FIR mTRF on the training EEG dataset for one layer -> (model, feat_mu, feat_sd, eval).
 
     Target columns are the parcels (raw average over NC-surviving member channels). If
     --eval_heldout, also predicts the built-in held-out TEST split (separate audiobook runs)
     and returns per-parcel out-of-sample Pearson r (raw and NC-normalized); else eval=None.
     """
-    feats_all, id_map = load_layer_features(args.layer, features_folder=Path(args.broderick_features))
+    feats_all, id_map = load_layer_features(args.layer, features_folder=Path(args.train_features))
     feats_all = feats_all.astype(np.float32)  # [n_stim, T, d]
 
-    eeg, feats = load_split_parcels(args.broderick_neural, feats_all, id_map, parcels, "train")
+    eeg, feats = load_split_targets(args.train_neural, feats_all, id_map, parcels, "train")
 
     # high-pass both, standardize features (save stats for the MMN + eval sides)
     feats = highpass_along_time(feats, FS, args.highpass_hz)
@@ -181,7 +112,7 @@ def evaluate_heldout(args, lags, parcels, model, mu, sd, feats_all, id_map):
     No leakage: features are standardized with TRAIN mu/sd; test windows come from audiobook
     runs absent from train. Returns dict with per-parcel out-of-sample Pearson r (raw + NC-norm).
     """
-    eeg, feats = load_split_parcels(args.broderick_neural, feats_all, id_map, parcels, "test")
+    eeg, feats = load_split_targets(args.train_neural, feats_all, id_map, parcels, "test")
     if eeg.shape[0] == 0:
         print(f"  held-out eval [{args.layer}]: TEST split empty -> skipped")
         return None
@@ -290,8 +221,15 @@ def plot_method(method, label, direction, res, parcels, args, out_path):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--broderick_features", default="outputs/features/whisper-base-delta-t/merged/")
-    p.add_argument("--broderick_neural", default="outputs/neural_data/broderick2018_30s.h5")
+    # EEG dataset to FIT on. Default = D2 (Cortical Surprisal, human-speech audiobook EEG with healthy
+    # fronto-central channels). --broderick_* kept as back-compat aliases. See project_plan §19/§20.
+    p.add_argument("--train_features", "--broderick_features", dest="train_features",
+                   default="/work/upschrimpf1/sigfstea/multimodal-brain-scaling/outputs/features/"
+                           "whisper-small-delta-t-surprisal/merged",
+                   help="features dir of the EEG dataset to fit on (default: D2/surprisal, whisper-small)")
+    p.add_argument("--train_neural", "--broderick_neural", dest="train_neural",
+                   default="outputs/neural_data/surprisal_30s.h5",
+                   help="EEG HDF5 to fit + held-out-eval on (default: D2 = Cortical Surprisal)")
     p.add_argument("--mmn_features_root", default="outputs/features")
     p.add_argument("--stimuli_root", default="outputs/mmn_stimuli")
     p.add_argument("--layer", default="blocks.3")
@@ -319,10 +257,10 @@ def main():
     lags = lags_in_bins(0.0, args.lag_max_ms, TIME_STEP_MS, TIME_STEP_MS)
 
     print(f"Building parcels (NC floor r>{args.nc_r_threshold}):")
-    parcels = build_parcels(Path(args.broderick_neural), args.nc_r_threshold)
+    parcels = build_parcels(Path(args.train_neural), args.nc_r_threshold)
     assert parcels, "no parcels survived the NC threshold"
 
-    # fit the Broderick->EEG mapping ONCE for this layer, apply to every method
+    # fit the model->EEG mapping ONCE for this layer, apply to every method
     model, mu, sd, eval_metrics = fit_mapping(args, lags, parcels)
 
     if args.methods == "all":

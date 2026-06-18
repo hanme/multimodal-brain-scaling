@@ -199,6 +199,7 @@ cython_debug/
 /features/
 /results/
 *.ckpt
+*.pt
 *.h5
 *.hdf5
 *.parquet

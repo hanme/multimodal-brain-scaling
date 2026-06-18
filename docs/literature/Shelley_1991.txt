@@ -1,0 +1,268 @@
+BIOL ~¥cmATRY 1059 
+1991 ;30:1059- |062 
+Mismatch Negativity: An Index of a Preattentive 
+Processing Deficit in Schizophrenia 
+A. M. Shelley, P. B. Ward, S. V. Catts, P. T. Michie, 
+S. Andrews, and N. McConaghy 
+Introduction 
+Although there is little doubt that schizophrenics 
+have attentional problems, the precise nature of 
+the deficit remains obscure. Following the dis- 
+tinction between automatic and controlled pro- 
+cesses (Shiffrin and Schneider 1977), some 
+theorists have proposed that schizophrenic at- 
+tention deficits are confined to controlled, or 
+active attentional processes (Caiiaway and Naghdi 
+1982; Nuechterlein and Dawson 1984), whereas 
+others have postulated an automatic, or preat- 
+tentive dysfunction, such as a failure of inhi- 
+bition (Johnson 1985) or defective filtering 
+(Shagass 1976). Most event-related potential 
+(ERP) studies of schizophrenic attention deficits 
+suggest an impairment in controlled processing 
+indexed by reduced P3 amplitude and an atten- 
+uation of processing negativity (PN) (Michie et 
+al 1990; Ward et al 1991). However, it is pos- 
+sible that dysfunctions in controlled processes 
+may be secondary to defects in preattentive 
+mechanisms. 
+Mismatch negativity (MMN) is an ERP 
+component elicited in the auditory "oddball" 
+paradigm by low probability "deviant" stimuli 
+embedded in a sequence of high probability 
+From the School of Psychology (SA) and Psychiatry (AMS, PBW, 
+SVC, NMcC), University of New South Wales, Kensington, 
+N.S.W., Australia; ~ld the School of Behavioural Sciences, Mac- 
+quarie University, N.S.W., Australia (PTM). 
+Address reprint requests to A.M. Shelley, Psychiatry Department 
+Prince of Wales Hospital, High Street, Randwick, N.S.W. 2031 
+Australia. 
+Received May 4, 1991; revised June 24, 1991. "'standard" stimuli. The MMN is most clearly 
+evident in conditions in which subjects are 
+asked to ignore auditory stimuli or to perform 
+a distracting task, suggesting that it is an in- 
+dex of preattentive processing. N~it~en (1990) 
+has proposed that the MMN is generated au- 
+tomatically whenever there is a mismatch be- 
+tween the neuronal model of the physical fea- 
+tures of the standard stimulus and the deviant 
+stimulus. At short interstimulus intervals (ISis), 
+all auditory stimuli elicit an N I and P2, but 
+deviants also elicit the MMN, which overlaps 
+NI and P2 (N~i[it~en and Picton 1987) and 
+peaks 100-300 ms after stimulus onset. MI~ 
+amplitude is increased for low probability de- 
+viant stimuli and for larger differences be- 
+tween deviants and standards. The auditory 
+MMN has been observed when stimulus de- 
+viance is defined by changes in pitch, inten- 
+sity, duration, spatial location, and phoneme 
+change (see N~it~inen 1990). The magnetic 
+counterpart of MMN, the mismatch field, has 
+been observed in response to deviations in 
+stimulus frequency, intensity, and duration (see 
+Kaukoranta et al 1989). 
+The present study investigated whether 
+schizophrenics show deficits in preattentive pro- 
+cesses indexed by the MMN. 
+Subjects and Methods 
+Subjects consisted of 11 medicated schizo- 
+phrenics (7 men, 4 women, mean age 29 years, 
+range 18--44 years) diagnosed according to 
+© 1991 Society of Biological Psychiatry 0006-3223/91/$03.50 
+
+1060 BIOL PSYCHIATRY 
+1991 ;~: 1059-1062 Brief Reports 
+DSM-III-R (APA 1987) criteria and 11 age- 
+and gender-matched controls. Patients mean 
+total score on the Brief Psychiatric Rathag Scale 
+(BPRS) (Lukoff et al 1986) was 47.0 (SD = 
+9.7). Mean neuroleptic dose, expressed in 
+chlorpromazine equivalents (Davis 1976), was 
+469.1 rag/day (SD = 262.9). Tones were 
+presented monaurally via TDH-39 head- 
+phones. Subjects heard i2 blocks of 290 au- 
+ditory tones (633 Hz, rise/fall time 10 ms, in- 
+tensity 80 dB SPL) of short (50 ms) and long 
+(100 ms) duration with a constant ISI of 510 
+ms. In half of the blocks, 10% of tones (de- 
+viants) were of long duration and 90% (stan- 
+dards) were of short duration, whereas in the 
+other half of the blocks, deviants were short 
+duration and standards were long duration 
+tones. Presentation of short and long deviant 
+blocks was counterbalanced, alternating be- 
+tween short and long deviants from one block 
+to the next. ERPs were recorded from 16 scalp 
+locations: four midline sites (Fpz, Fz, Cz, Pz) 
+and 12 lateral sites (F3, F4, F7, F8, C3, C4, 
+T3, T4, T5, T6, P3, P4). Eye mover, s=at ar- 
+tifact was monitored by vertical anJ ~:~rizon- 
+tal electrooculogram (EOG). Electroencepha- 
+logram (EEG) and EOG were amplified with 
+a bandpass of 0.01-30 Hz and digitized at 200 
+Hz for 760 ms, which included a 250 ms 
+prestimulus baseline. All recordings were re- 
+ferred to linked ears. All 12 blocks were per- 
+formed under a distraction condition in which 
+subjects made a manual response to visual 
+stimuli presented on a computer screen. Fol- 
+lowing ERP recording, patients were rated on 
+the Schedules for Positive and Negative 
+Symptoms (SAPS and SANS) (Andreasen 
+1982, 1984~ ERPs were analyzed using the 
+methods adopted by Niiiitiinen and colleagues 
+(1987, 1990), that is, difference waveforms 
+were obtained by subtracting standard ERPs 
+from deviant ERPs. Mean MMN amplitude 
+over the 150--225 ms epoch was calculated for 
+each subject and analyzed using a repeated 
+measures analysis of variance with factors of 
+group and deviant type (long versus short). 
+Correlations between symptom ratings and 
+MMN mean amplitude were examined with 
+Spearman's rho. Results 
+For this brief report, only data from Fz will be 
+considered. Grand average difference wave- 
+forms at Fz for the long deviant and short de- 
+viant conditions in the patient and control groups 
+are shown in Figure 1. There was a significant 
+difference between groups (F(I,20) = 6.49, 
+p < 0.02), with patients showing an attenuation 
+of MMN amplitude. The difference between the 
+two deviant types approached significance 
+(F(I,20) = 4.06, p < " "~' u.~p. The~c was also a 
+significant interaction between group and de- 
+viant type (F(l,20) = 4.79,p < 0.05). Patients 
+showed a significant attenuation of the MMN in 
+the long deviant condition (2.0 ttV versus 4.4 
+ttV) (F(I,20) = 8.64, p < 0.01) but not in the 
+short deviant condition (2.1 ttV versus 2.8 IxV) 
+(F(I,20) = 1.44, NS). There were no signifi- 
+cant correlations between mean MMN ampli- 
+tude and total scores on SAPS, SANS, BPRS, 
+or chlorpromazine equivalents. 
+Discussiea 
+The finding that the MMN component is atten- 
+uated in schizophrenics is consistent with other 
+demonstrations of anomalous preattentive pro- 
+cessing in schizophrenia such as gating abnor- 
+malities as indexed by the P50 (Baker et al 1987) 
+and the absence of visual perceptual grouping 
+effects (Place and Gilmore 1980). The results 
+raise the possibility that schizophrenic deficits 
+in controlled attention, as indexed by reductions 
+of PN and P3 amplitude (Michie et all !9_00_; 
+Ward et al 1991), may, at least partly, be due 
+to impairments in preattentive mechanisms. The 
+finding that group differences existed for long 
+but not short deviants is puzzling. It is possible 
+that short deviants are more attention capturing 
+and elicit a P3a in control subjects that artifi- 
+cially reduces MMN amplitude. This possibility 
+needs to be addressed by future research, par- 
+ticularly in view of recent controversy regarding 
+the purely preattentive nature of MMN (Wol- 
+dorff et al 1991; Alho et ai, unpublished data). 
+Both magnetoencephalography (Kaukoranta 
+et al 1989) and source analysis (Scherg et al 
+1989) have localized the MMN to the superior 
+
+Brief Repots BIOL PSYCHIATRY |~ | 
+199|~0: |~9- I062 
+v 
+-2#v - 2#V 
+0 200 400 0 200 400 
+r'r~s r'~s 
+Figure I. Grand average difference waveforms at the Fz electrode site for the long deviant (left) and the 
+short deviant (right) conditions in the p.~tient (dotted line) and control (solid line) groups. 
+temporal plane of the temporal lobe in healthy 
+subjects. These findings suggest that the ana- 
+tomical locus of the MMN deficit in schizo- 
+phrenics may be generated in the supratemporal 
+auditory cortex. This suggestion is consistent 
+with recent magnetic resonance imaging (MRI) 
+evidence that in schizophrenics the superior 
+temporal gyrus volume is reduced, particularly 
+in the left hemisphere (Barta et al 1990). The 
+question of whether schizophrenic patients with 
+abnormal MMN components show evidence of 
+structural changes in temporal areas merits care- 
+ful future scrutiny using MRI. 
+This research was supported by the National Health and 
+Medical Research Council and the Rebecca L. Cooper Med- 
+ical Research Foundation. 
+References 
+American Psychiatric Association (1987): DSM-IlI- 
+R: Diagnostic and Statistical Manual of Mental 
+Disorders. ed 3, Washington, DC: The Associ- 
+ation. 
+Andreasen NC (1982): Negative syrup:ores in schizo- 
+phrenia: Definition and reliability. Arch Gen Psy- 
+chiatry 39:784-788. 
+Andreasen NC (1984): The Scale for the Assessment 
+of Positive Symptoms (SAPS). Iowa City, Iowa: 
+The University of Iowa. Baker N, Adler LE, Franks RD, et al (1987): Neu- 
+rophysiological assessment of sensory gating in 
+psychiatric inpatients: Comparison between 
+schizophrenia and other diagnoses. Biol Psychia- 
+try 22:603-617. 
+Barta PE, Pearlson GD, Powers RE, Richards S$, 
+Tune LE (1990): Auditory hallucinations ~d 
+smiler superior temporal gyral vol~e in schizo- 
+phrenia. Am J Psychiatrs, 147:I457-1462. 
+Callaway E, Naghdi S (1982): An information pro- 
+cessing model for schizophrenia. Arch Gen Psy- 
+chiatry 39:339-347. 
+Davis JM (1976): Comparative doses and costs of 
+antipsychofic medication. Arch Gen Psychiatry 
+33:858-861. 
+Johnson JD (1985): A mechanism to inhibit input 
+activation and its dysfunction in schizophrenia. 
+Br J Psychiatry. i46:429-435. 
+Kaukoranta E, Sams M, Had R, H~n~l~finen M, 
+N~t~aen R (1989): Reactions of human auditory 
+cortex to a change in tone duration. Hear Res 
+41:15-21. 
+Lukoff D, Liberman RP, Nuechterlein KH (1986): 
+Symptom monitoring in the rehabilitation of 
+schizophrenic patients. Schizophr Bull 12:578-602. 
+Michie PT, Fox AM, Ward PB, Carts SV, Mc- 
+Conaghy N (1990): ERP indices of selective at- 
+tention and cortical lateralization m schizophre- 
+nia. Psychophysiology 27:209-227. 
+N~fftnen R (1990): The role of attention in auditory 
+information processing as revealed by event-re- 
+lated potentials and other brain measures of cog- 
+nitive function. Behav Brain Sci 13:201-288. 
+
+1062 BIOL PSYCHIATRY 
+1991 ;30:1059-1062 Brief Reports 
+N~i/itanen R, Picton TW (1987): The N I wave of the 
+human electric and magnetic response to sound: 
+A review and an analysis of the ¢-omponent struc- 
+ture. Psychophysiology 24:375-425. 
+Nuechterlein KH, Dawson ME (1984): Information 
+processing and attentional functioning in the de- 
+velopmental course of the schizophrenic disorder. 
+Schizophr Bull I 0:160-203. 
+P!.~ce EJS, Gilmore GC (1980): Perceptual organi- 
+zation in schizophrenia. J Abnorm Psycho189:409- 
+418. 
+Scherg M, Vajsar J, Picton TW (1989): A source 
+analysis of human auditory-evoked potentials. J 
+Cog Neurosci 1:336-355. Shagass C (1976): An electrophysiological view of 
+schizophrenia. Biol Psychiatry I 1:3-29. 
+Shi~n RM, Schneider W (1977): Controlled and 
+automatic human information processing. H. Per- 
+ceptual learning, automatic attending, and a gen- 
+eral theory. Psychol Rev 84:127-190. 
+Ward PB, Catts SV, Fox AM, Michie PT, Mc- 
+Conaghy N (1991): Auditory selective attention 
+and event-related potentials in schizophrenia. 8r 
+J Psychiatry 158:534-539. 
+Woldorff M, Hackley SA, Hillyatd SA (1991): The 
+effects of channel-selective attention on the mis- 
+match negativity wave elicited by deviant tones. 
+Psychophysiology 28:30--42. 
+

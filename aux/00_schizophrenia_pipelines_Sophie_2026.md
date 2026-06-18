@@ -97,6 +97,23 @@ Generates `.wav` files for all (model, method_id) combinations.
 - **Output dirs:** `data/audio_outputs_literature/audio_outputs_regular/{model}/` and `audio_outputs_counter/{model}/`
 - **Metadata:** `data/audio_outputs_literature/audio_outputs_regular_metadata/metadata.csv` (one row per file)
 
+> **Why the counterbalanced set matters — the two MMN constructions (physical control).** The MMN is
+> read time-locked to the **last (eliciting) tone**. Two ways to build the standard you subtract:
+> - **Definition 1 — uncontrolled:** standard `{1000,1000,1000,1000}` vs deviant `{1000,1000,1000,1200}`.
+>   Surprise = the 1000→1200 shift at the end, but the **last tone differs physically** (1000 vs 1200),
+>   so `deviant − standard` confounds surprise with the probe tone's acoustics.
+> - **Definition 2 — physically controlled:** standard `{1200,1200,1200,1200}` vs deviant
+>   `{1000,1000,1000,1200}`. Same surprise, but the **last tone is physically identical (1200 Hz) in
+>   both** → the subtraction isolates surprise and holds the probe-tone acoustics fixed.
+>
+> The **counterbalanced (`audio_outputs_counter`) set is exactly the mechanism that delivers
+> Definition 2**: averaging each physical tone equally across the standard and deviant roles matches the
+> eliciting-tone acoustics across conditions. This is the design **Weber 2022** uses; the classic
+> founding papers (Sams 1985, Tiitinen 1994) used the looser Definition 1 (oddball with physically
+> different standard vs deviant tones). Our encoding-side in-silico MMN (`method_09`, identity-MMN) is
+> also Definition 2 — the final tone is literally identical, deviance only in the context.
+> Full write-up: `aux/project_plan_20260611.md §17`.
+
 Model-specific durations and formats:
 
 | Model group | Duration | Format |
