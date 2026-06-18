@@ -28,7 +28,7 @@ from mbs.evaluation.utils.evaluation_helpers import load_layer_features
 from mbs.evaluation.evaluate_features_mtrf import (
     lags_in_bins, build_lagged_design, highpass_along_time, sample_time_indices, pearson_along_time,
 )
-from eeg_targets import FS, TIME_STEP_MS, build_targets, load_split_targets
+from eeg_targets import FS, TIME_STEP_MS, build_targets, load_split_targets, grouped_kfold
 
 
 def layers_for(model_id, layers_config):
@@ -80,7 +80,8 @@ def score_layer(layer, targets, args, lags, alphas):
     """CV-on-train score + held-out TEST score for one layer. Returns (cv_r, test_r) per target."""
     feats_all, id_map = load_layer_features(layer, features_folder=Path(args.features_dir))
     feats_all = feats_all.astype(np.float32)
-    eeg_tr, feats_tr = load_split_targets(args.neural, feats_all, id_map, targets, "train")
+    eeg_tr, feats_tr, train_ids = load_split_targets(args.neural, feats_all, id_map, targets,
+                                                     "train", return_ids=True)
     eeg_te, feats_te = load_split_targets(args.neural, feats_all, id_map, targets, "test")
     feats_tr = highpass_along_time(feats_tr, FS, args.highpass_hz)
     feats_te = highpass_along_time(feats_te, FS, args.highpass_hz)
@@ -90,12 +91,16 @@ def score_layer(layer, targets, args, lags, alphas):
     pca_tf, n_pc = maybe_pca([feats_tr], args.pca_var)
     feats_tr, feats_te = pca_tf(feats_tr), pca_tf(feats_te)
 
-    # k-fold CV over TRAIN stimuli (selection signal; test untouched)
+    # k-fold CV over TRAIN stimuli, GROUPED BY AUDIOBOOK PART so val windows never overlap the
+    # train windows (separate .wav files) — the selection signal is non-overlapping; test untouched.
     n = eeg_tr.shape[0]
-    folds = np.array_split(np.random.default_rng(args.seed).permutation(n), args.n_folds)
+    fold_id = grouped_kfold(train_ids, k=args.n_folds, seed=args.seed)
     cv = []
-    for vi in folds:
-        ti = np.setdiff1d(np.arange(n), vi)
+    for f in range(args.n_folds):
+        vi = np.where(fold_id == f)[0]
+        ti = np.where(fold_id != f)[0]
+        if vi.size == 0 or ti.size == 0:
+            continue
         cv.append(fit_predict(feats_tr[ti], eeg_tr[ti], feats_tr[vi], eeg_tr[vi],
                               lags, args.n_train_time_samples, alphas, args.seed))
     cv_r = np.nanmean(np.stack(cv, 0), 0)                                    # [n_target]
@@ -115,7 +120,8 @@ def main():
     p.add_argument("--features_dir", required=True, help="D2 (or other) features for this model")
     p.add_argument("--neural", default="outputs/neural_data/surprisal_30s.h5")
     p.add_argument("--layers_config", default="", help="override; else configs/.../<model>_layers.json")
-    p.add_argument("--n_folds", type=int, default=3)
+    p.add_argument("--n_folds", type=int, default=4,
+                   help="group-by-part CV folds (grouped_kfold); test split never touched")
     p.add_argument("--nc_r_threshold", type=float, default=0.2)
     p.add_argument("--highpass_hz", type=float, default=0.5)
     p.add_argument("--lag_max_ms", type=float, default=800.0)

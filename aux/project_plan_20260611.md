@@ -1115,7 +1115,7 @@ old `--broderick_*` kept as aliases). Runs against the 8 existing identity-MMN p
 few are eyeballed. Pair selection: ~10 from recent Def-2 studies (same eliciting tone), see
 `aux/mmn_screening_plan.md` and §17.
 
-## 20. ⭐ PICK UP HERE (2026-06-18 AM) — clean D2-only model→EEG mapping, from scratch
+## 20. (2026-06-18 AM) — clean D2-only model→EEG mapping, from scratch  [done; see §21]
 
 **Decision (2026-06-17 PM).** Redo the model→EEG mapping cleanly. Supersedes the ad-hoc fq_bars +
 best-layer-from-old-results approach (§19a) and the scattered `*-mtrf-*` results. One honest pipeline:
@@ -1167,3 +1167,61 @@ held-out validation split for speed via fewer folds if the sweep is too slow.
 **Status at handoff (2026-06-17 ~18:00):** fq_bars (§19a, job 55914970) still running — 3/4 models done
 (tiny/base/small results in its log), grinding medium; figure not yet written. That run is the OLD
 approach and is now mostly superseded by this §20 pipeline — keep it only as a cross-check.
+
+## 21. ⭐ PICK UP HERE (2026-06-18 PM) — non-overlapping group-by-part CV; mapping COMMITTED
+
+**The bug (supersedes the random-CV selection in §16.1/§16.2 and §20).** Layer selection used a
+validation/CV split carved from **random train windows**. D2 windows are 30 s at 10 s stride, so a
+held-out val window overlaps its retained train neighbours by 20 s → the selection score was
+**inflated ~2.5×** (encoder val ≈0.5 vs test ≈0.2; mTRF CV 0.24 vs test 0.10). Split 1 (train/test)
+was already clean — held out by whole audiobook *part* (`AUNP01` … = separate `.wav` files, no window
+overlap). Only **split 2 (selection)** leaked.
+
+**The fix.** Group the CV folds **by audiobook part** so each fold = whole parts → folds are
+non-overlapping by construction (no embargo needed). `part_group()` + `grouped_kfold(ids, k=4)` added
+to BOTH `scripts/eeg_targets.py` (mTRF) and `src/mbs/evaluation/attn_probe/dataset_temporal.py`
+(encoder), kept in sync. 12 train parts → 4 folds of 3 parts.
+- **mTRF** `eeg_mapping_sweep.py`: random `np.array_split` CV → `grouped_kfold` (default `--n_folds 4`);
+  `load_split_targets(..., return_ids=True)` exposes the ids. Output JSON schema unchanged.
+- **Encoder** driver gained `--val_mode {grouped,random}` (default grouped), `--n_folds`, `--fold_idx`;
+  `_aligned_feats` returns ids; writes per-layer `heldout_r__val` (held-out part-group) alongside
+  `heldout_r__test`. New scripts: `kuma_probe_d2_cv.sh` (32-task array = 4 models × 2 levels × 4 folds,
+  `--save_model false`), `eeg_mapping_encoder_cv.py` + `jed_collect_encoder_cv.sh` (average fold val r
+  → pick layer → emit the **mTRF-schema** JSON so `plot_eeg_mapping.py` is reused), `kuma_probe_d2_final.sh`
+  (8 tasks: train the final checkpoint at each chosen layer → the MMN `model__<layer>.pt` with
+  `eeg_mu`/`eeg_sd`). Deleted all old-way outputs incl. the 1-Pearson `whisper-small-probe-group-d2-mmn`.
+  Added `*.pt` to `.gitignore`. Tests: **26/26 green** (new `grouped_kfold` + grouped-val driver).
+
+**Runs (2026-06-18).** mTRF sweep jed `56930314` (8/8 COMPLETED), encoder CV kuma `3654867`
+(32/32, no errors), aggregation jed `57143730`. Figures: `outputs/figures/eeg_mapping{,_encoder}/`
+(`layer_selection*`, `test_fit_quality*`). Final encoder checkpoints = `kuma_probe_d2_final.sh`
+(`--array=0-7`, run from kuma1).
+
+**Result — inflation gone, and the "ridge wins" verdict (§14) is reversed.** Selection val is now
+≈1.3× test (was ≈2.5×). On the clean group-by-part CV, the **MSE encoder beats the mTRF on all 8
+cells** (test r at each method's chosen layer):
+
+| model | mTRF parc/elec | encoder parc/elec |
+|---|---|---|
+| tiny | 0.187 / 0.212 | **0.234 / 0.312** |
+| base | 0.153 / 0.173 | **0.271 / 0.286** |
+| small | 0.073 / 0.118 | **0.197 / 0.234** |
+| medium | 0.078 / 0.079 | **0.238 / 0.228** |
+
+Notably, with the leak removed the **mTRF now selects early layers** (blocks.0–3; medium 11/12) instead
+of the suspicious blocks.10/22 it picked under the inflated CV — i.e. those late-layer picks were
+partly a CV-leak artifact (this is the §14 suspicion, resolved on the selection side).
+
+**COMMITTED layers (fixed; what Sophie uses — see `aux/XX_handover_for_Sophie.md` §1):**
+
+| model | A mTRF parc/elec | B enc parc/elec |
+|---|---|---|
+| tiny | blocks.0 / blocks.0 | blocks.3 / blocks.3 |
+| base | blocks.0 / blocks.0 | blocks.2 / blocks.0 |
+| small | blocks.3 / blocks.1 | blocks.10 / blocks.10 |
+| medium | blocks.11 / blocks.12 | blocks.4 / blocks.3 |
+
+**Still open (the honest caveat).** Both methods still test on audiobooks *seen in train* (different
+parts) → this shows within-speaker generalisation; the **whole-audiobook (cross-speaker) holdout of
+§14 is not yet done**. That's the remaining stricter check before any "encoder beats ridge" claim
+goes in the paper.

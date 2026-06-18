@@ -11,6 +11,7 @@ Surprisal); nothing here is specific to a dataset.
 """
 
 from pathlib import Path
+import re
 import numpy as np
 import h5py
 
@@ -36,6 +37,43 @@ PREFIX_Y = {"FP": 0.95, "AF": 0.78, "F": 0.55, "FC": 0.32, "FT": 0.32, "C": 0.0,
 
 def decode(xs):
     return [x.decode() if hasattr(x, "decode") else x for x in xs]
+
+
+# ---------------------------------------------------------------------------
+# Group-by-part cross-validation folds (non-overlapping selection split)
+# ---------------------------------------------------------------------------
+# D2 windows are 30 s at 10 s stride, so windows from the SAME audiobook part overlap by 20 s.
+# Grouping CV folds by audiobook part (e.g. "AUNP01" — a separate .wav file) makes folds
+# non-overlapping by construction: no window in one fold shares samples with another fold. This is
+# the same principle that already makes the train/test split clean. Mirrored in
+# src/mbs/evaluation/attn_probe/dataset_temporal.py so the mTRF and the attention encoder fold
+# identically.
+
+def part_group(stim_id):
+    """Audiobook-part group of a stimulus id, e.g. 'AUNP02_0160000' -> 'AUNP02'."""
+    m = re.match(r"([A-Za-z]+\d+)_", str(stim_id))
+    return m.group(1) if m else str(stim_id)
+
+
+def grouped_kfold(ids, k=4, seed=42):
+    """Fold index [0..k-1] per id, grouping by audiobook part (whole parts stay together).
+
+    Parts are assigned to folds greedily largest-first onto the currently-smallest fold, so folds
+    are balanced by window count. Deterministic given (ids, k, seed). Returns an int array aligned
+    to ``ids``; every fold's set of parts is disjoint from every other fold's."""
+    groups = [part_group(i) for i in ids]
+    sizes = {}
+    for g in groups:
+        sizes[g] = sizes.get(g, 0) + 1
+    # tie-break by a seeded shuffle of equal-size groups for reproducible balance
+    rng = np.random.default_rng(seed)
+    order = sorted(sizes, key=lambda g: (-sizes[g], rng.random()))
+    fold_of_group, load = {}, [0] * int(k)
+    for g in order:
+        f = int(np.argmin(load))
+        fold_of_group[g] = f
+        load[f] += sizes[g]
+    return np.array([fold_of_group[g] for g in groups], dtype=int)
 
 
 def channel_r(neural_h5, ch):
@@ -107,13 +145,15 @@ def build_targets(neural_h5, level, threshold):
     return targets
 
 
-def load_split_targets(neural_h5, feats_all, id_map, targets, split):
+def load_split_targets(neural_h5, feats_all, id_map, targets, split, return_ids=False):
     """(target EEG [n, T, n_target], aligned raw features [n, T, d]) for one dataset split.
 
     Restricted to stimuli whose ids exist in id_map. Each target column is the raw average over
     its member channels (a single channel for electrodes). Identical id alignment per channel.
+    With ``return_ids=True`` also returns the aligned stimulus-id list (row order of the arrays),
+    needed for group-by-part CV (``grouped_kfold``).
     """
-    fi = keep = None
+    fi = keep = kept_ids = None
     cols = []
     for _, members, _ in targets:
         stack = []
@@ -124,7 +164,10 @@ def load_split_targets(neural_h5, feats_all, id_map, targets, split):
                 raw = [id_map.get(s) for s in ids]
                 keep = [i for i, v in enumerate(raw) if v is not None]
                 fi = [v for v in raw if v is not None]
+                kept_ids = [ids[i] for i in keep]
             stack.append(eeg_ch[keep][:, :, 0])             # [n, T]
         cols.append(np.mean(stack, axis=0)[:, :, None])     # raw avg -> [n, T, 1]
     eeg = np.concatenate(cols, axis=2).astype(np.float32)   # [n, T, n_target]
+    if return_ids:
+        return eeg, feats_all[fi], kept_ids
     return eeg, feats_all[fi]

@@ -24,6 +24,8 @@ from mbs.evaluation.attn_probe.dataset_temporal import (
     build_electrodes,
     load_parcel_eeg,
     WindowedTemporalDataset,
+    part_group,
+    grouped_kfold,
 )
 from mbs.evaluation.attn_probe.engine_temporal import (
     corr_loss,
@@ -447,3 +449,87 @@ def test_train_returns_best_val_checkpoint():
     best = history[-1]["best_val_r"]
     r_now = score_heldout(model, fva, eva, lookback=L, subject="group", device="cpu").mean()
     assert float(r_now) == pytest.approx(best, abs=1e-5)      # returned model IS the best one
+
+
+# ---------------------------------------------------------------------------
+# group-by-part CV folds (non-overlapping selection split, split 2)
+# ---------------------------------------------------------------------------
+
+def test_part_group_parses_audiobook_part():
+    assert part_group("AUNP02_0160000") == "AUNP02"
+    assert part_group("FLOP04_2560000") == "FLOP04"
+    assert part_group("BROP01_0000000") == "BROP01"
+
+
+def test_grouped_kfold_folds_are_part_disjoint_and_balanced():
+    """Every audiobook part lands entirely in ONE fold (so val windows never overlap train
+    windows), all k folds are used, and folds are balanced by window count."""
+    from collections import defaultdict
+    parts = {"AUNP01": 14, "AUNP03": 12, "AUNP04": 12, "AUNP05": 17, "AUNP06": 12, "AUNP07": 16,
+             "AUNP08": 16, "BROP01": 14, "FLOP01": 10, "FLOP02": 9, "FLOP03": 8, "FLOP04": 17}
+    ids = [f"{p}_{i:07d}" for p, n in parts.items() for i in range(n)]
+    fold = grouped_kfold(ids, k=4, seed=42)
+    assert fold.shape == (len(ids),)
+    assert set(fold.tolist()) == {0, 1, 2, 3}                    # all folds used
+    part_to_folds = defaultdict(set)
+    for i, f in zip(ids, fold):
+        part_to_folds[part_group(i)].add(int(f))
+    assert all(len(fs) == 1 for fs in part_to_folds.values())    # each part in exactly one fold
+    counts = [int((fold == f).sum()) for f in range(4)]
+    assert max(counts) - min(counts) <= max(parts.values())      # balanced within one part's size
+
+
+def test_grouped_kfold_is_deterministic():
+    ids = [f"{p}_{i:07d}" for p in ["AUNP01", "AUNP02", "BROP01", "FLOP01"] for i in range(5)]
+    np.testing.assert_array_equal(grouped_kfold(ids, k=4, seed=1), grouped_kfold(ids, k=4, seed=1))
+
+
+def test_driver_grouped_val_holds_out_a_whole_part(tmp_path):
+    """run_layer with --val_mode grouped uses a held-out audiobook-part fold as validation and
+    writes heldout_r__val; the val windows come from whole parts (no train overlap)."""
+    from types import SimpleNamespace
+    from mbs.evaluation.evaluate_features_attn_probe_temporal import run_layer
+
+    chans = ["Fz", "F3", "T7"]
+    parcels = [("frontal", ["Fz", "F3"], 0.5), ("temporal", ["T7"], 0.5)]
+    layer, d, T = "blocks.2", 6, 14
+    # 4 train parts (one per fold) + a test part; 4 windows each
+    train_parts = ["AUNP01", "AUNP02", "BROP01", "FLOP01"]
+    rng = np.random.default_rng(0)
+    neural = tmp_path / "d2.h5"
+    all_ids = []
+    with h5py.File(neural, "w") as f:
+        f.attrs["subjects"] = ["group"]; f.attrs["rois"] = chans
+        f.attrs["splits"] = ["train"]; f.attrs["max_nc"] = 100.0; f.attrs["time_step_ms"] = 20.0
+        layout = {"train": [f"{p}_{i:07d}" for p in train_parts for i in range(4)],
+                  "test":  [f"TESP01_{i:07d}" for i in range(4)]}
+        for split, sid_list in layout.items():
+            g = f.create_group(split)
+            g.create_dataset("stimulus_ids", data=np.array([s.encode() for s in sid_list]))
+            all_ids.extend(sid_list)
+            nd = g.create_group("neural_data").create_group("group")
+            for c in chans:
+                nd.create_dataset(c, data=rng.normal(size=(len(sid_list), T, 1)).astype(np.float32))
+        nc = f.create_group("noise_ceilings").create_group("group")
+        for c in chans:
+            nc.create_dataset(c, data=np.full((T, 1), 50.0, np.float32))
+
+    fdir = tmp_path / "feats"; fdir.mkdir()
+    with h5py.File(fdir / "feats_0.h5", "w") as f:
+        f.create_dataset(f"features/{layer.replace('.', '-')}",
+                         data=rng.normal(size=(len(all_ids), T, d)).astype(np.float32))
+        f.create_dataset("ids", data=np.array([s.encode() for s in all_ids]))
+
+    args = SimpleNamespace(
+        features_dir=str(fdir), data_hdf5_path=str(neural), highpass_hz=0.5,
+        d_model=16, nhead=4, num_latents=4, cross_attn_layers=1, dropout=0.0, pos_mode="learned",
+        device="cpu", epochs=2, lr=1e-3, weight_decay=1e-4, batch_size=64,
+        n_train_time_samples=8, amp=False, seed=0, readout_level="group", target_level="parcels",
+        val_mode="grouped", n_folds=4, fold_idx=0, eval_every=1, save_model=False,
+    )
+    with h5py.File(tmp_path / "out.h5", "w") as out_h5:
+        run_layer(args, layer, parcels, ["group"], lookback=4, out_h5=out_h5)
+        g = out_h5[layer.replace(".", "-")]
+        assert "heldout_r__val" in g and g["heldout_r__val"].shape == (2,)   # 2 parcels
+        assert g.attrs["val_mode"] == "grouped"
+        assert "heldout_r__test" in g                                        # clean test still scored

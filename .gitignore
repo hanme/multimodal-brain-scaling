@@ -212,6 +212,8 @@ outputs/features/
 outputs/neural_data/
 # copied MMN .wav stimuli (~119 MB), reproducible from Sophie's pipeline
 outputs/mmn_stimuli/
+# per-fold attention-encoder CV intermediates (the aggregated eeg_mapping_encoder JSONs are kept)
+outputs/results/*-cv/
 # (*.h5 rule above already excludes outputs/results/*.h5 and any other HDF5 files)
 
 # OS cruft

@@ -3,6 +3,13 @@
 _Last updated 2026-06-18. Full technical log (scaling, env/GPU, superseded methods, repo layout) is
 in `aux/project_plan_20260611.md`; MMN design in §17 there._
 
+> ✅ **Status (2026-06-18): mapping redone and complete (both methods, all 4 models, both levels).**
+> The earlier layer-selection CV was leaky (folds carved from overlapping windows); we switched to
+> non-overlapping group-by-part CV and re-ran. **The chosen layers in §1 are now committed/fixed** —
+> use them directly. mTRF (Method A) is ready now; the encoder (Method B) checkpoints are produced by
+> the final kuma job (`scripts/kuma_probe_d2_final.sh`) — use Method B once those `model__<layer>.pt`
+> files exist.
+
 **The task.** Feed MMN tone stimuli through a Whisper audio model, apply a trained model→EEG
 mapping, and get a predicted EEG time course at the **parcel** level (5 coarse 10-20 parcels) or the
 **electrode** level (47 NC-passing electrodes) — then run your deviant−standard MMN on it. The model
@@ -29,26 +36,35 @@ background.
 > then pass the names to `--methods`. (Screening guidance: `aux/mmn_screening_plan.md`; design
 > rationale: `project_plan §17`.)
 
-**Fixed layer** (from the D2 sweep; grab via
-`python -c "import json;print(json.load(open('outputs/results/eeg_mapping/whisper-small__parcels__D2.json'))['chosen_layer'])"`):
+**Fixed layer — committed (2026-06-18).** For each model × target level we pick the **one layer
+whose mapping best predicts the EEG averaged over targets** (highest mean-over-parcels / mean-over-
+electrodes held-out r under group-by-part CV). These are now **fixed — use the value from the table,
+don't re-select.** mTRF and the encoder pick different layers, so the table is per-method:
 
-| model | parcels | electrodes |
-|---|---|---|
-| whisper-tiny | `blocks.1` | `blocks.0` |
-| whisper-base | `blocks.4` | `blocks.4` |
-| whisper-small | `blocks.10` | `blocks.10` |
-| whisper-medium | `blocks.22` | `blocks.22` |
+| model | A mTRF · parcels | A mTRF · electrodes | B enc · parcels | B enc · electrodes |
+|---|---|---|---|---|
+| whisper-tiny | `blocks.0` | `blocks.0` | `blocks.3` | `blocks.3` |
+| whisper-base | `blocks.0` | `blocks.0` | `blocks.2` | `blocks.0` |
+| whisper-small | `blocks.3` | `blocks.1` | `blocks.10` | `blocks.10` |
+| whisper-medium | `blocks.11` | `blocks.12` | `blocks.4` | `blocks.3` |
 
-**Method A — mTRF** (recommended; ridge re-fit on D2 at `--layer`, amplitude-preserving):
+Use it as: **Method A** → pass `--layer <value>` (parcels and electrodes can differ — see the two
+columns); **Method B** → load the checkpoint already trained at that layer,
+`…-d2-<level>/model__<value>.pt`. (Source of truth, if ever needed: `chosen_layer` in
+`outputs/results/eeg_mapping{,_encoder}/<model>__<level>__D2.json`.)
+
+**Method A — mTRF** (recommended; ridge re-fit on D2 at `--layer`, amplitude-preserving). `--layer`
+= the committed value from the table (example below = whisper-small: parcels `blocks.3`,
+electrodes `blocks.1`):
 ```bash
-# parcels:
+# parcels (whisper-small -> blocks.3):
 python scripts/insilico_mmn.py \
   --train_features <MODEL D2 feats>/merged --train_neural outputs/neural_data/surprisal_30s.h5 \
-  --mmn_features_root outputs/features --layer blocks.10 --lag_max_ms 800 --methods all
-# electrodes (topographic MMN + present/absent verdict):
+  --mmn_features_root outputs/features --layer blocks.3 --lag_max_ms 800 --methods all
+# electrodes (whisper-small -> blocks.1; topographic MMN + present/absent verdict):
 python scripts/insilico_mmn_electrodes.py \
   --train_features <MODEL D2 feats>/merged --train_neural outputs/neural_data/surprisal_30s.h5 \
-  --layer blocks.10 --lag_max_ms 800 --methods all
+  --layer blocks.1 --lag_max_ms 800 --methods all
 ```
 Use `--lag_max_ms 800` to match the sweep that chose the layer (driver default is 500).
 
@@ -85,10 +101,9 @@ neg_peak = mmn[(t >= 100) & (t <= 250)].min(0)             # MMN-band negative p
 for n, v in zip(names, neg_peak): print(f"{n:9s} {v:+.3f}")
 ```
 
-**Amplitude.** Method A and the **new** Method B `…-d2-{parcels,electrodes}` checkpoints are
-amplitude-calibrated → read **magnitude** (for B, first invert with
-`checkpoint.predictions_to_units`). The **older** `…-d2-mmn` Method-B checkpoint used 1−Pearson loss
-→ amplitude is arbitrary, read **sign/shape** only.
+**Amplitude.** Both methods are amplitude-calibrated → read **magnitude**. Method A (ridge) preserves
+amplitude directly; Method B checkpoints (`…-d2-{parcels,electrodes}/model__<layer>.pt`) are MSE-trained
+and store the EEG scaling, so invert with `checkpoint.predictions_to_units` first.
 
 ---
 
@@ -108,19 +123,13 @@ amplitude-calibrated → read **magnitude** (for B, first invert with
   tone; the final tone is *physically identical* in standard and deviant (method_09: deviance is in
   the preceding context, 1000→600 Hz), so deviant−standard isolates surprise. Matches Weber 2022, not
   the classic Sams/Tiitinen oddball. (`project_plan §17`.)
-- **Layer-selection figures.** mTRF: `outputs/figures/eeg_mapping/` (`layer_selection*`,
-  `test_fit_quality*`, CV-chosen layer circled). Encoder (same plotter, after
-  `sbatch scripts/jed_collect_encoder_mapping.sh`): `outputs/figures/eeg_mapping_encoder/`.
-- **Fit quality on held-out speech EEG** (does the mapping work): figures in
-  `outputs/figures/insilico_mmn_small/fit_quality__*`; per-parcel test r ≈ 0.10 (mТРF) / 0.14 (enc).
+- **Layer selection = group-by-part k=4 CV** (non-overlapping): for each layer the val signal is a
+  held-out audiobook-part fold (separate .wav files → no window overlap with train), the chosen layer
+  maximises mean-fold val r, the clean test split is scored only at that layer. Same scheme for both
+  methods. Figures — mTRF: `outputs/figures/eeg_mapping/`; encoder: `outputs/figures/eeg_mapping_encoder/`
+  (built by `sbatch scripts/jed_collect_encoder_cv.sh`), each with `layer_selection*` (chosen layer
+  circled) + `test_fit_quality*`.
+- **Fit quality on held-out speech EEG** (does the mapping work): per-target test r is in the
+  `test_fit_quality*` figures above and the `eeg_mapping*` JSONs (`test_r_chosen`).
 
----
-
-## Open questions for you
-
-1. **Tones vs speech.** Mapping is fit on speech EEG, but the MMN stimuli are pure tones — a
-   speech-trained model extrapolating to non-speech. Want a speech-based oddball (phoneme/syllable
-   deviants) instead?
-2. **D2 split may be "easy"** (test shares the audiobook with train; windows overlap) — treat the
-   A-vs-B gap cautiously (`project_plan §14`).
-3. **Only `method_09` is run** — the full deviance-size / up-vs-down battery can be added.
+s

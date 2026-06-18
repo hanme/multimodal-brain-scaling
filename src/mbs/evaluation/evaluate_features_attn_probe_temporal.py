@@ -39,7 +39,7 @@ from mbs.evaluation.utils.evaluation_helpers import load_layer_features, load_ne
 from mbs.evaluation.evaluate_features_mtrf import highpass_along_time
 from mbs.evaluation.attn_probe.dataset_temporal import (
     build_parcels, build_electrodes, recompute_parcel_nc, load_parcel_eeg, parcel_nc_vector,
-    list_test_splits,
+    list_test_splits, grouped_kfold,
 )
 from mbs.evaluation.attn_probe.engine_temporal import (
     TemporalTrainConfig, train_temporal_probe, score_heldout,
@@ -70,9 +70,16 @@ def parse_args():
     p.add_argument("--lookback_ms", type=float, default=800.0)
     p.add_argument("--highpass_hz", type=float, default=0.5)
     p.add_argument("--nc_threshold", type=float, default=0.2)
+    p.add_argument("--val_mode", choices=["grouped", "random"], default="grouped",
+                   help="validation split for layer/epoch selection. 'grouped' = a held-out "
+                        "audiobook-part fold (non-overlapping with train — no 20s window leak); "
+                        "'random' = a random fraction of train windows (legacy, overlapping).")
+    p.add_argument("--n_folds", type=int, default=4,
+                   help="number of group-by-part folds (grouped val_mode).")
+    p.add_argument("--fold_idx", type=int, default=0,
+                   help="which grouped fold is the held-out validation set (0..n_folds-1).")
     p.add_argument("--val_frac", type=float, default=0.2,
-                   help="fraction of TRAIN stimuli held out as a validation split for checkpoint "
-                        "selection; the test split(s) are never touched during selection.")
+                   help="random val_mode only: fraction of TRAIN windows held out for selection.")
     p.add_argument("--eval_every", type=int, default=5,
                    help="evaluate validation Pearson every N epochs and keep the best-scoring "
                         "weights (MIRAGE-style). 0 disables selection (keep final epoch).")
@@ -109,7 +116,10 @@ def _decode(xs):
 
 
 def _aligned_feats(neural_h5, subject, parcels, split, layer_feats, id_map, highpass_hz):
-    """High-passed parcel EEG + id-aligned, high-passed features for one (subject, split)."""
+    """High-passed parcel EEG + id-aligned, high-passed features for one (subject, split).
+
+    Returns (feats [n,T,d], eeg [n,T,P], stimulus_ids [n]) — ids aligned to the array rows, used
+    for group-by-part CV folds."""
     ids, eeg = load_parcel_eeg(neural_h5, subject, parcels, split)
     raw = [id_map.get(s) for s in ids]
     keep = [i for i, v in enumerate(raw) if v is not None]
@@ -118,7 +128,7 @@ def _aligned_feats(neural_h5, subject, parcels, split, layer_feats, id_map, high
     eeg = eeg[keep].astype(np.float32)
     feats = highpass_along_time(feats, FS, highpass_hz)
     eeg = highpass_along_time(eeg, FS, highpass_hz)
-    return feats, eeg
+    return feats, eeg, [ids[i] for i in keep]
 
 
 def run_layer(args, layer_name, parcels, subjects, lookback, out_h5):
@@ -132,16 +142,25 @@ def run_layer(args, layer_name, parcels, subjects, lookback, out_h5):
     test_splits = list_test_splits(args.data_hdf5_path)   # ["test"] or ["test_d1","test_d2"]
 
     # Features are identical across subjects (all heard all runs); preprocess ONCE.
-    feats_tr_all, _ = _aligned_feats(args.data_hdf5_path, subjects[0], parcels, "train",
-                                     layer_feats, id_map, args.highpass_hz)
+    feats_tr_all, _, train_ids = _aligned_feats(args.data_hdf5_path, subjects[0], parcels, "train",
+                                                layer_feats, id_map, args.highpass_hz)
     n_tr = feats_tr_all.shape[0]
 
-    # Carve a validation split out of TRAIN for MIRAGE-style checkpoint selection; the held-out
-    # test split(s) are never touched during selection (matches the §20 mTRF CV-on-train rule).
-    val_frac = float(getattr(args, "val_frac", 0.2))
-    perm = np.random.default_rng(args.seed).permutation(n_tr)
-    n_val = int(round(val_frac * n_tr)) if n_tr > 1 else 0
-    val_idx, tr_idx = np.sort(perm[:n_val]), np.sort(perm[n_val:])
+    # Validation split out of TRAIN for MIRAGE-style layer/epoch selection; the held-out TEST
+    # split(s) are never touched during selection. 'grouped' = a held-out audiobook-part fold, so
+    # val windows never overlap train windows (separate .wav files) — no 20 s window leak; 'random'
+    # = legacy random-window carve (overlapping, inflated). Default grouped.
+    val_mode = getattr(args, "val_mode", "grouped")
+    if val_mode == "grouped":
+        fold_id = grouped_kfold(train_ids, k=int(getattr(args, "n_folds", 4)), seed=args.seed)
+        fi_sel = int(getattr(args, "fold_idx", 0))
+        val_idx = np.where(fold_id == fi_sel)[0]
+        tr_idx = np.where(fold_id != fi_sel)[0]
+    else:
+        val_frac = float(getattr(args, "val_frac", 0.2))
+        perm = np.random.default_rng(args.seed).permutation(n_tr)
+        n_val = int(round(val_frac * n_tr)) if n_tr > 1 else 0
+        val_idx, tr_idx = np.sort(perm[:n_val]), np.sort(perm[n_val:])
     if tr_idx.size == 0:                                  # degenerate tiny-data guard
         tr_idx, val_idx = np.arange(n_tr), np.array([], dtype=int)
     has_val = val_idx.size > 0
@@ -154,8 +173,8 @@ def run_layer(args, layer_name, parcels, subjects, lookback, out_h5):
     feats_tr_all = (feats_tr_all - mu) / sd
     feats_te_by_split = {}
     for split in test_splits:
-        f_te, _ = _aligned_feats(args.data_hdf5_path, subjects[0], parcels, split,
-                                 layer_feats, id_map, args.highpass_hz)
+        f_te, _, _ = _aligned_feats(args.data_hdf5_path, subjects[0], parcels, split,
+                                    layer_feats, id_map, args.highpass_hz)
         feats_te_by_split[split] = (f_te - mu) / sd
 
     # Per-subject EEG targets, z-scored per target on the TRAIN-PORTION stats. We REMEMBER the
@@ -165,8 +184,8 @@ def run_layer(args, layer_name, parcels, subjects, lookback, out_h5):
     eeg_tr_all, eeg_te_by_split = {}, {split: {} for split in test_splits}
     eeg_mu, eeg_sd = {}, {}
     for s in subjects:
-        _, e_tr = _aligned_feats(args.data_hdf5_path, s, parcels, "train",
-                                 layer_feats, id_map, args.highpass_hz)
+        _, e_tr, _ = _aligned_feats(args.data_hdf5_path, s, parcels, "train",
+                                    layer_feats, id_map, args.highpass_hz)
         n_tgt = e_tr.shape[-1]
         emu = e_tr[tr_idx].reshape(-1, n_tgt).mean(0)
         esd = e_tr[tr_idx].reshape(-1, n_tgt).std(0)
@@ -174,8 +193,8 @@ def run_layer(args, layer_name, parcels, subjects, lookback, out_h5):
         eeg_mu[s], eeg_sd[s] = emu.astype(np.float32), esd.astype(np.float32)
         eeg_tr_all[s] = ((e_tr - emu) / esd).astype(np.float32)
         for split in test_splits:
-            _, e_te = _aligned_feats(args.data_hdf5_path, s, parcels, split,
-                                     layer_feats, id_map, args.highpass_hz)
+            _, e_te, _ = _aligned_feats(args.data_hdf5_path, s, parcels, split,
+                                        layer_feats, id_map, args.highpass_hz)
             eeg_te_by_split[split][s] = ((e_te - emu) / esd).astype(np.float32)
 
     feats_train = {s: feats_tr_all[tr_idx] for s in subjects}
@@ -234,6 +253,23 @@ def run_layer(args, layer_name, parcels, subjects, lookback, out_h5):
         print(f"  [{layer_name}] {args.readout_level} held-out r [{split}] over {len(subjects)} subj:")
         for nm, rr, rn in zip(names, heldout_r, heldout_r_nc):
             print(f"    {nm:<10} r={rr:+.3f}   r/NC={rn:+.3f}")
+
+    # Per-layer VALIDATION r (the held-out selection split). For grouped val_mode this is the
+    # held-out audiobook-part fold (non-overlapping) — the honest layer-selection signal that the
+    # CV aggregation averages over folds. NOT used as a reported test number.
+    if has_val:
+        val_feats = feats_tr_all[val_idx]
+        r_persubj_val = np.stack([
+            score_heldout(model, val_feats, eeg_tr_all[s][val_idx], lookback, s, device=dev)
+            for s in subjects
+        ], axis=0)
+        heldout_r_val = r_persubj_val.mean(axis=0).astype(np.float32)
+        g.create_dataset("heldout_r__val", data=heldout_r_val)
+        g.attrs["val_mode"] = val_mode
+        g.attrs["fold_idx"] = int(getattr(args, "fold_idx", 0))
+        entry["val_r"] = heldout_r_val.tolist()
+        print(f"  [{layer_name}] val r ({val_mode} fold {getattr(args,'fold_idx',0)}) "
+              f"mean={float(np.nanmean(heldout_r_val)):+.3f}")
 
     if args.readout_level == "individual":
         g.create_dataset("subjects", data=np.array(subjects, dtype="S"))
@@ -294,6 +330,9 @@ def main(args):
     with h5py.File(scores_path, file_mode) as out_h5:
         out_h5.attrs["readout_level"] = args.readout_level
         out_h5.attrs["target_level"] = args.target_level
+        out_h5.attrs["val_mode"] = args.val_mode
+        out_h5.attrs["n_folds"] = args.n_folds
+        out_h5.attrs["fold_idx"] = args.fold_idx
         out_h5.attrs["lookback_ms"] = args.lookback_ms
         out_h5.attrs["lookback_bins"] = lookback
         out_h5.attrs["highpass_hz"] = args.highpass_hz

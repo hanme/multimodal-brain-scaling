@@ -12,6 +12,7 @@ per-subject (or ``group``) parcel EEG from the neural HDF5; ``WindowedTemporalDa
 feature windows to that EEG by stimulus id.
 """
 
+import re
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Tuple
 
@@ -68,6 +69,36 @@ def montage_pos(ch: str):
     mag = {1: 0.2, 2: 0.2, 3: 0.4, 4: 0.4, 5: 0.6, 6: 0.6, 7: 0.8, 8: 0.8,
            9: 1.0, 10: 1.0}.get(n, 0.9)
     return (-mag if n % 2 else mag), y
+
+
+# --- Group-by-part CV folds (mirror of scripts/eeg_targets.{part_group,grouped_kfold}) ---------
+# Folds grouped by audiobook part (separate .wav files) are non-overlapping by construction, so the
+# validation split used for layer/epoch selection carries no 20 s window-overlap leak. Kept in sync
+# with scripts/eeg_targets.py so the encoder and the mTRF fold identically.
+
+def part_group(stim_id) -> str:
+    """Audiobook-part group of a stimulus id, e.g. 'AUNP02_0160000' -> 'AUNP02'."""
+    m = re.match(r"([A-Za-z]+\d+)_", str(stim_id))
+    return m.group(1) if m else str(stim_id)
+
+
+def grouped_kfold(ids: Sequence, k: int = 4, seed: int = 42) -> np.ndarray:
+    """Fold index [0..k-1] per id, grouping by audiobook part (whole parts stay together).
+
+    Parts assigned greedily largest-first onto the currently-smallest fold (balanced by window
+    count). Deterministic; every fold's part-set is disjoint from the others'."""
+    groups = [part_group(i) for i in ids]
+    sizes: Dict[str, int] = {}
+    for g in groups:
+        sizes[g] = sizes.get(g, 0) + 1
+    rng = np.random.default_rng(seed)
+    order = sorted(sizes, key=lambda g: (-sizes[g], rng.random()))
+    fold_of_group, load = {}, [0] * int(k)
+    for g in order:
+        f = int(np.argmin(load))
+        fold_of_group[g] = f
+        load[f] += sizes[g]
+    return np.array([fold_of_group[g] for g in groups], dtype=int)
 
 
 def channel_r(neural_h5_path: Path, ch: str, nc_subject: str = "group") -> float:
