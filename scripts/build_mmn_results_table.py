@@ -5,8 +5,12 @@ Rows = (model, mapping, stimulus method); columns = baseline_normalized_peak per
 (frontal/central/temporal) plus the matching n7v1_peak diagnostic per parcel.
 
 Expects the model-namespaced directory convention from the cluster runbook:
-  outputs/insilico_mmn_predictions/<model>/predictions__<layer>.h5         (mTRF)
-  outputs/insilico_mmn_predictions/<model>/predictions__<layer>__attn.h5  (encoder)
+  outputs/insilico_mmn_predictions/<model>/predictions__<layer>.h5                    (mTRF)
+  outputs/insilico_mmn_predictions/<model>-<level>/<method>/predictions__<layer>__attn.h5  (encoder)
+
+The encoder driver (insilico_mmn_attn.py) truncates its output file on every invocation and
+only writes the one --method it was given, so per-method runs must use a per-method --data_dir;
+hence the search below is recursive (rglob), not a flat glob.
 
 Usage:
   python scripts/build_mmn_results_table.py \
@@ -45,7 +49,7 @@ def main():
     root = Path(args.predictions_root)
     rows = []
     for model_dir in sorted(d for d in root.iterdir() if d.is_dir()) if root.exists() else []:
-        for h5_path in sorted(model_dir.glob("predictions__*.h5")):
+        for h5_path in sorted(model_dir.rglob("predictions__*.h5")):
             mapping = "encoder" if h5_path.name.endswith("__attn.h5") else "mtrf"
             rows.extend(rows_from_h5(h5_path, model_dir.name, mapping))
 
