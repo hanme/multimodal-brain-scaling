@@ -6,7 +6,7 @@
 **Changelog pointer:** the most recent work touches the **model→EEG mapping** (§4) and the **layer-selection CV** — the committed per-model layers in §1.5 were finalised on 2026-06-18 after switching from leaky random folds to group-by-part CV. See §4.1–§4.2 and Open Questions §13.1.
 
 **Scope.** This document covers every executable / workflow-relevant script in the repository:
-- Python modules with a CLI / `__main__` (under `src/mbs/`, `scripts/`, and the repo-root `phase_00a_generate_activations.py`).
+- Python modules with a CLI / `__main__` (under `src/mbs/` and `scripts/`).
 - Registered console entry points (`pyproject.toml [project.scripts]`).
 - Shell and SLURM job scripts under `scripts/`.
 
@@ -17,7 +17,7 @@
 - **Notebooks** — the `visualization/main` and `visualization/supp` trees contain notebook/figure artifacts (commit `2cedb01` "Add visualization notebooks"); not documented here.
 - **Literature text** (`docs/literature/*.txt`, `docs/literature/extract_pdf_text.py`) — reference material for stimulus design, not pipeline code.
 
-**Orientation.** This repository is a **fork of the published ICML-2026 "Multimodal Scaling Laws for … Visual Cortex" codebase** that has been **extended for auditory EEG encoding and in-silico Mismatch-Negativity (MMN)** work. The document is centered on that **active auditory-EEG/MMN pipeline** (§2–§9). The original **vision→brain scaling pipeline is now reference-only and lives in §10**. A second, largely self-contained **schizophrenia MMN unit-identification pipeline** is represented in this checkout only by the root file `phase_00a_generate_activations.py` and the `data/audio_stimuli/` WAVs (§9); its full home is on Sophie's cluster account (see `aux/00_schizophrenia_pipelines_Sophie_2026.md`).
+**Orientation.** This repository is a **fork of the published ICML-2026 "Multimodal Scaling Laws for … Visual Cortex" codebase** that has been **extended for auditory EEG encoding and in-silico Mismatch-Negativity (MMN)** work. The document is centered on that **active auditory-EEG/MMN pipeline** (§2–§8). The original **vision→brain scaling pipeline is now reference-only and lives in §10**.
 
 ---
 
@@ -52,7 +52,6 @@
 - [6. Analysis / Scoring / Visualization](#6-analysis--scoring--visualization)
 - [7. Diagnostics](#7-diagnostics)
 - [8. Orchestration (shell / SLURM)](#8-orchestration-shell--slurm)
-- [9. Schizophrenia MMN unit pipeline (root `phase_00a`)](#9-schizophrenia-mmn-unit-pipeline-root-phase_00a)
 - [10. Legacy / reference-only: vision→brain scaling](#10-legacy--reference-only-visionbrain-scaling)
 - [11. High-Level Workflow Overview](#11-high-level-workflow-overview)
 - [12. Dependency and Execution Graph](#12-dependency-and-execution-graph)
@@ -139,7 +138,7 @@ The core **auditory mapping/scoring modules are NOT registered as console script
 | `scripts/` | all shell/SLURM job scripts + auditory analysis/plot/diagnostic Python (`insilico_mmn*`, `eeg_*`, `plot_*`, `diagnose_*`, `score_*`) |
 | `configs/extraction/audio/` | per-model Whisper layer lists `whisper_{tiny,base,small,medium,large}_layers.json` |
 | `configs/{models,training,evaluation,analysis}/` | legacy/vision research configs (§10) |
-| `data/audio_stimuli/` | 384 MMN tone WAVs `method_NN_*.wav` (standard + deviant) — inputs to §9 |
+| `data/audio_stimuli/` | 384 MMN tone WAVs `method_NN_*.wav` (standard + deviant); source for `outputs/mmn_stimuli/` (§5, §16.1) |
 | `data/metadata/` | `literature_frequency_intensity_duration_metadata.csv` (MMN paradigm definitions) |
 | `outputs/neural_data/` | formatted EEG HDF5s (`broderick2018_30s.h5` = D1, `surprisal_30s.h5` = D2, `d3_combined_30s.h5` = D3) — consumed everywhere; gitignored, produced on cluster |
 | `outputs/features/` | extracted delta-T feature HDF5s, per model, per stimulus set (`merged/` after combining SLURM chunks) |
@@ -785,64 +784,7 @@ All cluster scripts `cd` to the handover repo root and `source env.sh`. **jed** 
 
 **Legacy/example (local, not SLURM):** `train_example.sh`, `extract_example.sh`, `evaluate_example.sh`, `fit_curves_example.sh` (§10).
 
-> **Referenced-but-absent scripts** (named in `aux/project_plan_20260611.md`, not in this checkout): `scripts/jed_collect_encoder_mapping.sh`, `scripts/kuma_probe_d2_levels.sh`, `scripts/run_probe_d2_levels.sh`, and `scripts/submit_phase_0a.sh` (the latter referenced by §9). See §13.5.
-
----
-
-## 9. Schizophrenia MMN unit pipeline (root `phase_00a`)
-
-### 9.1 `phase_00a_generate_activations.py`
-
-**Purpose:** A **separate** pipeline from §2–§8: extract time-preserving model activations (and deviant−standard differences) for MMN unit identification. For every standard/deviant WAV pair and every model, it produces four output types — **Full_T** (activations over the full clip, `[T, U]`), **Delta_T** (causal, via progressive truncation, `[T, U]`), and the unit-wise **Full_T / Delta_T differences** (deviant − standard). This is the repo-root drop-in copy of the script whose full home is `…/scz_updated_pipeline_071226/` (see `aux/00_schizophrenia_pipelines_Sophie_2026.md`). It was the most recently edited file in this checkout (2026-06-18 20:03).
-
-**Supports / scope:** 9 audio models — `whisper-{tiny,small,base,medium,large}`, `wav2vec2-{base,large}`, `vggish`, `ast` (`CV_MODELS`). Whisper=30 s input, others=10 s (`MODEL_DURATION_MS`). VGGish forced to CPU; Whisper hooks the encoder only; wav2vec2/AST hook the full model.
-
-**How to run:**
-```bash
-# Test (whisper-tiny only):
-python phase_00a_generate_activations.py --audio_dir data/audio_inputs_literature --output_dir data --test
-
-# One model (SLURM-parallelisable):
-python phase_00a_generate_activations.py --model whisper-tiny --audio_dir data/audio_inputs_literature --output_dir data
-
-# All 9 sequentially:
-python phase_00a_generate_activations.py --audio_dir data/audio_inputs_literature --output_dir data
-```
-
-**Required inputs:** `--audio_dir` containing per-model subdirectories (`MODEL_SUBDIR_MAP`: whisper→`whisper/`, etc.) of WAVs named `method_<id>_standard.wav` and `method_<id>_N<n>_var<m>_deviant.wav` (`N∈{3,5,7}`, `var 1..5`).
-
-**Key parameters:**
-
-| Arg | Default | Purpose |
-|---|---|---|
-| `--model` | `None` (all 9) | one of `CV_MODELS` |
-| `--audio_dir` | (required) | root of per-model WAV subdirs |
-| `--output_dir` | (required) | root for activation outputs |
-| `--test` | off | whisper-tiny only |
-| `--skip_existing` | off | skip pairs whose outputs exist |
-| `--activation_type` | `both` | `both`\|`full_t`\|`delta_t` |
-
-**Produced outputs:** `.npy` dicts `{layer_name: [T, U]}` under:
-```
-{output_dir}/activations_full_t_method/{model}/{stem}_activation_full_t.npy
-{output_dir}/activations_delta_t_method/{model}/{stem}_activation_delta_t.npy
-{output_dir}/activations_full_t_method_difference/{model}/method_{id}_N{n}_var{m}_full_t_difference.npy
-{output_dir}/activations_delta_t_method_difference/{model}/method_{id}_N{n}_var{m}_delta_t_difference.npy
-```
-
-**Step-by-step:** per model — load model; **probe pass** on a zero waveform to discover `T` (most common time dim) and which layers carry a time axis; group WAVs by `method_id`; per method compute/save standard Full_T & Delta_T, then per deviant compute its activations + `deviant − standard` difference.
-
-**Key functions:** `run_probe_pass`, `compute_full_t`, `compute_delta_t`, `compute_difference`, `aggregate_activations`, `ActivationExtractor`, `discover_and_group_wavs`, `load_model`, `run_forward_pass`, `process_model`, `main`.
-
-**Main dependencies:** `torch`, `torchaudio`, `openai-whisper`, `transformers` (wav2vec2/AST), `torchvggish` (torch.hub or local), `numpy`, `tqdm`.
-
-**Relationship:** standalone in this checkout — downstream Phase 01 (`phase_01_unit_selection.py`) and the submit scripts live in Sophie's cluster repo, not here. The shipped `data/audio_stimuli/` WAVs (384 files) match its filename patterns and `data/metadata/literature_frequency_intensity_duration_metadata.csv` defines the paradigms.
-
-**Common failure modes / notes:**
-- **Path mismatch:** the usage examples read `data/audio_inputs_literature/<model_subdir>/`, but the WAVs in this checkout are flat under `data/audio_stimuli/` (no `whisper/` subdir). As written it would report "Audio directory not found" for the expected layout — see §13.6.
-- `--test` with `--model != whisper-tiny` errors out.
-- torch < 2.6 triggers a transformers safe-load monkeypatch (security warning printed).
-- VGGish import falls back through torch.hub → local `torchvggish/` → a hardcoded HPC path.
+> **Referenced-but-absent scripts** (named in `aux/project_plan_20260611.md`, not in this checkout): `scripts/jed_collect_encoder_mapping.sh`, `scripts/kuma_probe_d2_levels.sh`, `scripts/run_probe_d2_levels.sh`. See §13.5.
 
 ---
 
@@ -952,7 +894,6 @@ MMN WAVs ──slurm_mmn_extract.sh──► mmn-<method>-delta-t               
 | `plot_mtrf_scores.py` (§6.5) | §4.1 `mtrf_scores.h5` |
 | `plot_temporal_scores.py` / `plot_score_distributions.py` (§6.6/§6.7) | §4.5 `temporal_scores.h5` |
 | `diagnose_*` (§7) | §2.1 EEG, BIDS |
-| `phase_00a_generate_activations.py` (§9) | MMN WAVs (standalone) |
 
 ---
 
@@ -971,19 +912,13 @@ The plot scripts §6.5–§6.7 hardcode `subject="group"` in the key path, while
 `surprisal_30s.h5` (D2) and `d3_combined_30s.h5` (D3) are consumed pervasively, but only the Broderick (D1) formatter (§2.1) is present. The D2/D3 builders (the handover/plan mention a `cortical_suprisal_dataset` and a `build_d3_features` effort) live in Sophie's larger cluster copy, not here. To rebuild D2/D3 you need that code or the prebuilt HDF5s. The files are gitignored / not present locally.
 
 ### 13.5 Referenced-but-absent shell scripts — **Open (doc drift)**
-`aux/project_plan_20260611.md` references `scripts/jed_collect_encoder_mapping.sh`, `scripts/kuma_probe_d2_levels.sh`, `scripts/run_probe_d2_levels.sh`, and §9's docstring references `scripts/submit_phase_0a.sh` — none exist in this checkout. Treat them as planned/not-yet-committed.
-
-### 13.6 `phase_00a` audio-dir layout mismatch — **Needs confirmation**
-§9's documented `--audio_dir data/audio_inputs_literature/<model_subdir>/` layout does not match the shipped `data/audio_stimuli/*.wav` (flat, no per-model subdirs). Either the WAVs need reorganising into `data/audio_inputs_literature/whisper/…` (etc.), or `--audio_dir` should point at the real per-model tree on Sophie's account. Confirm the intended input root before running §9 here.
+`aux/project_plan_20260611.md` references `scripts/jed_collect_encoder_mapping.sh`, `scripts/kuma_probe_d2_levels.sh`, `scripts/run_probe_d2_levels.sh` — none exist in this checkout. Treat them as planned/not-yet-committed.
 
 ### 13.7 `insilico_mmn.py` default `--lag_max_ms 500` vs sweep 800 — **Resolved (2026-06-18)**
 The driver default was 500 ms even though the handover instructed `--lag_max_ms 800` to match the sweep that chose the committed layers, and `score_mtrf_fitquality.py`/`plot_fit_quality.py` already defaulted to 800. **Fixed:** `insilico_mmn.py`'s `--lag_max_ms` default is now `800.0`, matching the other two drivers; the electrode driver's default was also brought in line.
 
 ### 13.8 MMN frequency pairs are placeholders — **Resolved (2026-06-18, see §16.1)**
 The 8 shipped `method_*` pairs described a now-superseded identity-MMN design and are gone. `METHODS` in `insilico_mmn.py` now holds the 10-pair literature classic-oddball set (`data/metadata/literature_frequency_intensity_duration_metadata.csv`), already present as `data/audio_stimuli/`. See §16.1 for why this is a different design from the old `method_37/44/55`, not a stale copy of it.
-
-### 13.9 Two pipelines share a repo — **Resolved (clarified)**
-The encoding/auditory-EEG pipeline (§2–§8) and the schizophrenia MMN unit pipeline (§9) are conceptually separate codebases that happen to coexist here; their join is conceptual (the mapping says which layer/units predict EEG; the MMN pipeline supplies what to feed). See `aux/00_schizophrenia_pipelines_Sophie_2026.md`.
 
 ### 13.10 Shell-script `MMN_METHOD`/`--method` defaults still say `method_09` — **Open (doc drift, low risk)**
 `scripts/slurm_mmn_extract.sh` (`METHOD="${MMN_METHOD:-method_09}"`) and `scripts/kuma_probe_mmn.sh` (echoed example) still default/refer to the old-registry `method_09`, which no longer exists in `METHODS` or `data/audio_stimuli/` (§16.1). The three Python drivers' own `--method`/`--methods` defaults were updated to the new registry (`method_37`, §5.1–§5.3), but these two shell scripts were left as-is since they're outside this round's Python-only scope. Low risk because the runbook (§15 Stage D) always passes `MMN_METHOD` explicitly — just don't rely on the shell scripts' bare defaults.
@@ -995,13 +930,12 @@ The encoding/auditory-EEG pipeline (§2–§8) and the schizophrenia MMN unit pi
 1. `aux/XX_handover_for_Sophie.md` — the focused "run it" guide for the MMN deliverable; defines §1.5 layers and Methods A/B.
 2. `aux/01_setup.md` — environment, cluster, dataset download.
 3. `aux/mmn_screening_plan.md` — MMN stimulus selection + evaluation criteria.
-4. `aux/00_schizophrenia_pipelines_Sophie_2026.md` — context for §9 and the broader project.
-5. `aux/project_plan_20260611.md` — the full technical log (scaling, env/GPU, superseded methods, MMN design §17, repo layout); large — skim by section.
-6. `scripts/eeg_targets.py` (§4.8) — parcels/electrodes/CV definitions used everywhere.
-7. `src/mbs/evaluation/evaluate_features_mtrf.py` (§4.1) — the shared mTRF engine.
-8. `scripts/insilico_mmn.py` (§5.1) — the end-to-end Method A MMN driver.
-9. `src/mbs/evaluation/evaluate_features_attn_probe_temporal.py` (§4.4) — Method B training/scoring.
-10. `README.md` — only for the legacy vision pipeline (§10).
+4. `aux/project_plan_20260611.md` — the full technical log (scaling, env/GPU, superseded methods, MMN design §17, repo layout); large — skim by section.
+5. `scripts/eeg_targets.py` (§4.8) — parcels/electrodes/CV definitions used everywhere.
+6. `src/mbs/evaluation/evaluate_features_mtrf.py` (§4.1) — the shared mTRF engine.
+7. `scripts/insilico_mmn.py` (§5.1) — the end-to-end Method A MMN driver.
+8. `src/mbs/evaluation/evaluate_features_attn_probe_temporal.py` (§4.4) — Method B training/scoring.
+9. `README.md` — only for the legacy vision pipeline (§10).
 
 ---
 
@@ -1093,9 +1027,6 @@ This round closed out §13.2/§13.7/§13.8 above and replaced the placeholder MM
 
 ### 16.1 The new `method_37/44/55` are NOT the old `method_37/44/55`
 Two unrelated stimulus-generation rounds happen to reuse the same `method_id` numbers. The **old** round (still referenced in `aux/XX_handover_for_Sophie.md` and, until this commit, hardcoded in `insilico_mmn.py`'s `METHODS`) was a Definition-2, physically-controlled identity-MMN design: one standard/deviant pair per method, with the final/eliciting tone *physically identical* in both — deviance lived only in the preceding context (e.g. old `method_37` = "1050→1000 Hz downward," final tone fixed at 1000 Hz). The **new** round (this round's deliverable) is a literature-replication classic oddball design (Definition 1): per method, 1 standard file + 15 deviant files (`N∈{3,5,7} × var∈{1..5}`), and the deviant condition's *last* tone differs in frequency from the standard's (e.g. new `method_37` = Javitt_2000a, standard 1000 Hz repeats, deviant train ends on 1050 Hz). Confirmed against `data/metadata/literature_frequency_intensity_duration_metadata.csv`: all 10 requested ids map exactly to Karger_2014(75), Domjan_2012(74), Bodatsch_2011(72), Umbricht_2003a(60), Salisbury_2002a(53), Shinozaki_2002a(55), Javitt_2000a(37), Michie_2000b(43), Michie_2000c(44), Schall_1999a(27); `data/audio_stimuli/` already has all 10 × 16 files. **Implication:** if you ever see `outputs/mmn_stimuli/method_{37,44,55}` not matching `data/audio_stimuli/method_{37,44,55}`, that is not a stale-cache bug — it's two different experiments sharing a number. Don't cross-reference them; always populate `outputs/mmn_stimuli/` fresh from `data/audio_stimuli/` (or the verified cluster source) for this design.
-
-### 16.2 `phase_00a_generate_activations.py` (root-level, untracked) is confirmed non-interoperable with this repo's own extraction pipeline
-Checked whether `phase_00a`'s output (a separate, already-cluster-run activation extractor belonging to the §9 schizophrenia-unit pipeline) could substitute for re-running `scripts/slurm_mmn_extract.sh` → `mbs.extraction.extract_features_delta_t`. It can't, for two independent reasons: (1) **format** — `phase_00a` writes one `.npy` pickle per stimulus keyed by *every* hooked submodule of `model.encoder` with a time axis (attention/MLP/layernorm sublayers, not just block outputs), while this repo's pipeline writes batched HDF5 (`features/<alias>`, merged across stimuli) — the only schema `load_layer_features`/`insilico_mmn*.py`/`eeg_mapping_sweep.py` read; no converter exists. (2) **truncation mechanics differ** — `extract_features_delta_t.py` truncates by overwriting mel frames ≥`2(t+1)` in the already-normalized mel array with a precomputed silence value, while `phase_00a` zeroes the raw waveform past the boundary and recomputes the full log-mel-spectrogram from scratch at every `t`. Both hook the same `model.encoder.blocks.N` and should agree away from the truncation boundary, but this was never verified bit-identical near the boundary, and it doesn't matter given (1). **phase_00a stays out of scope; always (re-)extract via `slurm_mmn_extract.sh` for MMN work.**
 
 ### 16.3 Code changes made this round
 - `scripts/insilico_mmn.py`: `METHODS` replaced with the 10-pair set (§16.1); added `load_soa_table()`/`soa_for_method()` (reads `standard_soa` from the metadata CSV); replaced the mean-only, fixed-150ms `bc()` baseline correction with `finalize_method()` — a shared A/B helper that keeps the **plotted** `dev_b`/`std_b`/`diff_b` as mean-only baseline correction (now over a `3×SOA`-ms window, same units as before) but adds a **z-scored, verdict-only** `baseline_normalized_peak` (full z-score of dev/std within the same baseline window, differenced, most-negative point in `[100,240]` ms) plus an `n7v1_peak` diagnostic from the single `N7/var1` deviant trace alone. The z-scored arrays are never plotted — only the resulting scalar is annotated on the figures. `plot_method()` now restricts rows to frontal/central/temporal and annotates the third column with `baseline_normalized_peak`. `--lag_max_ms` default changed `500→800` (§13.7).
