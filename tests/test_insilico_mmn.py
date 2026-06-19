@@ -122,6 +122,27 @@ def test_finalize_method_plotted_traces_are_mean_only_not_zscored(monkeypatch, s
     assert np.allclose(res["diff_b"], res["dev_b"] - res["std_b"])
 
 
+def test_finalize_method_z_traces_are_plotted_and_match_peak(monkeypatch, stim_dir):
+    final_s, soa_ms, baseline_sd = 5.0, 300.0, 5.0
+    monkeypatch.setattr(im, "detect_final_tone_onset_s", lambda wav: final_s)
+    t_idx, std_raw, dev_preds, dev_ids = _synthetic_traces(final_s, soa_ms, baseline_sd=baseline_sd)
+
+    res = im.finalize_method("method_test", t_idx, std_raw, dev_preds, dev_ids, stim_dir, soa_ms)
+
+    rel_ms = res["rel_ms"]
+    base = (rel_ms >= -3.0 * soa_ms) & (rel_ms < 0)
+    mmn_win = (rel_ms >= 100.0) & (rel_ms <= 240.0)
+    # z_dev/z_std are full z-scores: baseline mean ~0 AND std ~1 (unlike dev_b/std_b above).
+    np.testing.assert_allclose(res["z_dev"][base].mean(0), 0.0, atol=1.0)
+    np.testing.assert_allclose(res["z_std"][base].mean(0), 0.0, atol=1.0)
+    np.testing.assert_allclose(res["z_dev"][base].std(0), 1.0, atol=0.2)
+    np.testing.assert_allclose(res["z_std"][base].std(0), 1.0, atol=0.2)
+    assert np.allclose(res["z_diff"], res["z_dev"] - res["z_std"])
+    # peak is exactly the most-negative point of the plotted z_diff line in the scoring window --
+    # i.e. plot_method()/plot_topo() now draw the same curve the annotated peak comes from.
+    np.testing.assert_allclose(res["z_diff"][mmn_win].min(0), res["peak"], atol=1e-4)
+
+
 def test_finalize_method_peak_is_zscored_and_negative_in_mmn_window(monkeypatch, stim_dir):
     final_s, soa_ms = 5.0, 300.0
     monkeypatch.setattr(im, "detect_final_tone_onset_s", lambda wav: final_s)

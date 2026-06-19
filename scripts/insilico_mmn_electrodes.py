@@ -5,9 +5,9 @@ Electrode version of insilico_mmn.py. Every helper there is reused as-is by trea
 as a single-member "parcel" (build_electrodes returns (channel, [channel], r)); the mapping, the
 held-out eval, and the time-locking are identical. Only the plotting/scoring differs:
 
-  * one figure per method: a 10-20 montage grid of the mean-baseline-corrected MMN (deviant -
-    standard) trace per electrode (shared y-scale so the topography is readable; 100-240 ms MMN
-    band shaded). The z-scoring used for the verdict (below) is never what's plotted here.
+  * one figure per method: a 10-20 montage grid of the z-scored MMN (deviant - standard) trace
+    per electrode (shared y-scale so the topography is readable; 100-240 ms MMN band shaded).
+    This is the same full baseline z-score the verdict (below) is computed from.
   * a simple per-method MMN verdict: the z-scored baseline_normalized_peak (insilico_mmn.finalize_method)
     averaged over a fronto-central ROI; negative beyond --mmn_thresh => "MMN present". Stored +
     printed alongside the figure.
@@ -53,7 +53,7 @@ def mmn_metric(res, electrodes, roi):
 
 
 def plot_topo(method, label, source, res, electrodes, args, amp, roi_used, present, out_path):
-    rel, diff = res["rel_ms"], res["diff_b"]      # diff_b is mean-baseline-corrected, NOT z-scored
+    rel, diff = res["rel_ms"], res["z_diff"]      # z_diff is the full baseline z-score, same units as peak
     win = (rel >= -args.win_pre_ms) & (rel <= args.win_post_ms)
     x = rel[win]
     ymax = float(np.nanmax(np.abs(diff[win]))) or 1.0
@@ -75,7 +75,7 @@ def plot_topo(method, label, source, res, electrodes, args, amp, roi_used, prese
     verdict = "MMN PRESENT" if present else "no MMN"
     fig.suptitle(
         f"In-silico MMN (electrodes) — {method} ({label}, {source})  |  layer {args.layer}\n"
-        f"mean-baseline-corrected deviant - standard per electrode (red = fronto-central ROI); "
+        f"z-scored deviant - standard per electrode (red = fronto-central ROI); "
         f"shaded = {args.mmn_lo_ms:.0f}-{args.mmn_hi_ms:.0f} ms band\n"
         f"ROI mean baseline_normalized_peak = {amp:+.3g}  ->  {verdict}  (thresh {-args.mmn_thresh:+.3g})",
         fontsize=11, y=0.98)

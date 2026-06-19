@@ -11,13 +11,13 @@ Pipeline:
      the standard's repeating tone -- see METHODS below and
      data/metadata/literature_frequency_intensity_duration_metadata.csv).
   3. Per method: average all 15 deviant trials (N in {3,5,7} x var in {1..5}), take the
-     standard, time-lock to the final-tone onset, mean-baseline-correct (window sized to
-     3x the method's SOA) for plotting, and separately z-score dev/std within that same
-     window to compute baseline_normalized_peak = min(z_dev - z_std) in the 100-240 ms band
-     (the z-scoring is verdict-only, never plotted -- see finalize_method()).
+     standard, time-lock to the final-tone onset, and z-score dev/std within a baseline window
+     (sized to 3x the method's SOA) to get z_dev/z_std; baseline_normalized_peak = min(z_dev -
+     z_std) in the 100-240 ms band (see finalize_method()).
   4. Plot a grid: rows = frontal/central/temporal parcels (each its OWN y-scale, annotated
      with NC + member channels), columns = deviant / standard / (deviant - standard), all
-     mean-baseline-corrected; the third column is annotated with baseline_normalized_peak.
+     z-scored; the third column is annotated with baseline_normalized_peak, the most-negative
+     point of that same plotted line in the shaded band.
 
 The mapping depends only on (layer, parcels), NOT on the MMN method, so it is fit ONCE
 per layer and applied to all methods in the loop.
@@ -183,10 +183,13 @@ def finalize_method(method, t_idx, std_raw, dev_preds, dev_ids, stim_dir, soa_ms
     All arrays span the full valid window (the entire ~29 s pre-final-tone baseline + post-onset),
     columns = parcels (same order as `parcels`). rel_ms = 0 is the final/critical-tone onset.
 
-    dev_b/std_b/diff_b (plotted) use mean-only baseline correction, exactly like the old `bc()`,
-    just with a baseline window sized to 3x the method's SOA instead of a fixed --win_pre_ms.
-    peak/n7v1_peak (verdict-only, NEVER plotted) additionally divide by the baseline std, i.e.
-    a full z-score, before differencing and taking the most-negative point in [100, 240] ms.
+    dev_b/std_b/diff_b use mean-only baseline correction, exactly like the old `bc()`, just with
+    a baseline window sized to 3x the method's SOA instead of a fixed --win_pre_ms; kept around
+    for callers/tests that want the un-normalized traces, but no longer what gets plotted.
+    z_dev/z_std/z_diff additionally divide by the baseline std (full z-score) -- these are what
+    plot_method()/plot_topo() now draw, so the plotted curve's units match the printed peak.
+    peak/n7v1_peak are the most-negative point of z_diff (or the N7/var1 deviant's own z-diff)
+    in [100, 240] ms.
     """
     dev_stack = np.stack(dev_preds, 0)              # [n_dev, n_t, n_parcel], RAW
     dev_raw = dev_stack.mean(0)                     # [n_t, n_parcel], RAW
@@ -204,10 +207,12 @@ def finalize_method(method, t_idx, std_raw, dev_preds, dev_ids, stim_dir, soa_ms
     def z(sig):
         sdv = sig[base].std(0, keepdims=True)
         sdv = np.where(sdv > 1e-8, sdv, 1.0)
-        return bc(sig) / sdv                        # full z-score, verdict-only (not plotted)
+        return bc(sig) / sdv                        # full z-score (now also the plotted MMN trace)
+
+    z_dev, z_std = z(dev_raw), z(std_raw)
+    z_diff = z_dev - z_std
 
     mmn_win = (rel_ms >= 100.0) & (rel_ms <= 240.0)
-    z_diff = z(dev_raw) - z(std_raw)
     peak = z_diff[mmn_win].min(0) if mmn_win.any() else np.full(z_diff.shape[1], np.nan, np.float32)
 
     n7v1_idx = next((i for i, sid in enumerate(dev_ids)
@@ -219,6 +224,8 @@ def finalize_method(method, t_idx, std_raw, dev_preds, dev_ids, stim_dir, soa_ms
 
     print(f"  {method}: {len(dev_preds)} deviants avg; final tone ~{final_s:.2f}s")
     return dict(rel_ms=rel_ms.astype(np.float32), dev_b=dev_b, std_b=std_b, diff_b=diff_b,
+                z_dev=z_dev.astype(np.float32), z_std=z_std.astype(np.float32),
+                z_diff=z_diff.astype(np.float32),
                 peak=peak.astype(np.float32), n7v1_peak=n7v1_peak.astype(np.float32),
                 std_raw=std_raw.astype(np.float32), dev_raw=dev_raw.astype(np.float32),
                 dev_stack=dev_stack.astype(np.float32), dev_ids=dev_ids, final_s=final_s)
@@ -250,19 +257,19 @@ PLOT_ROWS = ("frontal", "central", "temporal")
 
 
 def plot_method(method, label, source, res, parcels, args, out_path):
-    rel_ms, dev_b, std_b, diff_b, peak = (
-        res["rel_ms"], res["dev_b"], res["std_b"], res["diff_b"], res["peak"])
+    rel_ms, z_dev, z_std, z_diff, peak = (
+        res["rel_ms"], res["z_dev"], res["z_std"], res["z_diff"], res["peak"])
     win = (rel_ms >= -args.win_pre_ms) & (rel_ms <= args.win_post_ms)
     x = rel_ms[win]
 
     keep = [i for i, p in enumerate(parcels) if p[0] in PLOT_ROWS] or list(range(len(parcels)))
     parcels = [parcels[i] for i in keep]
-    dev_b, std_b, diff_b, peak = dev_b[:, keep], std_b[:, keep], diff_b[:, keep], peak[keep]
+    z_dev, z_std, z_diff, peak = z_dev[:, keep], z_std[:, keep], z_diff[:, keep], peak[keep]
 
     n = len(parcels)
     fig, axes = plt.subplots(n, 3, figsize=(13, 2.6 * n), sharex=True, squeeze=False)
-    col_titles = ["deviant", "standard", "deviant - standard (MMN)"]
-    sigs = [dev_b, std_b, diff_b]
+    col_titles = ["deviant (z-scored)", "standard (z-scored)", "deviant - standard (MMN, z-scored)"]
+    sigs = [z_dev, z_std, z_diff]
     for i, (pname, members, pr) in enumerate(parcels):
         for j, (ct, sig) in enumerate(zip(col_titles, sigs)):
             ax = axes[i][j]
@@ -283,8 +290,9 @@ def plot_method(method, label, source, res, parcels, args, out_path):
         f"In-silico MMN — {method} ({label}, {source})  |  layer {args.layer}, "
         f"{args.highpass_hz} Hz HP, {level} NC r>{args.nc_r_threshold} (raw avg)\n"
         f"classic oddball design: deviant train's final tone differs from the standard's; "
-        f"shaded = 100–240 ms MMN band. Columns are mean-baseline-corrected (not z-scored); "
-        f"3rd column annotated with the z-scored baseline_normalized_peak. Each row its own y-scale.",
+        f"shaded = 100–240 ms MMN band. Columns are full baseline z-scores (mean and std of the "
+        f"pre-onset window); 3rd column annotated with its own most-negative point in that band "
+        f"(baseline_normalized_peak). Each row its own y-scale.",
         fontsize=10)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.tight_layout(rect=[0, 0, 1, 0.97])
