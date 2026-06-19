@@ -3,7 +3,8 @@ insilico_mmn.py / insilico_mmn_electrodes.py (mTRF) and insilico_mmn_attn.py (en
 and assemble one CSV.
 
 Rows = (model, level, mapping, stimulus method); columns = baseline_normalized_peak per
-parcel (frontal/central/temporal) plus the matching n7v1_peak diagnostic per parcel.
+target (frontal/central/temporal parcel, or per-channel for electrode-level mTRF) plus the
+matching n7v1_peak diagnostic per target.
 
 Expects the model-namespaced directory convention from the cluster runbook:
   outputs/insilico_mmn_predictions/<model>/predictions__<layer>.h5                        (mTRF, parcels)
@@ -32,16 +33,19 @@ import h5py
 def rows_from_h5(h5_path, model, level, mapping):
     rows = []
     with h5py.File(h5_path, "r") as h5:
-        parcels = [p.decode() if hasattr(p, "decode") else p for p in h5["parcels"][:]]
+        # mTRF/encoder parcel-level files key their target dim "parcels"; mTRF electrode-level
+        # files key it "electrodes" instead (one row per 10-20 montage channel, not per ROI).
+        target_key = "parcels" if "parcels" in h5 else "electrodes"
+        targets = [t.decode() if hasattr(t, "decode") else t for t in h5[target_key][:]]
         for method, g in h5.items():
             if not isinstance(g, h5py.Group):
                 continue
             row = dict(model=model, level=level, mapping=mapping, method=method,
                        layer=h5.attrs.get("layer", ""),
                        source=g.attrs.get("source", ""), label=g.attrs.get("context_final", ""))
-            for pname, peak, n7v1_peak in zip(parcels, g["peak"][:], g["n7v1_peak"][:]):
-                row[f"{pname}_peak"] = float(peak)
-                row[f"{pname}_n7v1_peak"] = float(n7v1_peak)
+            for tname, peak, n7v1_peak in zip(targets, g["peak"][:], g["n7v1_peak"][:]):
+                row[f"{tname}_peak"] = float(peak)
+                row[f"{tname}_n7v1_peak"] = float(n7v1_peak)
             rows.append(row)
     return rows
 

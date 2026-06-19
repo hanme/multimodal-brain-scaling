@@ -156,10 +156,11 @@ def test_finalize_method_n7v1_peak_is_nan_when_absent(monkeypatch, stim_dir):
 import build_mmn_results_table as bmrt  # noqa: E402
 
 
-def _write_predictions_h5(path, layer, methods):
+def _write_predictions_h5(path, layer, methods, target_key="parcels",
+                           target_names=("frontal", "central", "temporal")):
     with h5py.File(path, "w") as h5:
         h5.attrs["layer"] = layer
-        h5.create_dataset("parcels", data=np.array(["frontal", "central", "temporal"], dtype="S12"))
+        h5.create_dataset(target_key, data=np.array(target_names, dtype="S12"))
         for method, source, peak, n7v1_peak in methods:
             g = h5.create_group(method)
             g.attrs["source"] = source
@@ -184,6 +185,22 @@ def test_rows_from_h5_reads_peak_and_n7v1_peak_per_parcel(tmp_path):
     assert row["central_n7v1_peak"] == pytest.approx(-2.5)
 
 
+def test_rows_from_h5_reads_electrode_level_files_keyed_by_electrodes_not_parcels(tmp_path):
+    # insilico_mmn_electrodes.py's output h5 keys its target dim "electrodes", not "parcels"
+    # (one row per 10-20 montage channel, not per frontal/central/temporal ROI).
+    h5_path = tmp_path / "electrode_predictions__blocks.0.h5"
+    _write_predictions_h5(h5_path, "blocks.0",
+                           [("method_75", "Karger_2014", [-1.0, -2.0], [-1.5, -2.5])],
+                           target_key="electrodes", target_names=("Fz", "Cz"))
+
+    rows = bmrt.rows_from_h5(h5_path, "whisper-tiny", "electrodes", "mtrf")
+    assert len(rows) == 1
+    row = rows[0]
+    assert row["level"] == "electrodes"
+    assert row["Fz_peak"] == pytest.approx(-1.0)
+    assert row["Cz_n7v1_peak"] == pytest.approx(-2.5)
+
+
 def test_main_globs_model_dirs_and_writes_combined_csv(tmp_path, monkeypatch):
     # mirrors the real cluster layout: mTRF parcels/electrodes share one bare "<model>" dir
     # (told apart by filename prefix); encoder dirs are namespaced "<model>-<level>".
@@ -193,7 +210,8 @@ def test_main_globs_model_dirs_and_writes_combined_csv(tmp_path, monkeypatch):
     _write_predictions_h5(tiny_dir / "predictions__blocks.0.h5", "blocks.0",
                            [("method_75", "Karger_2014", [-1.0, -2.0, -3.0], [-1.5, -2.5, -3.5])])
     _write_predictions_h5(tiny_dir / "electrode_predictions__blocks.0.h5", "blocks.0",
-                           [("method_75", "Karger_2014", [-1.1, -2.1, -3.1], [-1.6, -2.6, -3.6])])
+                           [("method_75", "Karger_2014", [-1.1, -2.1], [-1.6, -2.6])],
+                           target_key="electrodes", target_names=("Fz", "Cz"))
 
     enc_parcels_dir = root / "whisper-tiny-parcels" / "method_75"
     enc_parcels_dir.mkdir(parents=True)
