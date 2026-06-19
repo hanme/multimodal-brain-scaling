@@ -12,13 +12,13 @@ Produces, for one method + the checkpoint's layer:
   <out_dir>/fit_quality__<tag>__<layer>__attn.png         (recorded vs predicted, held-out window)
   <data_dir>/predictions__<layer>__attn.h5                (raw arrays for downstream MMN metrics)
 
-Example (whisper-small, D2, blocks.10 checkpoint):
+Example (whisper-small, D2, committed encoder parcels layer blocks.10):
   python scripts/insilico_mmn_attn.py \
-    --checkpoint outputs/results/whisper-small-probe-group-d2-mmn/model__blocks.10.pt \
-    --mmn_features_root outputs/features/whisper-small-mmn --method method_09 \
+    --checkpoint outputs/results/whisper-small-probe-group-d2-parcels/model__blocks.10.pt \
+    --mmn_features_root outputs/features --method method_37 \
     --features_dir /work/.../whisper-small-delta-t-surprisal/merged \
     --neural outputs/neural_data/surprisal_30s.h5 \
-    --out_dir outputs/figures/insilico_mmn_small --data_dir outputs/insilico_mmn_predictions_small
+    --out_dir outputs/figures/insilico_mmn/whisper-small --data_dir outputs/insilico_mmn_predictions/whisper-small
 """
 
 import os
@@ -36,8 +36,10 @@ import matplotlib.pyplot as plt
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # sibling insilico_mmn.py
 from insilico_mmn import (  # noqa: E402
-    FS, TIME_STEP_MS, METHODS, load_split_parcels, detect_final_tone_onset_s, plot_method,
+    FS, TIME_STEP_MS, METHODS, DEFAULT_SOA_CSV, finalize_method, load_soa_table, soa_for_method,
+    detect_final_tone_onset_s, plot_method,
 )
+from eeg_targets import load_split_targets  # noqa: E402
 from mbs.evaluation.attn_probe.checkpoint import load_probe_checkpoint, predict_timecourse  # noqa: E402
 from mbs.evaluation.utils.evaluation_helpers import load_layer_features  # noqa: E402
 from mbs.evaluation.evaluate_features_mtrf import highpass_along_time, pearson_along_time  # noqa: E402
@@ -51,10 +53,9 @@ def parcels_from_ckpt(ck):
     return [(n, mem, float(r)) for n, mem, r in zip(names, members, nc)]
 
 
-def analyze_method_attn(method, feat_dir, stim_dir, model, ck, layer, highpass_hz,
-                        win_pre_ms, device):
-    """B-side of insilico_mmn.analyze_method: predict every MMN clip with the network, time-lock
-    to the final-tone onset, baseline-correct. Returns the same dict shape plot_method expects."""
+def analyze_method_attn(method, feat_dir, stim_dir, model, ck, layer, device, soa_ms):
+    """B-side of insilico_mmn.analyze_method: predict every MMN clip with the network, then
+    hand off to the shared finalize_method() for time-locking + baseline + verdict peak."""
     mfeats, mid_map = load_layer_features(layer, features_folder=Path(feat_dir))
     mfeats = mfeats.astype(np.float32)
     id_by_row = {v: k for k, v in mid_map.items()}
@@ -70,21 +71,7 @@ def analyze_method_attn(method, feat_dir, stim_dir, model, ck, layer, highpass_h
     if std_raw is None or not dev_preds:
         print(f"  {method}: missing standard or deviants -> skipped")
         return None
-
-    dev_stack = np.stack(dev_preds, 0)              # [n_dev, n_t, P] RAW
-    dev_raw = dev_stack.mean(0)                     # [n_t, P] RAW
-    std_wav = sorted(glob.glob(f"{stim_dir}/*standard*.wav"))[0]
-    final_s = detect_final_tone_onset_s(std_wav)
-    rel_ms = t_idx * TIME_STEP_MS - final_s * 1000.0
-    base = (rel_ms >= -win_pre_ms) & (rel_ms < 0)
-
-    def bc(sig):
-        return sig - sig[base].mean(0, keepdims=True)
-    dev_b, std_b = bc(dev_raw), bc(std_raw)
-    print(f"  {method}: {len(dev_preds)} deviants avg; final tone ~{final_s:.2f}s")
-    return dict(rel_ms=rel_ms.astype(np.float32), dev_b=dev_b, std_b=std_b, diff_b=(dev_b - std_b),
-                std_raw=std_raw.astype(np.float32), dev_raw=dev_raw.astype(np.float32),
-                dev_stack=dev_stack.astype(np.float32), dev_ids=dev_ids, final_s=final_s)
+    return finalize_method(method, t_idx, std_raw, dev_preds, dev_ids, stim_dir, soa_ms)
 
 
 def fit_quality_figure(model, ck, parcels, neural, features_dir, layer, highpass_hz,
@@ -92,7 +79,7 @@ def fit_quality_figure(model, ck, parcels, neural, features_dir, layer, highpass
     """Recorded vs network-predicted parcel EEG on a held-out TEST window (B-side of
     plot_fit_quality.py)."""
     feats_all, id_map = load_layer_features(layer, features_folder=Path(features_dir))
-    eeg, feats = load_split_parcels(neural, feats_all.astype(np.float32), id_map, parcels, "test")
+    eeg, feats = load_split_targets(neural, feats_all.astype(np.float32), id_map, parcels, "test")
     n_win = eeg.shape[0]
     if n_win == 0:
         print("  fit-quality: no test windows -> skipped"); return None
@@ -148,6 +135,8 @@ def main():
     p.add_argument("--stimuli_root", default="outputs/mmn_stimuli")
     p.add_argument("--features_dir", required=True, help="mapping (train/test) features for fit-quality")
     p.add_argument("--neural", required=True, help="neural HDF5 with the test split (fit-quality)")
+    p.add_argument("--metadata_csv", default=DEFAULT_SOA_CSV,
+                   help="per-method standard_soa lookup, for the verdict baseline window")
     p.add_argument("--win_pre_ms", type=float, default=150.0)
     p.add_argument("--win_post_ms", type=float, default=500.0)
     p.add_argument("--window_idx", type=int, default=-1)
@@ -163,10 +152,11 @@ def main():
     print(f"Loaded checkpoint: layer={layer}  parcels={[n for n,_,_ in parcels]}  "
           f"lookback={ck['lookback']}  hp={ck['highpass_hz']}Hz")
 
-    label, direction = "attn-encoder", "identity"
+    label, source = args.method, ""
     reg = {m[0]: m for m in METHODS}
     if args.method in reg:
-        _, label, direction = reg[args.method]
+        _, label, source = reg[args.method]
+    soa_ms = soa_for_method(args.method, load_soa_table(args.metadata_csv))
 
     out_dir = Path(args.out_dir)
     feat_dir = Path(args.mmn_features_root) / f"mmn-{args.method}-delta-t"
@@ -181,14 +171,13 @@ def main():
 
     # ---- in-silico MMN ----
     print("In-silico MMN figure:")
-    res = analyze_method_attn(args.method, feat_dir, stim_dir, model, ck, layer,
-                              ck["highpass_hz"], args.win_pre_ms, args.device)
+    res = analyze_method_attn(args.method, feat_dir, stim_dir, model, ck, layer, args.device, soa_ms)
     if res is None:
         return
     plot_args = SimpleNamespace(win_pre_ms=args.win_pre_ms, win_post_ms=args.win_post_ms,
                                 layer=layer, highpass_hz=ck["highpass_hz"], nc_r_threshold=0.2)
     mmn_path = out_dir / f"insilico_mmn__{args.method}__{layer}__attn.png"
-    plot_method(args.method, label, direction, res, parcels, plot_args, mmn_path)
+    plot_method(args.method, label, source, res, parcels, plot_args, mmn_path)
 
     # ---- raw arrays for downstream MMN metrics ----
     data_path = Path(args.data_dir) / f"predictions__{layer}__attn.h5"
@@ -197,18 +186,23 @@ def main():
         h5.attrs.update(dict(layer=layer, highpass_hz=ck["highpass_hz"], fs=FS,
                              time_step_ms=TIME_STEP_MS, method="attn_encoder",
                              note=("Parcel-level RAW predicted EEG from the trained attention "
-                                   "encoder. time_ms=0 = final-tone onset; MMN = deviant - standard.")))
+                                   "encoder. time_ms=0 = final-tone onset; classic oddball design: "
+                                   "deviant train's final tone differs from the standard's. "
+                                   "MMN = deviant - standard; see each method group's 'peak' attr "
+                                   "for the z-scored baseline_normalized_peak.")))
         h5.create_dataset("parcels", data=np.array([n for n, _, _ in parcels], dtype="S12"))
         h5.create_dataset("parcel_members", data=np.array(["+".join(m) for _, m, _ in parcels], dtype="S40"))
         h5.create_dataset("parcel_nc_r", data=np.array([r for _, _, r in parcels], np.float32))
         g = h5.create_group(args.method)
-        g.attrs.update(dict(context_final=label, direction=direction,
+        g.attrs.update(dict(context_final=label, source=source, soa_ms=soa_ms,
                             final_tone_onset_s=res["final_s"], n_deviants=len(res["dev_ids"])))
         g.create_dataset("time_ms", data=res["rel_ms"])
         g.create_dataset("standard", data=res["std_raw"], compression="gzip", compression_opts=4)
         g.create_dataset("deviant_mean", data=res["dev_raw"], compression="gzip", compression_opts=4)
         g.create_dataset("deviants", data=res["dev_stack"], compression="gzip", compression_opts=4)
         g.create_dataset("deviant_ids", data=np.array(res["dev_ids"], dtype="S40"))
+        g.create_dataset("peak", data=res["peak"])
+        g.create_dataset("n7v1_peak", data=res["n7v1_peak"])
     print(f"Wrote parcel predictions -> {data_path}")
 
 

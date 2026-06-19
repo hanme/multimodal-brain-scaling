@@ -18,8 +18,9 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from insilico_mmn import (  # noqa: E402
-    build_parcels, fit_mapping, load_split_parcels, predict_timecourse, FS, TIME_STEP_MS,
+    build_parcels, fit_mapping, predict_timecourse, FS, TIME_STEP_MS,
 )
+from eeg_targets import load_split_targets  # noqa: E402
 from mbs.evaluation.utils.evaluation_helpers import load_layer_features  # noqa: E402
 from mbs.evaluation.evaluate_features_mtrf import (  # noqa: E402
     lags_in_bins, highpass_along_time, pearson_along_time,
@@ -54,7 +55,7 @@ def main():
     model, mu, sd, _ = fit_mapping(fit_args, lags, parcels)
 
     feats_all, id_map = load_layer_features(args.layer, features_folder=Path(args.features_dir))
-    eeg, feats = load_split_parcels(args.neural, feats_all.astype(np.float32), id_map, parcels, "test")
+    eeg, feats = load_split_targets(args.neural, feats_all.astype(np.float32), id_map, parcels, "test")
     hp_eeg = highpass_along_time(eeg, FS, args.highpass_hz)
 
     preds, t_idx = [], None
