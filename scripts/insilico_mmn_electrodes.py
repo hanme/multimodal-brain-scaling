@@ -5,15 +5,17 @@ Electrode version of insilico_mmn.py. Every helper there is reused as-is by trea
 as a single-member "parcel" (build_electrodes returns (channel, [channel], r)); the mapping, the
 held-out eval, and the time-locking are identical. Only the plotting/scoring differs:
 
-  * one figure per method: a 10-20 montage grid of the predicted MMN (deviant - standard) trace per
-    electrode (shared y-scale so the topography is readable; 100-240 ms MMN band shaded).
-  * a simple per-method MMN verdict: mean MMN amplitude in 100-240 ms over a fronto-central ROI;
-    negative beyond --mmn_thresh => "MMN present". Stored + printed alongside the figure.
+  * one figure per method: a 10-20 montage grid of the mean-baseline-corrected MMN (deviant -
+    standard) trace per electrode (shared y-scale so the topography is readable; 100-240 ms MMN
+    band shaded). The z-scoring used for the verdict (below) is never what's plotted here.
+  * a simple per-method MMN verdict: the z-scored baseline_normalized_peak (insilico_mmn.finalize_method)
+    averaged over a fronto-central ROI; negative beyond --mmn_thresh => "MMN present". Stored +
+    printed alongside the figure.
 
-Sophie's loop: generate a stimulus pair into outputs/mmn_stimuli/<name> + features into
-outputs/features/mmn-<name>-delta-t, then add <name> to --methods. Pick ~10 pairs from recent EEG
-studies where the last/eliciting tone is physically identical in standard and deviant (see
-aux/mmn_screening_plan.md). Run AFTER the per-pair delta_T features exist.
+The 10-pair literature classic-oddball set (METHODS in insilico_mmn.py, sourced from
+data/metadata/literature_frequency_intensity_duration_metadata.csv) is fixed; this script just
+screens it at the electrode level. Run AFTER the per-method delta_T features exist
+(scripts/slurm_mmn_extract.sh).
 
   # default trains on D2 (Cortical Surprisal, human-speech audiobook EEG, healthy fronto-central);
   # --train_neural/--train_features override the dataset (old --broderick_* names still work).
@@ -32,25 +34,26 @@ from mbs.evaluation.evaluate_features_mtrf import lags_in_bins
 # electrode/montage builders live in the shared module; the mTRF fit + time-locking are reused
 # unchanged from the parcel driver (electrodes are just singleton-member targets).
 from eeg_targets import FS, TIME_STEP_MS, build_electrodes, montage_pos
-from insilico_mmn import METHODS, fit_mapping, analyze_method
+from insilico_mmn import (
+    METHODS, DEFAULT_SOA_CSV, fit_mapping, analyze_method, load_soa_table, soa_for_method,
+)
 
 # Fronto-central ROI for the automatic MMN criterion (Umbricht & Krljes 2005: MMN max fronto-central).
 FC_ROI = ["Fz", "FCz", "Cz", "FC1", "FC2", "F1", "F2"]
 
 
-def mmn_metric(res, electrodes, lo_ms, hi_ms, roi):
-    """Mean MMN (deviant-standard) amplitude in [lo,hi] ms over the fronto-central ROI electrodes."""
-    rel, diff = res["rel_ms"], res["diff_b"]
-    win = (rel >= lo_ms) & (rel <= hi_ms)
+def mmn_metric(res, electrodes, roi):
+    """ROI-averaged z-scored baseline_normalized_peak (already computed per-electrode by
+    analyze_method/finalize_method) -- the canonical verdict metric, never re-derived here."""
     idx = [i for i, (ch, _, _) in enumerate(electrodes) if ch in roi]
-    if not idx or not win.any():
+    if not idx:
         return float("nan"), []
     used = [electrodes[i][0] for i in idx]
-    return float(diff[np.ix_(win, idx)].mean()), used
+    return float(np.nanmean(res["peak"][idx])), used
 
 
-def plot_topo(method, label, direction, res, electrodes, args, amp, roi_used, present, out_path):
-    rel, diff = res["rel_ms"], res["diff_b"]
+def plot_topo(method, label, source, res, electrodes, args, amp, roi_used, present, out_path):
+    rel, diff = res["rel_ms"], res["diff_b"]      # diff_b is mean-baseline-corrected, NOT z-scored
     win = (rel >= -args.win_pre_ms) & (rel <= args.win_post_ms)
     x = rel[win]
     ymax = float(np.nanmax(np.abs(diff[win]))) or 1.0
@@ -71,15 +74,15 @@ def plot_topo(method, label, direction, res, electrodes, args, amp, roi_used, pr
         ax.set_title(ch, fontsize=7, pad=1, color="firebrick" if in_roi else "black")
     verdict = "MMN PRESENT" if present else "no MMN"
     fig.suptitle(
-        f"In-silico MMN (electrodes) — {method} ({label}, {direction})  |  layer {args.layer}\n"
-        f"predicted deviant - standard per electrode (red = fronto-central ROI); "
+        f"In-silico MMN (electrodes) — {method} ({label}, {source})  |  layer {args.layer}\n"
+        f"mean-baseline-corrected deviant - standard per electrode (red = fronto-central ROI); "
         f"shaded = {args.mmn_lo_ms:.0f}-{args.mmn_hi_ms:.0f} ms band\n"
-        f"ROI mean amp = {amp:+.3g}  ->  {verdict}  (thresh {-args.mmn_thresh:+.3g})",
+        f"ROI mean baseline_normalized_peak = {amp:+.3g}  ->  {verdict}  (thresh {-args.mmn_thresh:+.3g})",
         fontsize=11, y=0.98)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, dpi=130)
     plt.close(fig)
-    print(f"  wrote {out_path}   [{verdict}, ROI amp {amp:+.3g}]")
+    print(f"  wrote {out_path}   [{verdict}, ROI peak {amp:+.3g}]")
 
 
 def main():
@@ -101,7 +104,9 @@ def main():
     p.add_argument("--methods", default="all", help="comma-sep stim-dir names, or 'all'")
     p.add_argument("--nc_r_threshold", type=float, default=0.2)
     p.add_argument("--highpass_hz", type=float, default=0.5)
-    p.add_argument("--lag_max_ms", type=float, default=500.0)
+    p.add_argument("--lag_max_ms", type=float, default=800.0)
+    p.add_argument("--metadata_csv", default=None,
+                   help="per-method standard_soa lookup (default: insilico_mmn.DEFAULT_SOA_CSV)")
     p.add_argument("--n_train_time_samples", type=int, default=120)
     p.add_argument("--eval_heldout", type=lambda s: s.lower() not in ("0", "false", "no"), default=True)
     p.add_argument("--n_eval_time_samples", type=int, default=400)
@@ -110,10 +115,11 @@ def main():
     p.add_argument("--alpha_n", type=int, default=25)
     p.add_argument("--win_pre_ms", type=float, default=150.0)
     p.add_argument("--win_post_ms", type=float, default=400.0)
-    p.add_argument("--mmn_lo_ms", type=float, default=100.0, help="MMN scoring window start")
-    p.add_argument("--mmn_hi_ms", type=float, default=240.0, help="MMN scoring window end")
+    p.add_argument("--mmn_lo_ms", type=float, default=100.0,
+                   help="plot shading only -- the verdict window is fixed at [100,240] ms inside finalize_method")
+    p.add_argument("--mmn_hi_ms", type=float, default=240.0, help="plot shading only, see --mmn_lo_ms")
     p.add_argument("--mmn_thresh", type=float, default=0.0,
-                   help="ROI mean amp must be < -thresh to count as an MMN (0 = any negativity)")
+                   help="ROI mean baseline_normalized_peak must be < -thresh to count as an MMN (0 = any negativity)")
     p.add_argument("--out_dir", default="outputs/figures/insilico_mmn_electrodes")
     p.add_argument("--data_dir", default="outputs/insilico_mmn_predictions")
     args = p.parse_args()
@@ -127,6 +133,7 @@ def main():
 
     # fit the model->EEG mapping ONCE for this layer (electrodes as targets), apply to every method
     model, mu, sd, _ = fit_mapping(args, lags, electrodes)
+    soa_table = load_soa_table(args.metadata_csv or DEFAULT_SOA_CSV)
 
     if args.methods == "all":
         run = METHODS
@@ -142,40 +149,44 @@ def main():
                          time_step_ms=TIME_STEP_MS, nc_r_threshold=args.nc_r_threshold,
                          mmn_lo_ms=args.mmn_lo_ms, mmn_hi_ms=args.mmn_hi_ms, fc_roi=",".join(roi),
                          note=("Per-ELECTRODE RAW predicted EEG. time_ms=0 = final/critical-tone onset. "
-                               "MMN = deviant_mean - standard. roi_mmn_amp = mean diff in the MMN "
-                               "window over the fronto-central ROI; negative => MMN.")))
+                               "MMN = deviant_mean - standard. roi_baseline_normalized_peak = the "
+                               "z-scored baseline_normalized_peak (insilico_mmn.finalize_method), "
+                               "averaged over the fronto-central ROI; negative => MMN.")))
     h5.create_dataset("electrodes", data=np.array([e[0] for e in electrodes], dtype="S8"))
     h5.create_dataset("electrode_nc_r", data=np.array([e[2] for e in electrodes], np.float32))
 
     summary = []
-    for method, label, direction in run:
+    for method, label, source in run:
         feat_dir = Path(args.mmn_features_root) / f"mmn-{method}-delta-t"
         stim_dir = Path(args.stimuli_root) / method
         if not feat_dir.exists():
             print(f"  {method}: feature dir {feat_dir} missing -> skipped")
             continue
-        res = analyze_method(method, feat_dir, stim_dir, model, mu, sd, lags, electrodes, args)
+        soa_ms = soa_for_method(method, soa_table)
+        res = analyze_method(method, feat_dir, stim_dir, model, mu, sd, lags, electrodes, args, soa_ms)
         if res is None:
             continue
-        amp, roi_used = mmn_metric(res, electrodes, args.mmn_lo_ms, args.mmn_hi_ms, roi)
+        amp, roi_used = mmn_metric(res, electrodes, roi)
         present = bool(amp < -args.mmn_thresh)
         out_path = out_dir / f"insilico_mmn_electrodes__{method}__{args.layer}.png"
-        plot_topo(method, label, direction, res, electrodes, args, amp, roi_used, present, out_path)
+        plot_topo(method, label, source, res, electrodes, args, amp, roi_used, present, out_path)
 
         g = h5.create_group(method)
-        g.attrs.update(dict(context_final=label, direction=direction,
+        g.attrs.update(dict(context_final=label, source=source, soa_ms=soa_ms,
                             final_tone_onset_s=res["final_s"], n_deviants=len(res["dev_ids"]),
-                            roi_mmn_amp=amp, mmn_present=present))
+                            roi_baseline_normalized_peak=amp, mmn_present=present))
         g.create_dataset("time_ms", data=res["rel_ms"])
         g.create_dataset("standard", data=res["std_raw"], compression="gzip", compression_opts=4)
         g.create_dataset("deviant_mean", data=res["dev_raw"], compression="gzip", compression_opts=4)
+        g.create_dataset("peak", data=res["peak"])
+        g.create_dataset("n7v1_peak", data=res["n7v1_peak"])
         summary.append((method, label, amp, present))
     h5.close()
 
     print("\n=== MMN screen summary (layer "
           f"{args.layer}, ROI {roi}, {args.mmn_lo_ms:.0f}-{args.mmn_hi_ms:.0f} ms) ===")
     for method, label, amp, present in summary:
-        print(f"  {method:<18} {label:<14} ROI amp {amp:+.3g}   {'MMN' if present else '-'}")
+        print(f"  {method:<18} {label:<14} ROI peak {amp:+.3g}   {'MMN' if present else '-'}")
     if summary:
         n_mmn = sum(p for *_, p in summary)
         print(f"  -> {n_mmn}/{len(summary)} pairs show an MMN")
