@@ -4,17 +4,35 @@
 10 literature classic-oddball stimulus methods × 2 independent mapping methods (mTRF, encoder)
 = 160 (model, level, mapping, method) combinations, all complete (`outputs/results/mmn_results_table.csv`).
 
-**MMN metric.** Each (model, level, mapping, method) run produces a per-target (parcel or
-electrode) `baseline_normalized_peak` — a z-scored, most-negative point in the 100–240 ms
-post-final-tone window (negative = deviant response more suppressed than standard, the classic
-MMN direction). "Mean MMN" below is that value averaged over a fronto-central ROI:
+## What MMN means
 
-- **Electrodes:** ROI = `{Fz, FCz, Cz, FC1, FC2, F1, F2}` — the exact ROI already used by
-`insilico_mmn_electrodes.py`'s built-in verdict.
-- **Parcels:** ROI = `{frontal, central}` — the natural parcel-level analog; no parcel-level
-verdict previously existed in the pipeline, so this generalizes the electrode criterion.
-- **MMN present** := mean ROI value < 0 (threshold 0, matching the script default
-`--mmn_thresh 0.0`). Used for the count columns below.
+**Mismatch negativity (MMN)** is an auditory event-related potential: a negative-going EEG
+deflection, typically ~100–250 ms after an unexpected ("deviant") sound embedded among repeated
+("standard") sounds, largest at fronto-central scalp sites (Näätänen et al., 1978; Näätänen &
+Picton, 1987; peak ≈170 ms per Sams et al., 1985; window per Umbricht & Krljes, 2005). It reflects
+automatic pre-attentive detection of acoustic deviance and is reduced or absent in some clinical
+populations (e.g. schizophrenia) — the motivation for using it as an in-silico screening signal
+here.
+
+**How this document operationalizes it.** For each (model, level, mapping, method) run:
+
+1. Predict EEG for the deviant-train average and the standard, time-locked to the final/critical
+   tone.
+2. Z-score each trace within a pre-onset baseline window (3× that stimulus method's SOA).
+3. `diff = z(deviant) − z(standard)`; `baseline_normalized_peak` = the most-negative point of
+   `diff` within the 100–240 ms post-onset window.
+4. **MMN present** (per run, per target) := `baseline_normalized_peak < 0` — the deviant response
+   dips below the standard's in that window. "Mean MMN" in the tables below averages that value
+   over a fronto-central ROI:
+   - **Electrodes:** ROI = `{Fz, FCz, Cz, FC1, FC2, F1, F2}` — the exact ROI already used by
+     `insilico_mmn_electrodes.py`'s built-in verdict.
+   - **Parcels:** ROI = `{frontal, central}` — the natural parcel-level analog; no parcel-level
+     verdict previously existed in the pipeline, so this generalizes the electrode criterion.
+
+This is a **magnitude/negativity criterion only** — it checks that the deviant response dips below
+the standard's somewhere in the window, but not that the dip has the characteristic MMN *shape*
+(a trough that rises back toward baseline within the window, rather than e.g. the tail of an
+unrelated ascending trend). See the shape-criteria caveat below.
 
 This document deliberately does **not** discuss fit quality (encoder probe accuracy on held-out
 EEG) — only MMN presence/absence and response magnitude are covered here.
@@ -267,7 +285,7 @@ unlike Table 2d — each column is that level's mean over the 10 methods)
 
 ## Notes & caveats
 
-- `**whisper-tiny` under mTRF is 100% MMN-positive (20/20)** — every single stimulus method
+- **`whisper-tiny` under mTRF is 100% MMN-positive (20/20)** — every single stimulus method
 triggers the criterion at both levels. That is unusually clean compared to every other
 model/mapping combination and is worth treating with some skepticism rather than as a strong
 positive finding: it may reflect a systematic negative drift in the predicted timecourse
@@ -293,4 +311,25 @@ methods are not strongly corroborating each other's verdicts at the individual-m
 worth investigating further before treating either mapping's verdict as ground truth.
 - Fit quality (encoder probe accuracy on held-out EEG) is intentionally excluded from this
 document per request; these tables describe MMN presence/absence and response magnitude only.
+- **Stimulus sources are provisional, not yet fully vetted.** The 10 methods were selected to get
+the pipeline running end-to-end, with the expectation that 1–2 may be swapped in/out later once
+the literature list is reviewed more carefully. Current inclusion criteria: most recent
+publication year per paper, only one method permitted per paper, frequency variants only
+(no duration/intensity deviants in this round). Treat the per-method rows (Tables 1a/1c/2a/2c,
+Table 4) as more provisional than the per-model rollups (1b/1d/1e/2b/2d/2e) — a future swap could
+shift individual method rows without necessarily changing the overall per-model picture much, or
+could change it a lot; this hasn't been stress-tested.
+- **The magnitude criterion can be satisfied by curve shapes that aren't a real MMN trough.**
+Because `baseline_normalized_peak` is just "most negative point in the 100–240 ms window," it
+doesn't distinguish a genuine dip-and-recover trough from e.g. a monotonically ascending (or
+descending) curve that simply happens to be most negative right at the window's edge — in which
+case the "peak" is really just wherever the window cut off an unrelated trend, not a deviance
+response. The smooth-ramp cases already flagged above (`whisper-tiny`/`whisper-base` encoder
+parcels, several methods) are examples of this: visually, those curves don't dip-and-recover, they
+ramp through the window. **Open question: should a shape-based criterion be added** (e.g. require
+the window's minimum to fall strictly inside the window rather than at either edge, and/or require
+the curve to rise back toward baseline after the trough by some margin)? This would need the full
+per-time-point curves (saved in the prediction h5s on jed, not in the local CSV) rather than just
+the scalar `peak`/`n7v1_peak` already extracted — not yet implemented, flagging for discussion
+before deciding whether to add it.
 
