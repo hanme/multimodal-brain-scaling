@@ -43,12 +43,16 @@ fi
 LAYER="${MTRF_ELECTRODES_LAYER[$MODEL_ID]}"
 [ -n "$LAYER" ] || { echo "unknown MODEL_ID=$MODEL_ID"; exit 1; }
 TRAIN_FEATURES="outputs/features/${MODEL_ID}-delta-t-surprisal/merged"
+# whisper-base keeps its historical MMN-features root (outputs/features); every other model's
+# MMN delta_T features live under a model-scoped root so they don't collide.
+if [ "$MODEL_ID" = "whisper-base" ]; then MMN_ROOT="outputs/features"; else MMN_ROOT="outputs/features/${MODEL_ID}-mmn"; fi
 
-echo "Start: $(date) on $(hostname)   MODEL_ID=$MODEL_ID  layer=$LAYER  features=$TRAIN_FEATURES"
+echo "Start: $(date) on $(hostname)   MODEL_ID=$MODEL_ID  layer=$LAYER  features=$TRAIN_FEATURES  mmn_root=$MMN_ROOT"
 
 OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-4} python scripts/insilico_mmn_electrodes.py \
     --layer "$LAYER" \
     --train_features "$TRAIN_FEATURES" \
+    --mmn_features_root "$MMN_ROOT" \
     --lag_max_ms 800 \
     --out_dir "outputs/figures/insilico_mmn_electrodes/${MODEL_ID}" \
     --data_dir "outputs/insilico_mmn_predictions/${MODEL_ID}" \
