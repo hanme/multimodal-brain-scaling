@@ -278,9 +278,10 @@ def plot_method(method, label, source, res, parcels, args, out_path):
             if i == n - 1:
                 ax.set_xlabel("time from final-tone onset (ms)")
         axes[i][0].set_ylabel(f"{pname}\nr={pr:.2f}  ({'+'.join(members)})", fontsize=9)
+    level = getattr(args, "level", "parcels")
     fig.suptitle(
         f"In-silico MMN — {method} ({label}, {source})  |  layer {args.layer}, "
-        f"{args.highpass_hz} Hz HP, parcels NC r>{args.nc_r_threshold} (raw avg)\n"
+        f"{args.highpass_hz} Hz HP, {level} NC r>{args.nc_r_threshold} (raw avg)\n"
         f"classic oddball design: deviant train's final tone differs from the standard's; "
         f"shaded = 100–240 ms MMN band. Columns are mean-baseline-corrected (not z-scored); "
         f"3rd column annotated with the z-scored baseline_normalized_peak. Each row its own y-scale.",

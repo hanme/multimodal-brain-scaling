@@ -149,7 +149,11 @@ def main():
     model, ck = load_probe_checkpoint(args.checkpoint, device=args.device)
     layer = ck["layer"]
     parcels = parcels_from_ckpt(ck)
-    print(f"Loaded checkpoint: layer={layer}  parcels={[n for n,_,_ in parcels]}  "
+    # build_electrodes() (eeg_targets.py) always returns singleton-member groups; build_parcels()
+    # groups multiple channels. Infer the level from the checkpoint's own parcels rather than
+    # requiring a separate --level flag that could drift out of sync with it.
+    level = "electrodes" if all(len(m) == 1 for _, m, _ in parcels) else "parcels"
+    print(f"Loaded checkpoint: layer={layer}  level={level}  parcels={[n for n,_,_ in parcels]}  "
           f"lookback={ck['lookback']}  hp={ck['highpass_hz']}Hz")
 
     label, source = args.method, ""
@@ -175,7 +179,8 @@ def main():
     if res is None:
         return
     plot_args = SimpleNamespace(win_pre_ms=args.win_pre_ms, win_post_ms=args.win_post_ms,
-                                layer=layer, highpass_hz=ck["highpass_hz"], nc_r_threshold=0.2)
+                                layer=layer, highpass_hz=ck["highpass_hz"], nc_r_threshold=0.2,
+                                level=level)
     mmn_path = out_dir / f"insilico_mmn__{args.method}__{layer}__attn.png"
     plot_method(args.method, label, source, res, parcels, plot_args, mmn_path)
 
