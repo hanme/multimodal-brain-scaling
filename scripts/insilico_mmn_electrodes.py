@@ -19,7 +19,7 @@ screens it at the electrode level. Run AFTER the per-method delta_T features exi
 
   # default trains on D2 (Cortical Surprisal, human-speech audiobook EEG, healthy fronto-central);
   # --train_neural/--train_features override the dataset (old --broderick_* names still work).
-  python scripts/insilico_mmn_electrodes.py --layer blocks.10 --methods method_09,method_12
+  python scripts/insilico_mmn_electrodes.py --layer blocks.10 --methods method_37,method_75
 """
 
 from pathlib import Path

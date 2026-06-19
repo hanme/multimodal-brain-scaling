@@ -131,7 +131,7 @@ def main():
     p = argparse.ArgumentParser(description="In-silico MMN + fit-quality figures from a trained attention encoder.")
     p.add_argument("--checkpoint", required=True, help="model__<layer>.pt from --save_model")
     p.add_argument("--mmn_features_root", required=True, help="dir containing mmn-<method>-delta-t")
-    p.add_argument("--method", default="method_09")
+    p.add_argument("--method", default="method_37")
     p.add_argument("--stimuli_root", default="outputs/mmn_stimuli")
     p.add_argument("--features_dir", required=True, help="mapping (train/test) features for fit-quality")
     p.add_argument("--neural", required=True, help="neural HDF5 with the test split (fit-quality)")
