@@ -6,13 +6,18 @@ Pipeline:
      Each parcel = raw average over its constituent channels that pass an NC floor
      (Gokce/Kadir precedent: drop channels with reliability r <= --nc_r_threshold before
      fitting; see evaluate_features_committed_layers.py `noise_ceiling > 0.1`).
-  2. Apply that single mapping to whisper-base delta_T features of EACH MMN method
-     (identity-MMN design: the final/critical tone is physically identical in standard and
-     deviant; the deviance lives in the preceding context frequency).
-  3. Per method: average deviant trials, take the standard, time-lock to the final-tone
-     onset, baseline-correct, compute deviant - standard (= MMN).
-  4. Plot a grid: rows = parcels (each its OWN y-scale, annotated with NC + member channels),
-     columns = deviant / standard / (deviant - standard).
+  2. Apply that single mapping to whisper-base delta_T features of EACH MMN method (classic
+     oddball / Definition-1 design: the deviant train's LAST tone differs in frequency from
+     the standard's repeating tone -- see METHODS below and
+     data/metadata/literature_frequency_intensity_duration_metadata.csv).
+  3. Per method: average all 15 deviant trials (N in {3,5,7} x var in {1..5}), take the
+     standard, time-lock to the final-tone onset, mean-baseline-correct (window sized to
+     3x the method's SOA) for plotting, and separately z-score dev/std within that same
+     window to compute baseline_normalized_peak = min(z_dev - z_std) in the 100-240 ms band
+     (the z-scoring is verdict-only, never plotted -- see finalize_method()).
+  4. Plot a grid: rows = frontal/central/temporal parcels (each its OWN y-scale, annotated
+     with NC + member channels), columns = deviant / standard / (deviant - standard), all
+     mean-baseline-corrected; the third column is annotated with baseline_normalized_peak.
 
 The mapping depends only on (layer, parcels), NOT on the MMN method, so it is fit ONCE
 per layer and applied to all methods in the loop.
@@ -22,6 +27,7 @@ Run AFTER the MMN delta_T features exist (scripts/slurm_mmn_extract.sh) for ever
 
 from pathlib import Path
 import argparse
+import csv
 import glob
 import numpy as np
 import h5py
@@ -39,19 +45,41 @@ from mbs.evaluation.evaluate_features_mtrf import (
 # parcels/electrodes + dataset I/O live in the shared, dataset-agnostic module
 from eeg_targets import FS, TIME_STEP_MS, build_parcels, load_split_targets
 
-# MMN methods: (stimulus-dir name, "context->final" label, deviance direction). All are
-# identity-MMN designs (final tone identical in std & dev). m12/44/55 appear in both
-# directions (regular = downward deviant, _counter = upward), giving matched mirror pairs.
+# MMN methods: literature classic-oddball (Definition 1) set, 10 pairs sourced from
+# data/metadata/literature_frequency_intensity_duration_metadata.csv. Each method has 1
+# standard file (repeating tone) + 15 deviant files (N in {3,5,7} x var in {1..5}); the
+# deviant train's LAST tone differs in frequency from the standard's repeating tone (unlike
+# the older identity-MMN design this registry used to describe, where the final tone was
+# physically identical in std & dev). Tuple = (stimulus-dir name, "standard->deviant" label,
+# source citation).
 METHODS = [
-    ("method_37",         "1050→1000 Hz", "DOWN ~4%"),
-    ("method_12",         "1200→1000 Hz", "DOWN ~17%"),
-    ("method_44",         "1000→633 Hz",  "DOWN ~37%"),
-    ("method_09",         "1000→600 Hz",  "DOWN ~40%"),
-    ("method_55",         "2000→1000 Hz", "DOWN ~50%"),
-    ("method_12_counter", "1000→1200 Hz", "UP ~20%"),
-    ("method_44_counter", "633→1000 Hz",  "UP ~58%"),
-    ("method_55_counter", "1000→2000 Hz", "UP octave"),
+    ("method_75", "1000→1200 Hz", "Karger_2014"),
+    ("method_74", "1000→1500 Hz", "Domjan_2012"),
+    ("method_72", "1000→1200 Hz", "Bodatsch_2011"),
+    ("method_60", "1000→1500 Hz", "Umbricht_2003a"),
+    ("method_53", "1000→1200 Hz", "Salisbury_2002a"),
+    ("method_55", "1000→2000 Hz", "Shinozaki_2002a"),
+    ("method_37", "1000→1050 Hz", "Javitt_2000a"),
+    ("method_43", "633→700 Hz",   "Michie_2000b"),
+    ("method_44", "633→1000 Hz",  "Michie_2000c"),
+    ("method_27", "1000→1064 Hz", "Schall_1999a"),
 ]
+
+DEFAULT_SOA_CSV = "data/metadata/literature_frequency_intensity_duration_metadata.csv"
+
+
+def load_soa_table(csv_path=DEFAULT_SOA_CSV):
+    """method_id (int) -> standard_soa (ms), from the literature stimulus metadata CSV."""
+    table = {}
+    with open(csv_path, newline="") as f:
+        for row in csv.DictReader(f):
+            table[int(row["method_id"])] = float(row["standard_soa"])
+    return table
+
+
+def soa_for_method(method, soa_table):
+    """'method_37' -> soa_table[37] (ms)."""
+    return soa_table[int(method.split("_")[1])]
 
 
 def detect_final_tone_onset_s(wav_path):
@@ -147,13 +175,57 @@ def predict_timecourse(feat_1stim, model, mu, sd, lags, highpass_hz):
     return t_idx, model.predict(X.astype(np.float32))   # [n_t, n_parcel]
 
 
-def analyze_method(method, feat_dir, stim_dir, model, mu, sd, lags, parcels, args):
-    """Predict + time-lock one method. Returns a dict with both the baseline-corrected
-    arrays (for plotting) and the RAW full time courses (for downstream MMN metrics), or None.
+def finalize_method(method, t_idx, std_raw, dev_preds, dev_ids, stim_dir, soa_ms):
+    """Time-lock + baseline one method (A and B sides share this). Returns a dict with both
+    the baseline-corrected arrays (for plotting) and the RAW full time courses (for downstream
+    MMN metrics), or None.
 
     All arrays span the full valid window (the entire ~29 s pre-final-tone baseline + post-onset),
     columns = parcels (same order as `parcels`). rel_ms = 0 is the final/critical-tone onset.
+
+    dev_b/std_b/diff_b (plotted) use mean-only baseline correction, exactly like the old `bc()`,
+    just with a baseline window sized to 3x the method's SOA instead of a fixed --win_pre_ms.
+    peak/n7v1_peak (verdict-only, NEVER plotted) additionally divide by the baseline std, i.e.
+    a full z-score, before differencing and taking the most-negative point in [100, 240] ms.
     """
+    dev_stack = np.stack(dev_preds, 0)              # [n_dev, n_t, n_parcel], RAW
+    dev_raw = dev_stack.mean(0)                     # [n_t, n_parcel], RAW
+
+    std_wav = sorted(glob.glob(f"{stim_dir}/*standard*.wav"))[0]
+    final_s = detect_final_tone_onset_s(std_wav)
+    rel_ms = t_idx * TIME_STEP_MS - final_s * 1000.0          # 0 = final-tone onset
+    base = (rel_ms >= -3.0 * soa_ms) & (rel_ms < 0)           # pre-onset baseline, 3x SOA
+
+    def bc(sig):
+        return sig - sig[base].mean(0, keepdims=True)
+    dev_b, std_b = bc(dev_raw), bc(std_raw)
+    diff_b = dev_b - std_b
+
+    def z(sig):
+        sdv = sig[base].std(0, keepdims=True)
+        sdv = np.where(sdv > 1e-8, sdv, 1.0)
+        return bc(sig) / sdv                        # full z-score, verdict-only (not plotted)
+
+    mmn_win = (rel_ms >= 100.0) & (rel_ms <= 240.0)
+    z_diff = z(dev_raw) - z(std_raw)
+    peak = z_diff[mmn_win].min(0) if mmn_win.any() else np.full(z_diff.shape[1], np.nan, np.float32)
+
+    n7v1_idx = next((i for i, sid in enumerate(dev_ids)
+                      if "n7" in sid.lower() and "var1" in sid.lower()), None)
+    if n7v1_idx is not None and mmn_win.any():
+        n7v1_peak = (z(dev_stack[n7v1_idx]) - z(std_raw))[mmn_win].min(0)
+    else:
+        n7v1_peak = np.full_like(peak, np.nan)
+
+    print(f"  {method}: {len(dev_preds)} deviants avg; final tone ~{final_s:.2f}s")
+    return dict(rel_ms=rel_ms.astype(np.float32), dev_b=dev_b, std_b=std_b, diff_b=diff_b,
+                peak=peak.astype(np.float32), n7v1_peak=n7v1_peak.astype(np.float32),
+                std_raw=std_raw.astype(np.float32), dev_raw=dev_raw.astype(np.float32),
+                dev_stack=dev_stack.astype(np.float32), dev_ids=dev_ids, final_s=final_s)
+
+
+def analyze_method(method, feat_dir, stim_dir, model, mu, sd, lags, parcels, args, soa_ms):
+    """Predict + time-lock one method via the mTRF, then hand off to finalize_method()."""
     mfeats, mid_map = load_layer_features(args.layer, features_folder=Path(feat_dir))
     mfeats = mfeats.astype(np.float32)
     id_by_row = {v: k for k, v in mid_map.items()}
@@ -169,27 +241,24 @@ def analyze_method(method, feat_dir, stim_dir, model, mu, sd, lags, parcels, arg
     if std_raw is None or not dev_preds:
         print(f"  {method}: missing standard or deviants -> skipped")
         return None
-    dev_stack = np.stack(dev_preds, 0)              # [n_dev, n_t, n_parcel], RAW
-    dev_raw = dev_stack.mean(0)                     # [n_t, n_parcel], RAW
-
-    std_wav = sorted(glob.glob(f"{stim_dir}/*standard*.wav"))[0]
-    final_s = detect_final_tone_onset_s(std_wav)
-    rel_ms = t_idx * TIME_STEP_MS - final_s * 1000.0          # 0 = final-tone onset
-    base = (rel_ms >= -args.win_pre_ms) & (rel_ms < 0)        # pre-onset baseline
-
-    def bc(sig):
-        return sig - sig[base].mean(0, keepdims=True)
-    dev_b, std_b = bc(dev_raw), bc(std_raw)
-    print(f"  {method}: {len(dev_preds)} deviants avg; final tone ~{final_s:.2f}s")
-    return dict(rel_ms=rel_ms.astype(np.float32), dev_b=dev_b, std_b=std_b, diff_b=(dev_b - std_b),
-                std_raw=std_raw.astype(np.float32), dev_raw=dev_raw.astype(np.float32),
-                dev_stack=dev_stack.astype(np.float32), dev_ids=dev_ids, final_s=final_s)
+    return finalize_method(method, t_idx, std_raw, dev_preds, dev_ids, stim_dir, soa_ms)
 
 
-def plot_method(method, label, direction, res, parcels, args, out_path):
-    rel_ms, dev_b, std_b, diff_b = res["rel_ms"], res["dev_b"], res["std_b"], res["diff_b"]
+# Parcel-level MMN figures show only these 3 rows (deliverable spec); the mapping itself is
+# still fit on all NC-surviving parcels, this only restricts what gets plotted.
+PLOT_ROWS = ("frontal", "central", "temporal")
+
+
+def plot_method(method, label, source, res, parcels, args, out_path):
+    rel_ms, dev_b, std_b, diff_b, peak = (
+        res["rel_ms"], res["dev_b"], res["std_b"], res["diff_b"], res["peak"])
     win = (rel_ms >= -args.win_pre_ms) & (rel_ms <= args.win_post_ms)
     x = rel_ms[win]
+
+    keep = [i for i, p in enumerate(parcels) if p[0] in PLOT_ROWS] or list(range(len(parcels)))
+    parcels = [parcels[i] for i in keep]
+    dev_b, std_b, diff_b, peak = dev_b[:, keep], std_b[:, keep], diff_b[:, keep], peak[keep]
+
     n = len(parcels)
     fig, axes = plt.subplots(n, 3, figsize=(13, 2.6 * n), sharex=True, squeeze=False)
     col_titles = ["deviant", "standard", "deviant - standard (MMN)"]
@@ -198,19 +267,23 @@ def plot_method(method, label, direction, res, parcels, args, out_path):
         for j, (ct, sig) in enumerate(zip(col_titles, sigs)):
             ax = axes[i][j]
             ax.plot(x, sig[win, i], color="tab:blue", lw=1.8)
-            ax.axvspan(100, 250, color="orange", alpha=0.10)   # typical MMN latency band
+            ax.axvspan(100, 240, color="orange", alpha=0.10)   # MMN scoring band
             ax.axvline(0, color="k", ls=":", lw=0.8)
             ax.axhline(0, color="grey", lw=0.5)
-            if i == 0:
+            if j == 2:
+                ax.set_title((f"{ct}\nbaseline_normalized_peak={peak[i]:+.2f}" if i == 0
+                              else f"peak={peak[i]:+.2f}"), fontsize=10 if i == 0 else 9)
+            elif i == 0:
                 ax.set_title(ct, fontsize=11)
             if i == n - 1:
                 ax.set_xlabel("time from final-tone onset (ms)")
         axes[i][0].set_ylabel(f"{pname}\nr={pr:.2f}  ({'+'.join(members)})", fontsize=9)
     fig.suptitle(
-        f"In-silico MMN — {method} ({label}, {direction})  |  layer {args.layer}, "
+        f"In-silico MMN — {method} ({label}, {source})  |  layer {args.layer}, "
         f"{args.highpass_hz} Hz HP, parcels NC r>{args.nc_r_threshold} (raw avg)\n"
-        f"identity design: final tone physically identical in std & dev; "
-        f"shaded = 100–250 ms MMN band. Each row has its own y-scale.",
+        f"classic oddball design: deviant train's final tone differs from the standard's; "
+        f"shaded = 100–240 ms MMN band. Columns are mean-baseline-corrected (not z-scored); "
+        f"3rd column annotated with the z-scored baseline_normalized_peak. Each row its own y-scale.",
         fontsize=10)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.tight_layout(rect=[0, 0, 1, 0.97])
@@ -238,7 +311,9 @@ def main():
     p.add_argument("--nc_r_threshold", type=float, default=0.2,
                    help="drop channels with reliability r <= this before averaging into a parcel")
     p.add_argument("--highpass_hz", type=float, default=0.5)
-    p.add_argument("--lag_max_ms", type=float, default=500.0)
+    p.add_argument("--lag_max_ms", type=float, default=800.0)
+    p.add_argument("--metadata_csv", default=DEFAULT_SOA_CSV,
+                   help="per-method standard_soa lookup, for the verdict baseline window")
     p.add_argument("--n_train_time_samples", type=int, default=120)
     p.add_argument("--eval_heldout", type=lambda s: s.lower() not in ("0", "false", "no"),
                    default=True, help="score the mapping on the built-in held-out TEST runs")
@@ -262,6 +337,7 @@ def main():
 
     # fit the model->EEG mapping ONCE for this layer, apply to every method
     model, mu, sd, eval_metrics = fit_mapping(args, lags, parcels)
+    soa_table = load_soa_table(args.metadata_csv)
 
     if args.methods == "all":
         run = METHODS
@@ -278,9 +354,10 @@ def main():
         layer=args.layer, highpass_hz=args.highpass_hz, lag_max_ms=args.lag_max_ms,
         fs=FS, time_step_ms=TIME_STEP_MS, nc_r_threshold=args.nc_r_threshold,
         note=("Parcel-level RAW (NOT baseline-corrected) predicted EEG. time_ms=0 is the "
-              "final/critical-tone onset (negatives = before onset); identity-MMN design: the "
-              "final tone is physically identical in standard and deviant. Parcels = raw average "
-              "over channels passing NC r>threshold. Compute MMN as deviant_mean - standard.")))
+              "final/critical-tone onset (negatives = before onset); classic oddball design: the "
+              "deviant train's final tone differs in frequency from the standard's. Parcels = raw "
+              "average over channels passing NC r>threshold. Compute MMN as deviant_mean - standard; "
+              "see each method group's 'peak' attr for the z-scored baseline_normalized_peak.")))
     h5.create_dataset("parcels", data=np.array([p[0] for p in parcels], dtype="S12"))
     h5.create_dataset("parcel_members", data=np.array(["+".join(p[1]) for p in parcels], dtype="S40"))
     h5.create_dataset("parcel_nc_r", data=np.array([p[2] for p in parcels], np.float32))
@@ -292,26 +369,29 @@ def main():
         h5.attrs["heldout_test_windows"] = eval_metrics["n_test_windows"]
         h5.attrs["heldout_n_samples"] = eval_metrics["n_samples"]
 
-    for method, label, direction in run:
+    for method, label, source in run:
         feat_dir = Path(args.mmn_features_root) / f"mmn-{method}-delta-t"
         stim_dir = Path(args.stimuli_root) / method
         if not feat_dir.exists():
             print(f"  {method}: feature dir {feat_dir} missing -> skipped")
             continue
-        res = analyze_method(method, feat_dir, stim_dir, model, mu, sd, lags, parcels, args)
+        soa_ms = soa_for_method(method, soa_table)
+        res = analyze_method(method, feat_dir, stim_dir, model, mu, sd, lags, parcels, args, soa_ms)
         if res is None:
             continue
         out_path = out_dir / f"insilico_mmn__{method}__{args.layer}.png"
-        plot_method(method, label, direction, res, parcels, args, out_path)
+        plot_method(method, label, source, res, parcels, args, out_path)
 
         g = h5.create_group(method)
-        g.attrs.update(dict(context_final=label, direction=direction,
+        g.attrs.update(dict(context_final=label, source=source, soa_ms=soa_ms,
                             final_tone_onset_s=res["final_s"], n_deviants=len(res["dev_ids"])))
         g.create_dataset("time_ms", data=res["rel_ms"])
         g.create_dataset("standard", data=res["std_raw"], compression="gzip", compression_opts=4)
         g.create_dataset("deviant_mean", data=res["dev_raw"], compression="gzip", compression_opts=4)
         g.create_dataset("deviants", data=res["dev_stack"], compression="gzip", compression_opts=4)
         g.create_dataset("deviant_ids", data=np.array(res["dev_ids"], dtype="S40"))
+        g.create_dataset("peak", data=res["peak"])
+        g.create_dataset("n7v1_peak", data=res["n7v1_peak"])
     h5.close()
     print(f"Wrote parcel predictions -> {data_path}")
 
