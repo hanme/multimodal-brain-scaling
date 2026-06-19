@@ -173,10 +173,10 @@ def test_rows_from_h5_reads_peak_and_n7v1_peak_per_parcel(tmp_path):
     _write_predictions_h5(h5_path, "blocks.0",
                            [("method_75", "Karger_2014", [-1.0, -2.0, -3.0], [-1.5, -2.5, -3.5])])
 
-    rows = bmrt.rows_from_h5(h5_path, "whisper-tiny", "mtrf")
+    rows = bmrt.rows_from_h5(h5_path, "whisper-tiny", "parcels", "mtrf")
     assert len(rows) == 1
     row = rows[0]
-    assert row["model"] == "whisper-tiny" and row["mapping"] == "mtrf"
+    assert row["model"] == "whisper-tiny" and row["level"] == "parcels" and row["mapping"] == "mtrf"
     assert row["method"] == "method_75" and row["source"] == "Karger_2014"
     assert row["layer"] == "blocks.0"
     assert row["frontal_peak"] == pytest.approx(-1.0)
@@ -185,13 +185,25 @@ def test_rows_from_h5_reads_peak_and_n7v1_peak_per_parcel(tmp_path):
 
 
 def test_main_globs_model_dirs_and_writes_combined_csv(tmp_path, monkeypatch):
+    # mirrors the real cluster layout: mTRF parcels/electrodes share one bare "<model>" dir
+    # (told apart by filename prefix); encoder dirs are namespaced "<model>-<level>".
     root = tmp_path / "predictions"
     tiny_dir = root / "whisper-tiny"
     tiny_dir.mkdir(parents=True)
     _write_predictions_h5(tiny_dir / "predictions__blocks.0.h5", "blocks.0",
                            [("method_75", "Karger_2014", [-1.0, -2.0, -3.0], [-1.5, -2.5, -3.5])])
-    _write_predictions_h5(tiny_dir / "predictions__blocks.3__attn.h5", "blocks.3",
+    _write_predictions_h5(tiny_dir / "electrode_predictions__blocks.0.h5", "blocks.0",
+                           [("method_75", "Karger_2014", [-1.1, -2.1, -3.1], [-1.6, -2.6, -3.6])])
+
+    enc_parcels_dir = root / "whisper-tiny-parcels" / "method_75"
+    enc_parcels_dir.mkdir(parents=True)
+    _write_predictions_h5(enc_parcels_dir / "predictions__blocks.3__attn.h5", "blocks.3",
                            [("method_75", "Karger_2014", [-0.5, -0.6, -0.7], [-0.8, -0.9, -1.0])])
+
+    enc_elec_dir = root / "whisper-tiny-electrodes" / "method_75"
+    enc_elec_dir.mkdir(parents=True)
+    _write_predictions_h5(enc_elec_dir / "predictions__blocks.3__attn.h5", "blocks.3",
+                           [("method_75", "Karger_2014", [-0.4, -0.5, -0.6], [-0.7, -0.8, -0.9])])
 
     out_csv = tmp_path / "out" / "table.csv"
     monkeypatch.setattr(sys, "argv", ["build_mmn_results_table.py",
@@ -201,9 +213,14 @@ def test_main_globs_model_dirs_and_writes_combined_csv(tmp_path, monkeypatch):
     assert out_csv.exists()
     with open(out_csv, newline="") as f:
         rows = list(csv.DictReader(f))
-    assert len(rows) == 2
-    mappings = {r["mapping"] for r in rows}
-    assert mappings == {"mtrf", "encoder"}
+    assert len(rows) == 4
+    seen = {(r["model"], r["level"], r["mapping"]) for r in rows}
+    assert seen == {
+        ("whisper-tiny", "parcels", "mtrf"),
+        ("whisper-tiny", "electrodes", "mtrf"),
+        ("whisper-tiny", "parcels", "encoder"),
+        ("whisper-tiny", "electrodes", "encoder"),
+    }
 
 
 def test_main_writes_nothing_when_predictions_root_missing(tmp_path, monkeypatch, capsys):
