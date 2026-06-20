@@ -26,7 +26,7 @@
 PROJECT_DIR="/work/upschrimpf1/sigfstea/multimodal-brain-scaling"
 cd "$PROJECT_DIR" || { echo "cannot cd"; exit 1; }
 source env.sh
-mkdir -p logs outputs/figures outputs/insilico_mmn_predictions
+mkdir -p logs outputs_new_pre_tone_baseline/figures outputs_new_pre_tone_baseline/insilico_mmn_predictions
 
 # committed §1.5 mTRF-parcels layer per model (do not re-select)
 declare -A MTRF_PARCELS_LAYER=(
@@ -54,8 +54,9 @@ OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-4} python scripts/insilico_mmn.py \
     --train_features "$TRAIN_FEATURES" \
     --mmn_features_root "$MMN_ROOT" \
     --lag_max_ms 800 \
-    --out_dir "outputs/figures/insilico_mmn/${MODEL_ID}" \
-    --data_dir "outputs/insilico_mmn_predictions/${MODEL_ID}" \
+    --baseline_start_mult -3.0 --baseline_end_mult -1.0 \
+    --out_dir "outputs_new_pre_tone_baseline/figures/insilico_mmn/${MODEL_ID}" \
+    --data_dir "outputs_new_pre_tone_baseline/insilico_mmn_predictions/${MODEL_ID}" \
     "$@"
 EXIT_CODE=$?
 [ $EXIT_CODE -eq 0 ] && echo "SUCCESS ${MODEL_ID}/parcels" || echo "FAILED ${MODEL_ID}/parcels exit=${EXIT_CODE}"

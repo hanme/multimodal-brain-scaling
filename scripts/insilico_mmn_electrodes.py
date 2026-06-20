@@ -107,6 +107,10 @@ def main():
     p.add_argument("--lag_max_ms", type=float, default=800.0)
     p.add_argument("--metadata_csv", default=None,
                    help="per-method standard_soa lookup (default: insilico_mmn.DEFAULT_SOA_CSV)")
+    p.add_argument("--baseline_start_mult", type=float, default=-3.0,
+                   help="pre-onset baseline window start, in units of soa_ms (negative = before onset)")
+    p.add_argument("--baseline_end_mult", type=float, default=0.0,
+                   help="pre-onset baseline window end, in units of soa_ms")
     p.add_argument("--n_train_time_samples", type=int, default=120)
     p.add_argument("--eval_heldout", type=lambda s: s.lower() not in ("0", "false", "no"), default=True)
     p.add_argument("--n_eval_time_samples", type=int, default=400)

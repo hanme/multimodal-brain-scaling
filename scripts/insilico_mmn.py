@@ -175,7 +175,8 @@ def predict_timecourse(feat_1stim, model, mu, sd, lags, highpass_hz):
     return t_idx, model.predict(X.astype(np.float32))   # [n_t, n_parcel]
 
 
-def finalize_method(method, t_idx, std_raw, dev_preds, dev_ids, stim_dir, soa_ms):
+def finalize_method(method, t_idx, std_raw, dev_preds, dev_ids, stim_dir, soa_ms,
+                     baseline_start_mult=-3.0, baseline_end_mult=0.0):
     """Time-lock + baseline one method (A and B sides share this). Returns a dict with both
     the baseline-corrected arrays (for plotting) and the RAW full time courses (for downstream
     MMN metrics), or None.
@@ -184,8 +185,9 @@ def finalize_method(method, t_idx, std_raw, dev_preds, dev_ids, stim_dir, soa_ms
     columns = parcels (same order as `parcels`). rel_ms = 0 is the final/critical-tone onset.
 
     dev_b/std_b/diff_b use mean-only baseline correction, exactly like the old `bc()`, just with
-    a baseline window sized to 3x the method's SOA instead of a fixed --win_pre_ms; kept around
-    for callers/tests that want the un-normalized traces, but no longer what gets plotted.
+    a baseline window sized by [baseline_start_mult, baseline_end_mult) x the method's SOA instead
+    of a fixed --win_pre_ms (default [-3, 0) x SOA); kept around for callers/tests that want the
+    un-normalized traces, but no longer what gets plotted.
     z_dev/z_std/z_diff additionally divide by the baseline std (full z-score) -- these are what
     plot_method()/plot_topo() now draw, so the plotted curve's units match the printed peak.
     peak/n7v1_peak are the most-negative point of z_diff (or the N7/var1 deviant's own z-diff)
@@ -197,7 +199,7 @@ def finalize_method(method, t_idx, std_raw, dev_preds, dev_ids, stim_dir, soa_ms
     std_wav = sorted(glob.glob(f"{stim_dir}/*standard*.wav"))[0]
     final_s = detect_final_tone_onset_s(std_wav)
     rel_ms = t_idx * TIME_STEP_MS - final_s * 1000.0          # 0 = final-tone onset
-    base = (rel_ms >= -3.0 * soa_ms) & (rel_ms < 0)           # pre-onset baseline, 3x SOA
+    base = (rel_ms >= baseline_start_mult * soa_ms) & (rel_ms < baseline_end_mult * soa_ms)
 
     def bc(sig):
         return sig - sig[base].mean(0, keepdims=True)
@@ -248,7 +250,9 @@ def analyze_method(method, feat_dir, stim_dir, model, mu, sd, lags, parcels, arg
     if std_raw is None or not dev_preds:
         print(f"  {method}: missing standard or deviants -> skipped")
         return None
-    return finalize_method(method, t_idx, std_raw, dev_preds, dev_ids, stim_dir, soa_ms)
+    return finalize_method(method, t_idx, std_raw, dev_preds, dev_ids, stim_dir, soa_ms,
+                            baseline_start_mult=args.baseline_start_mult,
+                            baseline_end_mult=args.baseline_end_mult)
 
 
 # Parcel-level MMN figures show only these 3 rows (deliverable spec); the mapping itself is
@@ -323,6 +327,10 @@ def main():
     p.add_argument("--lag_max_ms", type=float, default=800.0)
     p.add_argument("--metadata_csv", default=DEFAULT_SOA_CSV,
                    help="per-method standard_soa lookup, for the verdict baseline window")
+    p.add_argument("--baseline_start_mult", type=float, default=-3.0,
+                   help="pre-onset baseline window start, in units of soa_ms (negative = before onset)")
+    p.add_argument("--baseline_end_mult", type=float, default=0.0,
+                   help="pre-onset baseline window end, in units of soa_ms")
     p.add_argument("--n_train_time_samples", type=int, default=120)
     p.add_argument("--eval_heldout", type=lambda s: s.lower() not in ("0", "false", "no"),
                    default=True, help="score the mapping on the built-in held-out TEST runs")

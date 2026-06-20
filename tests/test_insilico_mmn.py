@@ -170,6 +170,33 @@ def test_finalize_method_n7v1_peak_is_nan_when_absent(monkeypatch, stim_dir):
     assert np.isnan(res["n7v1_peak"]).all()
 
 
+def test_finalize_method_custom_baseline_mult_narrows_window(monkeypatch, stim_dir):
+    final_s, soa_ms = 5.0, 300.0
+    monkeypatch.setattr(im, "detect_final_tone_onset_s", lambda wav: final_s)
+    n_t, n_target = 300, 2
+    t_idx = np.arange(n_t)
+    rel_ms = t_idx * im.TIME_STEP_MS - final_s * 1000.0
+
+    win_4th = (rel_ms >= -3.0 * soa_ms) & (rel_ms < -2.0 * soa_ms)
+    win_3rd = (rel_ms >= -2.0 * soa_ms) & (rel_ms < -1.0 * soa_ms)
+    win_2nd = (rel_ms >= -1.0 * soa_ms) & (rel_ms < 0)
+    std_raw = np.zeros((n_t, n_target), dtype=np.float32)
+    std_raw[win_4th] = 10.0
+    std_raw[win_3rd] = 10.0
+    std_raw[win_2nd] = 100.0  # only the dropped 2nd-to-last-tone window differs
+
+    dev_preds, dev_ids = [std_raw.copy()], ["method_test_N1_var1_deviant"]
+
+    res_default = im.finalize_method("method_test", t_idx, std_raw, dev_preds, dev_ids, stim_dir, soa_ms)
+    res_narrow = im.finalize_method("method_test", t_idx, std_raw, dev_preds, dev_ids, stim_dir, soa_ms,
+                                     baseline_start_mult=-3.0, baseline_end_mult=-1.0)
+
+    # default baseline mean mixes all 3 windows -> [10,10,100].mean() = 40
+    np.testing.assert_allclose(res_default["std_b"][win_4th], 10.0 - 40.0, atol=1e-3)
+    # narrowed baseline excludes win_2nd -> mean = [10,10].mean() = 10 -> std_b in win_4th is 0
+    np.testing.assert_allclose(res_narrow["std_b"][win_4th], 0.0, atol=1e-3)
+
+
 # ──────────────────────────────────────────────────────────
 # build_mmn_results_table.py
 # ──────────────────────────────────────────────────────────

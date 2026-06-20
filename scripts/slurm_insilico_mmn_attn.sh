@@ -32,7 +32,7 @@
 PROJECT_DIR="/work/upschrimpf1/sigfstea/multimodal-brain-scaling"
 cd "$PROJECT_DIR" || { echo "cannot cd"; exit 1; }
 source env.sh
-mkdir -p logs outputs/figures outputs/insilico_mmn_predictions
+mkdir -p logs outputs_new_pre_tone_baseline/figures outputs_new_pre_tone_baseline/insilico_mmn_predictions
 
 MODELS=(whisper-tiny whisper-base whisper-small whisper-medium)
 LEVELS=(parcels electrodes)
@@ -65,8 +65,8 @@ CHECKPOINT="outputs/results/${MODEL_ID}-probe-group-d2-${LEVEL}/model__${LAYER}.
 FEATURES_DIR="outputs/features/${MODEL_ID}-delta-t-surprisal/merged"
 NEURAL="outputs/neural_data/surprisal_30s.h5"
 if [ "$MODEL_ID" = "whisper-base" ]; then MMN_FEATURES_ROOT="outputs/features"; else MMN_FEATURES_ROOT="outputs/features/${MODEL_ID}-mmn"; fi
-OUT_DIR="outputs/figures/insilico_mmn/${MODEL_ID}-${LEVEL}/${METHOD}"
-DATA_DIR="outputs/insilico_mmn_predictions/${MODEL_ID}-${LEVEL}/${METHOD}"
+OUT_DIR="outputs_new_pre_tone_baseline/figures/insilico_mmn/${MODEL_ID}-${LEVEL}/${METHOD}"
+DATA_DIR="outputs_new_pre_tone_baseline/insilico_mmn_predictions/${MODEL_ID}-${LEVEL}/${METHOD}"
 
 [ -f "$CHECKPOINT" ] || { echo "🛑 missing checkpoint $CHECKPOINT — run kuma_probe_d2_final.sh first"; exit 1; }
 
@@ -79,6 +79,7 @@ OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-4} python scripts/insilico_mmn_attn.py \
     --method "$METHOD" \
     --features_dir "$FEATURES_DIR" \
     --neural "$NEURAL" \
+    --baseline_start_mult -3.0 --baseline_end_mult -1.0 \
     --out_dir "$OUT_DIR" \
     --data_dir "$DATA_DIR" \
     "$@"

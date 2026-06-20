@@ -53,7 +53,8 @@ def parcels_from_ckpt(ck):
     return [(n, mem, float(r)) for n, mem, r in zip(names, members, nc)]
 
 
-def analyze_method_attn(method, feat_dir, stim_dir, model, ck, layer, device, soa_ms):
+def analyze_method_attn(method, feat_dir, stim_dir, model, ck, layer, device, soa_ms,
+                         baseline_start_mult=-3.0, baseline_end_mult=0.0):
     """B-side of insilico_mmn.analyze_method: predict every MMN clip with the network, then
     hand off to the shared finalize_method() for time-locking + baseline + verdict peak."""
     mfeats, mid_map = load_layer_features(layer, features_folder=Path(feat_dir))
@@ -71,7 +72,8 @@ def analyze_method_attn(method, feat_dir, stim_dir, model, ck, layer, device, so
     if std_raw is None or not dev_preds:
         print(f"  {method}: missing standard or deviants -> skipped")
         return None
-    return finalize_method(method, t_idx, std_raw, dev_preds, dev_ids, stim_dir, soa_ms)
+    return finalize_method(method, t_idx, std_raw, dev_preds, dev_ids, stim_dir, soa_ms,
+                            baseline_start_mult=baseline_start_mult, baseline_end_mult=baseline_end_mult)
 
 
 def fit_quality_figure(model, ck, parcels, neural, features_dir, layer, highpass_hz,
@@ -137,6 +139,10 @@ def main():
     p.add_argument("--neural", required=True, help="neural HDF5 with the test split (fit-quality)")
     p.add_argument("--metadata_csv", default=DEFAULT_SOA_CSV,
                    help="per-method standard_soa lookup, for the verdict baseline window")
+    p.add_argument("--baseline_start_mult", type=float, default=-3.0,
+                   help="pre-onset baseline window start, in units of soa_ms (negative = before onset)")
+    p.add_argument("--baseline_end_mult", type=float, default=0.0,
+                   help="pre-onset baseline window end, in units of soa_ms")
     p.add_argument("--win_pre_ms", type=float, default=150.0)
     p.add_argument("--win_post_ms", type=float, default=500.0)
     p.add_argument("--window_idx", type=int, default=-1)
@@ -175,7 +181,9 @@ def main():
 
     # ---- in-silico MMN ----
     print("In-silico MMN figure:")
-    res = analyze_method_attn(args.method, feat_dir, stim_dir, model, ck, layer, args.device, soa_ms)
+    res = analyze_method_attn(args.method, feat_dir, stim_dir, model, ck, layer, args.device, soa_ms,
+                               baseline_start_mult=args.baseline_start_mult,
+                               baseline_end_mult=args.baseline_end_mult)
     if res is None:
         return
     plot_args = SimpleNamespace(win_pre_ms=args.win_pre_ms, win_post_ms=args.win_post_ms,
