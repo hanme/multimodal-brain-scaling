@@ -568,3 +568,243 @@ second look at that specific trace.
 `whisper-base`/mTRF/parcels/`method_55`, whose trough sits at the window's left (100 ms)  
 edge — the concrete real-data example that rules out S1/S3 as a standalone criterion.
 
+---
+
+## Section 5 — ROI sensitivity comparison
+
+### ROI definitions
+
+
+| Level      | Variant    | Definition                                                                        |
+| ---------- | ---------- | --------------------------------------------------------------------------------- |
+| Electrodes | `Fz`       | Single electrode                                                                  |
+| Electrodes | `FCz`      | Single electrode                                                                  |
+| Electrodes | `Fz_FCz`   | Mean of `Fz`, `FCz`                                                               |
+| Electrodes | `current7` | `{Fz, FCz, Cz, FC1, FC2, F1, F2}` — the ROI used everywhere else in this document |
+| Parcels    | `frontal`  | Single parcel                                                                     |
+| Parcels    | `temporal` | Single parcel                                                                     |
+| Parcels    | `central`  | Single parcel                                                                     |
+| Parcels    | `current2` | `{frontal, central}` — the ROI used everywhere else in this document              |
+
+
+### Rationale
+
+The MMN literature more commonly reports a single best-performing electrode (Fz or FCz) rather
+than an averaged scalp ROI, and MMN's intracranial generators include auditory/temporal cortex
+even though the classic scalp topography is fronto-central. This section checks whether the
+broader averaged ROI used elsewhere in this document (`current7`/`current2`) dilutes or
+stabilizes the magnitude-only (C0) verdict relative to single canonical sites, on the same
+100–240 ms window and the same 160 runs, using `scripts/analyze_mmn_roi_variants.py`.
+
+### Results — present-count by ROI variant (n/10 methods per model; n/40 total per mapping)
+
+**Table 15. Electrodes, mTRF**
+
+
+| Model            | Fz        | FCz       | Fz_FCz    | current7  |
+| ---------------- | --------- | --------- | --------- | --------- |
+| tiny             | 10/10     | 10/10     | 10/10     | 10/10     |
+| base             | 6/10      | 6/10      | 6/10      | 6/10      |
+| small            | 9/10      | 10/10     | 9/10      | 10/10     |
+| medium           | 9/10      | 10/10     | 10/10     | 10/10     |
+| **Total (n/40)** | **34/40** | **36/40** | **35/40** | **36/40** |
+
+
+**Table 16. Electrodes, Encoder**
+
+
+| Model            | Fz        | FCz       | Fz_FCz    | current7  |
+| ---------------- | --------- | --------- | --------- | --------- |
+| tiny             | 5/10      | 5/10      | 4/10      | 5/10      |
+| base             | 7/10      | 6/10      | 7/10      | 7/10      |
+| small            | 4/10      | 3/10      | 3/10      | 2/10      |
+| medium           | 7/10      | 5/10      | 6/10      | 5/10      |
+| **Total (n/40)** | **23/40** | **19/40** | **20/40** | **19/40** |
+
+
+**Table 17. Parcels, mTRF**
+
+
+| Model            | frontal   | temporal  | central   | current2  |
+| ---------------- | --------- | --------- | --------- | --------- |
+| tiny             | 10/10     | 9/10      | 10/10     | 10/10     |
+| base             | 8/10      | 8/10      | 6/10      | 6/10      |
+| small            | 6/10      | 6/10      | 9/10      | 9/10      |
+| medium           | 9/10      | 9/10      | 10/10     | 9/10      |
+| **Total (n/40)** | **33/40** | **32/40** | **35/40** | **34/40** |
+
+
+**Table 18. Parcels, Encoder**
+
+
+| Model            | frontal   | temporal  | central   | current2  |
+| ---------------- | --------- | --------- | --------- | --------- |
+| tiny             | 6/10      | 6/10      | 7/10      | 6/10      |
+| base             | 6/10      | 5/10      | 6/10      | 6/10      |
+| small            | 4/10      | 4/10      | 5/10      | 4/10      |
+| medium           | 7/10      | 7/10      | 7/10      | 7/10      |
+| **Total (n/40)** | **23/40** | **22/40** | **25/40** | **23/40** |
+
+
+**Table 23. Electrodes, combined (mTRF + Encoder)** (Table 15 + Table 16, n/20 per model)
+
+
+| Model            | Fz        | FCz       | Fz_FCz    | current7  |
+| ---------------- | --------- | --------- | --------- | --------- |
+| tiny             | 15/20     | 15/20     | 14/20     | 15/20     |
+| base             | 13/20     | 12/20     | 13/20     | 13/20     |
+| small            | 13/20     | 13/20     | 12/20     | 12/20     |
+| medium           | 16/20     | 15/20     | 16/20     | 15/20     |
+| **Total (n/80)** | **57/80** | **55/80** | **55/80** | **55/80** |
+
+
+Winner: Fz (using C0)  
+  
+**Table 24. Parcels, combined (mTRF + Encoder)** (Table 17 + Table 18, n/20 per model)
+
+
+| Model            | frontal   | temporal  | central   | current2  |
+| ---------------- | --------- | --------- | --------- | --------- |
+| tiny             | 16/20     | 15/20     | 17/20     | 16/20     |
+| base             | 14/20     | 13/20     | 12/20     | 12/20     |
+| small            | 10/20     | 10/20     | 14/20     | 13/20     |
+| medium           | 16/20     | 16/20     | 17/20     | 16/20     |
+| **Total (n/80)** | **56/80** | **54/80** | **60/80** | **57/80** |
+
+
+Winner: Central (using C0)  
+  
+Continuous-magnitude check (mean peak across the 10 methods per model)
+
+**Table 19. Electrodes, mTRF**
+
+
+| Model   | Fz        | FCz       | Fz_FCz    | current7  |
+| ------- | --------- | --------- | --------- | --------- |
+| tiny    | -0.70     | -0.84     | -0.74     | -0.70     |
+| base    | -0.28     | -0.28     | -0.28     | -0.21     |
+| small   | -0.40     | -0.48     | -0.43     | -0.27     |
+| medium  | -0.59     | -0.78     | -0.67     | -0.63     |
+| **avg** | **-0.49** | **-0.59** | **-0.53** | **-0.45** |
+
+
+**Table 20. Electrodes, Encoder**
+
+
+| Model   | Fz        | FCz       | Fz_FCz    | current7  |
+| ------- | --------- | --------- | --------- | --------- |
+| tiny    | -0.06     | +0.03     | -0.01     | +0.07     |
+| base    | -0.07     | -0.12     | -0.08     | -0.29     |
+| small   | +0.10     | +0.42     | +0.29     | +0.30     |
+| medium  | -0.47     | -0.32     | -0.39     | -0.14     |
+| **avg** | **-0.12** | **+0.00** | **-0.05** | **-0.01** |
+
+
+**Table 21. Parcels, mTRF**
+
+
+| Model   | frontal   | temporal  | central   | current2  |
+| ------- | --------- | --------- | --------- | --------- |
+| tiny    | -0.86     | -0.50     | -0.89     | -0.83     |
+| base    | -0.29     | -0.24     | -0.20     | -0.18     |
+| small   | -0.13     | -0.12     | -0.54     | -0.30     |
+| medium  | -0.85     | -0.84     | -0.75     | -0.76     |
+| **avg** | **-0.53** | **-0.43** | **-0.60** | **-0.52** |
+
+
+**Table 22. Parcels, Encoder**
+
+
+| Model   | frontal   | temporal  | central   | current2  |
+| ------- | --------- | --------- | --------- | --------- |
+| tiny    | -1.22     | -1.22     | -1.57     | -1.39     |
+| base    | +0.16     | +0.34     | -1.05     | -0.42     |
+| small   | +0.14     | +0.19     | +0.17     | +0.17     |
+| medium  | -0.12     | -0.21     | -0.13     | -0.13     |
+| **avg** | **-0.26** | **-0.23** | **-0.65** | **-0.44** |
+
+
+### Agreement with the current ROI (Pearson r on peak, pooled across applicable runs)
+
+
+| Comparison           | n   | r      |
+| -------------------- | --- | ------ |
+| current7 vs Fz       | 80  | +0.764 |
+| current7 vs FCz      | 80  | +0.947 |
+| current7 vs Fz_FCz   | 80  | +0.927 |
+| current2 vs frontal  | 80  | +0.962 |
+| current2 vs temporal | 80  | +0.932 |
+| current2 vs central  | 80  | +0.971 |
+
+
+### Disagreement lists
+
+**Fz vs FCz sign disagreement** (12 of 80 electrode runs, 15%):
+
+
+| Model  | Mapping | Method    | Fz        | FCz       |
+| ------ | ------- | --------- | --------- | --------- |
+| base   | encoder | method_27 | +0.31     | -0.46     |
+| base   | encoder | method_37 | -0.20     | +0.21     |
+| base   | encoder | method_60 | -0.95     | +0.71     |
+| base   | mtrf    | method_60 | -0.88     | +0.27     |
+| base   | mtrf    | method_74 | +0.17     | -0.03     |
+| medium | encoder | method_27 | -0.06     | +0.02     |
+| medium | encoder | method_44 | -0.21     | +0.33     |
+| medium | mtrf    | method_37 | +0.04     | -0.22     |
+| small  | encoder | method_43 | -0.07     | +0.36     |
+| small  | mtrf    | method_27 | +0.35     | -0.04     |
+| tiny   | encoder | method_55 | +0.14     | -0.06     |
+| tiny   | encoder | method_60 | **-1.02** | **+2.96** |
+
+
+**frontal/temporal/central sign disagreement** (14 of 80 parcel runs, 17.5%):
+
+
+| Model  | Mapping | Method    | frontal | temporal | central   |
+| ------ | ------- | --------- | ------- | -------- | --------- |
+| base   | encoder | method_53 | -0.39   | +0.08    | **-2.88** |
+| base   | mtrf    | method_27 | -0.04   | -0.01    | +0.02     |
+| base   | mtrf    | method_43 | +0.06   | +0.05    | -0.01     |
+| base   | mtrf    | method_44 | -0.13   | -0.06    | +0.46     |
+| base   | mtrf    | method_74 | -0.14   | -0.27    | +0.03     |
+| medium | mtrf    | method_55 | +0.05   | +0.11    | -0.04     |
+| small  | encoder | method_37 | -0.25   | -0.10    | +0.69     |
+| small  | encoder | method_55 | +0.04   | +0.05    | -0.65     |
+| small  | encoder | method_60 | +0.44   | +0.79    | -0.06     |
+| small  | mtrf    | method_72 | +0.08   | +0.01    | -0.49     |
+| small  | mtrf    | method_74 | +0.12   | +0.16    | -0.92     |
+| small  | mtrf    | method_75 | +0.08   | +0.00    | -0.50     |
+| tiny   | encoder | method_44 | +0.62   | +0.69    | -0.11     |
+| tiny   | mtrf    | method_60 | -0.13   | +1.34    | -0.99     |
+
+
+### Summary
+
+- **The continuous magnitude is largely ROI-invariant.** Every single-site/single-parcel variant
+correlates with its current multi-site ROI at r ≥ 0.76 (electrodes) or r ≥ 0.93 (parcels), pooled
+across all 80 applicable runs each — the ROI choice is not driving wholesale disagreement in the
+underlying signal.
+- **FCz tracks `current7` almost exactly (r=0.947); Fz is the outlier (r=0.764), and is also where
+the present-count diverges most** — in encoder/electrodes, Fz is present in 23/40 vs. 19/40 for
+FCz/current7, a 4-run (10%) swing entirely driven by Fz, not FCz. If a single canonical site were
+chosen for this dataset, FCz is the closer match to the existing multi-site ROI than Fz.
+- **Parcels are more interchangeable than electrodes.** All three parcel variants sit within
+r ≥ 0.93 of `current2`, and present-counts cluster tightly (32–35/40 mTRF, 22–25/40 encoder) — no
+single parcel stands out as systematically different, including `temporal`, despite it being the
+one parcel most tied to MMN's intracranial auditory generators rather than the scalp-projected
+fronto-central topography.
+- **Sign disagreements are a real minority effect, not pure borderline noise.** ~15–18% of runs
+flip sign between single-site/parcel choices, and a handful are large, not borderline —
+`whisper-tiny`/encoder/`method_60` swings from Fz=-1.02 to FCz=+2.96, and
+`whisper-base`/encoder/`method_53` swings from frontal=-0.39 to central=-2.88. These look like
+genuine site-specific divergence in a few runs rather than threshold noise near zero.
+- **Encoder is disproportionately responsible for the electrode-level disagreements** (8 of 12
+Fz/FCz flips are encoder runs, vs. 4 mTRF) — consistent with Section 4's finding that encoder
+verdicts are generally less stable/more shape-ambiguous than mTRF's.
+- **Net takeaway**: the existing multi-site ROI (`current7`/`current2`) is a reasonable,
+conservative choice — it doesn't obviously dilute a stronger single-site effect, and FCz/central
+are the closest single-site proxies if a narrower ROI were ever preferred. The minority of large
+sign-disagreement runs (especially `whisper-tiny`/encoder/`method_60`) are worth a closer look the
+same way Section 4 flagged smooth-ramp outliers.
+
