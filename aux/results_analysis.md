@@ -1050,7 +1050,7 @@ general property of single-site ROIs.
 
 ---
 
-## Appendix — example qualifying responses (whisper-tiny, parcels)
+## Appendix — example qualifying responses (whisper-tiny, parcels, Encoder only)
 
 This appendix shows one concrete example response per criterion (C0, S1, S2, S3, S4, S5, S6),
 all from `whisper-tiny`, `parcels` level, **encoder mapping**, `--roi_variant current` — using
@@ -1067,7 +1067,7 @@ underlying run across adjacent sections — noted explicitly where it happens.
 
 ### C0 — current (magnitude only)
 
-![](images_for_analysis/insilico_mmn__method_27__blocks.3__attn.png)
+
 
 Encoder, `method_27`. The windowed trough is `current_peak = -0.78` at
 `current_argmin_ms = 220.9` ms — right at the window's right edge (`current_interior = False`).
@@ -1080,9 +1080,9 @@ C0 alone calls this run "MMN present"; nothing else agrees.
 
 ### C0 — why magnitude alone is not sufficient (two more examples)
 
-![](images_for_analysis/insilico_mmn__method_72__blocks.3__attn.png)
 
-![](images_for_analysis/insilico_mmn__method_75__blocks.3__attn.png)
+
+
 
 Encoder, `method_72` and `method_75` — the two runs already flagged in Section 4's rationale as
 extreme outliers. Both have a huge windowed trough (`current_peak ≈ -6.5` for each, roughly 5–8×
@@ -1099,7 +1099,7 @@ smooth monotonic ramp, not an oscillatory dip-and-recover.
 
 ### S1 — interior argmin
 
-![](images_for_analysis/insilico_mmn__method_37__blocks.3__attn.png)
+
 
 Encoder, `method_37`. The trough is `current_peak = -0.42` at `current_argmin_ms = 210.9` ms,
 comfortably inside both the 100 ms and 240 ms boundaries (`current_interior = True`), so S1
@@ -1109,7 +1109,7 @@ evidence of a genuine dip-and-recover.
 
 ### S2 — trough + recovery
 
-![](images_for_analysis/insilico_mmn__method_60__blocks.3__attn.png)
+
 
 Encoder, `method_60`. The trough is `current_peak = -2.53` at `current_argmin_ms = 200.9` ms,
 recovering `recovery_frac = 0.576` (≥50%) of that depth within 120 ms, so
@@ -1119,7 +1119,7 @@ non-interior-but-recovering run exists in this particular 10-method slice.)
 
 ### S3 — interior & recovery
 
-![](images_for_analysis/insilico_mmn__method_60__blocks.3__attn.png)
+
 
 Encoder, `method_60` (same run as the S2 example above). Interior
 (`current_interior = True`) **and** recovers (`recovery_frac = 0.576`), so
@@ -1128,7 +1128,7 @@ S3 = S1 AND S2 passes cleanly. This run passes every criterion C0–S6 in the ta
 
 ### S4 — tone-end-relative dip + recovery
 
-![](images_for_analysis/insilico_mmn__method_55__blocks.3__attn.png)
+
 
 Encoder, `method_55`. The fixed-window argmin is actually positive
 (`current_peak = +1.79`), so even C0 fails here (`current__C0_current = False`) — there is no
@@ -1143,7 +1143,7 @@ either the fixed window's or the whole trace's own argmin.
 
 ### S5 — unbound dip + recovery
 
-![](images_for_analysis/insilico_mmn__method_44__blocks.3__attn.png)
+
 
 Encoder, `method_44`. In the fixed 100–240 ms window there is no dip at all
 (`current_peak = +0.26`, `current__C0_current = False`). Searching the entire trace finds a
@@ -1155,7 +1155,7 @@ a trough the fixed window misses entirely. (`global__S6_envelope_recovery = Fals
 
 ### S6 — envelope-guarded unbound search
 
-![](images_for_analysis/insilico_mmn__method_60__blocks.3__attn.png)
+
 
 Encoder, `method_60` (same run as the S2/S3 examples above — the only run in this slice that
 clears the full S2→S3→S6 chain). The unbound search finds its trough at
@@ -1170,40 +1170,87 @@ Each shape-aware criterion closes a specific gap in the one before it, but each 
 blind spot, visible either in the examples above or in the full 160-run counts (Tables 13/14):
 
 - **S1 (interior argmin)** only checks that the trough is one sample away from the window
-  boundary — it says nothing about whether the curve actually turns around afterward. 9/160 runs
-  are S1-true but S2-false (e.g. `whisper-base`/encoder/electrodes/`method_53`,
-  `recovery_frac = 0.248`); an interior trough can still belong to a curve that is substantially
-  still descending when the window ends, exactly like the `method_37` example above
-  (`recovery_frac = 0.019`).
+boundary — it says nothing about whether the curve actually turns around afterward. 9/160 runs
+are S1-true but S2-false (e.g. `whisper-base`/encoder/electrodes/`method_53`,
+`recovery_frac = 0.248`); an interior trough can still belong to a curve that is substantially
+still descending when the window ends, exactly like the `method_37` example above
+(`recovery_frac = 0.019`).
 - **S2 (trough + recovery)** has no minimum-depth floor: because recovery is scored as a
-  *fraction* of the trough's own depth, an arbitrarily small, noise-scale dip that happens to
-  bounce back passes just as well as a large one. `whisper-tiny`/encoder/electrodes/`method_55`
-  has `current_peak = -0.0209` — essentially a flat trace — yet `recovery_frac = 3.974`,
-  satisfying S2. The test can't distinguish a genuine small MMN from baseline jitter.
+*fraction* of the trough's own depth, an arbitrarily small, noise-scale dip that happens to
+bounce back passes just as well as a large one. `whisper-tiny`/encoder/electrodes/`method_55`
+has `current_peak = -0.0209` — essentially a flat trace — yet `recovery_frac = 3.974`,
+satisfying S2. The test can't distinguish a genuine small MMN from baseline jitter.
 - **S3 (S1 AND S2)** inherits both limitations rather than removing them: the interior threshold
-  is still a single arbitrary bin, and the recovery test still has no absolute depth floor.
-  Requiring both narrows the false-positive rate somewhat (a run has to clear two independent
-  gates) but doesn't close either gap on its own.
+is still a single arbitrary bin, and the recovery test still has no absolute depth floor.
+Requiring both narrows the false-positive rate somewhat (a run has to clear two independent
+gates) but doesn't close either gap on its own.
 - **S4 (tone-end-relative scan)** is the most permissive shape-aware criterion in both tables
-  (mTRF 73/80, encoder 26/80 — more than triple S3's encoder count of 8/80, and for mTRF even
-  exceeding C0 once pooled by model in Table 13). This follows directly from dropping *both* the
-  single-argmin constraint and the minimum-depth floor at once: scanning every sample in a
-  250 ms-wide window for *any* qualifying dip-and-recover means one lucky noise sample among
-  several dozen can satisfy it, with no requirement that it be the curve's dominant feature.
-  Nothing in the test distinguishes "the one genuine MMN sample" from "one lucky sample out of
-  many."
+(mTRF 73/80, encoder 26/80 — more than triple S3's encoder count of 8/80, and for mTRF even
+exceeding C0 once pooled by model in Table 13). This follows directly from dropping *both* the
+single-argmin constraint and the minimum-depth floor at once: scanning every sample in a
+250 ms-wide window for *any* qualifying dip-and-recover means one lucky noise sample among
+several dozen can satisfy it, with no requirement that it be the curve's dominant feature.
+Nothing in the test distinguishes "the one genuine MMN sample" from "one lucky sample out of
+many."
 - **S5 (unbound search)** drops the fixed window entirely, so the global trough can land
-  anywhere in `[0, t.max()]` — including implausibly early (a baseline/onset transient, not an
-  MMN) or implausibly late (drift or an unrelated later component). Concretely, 48 of the 87
-  S5-true runs (55%) have their global argmin outside the 90–250 ms literature envelope,
-  including several essentially at trace start (e.g. `whisper-base`/mTRF/`method_60`, both ROI
-  levels, `global_argmin_ms ≈ 0.9`). S5 alone cannot tell these apart from a genuine MMN — that
-  gap is exactly what S6 is built to close.
+anywhere in `[0, t.max()]` — including implausibly early (a baseline/onset transient, not an
+MMN) or implausibly late (drift or an unrelated later component). Concretely, 48 of the 87
+S5-true runs (55%) have their global argmin outside the 90–250 ms literature envelope,
+including several essentially at trace start (e.g. `whisper-base`/mTRF/`method_60`, both ROI
+levels, `global_argmin_ms ≈ 0.9`). S5 alone cannot tell these apart from a genuine MMN — that
+gap is exactly what S6 is built to close.
 - **S6 (envelope guard)** closes most of S5's gap but not all of it: the 90–250 ms envelope is a
-  wide heuristic band (the union across 10 source papers' own windows), not a per-stimulus
-  plausibility check — a coincidental noise trough that happens to land inside 90–250 ms by
-  chance would still pass, since the envelope only constrains latency, not the trough's
-  robustness beyond what S5 already checks. It is also the most restrictive criterion in both
-  tables (32/80 mTRF, 7/80 encoder), so the flip side of guarding against implausible latencies
-  is a real risk of rejecting genuine MMN responses whose true latency, for this paradigm, falls
-  outside the literature-derived range.
+wide heuristic band (the union across 10 source papers' own windows), not a per-stimulus
+plausibility check — a coincidental noise trough that happens to land inside 90–250 ms by
+chance would still pass, since the envelope only constrains latency, not the trough's
+robustness beyond what S5 already checks. It is also the most restrictive criterion in both
+tables (32/80 mTRF, 7/80 encoder), so the flip side of guarding against implausible latencies
+is a real risk of rejecting genuine MMN responses whose true latency, for this paradigm, falls
+outside the literature-derived range.
+
+### mTRF vs. Encoder — expressiveness gap on the same stimulus
+
+The criterion-by-criterion counts above (Tables 13/14) show encoder lagging mTRF on every
+single criterion (e.g. C0 70/80 vs 42/80, S3 38/80 vs 8/80) — this section shows what that gap
+actually looks like on the same stimulus, by comparing the two mappings' response to identical
+`method_55` and `method_60` inputs (`whisper-tiny`, parcels, same ROI mean, same time-locking).
+
+**`method_55` — mTRF finds a textbook dip-and-recover; encoder finds nothing.**
+
+![](images_for_analysis/insilico_mmn__method_55__blocks.0.png)
+
+mTRF: `current_peak = -1.43` at `current_argmin_ms = 120.9` ms — interior, recovering
+(`recovery_frac = 2.31`) — passes C0 through S3 and S6 cleanly (the same run used as the S3
+example earlier in this appendix's first draft).
+
+![](images_for_analysis/insilico_mmn__method_55__blocks.3__attn.png)
+
+Encoder, identical stimulus: `current_peak = +1.79` — **positive**, i.e. no dip at all in the
+100–240 ms window (`current__C0_current = False`). The two mappings don't just disagree on
+*shape*, they disagree on whether there's a response in the window in the first place. (S4
+still finds a real, if late, dip-and-recover for this run outside the fixed window — see the S4
+example above — but the fixed-window picture the rest of this document mostly reports on is a
+flat or rising curve here, not a trough.)
+
+**`method_60` — the exception: encoder is the one with real shape here.**
+
+![](images_for_analysis/insilico_mmn__method_60__blocks.0.png)
+
+mTRF, identical stimulus: `current_peak = -0.56`, off-center and *not* recovering
+(`recovery_frac = -0.101`, `current__S2_recovery = False`); the unbound search does find a
+deeper trough (`global_peak = -1.39`), but at `global_argmin_ms = 20.9` ms — implausibly early,
+outside the 90–250 ms envelope, so `global__S6_envelope_recovery = False` too. By every
+criterion in this table, mTRF shows essentially no usable MMN shape for this stimulus.
+
+![](images_for_analysis/insilico_mmn__method_60__blocks.3__attn.png)
+
+Encoder, identical stimulus: `current_peak = -2.53` at `current_argmin_ms = 200.9` ms — interior,
+recovering (`recovery_frac = 0.576`), envelope-plausible — passes every criterion C0–S6 (the
+same run used as the S2/S3/S6 example above).
+
+**Takeaway:** the aggregate counts say encoder is *generally* less shape-confirmed than mTRF,
+not *always* — `method_60` is a direct counterexample on the very same model/level. What's
+consistent is that the two mappings frequently disagree about the *same* stimulus, sometimes
+sharply (`method_55`'s sign flip between a clear trough and no dip at all), rather than encoder
+producing a uniformly attenuated version of the same response mTRF sees.
+
