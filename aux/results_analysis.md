@@ -808,3 +808,144 @@ are the closest single-site proxies if a narrower ROI were ever preferred. The m
 sign-disagreement runs (especially `whisper-tiny`/encoder/`method_60`) are worth a closer look the
 same way Section 4 flagged smooth-ramp outliers.
 
+---
+
+## Section 6 — Shape-aware criteria under single-site ROI (Fz / central)
+
+### Rationale
+
+Section 5 found that, for the magnitude-only (C0) verdict, `Fz` (electrodes) and `central`
+(parcels) are each the best-correlated single-site stand-in for their respective current
+averaged ROI. This section checks whether that holds for the *shape-aware* criteria (S1–S4)
+too — narrowing the ROI to one site removes any smoothing-by-averaging, which could plausibly
+make trough shape noisier (more S1/S3 edge-rejections) or cleaner (less dilution from off-peak
+sites). Metric definitions are unchanged from Section 4's table; only the scoring ROI changes
+(`{Fz}` instead of `{Fz, FCz, Cz, FC1, FC2, F1, F2}`; `{central}` instead of
+`{frontal, central}`).
+
+### Results — mTRF
+
+**Table 25. Electrodes, mTRF — Fz only** (n/10 per model, 10 methods each)
+
+
+| Model            | C0 (n/10) | S1 (n/10) | S2 (n/10) | S3 (n/10) | S4 (n/10) |
+| ---------------- | --------- | --------- | --------- | --------- | --------- |
+| tiny             | 10/10     | 7/10      | 7/10      | 4/10      | 7/10      |
+| base             | 6/10      | 3/10      | 6/10      | 3/10      | 4/10      |
+| small            | 9/10      | 6/10      | 9/10      | 6/10      | 7/10      |
+| medium           | 9/10      | 8/10      | 9/10      | 8/10      | 6/10      |
+| **Total (n/40)** | **34/40** | **24/40** | **31/40** | **21/40** | **24/40** |
+
+
+**Table 26. Parcels, mTRF — central only** (n/10 per model, 10 methods each)
+
+
+| Model            | C0 (n/10) | S1 (n/10) | S2 (n/10) | S3 (n/10) | S4 (n/10) |
+| ---------------- | --------- | --------- | --------- | --------- | --------- |
+| tiny             | 10/10     | 4/10      | 8/10      | 4/10      | 7/10      |
+| base             | 6/10      | 3/10      | 6/10      | 3/10      | 4/10      |
+| small            | 9/10      | 5/10      | 9/10      | 5/10      | 7/10      |
+| medium           | 10/10     | 9/10      | 10/10     | 9/10      | 5/10      |
+| **Total (n/40)** | **35/40** | **21/40** | **33/40** | **21/40** | **23/40** |
+
+
+### Results — Encoder
+
+**Table 27. Electrodes, Encoder — Fz only** (n/10 per model, 10 methods each)
+
+
+| Model            | C0 (n/10) | S1 (n/10) | S2 (n/10) | S3 (n/10) | S4 (n/10) |
+| ---------------- | --------- | --------- | --------- | --------- | --------- |
+| tiny             | 5/10      | 4/10      | 1/10      | 1/10      | 0/10      |
+| base             | 7/10      | 2/10      | 6/10      | 2/10      | 4/10      |
+| small            | 4/10      | 1/10      | 0/10      | 0/10      | 1/10      |
+| medium           | 7/10      | 2/10      | 2/10      | 1/10      | 2/10      |
+| **Total (n/40)** | **23/40** | **9/40**  | **9/40**  | **4/40**  | **7/40**  |
+
+
+**Table 28. Parcels, Encoder — central only** (n/10 per model, 10 methods each)
+
+
+| Model            | C0 (n/10) | S1 (n/10) | S2 (n/10) | S3 (n/10) | S4 (n/10) |
+| ---------------- | --------- | --------- | --------- | --------- | --------- |
+| tiny             | 7/10      | 4/10      | 2/10      | 2/10      | 1/10      |
+| base             | 6/10      | 4/10      | 2/10      | 2/10      | 3/10      |
+| small            | 5/10      | 2/10      | 5/10      | 2/10      | 3/10      |
+| medium           | 7/10      | 1/10      | 1/10      | 1/10      | 2/10      |
+| **Total (n/40)** | **25/40** | **11/40** | **10/40** | **7/40**  | **9/40**  |
+
+
+### Combined (parcels + electrodes pooled) — for direct comparison to Table 13/14
+
+**Table 29. mTRF, combined** (= Table 25 + Table 26, n/20 per model)
+
+
+| Model            | C0 (n/20) | S1 (n/20) | S2 (n/20) | S3 (n/20) | S4 (n/20) |
+| ---------------- | --------- | --------- | --------- | --------- | --------- |
+| tiny             | 20/20     | 11/20     | 15/20     | 8/20      | 14/20     |
+| base             | 12/20     | 6/20      | 12/20     | 6/20      | 8/20      |
+| small            | 18/20     | 11/20     | 18/20     | 11/20     | 14/20     |
+| medium           | 19/20     | 17/20     | 19/20     | 17/20     | 11/20     |
+| **Total (n/80)** | **69/80** | **45/80** | **64/80** | **42/80** | **47/80** |
+
+
+**Table 30. Encoder, combined** (= Table 27 + Table 28, n/20 per model)
+
+
+| Model            | C0 (n/20) | S1 (n/20) | S2 (n/20) | S3 (n/20) | S4 (n/20) |
+| ---------------- | --------- | --------- | --------- | --------- | --------- |
+| tiny             | 12/20     | 8/20      | 3/20      | 3/20      | 1/20      |
+| base             | 13/20     | 6/20      | 8/20      | 4/20      | 7/20      |
+| small            | 9/20      | 3/20      | 5/20      | 2/20      | 4/20      |
+| medium           | 14/20     | 3/20      | 3/20      | 2/20      | 4/20      |
+| **Total (n/80)** | **48/80** | **20/80** | **19/80** | **11/80** | **16/80** |
+
+
+### Comparison against Section 4 (current7/current2)
+
+| Criterion | mTRF current7/current2 | mTRF Fz/central (combined) | Encoder current7/current2 | Encoder Fz/central (combined) |
+| --------- | ----------------------- | --------------------------- | -------------------------- | ------------------------------- |
+| C0        | 70/80                  | 69/80                       | 42/80                      | 48/80                           |
+| S1        | 40/80                  | 45/80                       | 15/80                      | 20/80                           |
+| S2        | 65/80                  | 64/80                       | 16/80                      | 19/80                           |
+| S3        | 38/80                  | 42/80                       | 8/80                       | 11/80                           |
+| S4        | 46/80                  | 47/80                       | 13/80                      | 16/80                           |
+
+### Summary
+
+- **C0 barely moves under mTRF** (70→69) but **rises noticeably under encoder** (42→48) —
+single-site Fz/central crosses the present/absent threshold for a few more encoder runs than the
+averaged ROI does, consistent with Section 5's weaker correlations on the encoder side.
+- **The core Section 4 finding is unchanged**: encoder still collapses far more than mTRF under
+shape gating. S2/C0 retention is 64/69=92.8% (mTRF) vs 19/48=39.6% (encoder) under Fz/central —
+essentially identical to the original 65/70=92.9% vs 16/42=38.1%. Narrowing the ROI does not
+rescue the encoder's shape problem.
+- **The S1/S3 edge-rejection penalty on mTRF persists** (and is if anything slightly less
+severe): 69→45/42 under Fz/central vs 70→40/38 under current7/current2 — same qualitative gap
+that motivated preferring S2/S4 over S1/S3 in Section 4.
+- **New finding visible only at the per-level split (Tables 25–28)**: under encoder,
+electrodes/Fz is consistently the weaker of the two single-site ROIs for shape-confirmation —
+S2 9/40 (22.5%) and S4 7/40 (17.5%) for electrodes/Fz vs S2 10/40 (25%) and S4 9/40 (22.5%) for
+parcels/central. Under mTRF the two levels track each other closely (S2 31/40 vs 33/40). This
+asymmetry was invisible in the pooled view and suggests the auditory/temporal-adjacent parcel
+signal (`central`) is a marginally more robust single-site choice than the scalp electrode
+(`Fz`) once shape constraints are applied — though the gap is small relative to the
+encoder-vs-mTRF gap, which remains the dominant effect.
+- **All previously flagged cases behave identically.** The 4 confirmed smooth ramps
+(`whisper-{tiny,base}`/parcels/encoder/`method_{72,75}`) again flip to absent under every shape
+criterion. The 5th flagged case (`whisper-medium`/electrodes/mTRF/`method_43`) again stays
+present under all four shape criteria (peak=-1.31, 90% recovery at 171ms) — reproducing the same
+"worth a second look" anomaly noted in Section 4, ruling out averaged-ROI dilution as the
+explanation. All 3 clear-trough sanity checks stay present under S2/S4, including
+`whisper-base`/mTRF/parcels/`method_55`, whose trough again sits exactly at the 100ms window edge
+and again fails S1/S3 while passing S2/S4 — the same concrete edge case that argues against
+S1/S3 as standalone criteria, independent of ROI choice.
+
+**Bottom line:** Narrowing to single-site ROI (Fz/central) changes individual run-level verdicts
+at the margins but does not change Section 4's structural conclusions — S2 and S4 remain
+preferable to S1/S3, and encoder responses remain far less shape-confirmed than mTRF, regardless
+of whether the ROI is the averaged scalp/parcel set or the single best-correlated site. The one
+new wrinkle is that electrodes/Fz is a slightly weaker single-site choice than parcels/central
+for encoder shape-confirmation specifically — worth keeping in mind if a future analysis needs
+to pick one ROI level over the other.
+
