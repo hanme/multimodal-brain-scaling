@@ -1067,7 +1067,7 @@ underlying run across adjacent sections — noted explicitly where it happens.
 
 ### C0 — current (magnitude only)
 
-![](../outputs/figures/insilico_mmn/whisper-tiny-parcels/method_27/insilico_mmn__method_27__blocks.3__attn.png)
+![](images_for_analysis/insilico_mmn__method_27__blocks.3__attn.png)
 
 Encoder, `method_27`. The windowed trough is `current_peak = -0.78` at
 `current_argmin_ms = 220.9` ms — right at the window's right edge (`current_interior = False`).
@@ -1080,9 +1080,9 @@ C0 alone calls this run "MMN present"; nothing else agrees.
 
 ### C0 — why magnitude alone is not sufficient (two more examples)
 
-![](../outputs/figures/insilico_mmn/whisper-tiny-parcels/method_72/insilico_mmn__method_72__blocks.3__attn.png)
+![](images_for_analysis/insilico_mmn__method_72__blocks.3__attn.png)
 
-![](../outputs/figures/insilico_mmn/whisper-tiny-parcels/method_75/insilico_mmn__method_75__blocks.3__attn.png)
+![](images_for_analysis/insilico_mmn__method_75__blocks.3__attn.png)
 
 Encoder, `method_72` and `method_75` — the two runs already flagged in Section 4's rationale as
 extreme outliers. Both have a huge windowed trough (`current_peak ≈ -6.5` for each, roughly 5–8×
@@ -1099,7 +1099,7 @@ smooth monotonic ramp, not an oscillatory dip-and-recover.
 
 ### S1 — interior argmin
 
-![](../outputs/figures/insilico_mmn/whisper-tiny-parcels/method_37/insilico_mmn__method_37__blocks.3__attn.png)
+![](images_for_analysis/insilico_mmn__method_37__blocks.3__attn.png)
 
 Encoder, `method_37`. The trough is `current_peak = -0.42` at `current_argmin_ms = 210.9` ms,
 comfortably inside both the 100 ms and 240 ms boundaries (`current_interior = True`), so S1
@@ -1109,7 +1109,7 @@ evidence of a genuine dip-and-recover.
 
 ### S2 — trough + recovery
 
-![](../outputs/figures/insilico_mmn/whisper-tiny-parcels/method_60/insilico_mmn__method_60__blocks.3__attn.png)
+![](images_for_analysis/insilico_mmn__method_60__blocks.3__attn.png)
 
 Encoder, `method_60`. The trough is `current_peak = -2.53` at `current_argmin_ms = 200.9` ms,
 recovering `recovery_frac = 0.576` (≥50%) of that depth within 120 ms, so
@@ -1119,7 +1119,7 @@ non-interior-but-recovering run exists in this particular 10-method slice.)
 
 ### S3 — interior & recovery
 
-![](../outputs/figures/insilico_mmn/whisper-tiny-parcels/method_60/insilico_mmn__method_60__blocks.3__attn.png)
+![](images_for_analysis/insilico_mmn__method_60__blocks.3__attn.png)
 
 Encoder, `method_60` (same run as the S2 example above). Interior
 (`current_interior = True`) **and** recovers (`recovery_frac = 0.576`), so
@@ -1128,7 +1128,7 @@ S3 = S1 AND S2 passes cleanly. This run passes every criterion C0–S6 in the ta
 
 ### S4 — tone-end-relative dip + recovery
 
-![](../outputs/figures/insilico_mmn/whisper-tiny-parcels/method_55/insilico_mmn__method_55__blocks.3__attn.png)
+![](images_for_analysis/insilico_mmn__method_55__blocks.3__attn.png)
 
 Encoder, `method_55`. The fixed-window argmin is actually positive
 (`current_peak = +1.79`), so even C0 fails here (`current__C0_current = False`) — there is no
@@ -1143,7 +1143,7 @@ either the fixed window's or the whole trace's own argmin.
 
 ### S5 — unbound dip + recovery
 
-![](../outputs/figures/insilico_mmn/whisper-tiny-parcels/method_44/insilico_mmn__method_44__blocks.3__attn.png)
+![](images_for_analysis/insilico_mmn__method_44__blocks.3__attn.png)
 
 Encoder, `method_44`. In the fixed 100–240 ms window there is no dip at all
 (`current_peak = +0.26`, `current__C0_current = False`). Searching the entire trace finds a
@@ -1155,7 +1155,7 @@ a trough the fixed window misses entirely. (`global__S6_envelope_recovery = Fals
 
 ### S6 — envelope-guarded unbound search
 
-![](../outputs/figures/insilico_mmn/whisper-tiny-parcels/method_60/insilico_mmn__method_60__blocks.3__attn.png)
+![](images_for_analysis/insilico_mmn__method_60__blocks.3__attn.png)
 
 Encoder, `method_60` (same run as the S2/S3 examples above — the only run in this slice that
 clears the full S2→S3→S6 chain). The unbound search finds its trough at

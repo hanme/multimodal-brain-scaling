@@ -206,6 +206,8 @@ cython_debug/
 *.pdf
 *.png
 *.svg
+# exception: small set of figures embedded in aux/results_analysis.md's Appendix
+!aux/images_for_analysis/*.png
 
 # outputs/ — exclude large generated data, keep figures and JSON summaries
 outputs/features/
