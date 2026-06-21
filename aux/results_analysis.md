@@ -41,6 +41,11 @@ EEG) — only MMN presence/absence and response magnitude are covered here.
 
 ## Section 1 — Method A (mTRF)
 
+> **Code:** `scripts/build_mmn_results_table.py` (`python scripts/build_mmn_results_table.py --predictions_root outputs/insilico_mmn_predictions --out outputs/results/mmn_results_table.csv`)
+> · **Data:** `outputs/results/mmn_results_table.csv` (raw per-target table; Tables 1a–1e below are
+> aggregations — mean/count per model × method × level, filtered to `mapping=="mtrf"` — computed
+> directly from it).
+
 **Table 1a. Mean MMN per model × method**
 
 
@@ -144,6 +149,10 @@ unlike Table 1d — each column is that level's mean over the 10 methods)
 ---
 
 ## Section 2 — Method B (encoder)
+
+> **Code:** `scripts/build_mmn_results_table.py` (same invocation as Section 1) · **Data:**
+> `outputs/results/mmn_results_table.csv` (same raw table as Section 1; Tables 2a–2e are the
+> identical aggregation filtered to `mapping=="encoder"` instead of `"mtrf"`).
 
 **Table 2a. Mean MMN per model × method**
 
@@ -249,6 +258,11 @@ unlike Table 2d — each column is that level's mean over the 10 methods)
 
 ## Cross-Method Comparisons
 
+> **Code:** ad hoc pairwise aggregation over `outputs/results/mmn_results_table.csv` (pivoting
+> Tables 1a/2a's per-target verdicts to compare `mapping=="mtrf"` vs `mapping=="encoder"` for the
+> same model × level × method); no standalone script was saved for this comparison. · **Data:**
+> `outputs/results/mmn_results_table.csv` (same file as Sections 1–2).
+
 **Table 3. mTRF vs. encoder agreement** (per model × level, over the 10 methods)
 
 
@@ -284,6 +298,10 @@ unlike Table 2d — each column is that level's mean over the 10 methods)
 ---
 
 ## Notes & caveats
+
+> **Code:** none new — these are observations synthesized from Sections 1–4 above. · **Data:**
+> `outputs/results/mmn_results_table.csv` (Tables 1–4) and `outputs/results/mmn_criteria_comparison.csv`
+> (the shape-criterion caveat below, formalized later in Section 4).
 
 - `**whisper-tiny` under mTRF is 100% MMN-positive (20/20)** — every single stimulus method
 triggers the criterion at both levels. That is unusually clean compared to every other
@@ -336,6 +354,13 @@ before deciding whether to add it.
 ---
 
 ## Section 3 — Pre-tone baseline window comparison (excluding the N-1 tone window to prevent leakage)
+
+> **Code:** ad hoc paired comparison between the two CSVs below (Pearson/Spearman correlation,
+> sign agreement, per-method and per-mapping breakdowns); no standalone script was saved for this
+> comparison. · **Data:** `outputs/results/mmn_results_table.csv` (original 3-tone baseline) and
+> `outputs_new_pre_tone_baseline/results/mmn_results_table.csv` (new 2-tone baseline, built by the
+> same `scripts/build_mmn_results_table.py` against a separate `outputs_new_pre_tone_baseline/`
+> predictions tree).
 
 ### Rationale
 
@@ -487,22 +512,42 @@ exposed to this failure mode.
 
 ## Section 4 — Comparison of different possible MMN shape metrics using existing ROI definitions
 
+> **Code:** `scripts/analyze_mmn_criteria.py` (`python scripts/analyze_mmn_criteria.py --predictions_root outputs/insilico_mmn_predictions --out outputs/results/mmn_criteria_comparison.csv`)
+> · **Data:** `outputs/results/mmn_criteria_comparison.csv` (per-run) and
+> `outputs/results/mmn_criteria_comparison__per_target.csv` (per-target detail).
+> · **S5/S6 code:** `scripts/analyze_mmn_criteria_s5_s6.py` (`--roi_variant current`) ·
+> **S5/S6 data:** `outputs/results/mmn_criteria_s5_s6.csv`.
+
 ### Metric definitions
 
-All five criteria share the same magnitude gate (the windowed trough must be `< 0`) and are
-evaluated on the same ROI-mean z-scored `deviant − standard` curve over the current 100–240 ms
-window (`{frontal, central}` for parcels, `{Fz, FCz, Cz, FC1, FC2, F1, F2}` for electrodes); C0
-is the metric already used everywhere else in this document.
+C0–S3 share the same magnitude gate (the windowed trough must be `< 0`) and are evaluated on the
+same ROI-mean z-scored `deviant − standard` curve over the current 100–240 ms window
+(`{frontal, central}` for parcels, `{Fz, FCz, Cz, FC1, FC2, F1, F2}` for electrodes); C0 is the
+metric already used everywhere else in this document. S4 and S5/S6 search outside this fixed
+window — S4 over a per-method, tone-end-relative window; S5/S6 over the entire post-onset trace —
+so they are not "the same window," just the same underlying ROI-mean trace.
 
 
-| ID     | Name                       | Definition                                                                                                                                                                                                                                    |
-| ------ | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **C0** | current (magnitude only)   | The most negative point of the curve in the 100–240 ms window is below 0. No shape requirement.                                                                                                                                               |
-| **S1** | interior argmin            | Like C0, plus the trough may not sit at either edge of the window — it must be at least one time-bin inside both the 100 ms and 240 ms boundaries.                                                                                            |
-| **S2** | trough + recovery          | Like C0, plus after the trough the curve must climb back up by at least 50% of the trough's depth within 120 ms (a genuine dip-and-recover, not a curve still descending).                                                                    |
-| **S3** | interior & recovery        | S1 **and** S2 both required.                                                                                                                                                                                                                  |
-| **S4** | control-window specificity | Like C0, plus the in-window trough must be more negative than the lowest point of a later window (300–440 ms) where no MMN is expected — rules out cases where the "trough" is really the edge of a deeper, unrelated dip further downstream. |
+| ID     | Name                             | Definition                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ------ | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **C0** | current (magnitude only)         | The most negative point of the curve in the 100–240 ms window is below 0. No shape requirement.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **S1** | interior argmin                  | Like C0, plus the trough may not sit at either edge of the window — it must be at least one time-bin inside both the 100 ms and 240 ms boundaries.                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| **S2** | trough + recovery                | Like C0, plus after the trough the curve must climb back up by at least 50% of the trough's depth within 120 ms (a genuine dip-and-recover, not a caurve still descending).                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| **S3** | interior & recovery              | S1 **and** S2 both required.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| **S4** | tone-end-relative dip + recovery | Per method, using the final/critical tone's real duration (`tone_end_ms`, looked up by `method_id` from `data/metadata/literature_frequency_intensity_duration_metadata.csv`): scans **every sample** — not just a window's argmin — in `[tone_end_ms, tone_end_ms+250]` for one that dips below 0 and recovers ≥50% of its own depth by the **absolute** deadline `tone_end_ms+400` (clipped to `t.max()`). True if **any** sample qualifies; does not require the qualifying point to be the window's most negative point. Supersedes a retired control-window-specificity test (see Rationale). |
+| **S5** | unbound dip + recovery           | Like S2 (trough + recovery), but the trough search is not restricted to the 100–240 ms window — it runs over the entire available post-onset trace (`[0, t.max()]`, where `t.max()` varies by run/method, ≈281–981 ms across the 160 runs). Recovery is now checked against the same **absolute** deadline as S4 (`tone_end_ms+400`, clipped to `t.max()`) instead of a fixed 120 ms window after the trough.                                                                                                                                                                                      |
+| **S6** | envelope-guarded unbound search  | Like S5 (now deadline-bound), plus the located trough's latency must fall inside a literature-derived plausibility envelope (default 90–250 ms, the union across the 10 source papers' own MMN windows — see `aux/mmn_criterion_investigation.md`).                                                                                                                                                                                                                                                                                                                                                |
 
+
+### Relationship between criteria
+
+- **S6 ⊆ S5 — guaranteed, by construction.** S6 is literally `S5 AND (90 ≤ global_argmin_ms ≤ 250)`; adding an AND condition can only narrow the true set, never widen it. Every S6-true run
+is necessarily S5-true; the reverse does not hold.
+- **S2 vs. S5 — NOT a subset relationship either direction**, despite S5 looking like "S2 with a
+wider window." The reason: both criteria locate *their own* trough first (argmin within
+whichever window), then check recovery *from that specific point*. Widening the search window
+can relocate the trough entirely — so a run can flip either way (S2-true/S5-false, or
+S2-false/S5-true), not just gain positives.
 
 ### Rationale
 
@@ -513,24 +558,20 @@ from a curve that is simply still ramping downward when the window cuts off (see
 above). A handful of runs already flagged as extreme outliers (e.g. `whisper-tiny`/encoder/
 parcels/`method_72`/`method_75`, peaks ≈ −6.5) turned out on inspection to be smooth monotonic
 ramps rather than oscillatory MMN-like responses, with their true (much later) trough sitting
-outside the scored window. `aux/mmn_criterion_investigation.md` worked through candidate
-shape-aware criteria to catch this systematically; this section reports the actual counts from
-running those criteria (`scripts/analyze_mmn_criteria.py`) over all 160 runs, on the existing
-100–240 ms window and ROI definitions (the window itself is not varied — see that document's
-Q2 for why it was kept as-is).
+outside the scored window. `aux/mmn_criterion_investigation.md` worked through candidate shape-aware criteria to catch this systematically; this section reports the actual counts from running those criteria over all 160 runs, on the existing 100–240 ms window and ROI definitions (the window itself is not varied — see that document's Q2 for why it was kept as-is). S4/S5/S6 (added below) directly target this limitation: S4 by scanning a per-method, tone-end-relative window for any qualifying dip-and-recover sample (not just the deepest one), S5/S6 by searching the entire available post-onset trace instead of the fixed window, with S6 additionally guarding against implausibly early/late "troughs" the unbound search can otherwise pick up (e.g. baseline-noise spikes near t≈0). Note also that 3 of the 10 methods in use (37, 53, 60 — 50–100 ms tones) have `t.max()` shorter than `tone_end_ms+400`, so their S4 dip window and S5/S6 recovery deadline get clipped to `t.max()` for every run using those methods (48/160 rows, consistently across all models/mappings) — this is expected, not a bug.
 
 ### Results — mTRF
 
 **Table 13. MMN-present counts per criterion, by model** (n/20 = parcels + electrodes pooled, 10 methods each)
 
 
-| Model            | C0 (n/20) | S1 (n/20) | S2 (n/20) | S3 (n/20) | S4 (n/20) |
-| ---------------- | --------- | --------- | --------- | --------- | --------- |
-| tiny             | 20/20     | 8/20      | 17/20     | 8/20      | 16/20     |
-| base             | 12/20     | 4/20      | 12/20     | 4/20      | 6/20      |
-| small            | 19/20     | 11/20     | 19/20     | 11/20     | 14/20     |
-| medium           | 19/20     | 17/20     | 17/20     | 15/20     | 10/20     |
-| **Total (n/80)** | **70/80** | **40/80** | **65/80** | **38/80** | **46/80** |
+| Model            | C0 (n/20) | S1 (n/20) | S2 (n/20) | S3 (n/20) | S4 (n/20) | S5 (n/20) | S6 (n/20) |
+| ---------------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
+| tiny             | 20/20     | 8/20      | 17/20     | 8/20      | 18/20     | 19/20     | 10/20     |
+| base             | 12/20     | 4/20      | 12/20     | 4/20      | 16/20     | 15/20     | 7/20      |
+| small            | 19/20     | 11/20     | 19/20     | 11/20     | 20/20     | 17/20     | 6/20      |
+| medium           | 19/20     | 17/20     | 17/20     | 15/20     | 19/20     | 14/20     | 9/20      |
+| **Total (n/80)** | **70/80** | **40/80** | **65/80** | **38/80** | **73/80** | **65/80** | **32/80** |
 
 
 ### Results — Encoder
@@ -538,13 +579,13 @@ Q2 for why it was kept as-is).
 **Table 14. MMN-present counts per criterion, by model** (n/20 = parcels + electrodes pooled, 10 methods each)
 
 
-| Model            | C0 (n/20) | S1 (n/20) | S2 (n/20) | S3 (n/20) | S4 (n/20) |
-| ---------------- | --------- | --------- | --------- | --------- | --------- |
-| tiny             | 11/20     | 4/20      | 3/20      | 2/20      | 2/20      |
-| base             | 13/20     | 6/20      | 9/20      | 4/20      | 7/20      |
-| small            | 6/20      | 3/20      | 4/20      | 2/20      | 3/20      |
-| medium           | 12/20     | 2/20      | 0/20      | 0/20      | 1/20      |
-| **Total (n/80)** | **42/80** | **15/80** | **16/80** | **8/80**  | **13/80** |
+| Model            | C0 (n/20) | S1 (n/20) | S2 (n/20) | S3 (n/20) | S4 (n/20) | S5 (n/20) | S6 (n/20) |
+| ---------------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
+| tiny             | 11/20     | 4/20      | 3/20      | 2/20      | 6/20      | 4/20      | 2/20      |
+| base             | 13/20     | 6/20      | 9/20      | 4/20      | 10/20     | 10/20     | 4/20      |
+| small            | 6/20      | 3/20      | 4/20      | 2/20      | 5/20      | 2/20      | 0/20      |
+| medium           | 12/20     | 2/20      | 0/20      | 0/20      | 5/20      | 6/20      | 1/20      |
+| **Total (n/80)** | **42/80** | **15/80** | **16/80** | **8/80**  | **26/80** | **22/80** | **7/80**  |
 
 
 ### Summary
@@ -554,23 +595,53 @@ S2 criterion, mTRF retains 65/70 (93%) of its C0-positive runs, but encoder reta
 16/42 (38%) — consistent with the earlier suspicion that a larger share of the encoder's
 magnitude-only "MMN present" verdicts are non-MMN-shaped curves (ramps), not genuine troughs.
 - **S1/S3 (interior-only) penalize mTRF disproportionately** (70→40 and 70→38) compared to
-S2/S4 (70→65 and 70→46) — because several genuine mTRF troughs sit right at the window's
-100 ms edge and get wrongly rejected by an interior-only test. This is the concrete
-case for preferring S2 and/or S4 over S1/S3, matching the recommendation in
-`aux/mmn_criterion_investigation.md`.
+S2/S4 (70→65 and **70→73**) — several genuine mTRF troughs sit right at the window's 100 ms
+edge and get wrongly rejected by an interior-only test, and the redefined S4 is now *more*
+permissive than S2 for mTRF (it no longer requires the qualifying dip to be the deepest point
+in its window), reinforcing rather than just matching the case for preferring S2/S4 over S1/S3,
+per the recommendation in `aux/mmn_criterion_investigation.md`.
 - **4 of the 5 previously flagged smooth-ramp cases behave exactly as predicted** — all four
-`whisper-{tiny,base}`/parcels/encoder/`method_{72,75}` runs flip to absent under every shape
-criterion. The fifth, `whisper-medium`/electrodes/mTRF/`method_43`, unexpectedly stays
-**present under all four shape criteria** (interior trough at 171 ms, 95% recovery) —
-contradicting the earlier figure-based read of it as an edge-spike artifact and worth a
-second look at that specific trace.
-- **All 3 clear-trough sanity checks stay present under S2/S4**, including  
-`whisper-base`/mTRF/parcels/`method_55`, whose trough sits at the window's left (100 ms)  
-edge — the concrete real-data example that rules out S1/S3 as a standalone criterion.
+`whisper-{tiny,base}`/parcels/encoder/`method_{72,75}` runs reject under every shape criterion,
+including the redefined S4 (no sample in their tone-end-relative dip window ever recovers). The
+fifth, `whisper-medium`/electrodes/mTRF/`method_43`, unexpectedly stays **present under all of
+S1–S4** (global trough at 171 ms; new-S4 qualifying sample at 50.9 ms) — same anomaly as before,
+now also confirmed under the redefined S4, and still worth a second look at that specific trace.
+- **All 3 clear-trough sanity checks stay present under S2 and the redefined S4**, including
+`whisper-base`/mTRF/parcels/`method_55` (S1/S3-failing edge trough at 100 ms, but an S4-
+qualifying sample at 80.9 ms) — the concrete real-data example that rules out S1/S3 as a
+standalone criterion.
+- **S5 (now deadline-bound) rescues 8/160 runs** that C0 missed entirely — fewer than the
+13/160 reported under the old fixed-120ms recovery rule, because some previously-rescued
+troughs sit close to or past their method's `tone_end_ms+400` deadline. E.g.
+`whisper-tiny`/parcels/encoder/`method_44` still rescues (current_peak=+0.26 → global_peak=
+−1.03 at 31 ms, recovering well inside its 300.9 ms deadline); `whisper-base`/electrodes/mtrf/
+`method_44` is a new rescue (+0.19 → −0.36 at 51 ms). mTRF retains far more under S5 than C0
+alone would predict (65/80 vs 70/80 C0 — close, unlike before), while encoder's S5 count
+(22/80) remains *lower* than its C0 count (42/80) — the unbound search, now deadline-gated,
+still finds fewer encoder runs with genuine recovering troughs than the windowed
+magnitude-only test flags as "present."
+- **S6's envelope guard rejects 48/87 (55%) of S5-positive runs** — down from the old 61%,
+since the deadline-bound recovery test itself already screens out some of the spurious
+early/late troughs that previously relied on the envelope to be caught.
+- **The mTRF-vs-encoder gap persists under the redefined S5/S6**: mTRF retains 32/65 (49%) of
+its S5-positives after the envelope guard vs encoder's 7/22 (32%) — and as an absolute share of
+all runs, mTRF S6=32/80 (40%) vs encoder S6=7/80 (8.75%), a gap comparable in size to the old
+one, now on different underlying S5 numbers.
+- **Flagged-case re-check under the redefined S4/S5/S6**: all 4 confirmed smooth ramps
+(`whisper-{tiny,base}`/parcels/encoder/`method_{72,75}`) **reject under S4, S5, and S6** —
+their true (later) trough at 301–321 ms is more negative than the windowed peak with no
+qualifying recovery by any deadline (e.g. `method_72`: current_peak=−6.53 → global_peak=−8.60,
+still descending), confirming these are genuine non-recovering ramps. The 5th flagged case,
+`whisper-medium`/electrodes/mTRF/`method_43`, **stays present under S4, S5, and S6** (global
+trough at 171 ms identical to its current-window trough). All 3 clear-trough sanity checks
+also stay present under S4/S5/S6 — unchanged conclusion, now resting on the new machinery.
 
 ---
 
 ## Section 5 — ROI sensitivity comparison
+
+> **Code:** `scripts/analyze_mmn_roi_variants.py` (`python scripts/analyze_mmn_roi_variants.py --predictions_root outputs/insilico_mmn_predictions --out outputs/results/mmn_roi_variants.csv`)
+> · **Data:** `outputs/results/mmn_roi_variants.csv`.
 
 ### ROI definitions
 
@@ -594,7 +665,7 @@ than an averaged scalp ROI, and MMN's intracranial generators include auditory/t
 even though the classic scalp topography is fronto-central. This section checks whether the
 broader averaged ROI used elsewhere in this document (`current7`/`current2`) dilutes or
 stabilizes the magnitude-only (C0) verdict relative to single canonical sites, on the same
-100–240 ms window and the same 160 runs, using `scripts/analyze_mmn_roi_variants.py`.
+100–240 ms window and the same 160 runs.
 
 ### Results — present-count by ROI variant (n/10 methods per model; n/40 total per mapping)
 
@@ -659,7 +730,7 @@ stabilizes the magnitude-only (C0) verdict relative to single canonical sites, o
 
 
 Winner: Fz (using C0)  
-  
+
 **Table 24. Parcels, combined (mTRF + Encoder)** (Table 17 + Table 18, n/20 per model)
 
 
@@ -673,7 +744,7 @@ Winner: Fz (using C0)
 
 
 Winner: Central (using C0)  
-  
+
 Continuous-magnitude check (mean peak across the 10 methods per model)
 
 **Table 19. Electrodes, mTRF**
@@ -805,12 +876,18 @@ verdicts are generally less stable/more shape-ambiguous than mTRF's.
 - **Net takeaway**: the existing multi-site ROI (`current7`/`current2`) is a reasonable,
 conservative choice — it doesn't obviously dilute a stronger single-site effect, and FCz/central
 are the closest single-site proxies if a narrower ROI were ever preferred. The minority of large
-sign-disagreement runs (especially `whisper-tiny`/encoder/`method_60`) are worth a closer look the
-same way Section 4 flagged smooth-ramp outliers.
+sign-disagreement runs (especially `whisper-tiny`/encoder/`method_60`) are worth a closer look the same way Section 4 flagged smooth-ramp outliers.
 
 ---
 
 ## Section 6 — Shape-aware criteria under single-site ROI (Fz / central)
+
+> **Code:** `scripts/analyze_mmn_criteria_fz_central.py` (`python scripts/analyze_mmn_criteria_fz_central.py --predictions_root outputs/insilico_mmn_predictions --out outputs/results/mmn_criteria_fz_central.csv`; monkey-patches the ROI constants in
+> `scripts/analyze_mmn_criteria.py` before reusing its loop) · **Data:**
+> `outputs/results/mmn_criteria_fz_central.csv` (per-run) and
+> `outputs/results/mmn_criteria_fz_central__per_target.csv` (per-target detail).
+> · **S5/S6 code:** `scripts/analyze_mmn_criteria_s5_s6.py --roi_variant fz_central` ·
+> **S5/S6 data:** `outputs/results/mmn_criteria_s5_s6_fz_central.csv`.
 
 ### Rationale
 
@@ -819,34 +896,37 @@ Section 5 found that, for the magnitude-only (C0) verdict, `Fz` (electrodes) and
 averaged ROI. This section checks whether that holds for the *shape-aware* criteria (S1–S4)
 too — narrowing the ROI to one site removes any smoothing-by-averaging, which could plausibly
 make trough shape noisier (more S1/S3 edge-rejections) or cleaner (less dilution from off-peak
-sites). Metric definitions are unchanged from Section 4's table; only the scoring ROI changes
-(`{Fz}` instead of `{Fz, FCz, Cz, FC1, FC2, F1, F2}`; `{central}` instead of
-`{frontal, central}`).
+sites). Metric definitions (including the redefined S4 and deadline-bound S5/S6) are unchanged
+from Section 4's table; only the scoring ROI changes (`{Fz}` instead of
+`{Fz, FCz, Cz, FC1, FC2, F1, F2}`; `{central}` instead of `{frontal, central}`). The
+window-clipping limitation S5/S6 address (Section 4) is identical here — it is a property of
+the fixed scoring window, not of which ROI feeds the trace — so S4/S5/S6 are recomputed under
+Fz/central below using the same definitions, unchanged from Section 4's table.
 
 ### Results — mTRF
 
 **Table 25. Electrodes, mTRF — Fz only** (n/10 per model, 10 methods each)
 
 
-| Model            | C0 (n/10) | S1 (n/10) | S2 (n/10) | S3 (n/10) | S4 (n/10) |
-| ---------------- | --------- | --------- | --------- | --------- | --------- |
-| tiny             | 10/10     | 7/10      | 7/10      | 4/10      | 7/10      |
-| base             | 6/10      | 3/10      | 6/10      | 3/10      | 4/10      |
-| small            | 9/10      | 6/10      | 9/10      | 6/10      | 7/10      |
-| medium           | 9/10      | 8/10      | 9/10      | 8/10      | 6/10      |
-| **Total (n/40)** | **34/40** | **24/40** | **31/40** | **21/40** | **24/40** |
+| Model            | C0 (n/10) | S1 (n/10) | S2 (n/10) | S3 (n/10) | S4 (n/10) | S5 (n/10) | S6 (n/10) | Total (n/70) |
+| ---------------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- | ------------ |
+| tiny             | 10/10     | 7/10      | 7/10      | 4/10      | 9/10      | 9/10      | 4/10      | 50/70        |
+| base             | 6/10      | 3/10      | 6/10      | 3/10      | 8/10      | 9/10      | 3/10      | 38/70        |
+| small            | 9/10      | 6/10      | 9/10      | 6/10      | 10/10     | 10/10     | 4/10      | 54/70        |
+| medium           | 9/10      | 8/10      | 9/10      | 8/10      | 9/10      | 7/10      | 5/10      | 55/70        |
+| **Total (n/40)** | **34/40** | **24/40** | **31/40** | **21/40** | **36/40** | **35/40** | **16/40** | **197/280**  |
 
 
 **Table 26. Parcels, mTRF — central only** (n/10 per model, 10 methods each)
 
 
-| Model            | C0 (n/10) | S1 (n/10) | S2 (n/10) | S3 (n/10) | S4 (n/10) |
-| ---------------- | --------- | --------- | --------- | --------- | --------- |
-| tiny             | 10/10     | 4/10      | 8/10      | 4/10      | 7/10      |
-| base             | 6/10      | 3/10      | 6/10      | 3/10      | 4/10      |
-| small            | 9/10      | 5/10      | 9/10      | 5/10      | 7/10      |
-| medium           | 10/10     | 9/10      | 10/10     | 9/10      | 5/10      |
-| **Total (n/40)** | **35/40** | **21/40** | **33/40** | **21/40** | **23/40** |
+| Model            | C0 (n/10) | S1 (n/10) | S2 (n/10) | S3 (n/10) | S4 (n/10) | S5 (n/10) | S6 (n/10) | Total (n/70) |
+| ---------------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- | ------------ |
+| tiny             | 10/10     | 4/10      | 8/10      | 4/10      | 9/10      | 9/10      | 3/10      | 47/70        |
+| base             | 6/10      | 3/10      | 6/10      | 3/10      | 8/10      | 7/10      | 2/10      | 35/70        |
+| small            | 9/10      | 5/10      | 9/10      | 5/10      | 10/10     | 9/10      | 4/10      | 51/70        |
+| medium           | 10/10     | 9/10      | 10/10     | 9/10      | 10/10     | 8/10      | 6/10      | 62/70        |
+| **Total (n/40)** | **35/40** | **21/40** | **33/40** | **21/40** | **37/40** | **33/40** | **15/40** | **195/280**  |
 
 
 ### Results — Encoder
@@ -854,25 +934,25 @@ sites). Metric definitions are unchanged from Section 4's table; only the scorin
 **Table 27. Electrodes, Encoder — Fz only** (n/10 per model, 10 methods each)
 
 
-| Model            | C0 (n/10) | S1 (n/10) | S2 (n/10) | S3 (n/10) | S4 (n/10) |
-| ---------------- | --------- | --------- | --------- | --------- | --------- |
-| tiny             | 5/10      | 4/10      | 1/10      | 1/10      | 0/10      |
-| base             | 7/10      | 2/10      | 6/10      | 2/10      | 4/10      |
-| small            | 4/10      | 1/10      | 0/10      | 0/10      | 1/10      |
-| medium           | 7/10      | 2/10      | 2/10      | 1/10      | 2/10      |
-| **Total (n/40)** | **23/40** | **9/40**  | **9/40**  | **4/40**  | **7/40**  |
+| Model            | C0 (n/10) | S1 (n/10) | S2 (n/10) | S3 (n/10) | S4 (n/10) | S5 (n/10) | S6 (n/10) | Total (n/70) |
+| ---------------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- | ------------ |
+| tiny             | 5/10      | 4/10      | 1/10      | 1/10      | 1/10      | 0/10      | 0/10      | 12/70        |
+| base             | 7/10      | 2/10      | 6/10      | 2/10      | 8/10      | 7/10      | 3/10      | 35/70        |
+| small            | 4/10      | 1/10      | 0/10      | 0/10      | 1/10      | 0/10      | 0/10      | 6/70         |
+| medium           | 7/10      | 2/10      | 2/10      | 1/10      | 4/10      | 2/10      | 1/10      | 19/70        |
+| **Total (n/40)** | **23/40** | **9/40**  | **9/40**  | **4/40**  | **14/40** | **9/40**  | **4/40**  | **72/280**   |
 
 
 **Table 28. Parcels, Encoder — central only** (n/10 per model, 10 methods each)
 
 
-| Model            | C0 (n/10) | S1 (n/10) | S2 (n/10) | S3 (n/10) | S4 (n/10) |
-| ---------------- | --------- | --------- | --------- | --------- | --------- |
-| tiny             | 7/10      | 4/10      | 2/10      | 2/10      | 1/10      |
-| base             | 6/10      | 4/10      | 2/10      | 2/10      | 3/10      |
-| small            | 5/10      | 2/10      | 5/10      | 2/10      | 3/10      |
-| medium           | 7/10      | 1/10      | 1/10      | 1/10      | 2/10      |
-| **Total (n/40)** | **25/40** | **11/40** | **10/40** | **7/40**  | **9/40**  |
+| Model            | C0 (n/10) | S1 (n/10) | S2 (n/10) | S3 (n/10) | S4 (n/10) | S5 (n/10) | S6 (n/10) | Total (n/70) |
+| ---------------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- | ------------ |
+| tiny             | 7/10      | 4/10      | 2/10      | 2/10      | 3/10      | 1/10      | 0/10      | 19/70        |
+| base             | 6/10      | 4/10      | 2/10      | 2/10      | 3/10      | 4/10      | 1/10      | 22/70        |
+| small            | 5/10      | 2/10      | 5/10      | 2/10      | 5/10      | 4/10      | 1/10      | 24/70        |
+| medium           | 7/10      | 1/10      | 1/10      | 1/10      | 2/10      | 4/10      | 0/10      | 16/70        |
+| **Total (n/40)** | **25/40** | **11/40** | **10/40** | **7/40**  | **13/40** | **13/40** | **2/40**  | **81/280**   |
 
 
 ### Combined (parcels + electrodes pooled) — for direct comparison to Table 13/14
@@ -880,36 +960,40 @@ sites). Metric definitions are unchanged from Section 4's table; only the scorin
 **Table 29. mTRF, combined** (= Table 25 + Table 26, n/20 per model)
 
 
-| Model            | C0 (n/20) | S1 (n/20) | S2 (n/20) | S3 (n/20) | S4 (n/20) |
-| ---------------- | --------- | --------- | --------- | --------- | --------- |
-| tiny             | 20/20     | 11/20     | 15/20     | 8/20      | 14/20     |
-| base             | 12/20     | 6/20      | 12/20     | 6/20      | 8/20      |
-| small            | 18/20     | 11/20     | 18/20     | 11/20     | 14/20     |
-| medium           | 19/20     | 17/20     | 19/20     | 17/20     | 11/20     |
-| **Total (n/80)** | **69/80** | **45/80** | **64/80** | **42/80** | **47/80** |
+| Model            | C0 (n/20) | S1 (n/20) | S2 (n/20) | S3 (n/20) | S4 (n/20) | S5 (n/20) | S6 (n/20) |
+| ---------------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
+| tiny             | 20/20     | 11/20     | 15/20     | 8/20      | 18/20     | 18/20     | 7/20      |
+| base             | 12/20     | 6/20      | 12/20     | 6/20      | 16/20     | 16/20     | 5/20      |
+| small            | 18/20     | 11/20     | 18/20     | 11/20     | 20/20     | 19/20     | 8/20      |
+| medium           | 19/20     | 17/20     | 19/20     | 17/20     | 19/20     | 15/20     | 11/20     |
+| **Total (n/80)** | **69/80** | **45/80** | **64/80** | **42/80** | **73/80** | **68/80** | **31/80** |
 
 
 **Table 30. Encoder, combined** (= Table 27 + Table 28, n/20 per model)
 
 
-| Model            | C0 (n/20) | S1 (n/20) | S2 (n/20) | S3 (n/20) | S4 (n/20) |
-| ---------------- | --------- | --------- | --------- | --------- | --------- |
-| tiny             | 12/20     | 8/20      | 3/20      | 3/20      | 1/20      |
-| base             | 13/20     | 6/20      | 8/20      | 4/20      | 7/20      |
-| small            | 9/20      | 3/20      | 5/20      | 2/20      | 4/20      |
-| medium           | 14/20     | 3/20      | 3/20      | 2/20      | 4/20      |
-| **Total (n/80)** | **48/80** | **20/80** | **19/80** | **11/80** | **16/80** |
+| Model            | C0 (n/20) | S1 (n/20) | S2 (n/20) | S3 (n/20) | S4 (n/20) | S5 (n/20) | S6 (n/20) |
+| ---------------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
+| tiny             | 12/20     | 8/20      | 3/20      | 3/20      | 4/20      | 1/20      | 0/20      |
+| base             | 13/20     | 6/20      | 8/20      | 4/20      | 11/20     | 11/20     | 4/20      |
+| small            | 9/20      | 3/20      | 5/20      | 2/20      | 6/20      | 4/20      | 1/20      |
+| medium           | 14/20     | 3/20      | 3/20      | 2/20      | 6/20      | 6/20      | 1/20      |
+| **Total (n/80)** | **48/80** | **20/80** | **19/80** | **11/80** | **27/80** | **22/80** | **6/80**  |
 
 
-### Comparison against Section 4 (current7/current2)
+### Comparison against Section 4 (current7/current2) - Comparing ROI for MMN of mean of electrodes/parcels vs. specific electrode (Fz) and parcel (central)
+
 
 | Criterion | mTRF current7/current2 | mTRF Fz/central (combined) | Encoder current7/current2 | Encoder Fz/central (combined) |
-| --------- | ----------------------- | --------------------------- | -------------------------- | ------------------------------- |
-| C0        | 70/80                  | 69/80                       | 42/80                      | 48/80                           |
-| S1        | 40/80                  | 45/80                       | 15/80                      | 20/80                           |
-| S2        | 65/80                  | 64/80                       | 16/80                      | 19/80                           |
-| S3        | 38/80                  | 42/80                       | 8/80                       | 11/80                           |
-| S4        | 46/80                  | 47/80                       | 13/80                      | 16/80                           |
+| --------- | ---------------------- | -------------------------- | ------------------------- | ----------------------------- |
+| C0        | 70/80                  | 69/80                      | 42/80                     | 48/80                         |
+| S1        | 40/80                  | 45/80                      | 15/80                     | 20/80                         |
+| S2        | 65/80                  | 64/80                      | 16/80                     | 19/80                         |
+| S3        | 38/80                  | 42/80                      | 8/80                      | 11/80                         |
+| S4        | 73/80                  | 73/80                      | 26/80                     | 27/80                         |
+| S5        | 65/80                  | 68/80                      | 22/80                     | 22/80                         |
+| S6        | 32/80                  | 31/80                      | 7/80                      | 6/80                          |
+
 
 ### Summary
 
@@ -920,32 +1004,206 @@ averaged ROI does, consistent with Section 5's weaker correlations on the encode
 shape gating. S2/C0 retention is 64/69=92.8% (mTRF) vs 19/48=39.6% (encoder) under Fz/central —
 essentially identical to the original 65/70=92.9% vs 16/42=38.1%. Narrowing the ROI does not
 rescue the encoder's shape problem.
-- **The S1/S3 edge-rejection penalty on mTRF persists** (and is if anything slightly less
-severe): 69→45/42 under Fz/central vs 70→40/38 under current7/current2 — same qualitative gap
-that motivated preferring S2/S4 over S1/S3 in Section 4.
-- **New finding visible only at the per-level split (Tables 25–28)**: under encoder,
-electrodes/Fz is consistently the weaker of the two single-site ROIs for shape-confirmation —
-S2 9/40 (22.5%) and S4 7/40 (17.5%) for electrodes/Fz vs S2 10/40 (25%) and S4 9/40 (22.5%) for
-parcels/central. Under mTRF the two levels track each other closely (S2 31/40 vs 33/40). This
-asymmetry was invisible in the pooled view and suggests the auditory/temporal-adjacent parcel
-signal (`central`) is a marginally more robust single-site choice than the scalp electrode
-(`Fz`) once shape constraints are applied — though the gap is small relative to the
-encoder-vs-mTRF gap, which remains the dominant effect.
+- **The S1/S3 edge-rejection penalty on mTRF persists**: 69→45/42 under Fz/central vs 70→40/38
+under current7/current2 — same qualitative gap that motivated preferring S2/S4 over S1/S3 in
+Section 4. Under the redefined S4, mTRF retains even more: 69→**73/80** under Fz/central
+(identical to the 73/80 under current7/current2) — S4 is now the *most* permissive shape
+criterion for mTRF in both ROI variants, not just competitive with S2.
+- **The per-level S4 asymmetry flips relative to S2 (Tables 25–28)**: under encoder, S2
+retention is still weaker for electrodes/Fz (9/40, 22.5%) than parcels/central (10/40, 25%) —
+unchanged from before. But the redefined S4's retention is electrodes/Fz **14/40 (35%)** vs
+parcels/central **13/40 (32.5%)** — Fz is now slightly *higher*. The tone-end-relative,
+scan-every-sample test is evidently less sensitive to which single site is used than the old
+control-window test was; the S2-based asymmetry favoring `central` does not carry over to S4.
 - **All previously flagged cases behave identically.** The 4 confirmed smooth ramps
-(`whisper-{tiny,base}`/parcels/encoder/`method_{72,75}`) again flip to absent under every shape
-criterion. The 5th flagged case (`whisper-medium`/electrodes/mTRF/`method_43`) again stays
-present under all four shape criteria (peak=-1.31, 90% recovery at 171ms) — reproducing the same
-"worth a second look" anomaly noted in Section 4, ruling out averaged-ROI dilution as the
-explanation. All 3 clear-trough sanity checks stay present under S2/S4, including
-`whisper-base`/mTRF/parcels/`method_55`, whose trough again sits exactly at the 100ms window edge
-and again fails S1/S3 while passing S2/S4 — the same concrete edge case that argues against
-S1/S3 as standalone criteria, independent of ROI choice.
+(`whisper-{tiny,base}`/parcels/encoder/`method_{72,75}`) reject under S4 (and S5/S6) in both ROI
+variants — no sample in their tone-end-relative dip window ever recovers. The 5th flagged case
+(`whisper-medium`/electrodes/mTRF/`method_43`) stays present under all of S1–S4 (new-S4
+qualifying sample at 70.9 ms) — reproducing the same "worth a second look" anomaly noted in
+Section 4. All 3 clear-trough sanity checks stay present under S2 and the redefined S4,
+including `whisper-base`/mTRF/parcels/`method_55` — the same concrete edge case that argues
+against S1/S3 as standalone criteria, independent of ROI choice.
+- **S5 (deadline-bound) moves modestly when narrowing the ROI**: mTRF 65/80→68/80, encoder
+22/80→22/80 (identical count, though not necessarily the identical runs). **S6 moves similarly
+to before**: mTRF 32/80→31/80, encoder 7/80→6/80 — narrowing to a single site still costs mTRF
+slightly more envelope-plausible troughs than it costs encoder.
+- **Rescue count drops more from the deadline-bound recovery test than from ROI narrowing**:
+8/160 (current) vs 10/160 (Fz/central) — both well below the old fixed-120ms-recovery numbers
+(13/160, 14/160), consistent with some previously-rescued troughs sitting near/past their
+method's `tone_end_ms+400` deadline.
+- **Envelope pullback**: 48/87 (55%, current) vs 53/90 (59%, Fz/central) of S5-true runs fail
+the 90–250 ms guard — both lower than the old ~61%/65%, for the same reason: the deadline-bound
+recovery test pre-filters some of what the envelope used to catch on its own.
+- **The mTRF-vs-encoder gap persists under Fz/central for S6**: mTRF S6/S5 retention is
+31/68 (46%) vs encoder's 6/22 (27%) — comparable to current variant's 32/65 (49%) vs 7/22 (32%).
+As with C0–S4, narrowing the ROI does not rescue the encoder's shape problem under the unbound
+criteria either.
 
-**Bottom line:** Narrowing to single-site ROI (Fz/central) changes individual run-level verdicts
-at the margins but does not change Section 4's structural conclusions — S2 and S4 remain
-preferable to S1/S3, and encoder responses remain far less shape-confirmed than mTRF, regardless
-of whether the ROI is the averaged scalp/parcel set or the single best-correlated site. The one
-new wrinkle is that electrodes/Fz is a slightly weaker single-site choice than parcels/central
-for encoder shape-confirmation specifically — worth keeping in mind if a future analysis needs
-to pick one ROI level over the other.
+**Bottom line:** Narrowing to single-site ROI (Fz/central) still does not change Section 4's
+structural conclusions — encoder responses remain far less shape-confirmed than mTRF regardless
+of whether the ROI is the averaged scalp/parcel set or the single best-correlated site. The
+redefined S4 and deadline-bound S5/S6 change two things from the old picture: (1) S4 is now the
+most permissive mTRF criterion in both ROI variants rather than roughly tracking S2's
+restrictiveness, and (2) the Fz-vs-central asymmetry for encoder seen under S2 does **not**
+reproduce under the new S4 — it appears specific to the old control-window-style test, not a
+general property of single-site ROIs.
 
+---
+
+## Appendix — example qualifying responses (whisper-tiny, parcels)
+
+This appendix shows one concrete example response per criterion (C0, S1, S2, S3, S4, S5, S6),
+all from `whisper-tiny`, `parcels` level, **encoder mapping**, `--roi_variant current` — using
+the existing trace plots already generated for Sections 1–3 (no new figures). Two caveats apply
+to every example below: (1) the verdict's ROI mean is `{frontal, central}` averaged together,
+but the plots show frontal and central as **separate rows**, not pre-averaged — the central row
+of the third (diff) column is the closest single-panel proxy to the scored trace, not the trace
+itself; (2) the plots shade only the fixed 100–240 ms window — they do not visually mark S4's
+tone-end-relative dip window or the S5/S6 deadline-bound recovery horizon, so each caption below
+spells out the relevant times and values in words, pulled from
+`outputs/results/mmn_criteria_s5_s6.csv`. Within this single model/level/mapping slice there are
+only 10 runs (one per method), so a couple of examples below necessarily reuse the same
+underlying run across adjacent sections — noted explicitly where it happens.
+
+### C0 — current (magnitude only)
+
+![](../outputs/figures/insilico_mmn/whisper-tiny-parcels/method_27/insilico_mmn__method_27__blocks.3__attn.png)
+
+Encoder, `method_27`. The windowed trough is `current_peak = -0.78` at
+`current_argmin_ms = 220.9` ms — right at the window's right edge (`current_interior = False`).
+C0 only requires the trough be negative, so it passes (`current__C0_current = True`); every
+other criterion rejects it: S1 fails on position, S2 fails on recovery
+(`recovery_frac = -0.13` — the curve is still descending, not recovering), and even the unbound
+search finds a much deeper, later trough (`global_peak = -11.16` at `global_argmin_ms = 700.9`)
+that sits past its own recovery deadline (`600` ms), so `global__S5 = False` by construction.
+C0 alone calls this run "MMN present"; nothing else agrees.
+
+### C0 — why magnitude alone is not sufficient (two more examples)
+
+![](../outputs/figures/insilico_mmn/whisper-tiny-parcels/method_72/insilico_mmn__method_72__blocks.3__attn.png)
+
+![](../outputs/figures/insilico_mmn/whisper-tiny-parcels/method_75/insilico_mmn__method_75__blocks.3__attn.png)
+
+Encoder, `method_72` and `method_75` — the two runs already flagged in Section 4's rationale as
+extreme outliers. Both have a huge windowed trough (`current_peak ≈ -6.5` for each, roughly 5–8×
+the magnitude of a typical run) sitting at the window's right edge
+(`current_argmin_ms = 220.9`, `current_interior = False`), so C0 passes confidently for both
+(`current__C0_current = True`). But neither is a real dip-and-recover: the curve is still
+descending when the window cuts off (`current_recovery_frac = -0.107` for both), and the
+unbound search confirms it — the true trough is even deeper and later
+(`global_peak ≈ -8.6` at `global_argmin_ms = 300.9` for both), recovering only `~0.23–0.24` of
+its depth by the deadline, well under the 50% threshold. Every shape-aware criterion (S1–S6)
+correctly rejects both runs. This is the concrete case for why magnitude alone is not a usable
+MMN-presence criterion: it is most confident exactly where the shape is least MMN-like — a
+smooth monotonic ramp, not an oscillatory dip-and-recover.
+
+### S1 — interior argmin
+
+![](../outputs/figures/insilico_mmn/whisper-tiny-parcels/method_37/insilico_mmn__method_37__blocks.3__attn.png)
+
+Encoder, `method_37`. The trough is `current_peak = -0.42` at `current_argmin_ms = 210.9` ms,
+comfortably inside both the 100 ms and 240 ms boundaries (`current_interior = True`), so S1
+passes alongside C0. Note S1 alone is still not sufficient here: recovery is negligible
+(`recovery_frac = 0.019`, `current__S2_recovery = False`) — an interior trough is not on its own
+evidence of a genuine dip-and-recover.
+
+### S2 — trough + recovery
+
+![](../outputs/figures/insilico_mmn/whisper-tiny-parcels/method_60/insilico_mmn__method_60__blocks.3__attn.png)
+
+Encoder, `method_60`. The trough is `current_peak = -2.53` at `current_argmin_ms = 200.9` ms,
+recovering `recovery_frac = 0.576` (≥50%) of that depth within 120 ms, so
+`current__S2_recovery = True`. (This run also happens to be interior — see the S3 example below
+— so it does not by itself isolate S2's "edge trough that still recovers" case; no
+non-interior-but-recovering run exists in this particular 10-method slice.)
+
+### S3 — interior & recovery
+
+![](../outputs/figures/insilico_mmn/whisper-tiny-parcels/method_60/insilico_mmn__method_60__blocks.3__attn.png)
+
+Encoder, `method_60` (same run as the S2 example above). Interior
+(`current_interior = True`) **and** recovers (`recovery_frac = 0.576`), so
+S3 = S1 AND S2 passes cleanly. This run passes every criterion C0–S6 in the table — the
+"textbook" example for this slice.
+
+### S4 — tone-end-relative dip + recovery
+
+![](../outputs/figures/insilico_mmn/whisper-tiny-parcels/method_55/insilico_mmn__method_55__blocks.3__attn.png)
+
+Encoder, `method_55`. The fixed-window argmin is actually positive
+(`current_peak = +1.79`), so even C0 fails here (`current__C0_current = False`) — there is no
+dip at all in the 100–240 ms window. But a different sample, at
+`s4__qualifying_argmin_ms = 280.9` ms, dips below 0 within the tone-end-relative dip window
+`[tone_end_ms=50, 300]` ms and recovers by the deadline, so `s4__dip_recovery = True`. Notably,
+the unbound search doesn't catch this either: its own global trough sits even later
+(`global_argmin_ms = 460.9`), past its own deadline (`450` ms), so `global__S5 = False`. This is
+the strongest case for S4 occupying its own niche: it can succeed where *both* C0 and the
+unbound S5 search fail, because it scans every sample in a per-method window instead of trusting
+either the fixed window's or the whole trace's own argmin.
+
+### S5 — unbound dip + recovery
+
+![](../outputs/figures/insilico_mmn/whisper-tiny-parcels/method_44/insilico_mmn__method_44__blocks.3__attn.png)
+
+Encoder, `method_44`. In the fixed 100–240 ms window there is no dip at all
+(`current_peak = +0.26`, `current__C0_current = False`). Searching the entire trace finds a
+trough at `global_argmin_ms = 30.9` ms (`global_peak = -1.03`), well before the fixed window
+even starts, recovering strongly (`global_recovery_frac = 8.24`) by the deadline
+(`tone_end_ms+400`, clipped to `450` ms for this run), so `global__S5 = True`. A genuine rescue:
+a trough the fixed window misses entirely. (`global__S6_envelope_recovery = False` here, since
+30.9 ms falls outside the 90–250 ms envelope — not used as the S6 example.)
+
+### S6 — envelope-guarded unbound search
+
+![](../outputs/figures/insilico_mmn/whisper-tiny-parcels/method_60/insilico_mmn__method_60__blocks.3__attn.png)
+
+Encoder, `method_60` (same run as the S2/S3 examples above — the only run in this slice that
+clears the full S2→S3→S6 chain). The unbound search finds its trough at
+`global_argmin_ms = 200.9` ms (`global_peak = -2.53`), inside the 90–250 ms literature envelope,
+recovering by the deadline (`recovery_frac = 0.576`), so `global__S5 = True` and, with the
+envelope guard satisfied, `global__S6_envelope_recovery = True` — a clean envelope-plausible
+pass.
+
+### Known limitations of S1–S6
+
+Each shape-aware criterion closes a specific gap in the one before it, but each also has its own
+blind spot, visible either in the examples above or in the full 160-run counts (Tables 13/14):
+
+- **S1 (interior argmin)** only checks that the trough is one sample away from the window
+  boundary — it says nothing about whether the curve actually turns around afterward. 9/160 runs
+  are S1-true but S2-false (e.g. `whisper-base`/encoder/electrodes/`method_53`,
+  `recovery_frac = 0.248`); an interior trough can still belong to a curve that is substantially
+  still descending when the window ends, exactly like the `method_37` example above
+  (`recovery_frac = 0.019`).
+- **S2 (trough + recovery)** has no minimum-depth floor: because recovery is scored as a
+  *fraction* of the trough's own depth, an arbitrarily small, noise-scale dip that happens to
+  bounce back passes just as well as a large one. `whisper-tiny`/encoder/electrodes/`method_55`
+  has `current_peak = -0.0209` — essentially a flat trace — yet `recovery_frac = 3.974`,
+  satisfying S2. The test can't distinguish a genuine small MMN from baseline jitter.
+- **S3 (S1 AND S2)** inherits both limitations rather than removing them: the interior threshold
+  is still a single arbitrary bin, and the recovery test still has no absolute depth floor.
+  Requiring both narrows the false-positive rate somewhat (a run has to clear two independent
+  gates) but doesn't close either gap on its own.
+- **S4 (tone-end-relative scan)** is the most permissive shape-aware criterion in both tables
+  (mTRF 73/80, encoder 26/80 — more than triple S3's encoder count of 8/80, and for mTRF even
+  exceeding C0 once pooled by model in Table 13). This follows directly from dropping *both* the
+  single-argmin constraint and the minimum-depth floor at once: scanning every sample in a
+  250 ms-wide window for *any* qualifying dip-and-recover means one lucky noise sample among
+  several dozen can satisfy it, with no requirement that it be the curve's dominant feature.
+  Nothing in the test distinguishes "the one genuine MMN sample" from "one lucky sample out of
+  many."
+- **S5 (unbound search)** drops the fixed window entirely, so the global trough can land
+  anywhere in `[0, t.max()]` — including implausibly early (a baseline/onset transient, not an
+  MMN) or implausibly late (drift or an unrelated later component). Concretely, 48 of the 87
+  S5-true runs (55%) have their global argmin outside the 90–250 ms literature envelope,
+  including several essentially at trace start (e.g. `whisper-base`/mTRF/`method_60`, both ROI
+  levels, `global_argmin_ms ≈ 0.9`). S5 alone cannot tell these apart from a genuine MMN — that
+  gap is exactly what S6 is built to close.
+- **S6 (envelope guard)** closes most of S5's gap but not all of it: the 90–250 ms envelope is a
+  wide heuristic band (the union across 10 source papers' own windows), not a per-stimulus
+  plausibility check — a coincidental noise trough that happens to land inside 90–250 ms by
+  chance would still pass, since the envelope only constrains latency, not the trough's
+  robustness beyond what S5 already checks. It is also the most restrictive criterion in both
+  tables (32/80 mTRF, 7/80 encoder), so the flip side of guarding against implausible latencies
+  is a real risk of rejecting genuine MMN responses whose true latency, for this paradigm, falls
+  outside the literature-derived range.
