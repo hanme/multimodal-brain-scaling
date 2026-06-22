@@ -1067,7 +1067,7 @@ underlying run across adjacent sections — noted explicitly where it happens.
 
 ### C0 — current (magnitude only)
 
-
+![](images_for_analysis/insilico_mmn__method_27__blocks.3__attn.png)
 
 Encoder, `method_27`. The windowed trough is `current_peak = -0.78` at
 `current_argmin_ms = 220.9` ms — right at the window's right edge (`current_interior = False`).
@@ -1080,9 +1080,9 @@ C0 alone calls this run "MMN present"; nothing else agrees.
 
 ### C0 — why magnitude alone is not sufficient (two more examples)
 
+![](images_for_analysis/insilico_mmn__method_72__blocks.3__attn.png)
 
-
-
+![](images_for_analysis/insilico_mmn__method_75__blocks.3__attn.png)
 
 Encoder, `method_72` and `method_75` — the two runs already flagged in Section 4's rationale as
 extreme outliers. Both have a huge windowed trough (`current_peak ≈ -6.5` for each, roughly 5–8×
@@ -1099,7 +1099,7 @@ smooth monotonic ramp, not an oscillatory dip-and-recover.
 
 ### S1 — interior argmin
 
-
+![](images_for_analysis/insilico_mmn__method_37__blocks.3__attn.png)
 
 Encoder, `method_37`. The trough is `current_peak = -0.42` at `current_argmin_ms = 210.9` ms,
 comfortably inside both the 100 ms and 240 ms boundaries (`current_interior = True`), so S1
@@ -1109,7 +1109,7 @@ evidence of a genuine dip-and-recover.
 
 ### S2 — trough + recovery
 
-
+![](images_for_analysis/insilico_mmn__method_60__blocks.3__attn.png)
 
 Encoder, `method_60`. The trough is `current_peak = -2.53` at `current_argmin_ms = 200.9` ms,
 recovering `recovery_frac = 0.576` (≥50%) of that depth within 120 ms, so
@@ -1119,7 +1119,7 @@ non-interior-but-recovering run exists in this particular 10-method slice.)
 
 ### S3 — interior & recovery
 
-
+![](images_for_analysis/insilico_mmn__method_60__blocks.3__attn.png)
 
 Encoder, `method_60` (same run as the S2 example above). Interior
 (`current_interior = True`) **and** recovers (`recovery_frac = 0.576`), so
@@ -1128,7 +1128,7 @@ S3 = S1 AND S2 passes cleanly. This run passes every criterion C0–S6 in the ta
 
 ### S4 — tone-end-relative dip + recovery
 
-
+![](images_for_analysis/insilico_mmn__method_55__blocks.3__attn.png)
 
 Encoder, `method_55`. The fixed-window argmin is actually positive
 (`current_peak = +1.79`), so even C0 fails here (`current__C0_current = False`) — there is no
@@ -1143,7 +1143,7 @@ either the fixed window's or the whole trace's own argmin.
 
 ### S5 — unbound dip + recovery
 
-
+![](images_for_analysis/insilico_mmn__method_44__blocks.3__attn.png)
 
 Encoder, `method_44`. In the fixed 100–240 ms window there is no dip at all
 (`current_peak = +0.26`, `current__C0_current = False`). Searching the entire trace finds a
@@ -1155,7 +1155,7 @@ a trough the fixed window misses entirely. (`global__S6_envelope_recovery = Fals
 
 ### S6 — envelope-guarded unbound search
 
-
+![](images_for_analysis/insilico_mmn__method_60__blocks.3__attn.png)
 
 Encoder, `method_60` (same run as the S2/S3 examples above — the only run in this slice that
 clears the full S2→S3→S6 chain). The unbound search finds its trough at
@@ -1232,15 +1232,14 @@ still finds a real, if late, dip-and-recover for this run outside the fixed wind
 example above — but the fixed-window picture the rest of this document mostly reports on is a
 flat or rising curve here, not a trough.)
 
-**`method_60` — the exception: encoder is the one with real shape here.**
+**`method_60`**
 
 ![](images_for_analysis/insilico_mmn__method_60__blocks.0.png)
 
 mTRF, identical stimulus: `current_peak = -0.56`, off-center and *not* recovering
 (`recovery_frac = -0.101`, `current__S2_recovery = False`); the unbound search does find a
 deeper trough (`global_peak = -1.39`), but at `global_argmin_ms = 20.9` ms — implausibly early,
-outside the 90–250 ms envelope, so `global__S6_envelope_recovery = False` too. By every
-criterion in this table, mTRF shows essentially no usable MMN shape for this stimulus.
+outside the 90–250 ms envelope, so `global__S6_envelope_recovery = False` too.
 
 ![](images_for_analysis/insilico_mmn__method_60__blocks.3__attn.png)
 
@@ -1248,9 +1247,6 @@ Encoder, identical stimulus: `current_peak = -2.53` at `current_argmin_ms = 200.
 recovering (`recovery_frac = 0.576`), envelope-plausible — passes every criterion C0–S6 (the
 same run used as the S2/S3/S6 example above).
 
-**Takeaway:** the aggregate counts say encoder is *generally* less shape-confirmed than mTRF,
-not *always* — `method_60` is a direct counterexample on the very same model/level. What's
-consistent is that the two mappings frequently disagree about the *same* stimulus, sometimes
+**Takeaway:** the aggregate counts say encoder is *generally* less shape-confirmed than mTRF. What's consistent is that the two mappings frequently disagree about the *same* stimulus, sometimes
 sharply (`method_55`'s sign flip between a clear trough and no dip at all), rather than encoder
 producing a uniformly attenuated version of the same response mTRF sees.
-
