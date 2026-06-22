@@ -1,5 +1,39 @@
 # In-Silico MMN Results Analysis
 
+## 0. Note on MMN stimulus definitions — correction (2026-06-21)
+
+Previously it was assumed the 10 literature-derived stimulus methods analyzed below were built following a design where the final/eliciting tone is physically identical between the standard and deviant trains, with deviance carried only by the tones preceding it. Reviewing of all 10 sourced papers' methods/epoching sections (see `aux/sophies_repository_overview.md` §16.1) shows this assumption was wrong: every one of these papers actually uses the older, classic single-tone frequency-oddball MMN paradigm — the deviant tone's own frequency (or duration) differs from the repeating standard's, and the ERP is time-locked to that tone's own onset. We had mis-perceived how the literature constructs its MMN stimuli, based on the idea that all newer stimuli follow the newer definition used for MMN. 
+
+**Definitions (relabeled 2026-06-21 — see `aux/sophies_repository_overview.md` for the full
+correction):**
+
+- **Definition 1** (literature classic-oddball, frequency-deviant): the deviant tone's own frequency/duration differs from the repeating standard's; each tone is individually classified and its ERP epoch is time-locked to its own onset. This is the original/classic Näätänen-style MMN paradigm and is what all 10 sourced papers discuss. Stimuli created according to these papers would follow this Definition 1, however they were actually created according to Definition 2.
+- **Definition 2** (physically-controlled identity-MMN): the final/eliciting tone is physically identical between the standard and deviant trains; deviance lives only in the tones preceding that final tone. This is the methodologically newer paradigm, designed to rule out the physical-stimulus-difference confound in Definition 1. As the stimuli were created with this method, the below results are more aligned with what the results would be for Def 2 stimuli. However, true Def 2 stimuli are still being sought in the literature. 
+
+**Literature classification of the 10 sourced papers (all Definition 1):**
+
+
+| method_id | Source citation | MMN Type | Reason                                                                                                                                                                                                                     |
+| --------- | --------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 27        | Schall_1999a    | Def 1    | Standard 1000 Hz / deviant 1064 Hz, single discrete tones at fixed SOA; ERP epoch locked to each tone's own onset, so the deviant ERP = response to the 1064 Hz tone itself.                                               |
+| 37        | Javitt_2000a    | Def 1    | Standard 1000 Hz / deviant 1050 Hz, fixed 9:1 order; "Difference waveforms were constructed by subtracting the responses to standard stimuli from the responses to deviants" — each epoch locked to its own tone's onset.  |
+| 43        | Michie_2000b    | Def 1    | Standard 633 Hz / deviant 700 Hz & 1000 Hz; "ERPs elicited by standard stimuli [subtracted] from ERPs elicited by [deviant stimuli]" — deviant epoch locked to the differing-frequency tone itself.                        |
+| 44        | Michie_2000c    | Def 1    | Same paper, duration condition: standard 50 ms / deviant 100 ms tone (same 633 Hz); same per-tone epoching/subtraction procedure — deviance is the analyzed tone's own duration, not preceding context.                    |
+| 53        | Salisbury_2002a | Def 1    | Standard 1 kHz / deviant 1.2 kHz; "ERPs to standard tones were subtracted from ERPs to deviant tones" — each locked to its own tone onset.                                                                                 |
+| 55        | Shinozaki_2002a | Def 1    | Standard 1000 Hz / deviant 2000 Hz, random order, fixed SOA; "Difference waveforms were obtained by subtracting ERPs elicited by the standard stimuli from ERPs elicited by the deviant stimuli."                          |
+| 60        | Umbricht_2003a  | Def 1    | Standard 1000 Hz / freq-deviant 1500 Hz / dur-deviant 250 ms; "Epochs to standard stimuli immediately after a deviant stimulus were not included" in averaging — rules out the post-deviant tone being the analyzed event. |
+| 72        | Bodatsch_2011   | Def 1    | Standard 1000 Hz/80 ms / freq-deviant 1200 Hz / dur-deviant 40 ms; potentials averaged separately "in response to standard stimuli and those in response to [deviant stimuli]", epoch locked to stimulus onset.            |
+| 74        | Domjan_2012     | Def 1    | Standard 1000 Hz/100 ms / pitch-deviant 1500 Hz / dur-deviant 250 ms, fixed 9:1 order; epochs computed and analyzed separately per stimulus type, locked to each tone's own onset.                                         |
+| 75        | Karger_2014     | Def 1    | Standard 1 kHz/80 ms / freq-deviant 1.2 kHz / dur-deviant 40 ms, random order; epoch defined "100 ms before to 400 ms after stimulus onset" per stimulus type — deviant epoch = response to the differing tone itself.     |
+
+
+**Caveat for the analyses below:** the stimuli actually generated and analyzed in this document
+were built in a **Definition 2 way** — multi-tone trains (`N∈{3,5,7}` tones × `var∈{1..5}`) where
+the deviant train's final tone differs from the standard's — even though the underlying
+(standard, deviant) frequency pairs are **sourced from Definition 1 literature** (the 10 papers above). No papers implementing a genuine Definition 2 (final-tone-identical) design has yet been identified; I am currently searching for them.
+
+---
+
 **Scope:** 4 Whisper models (tiny/base/small/medium) × 2 target levels (parcels, electrodes) ×
 10 literature classic-oddball stimulus methods × 2 independent mapping methods (mTRF, encoder)
 = 160 (model, level, mapping, method) combinations, all complete (`outputs/results/mmn_results_table.csv`).
@@ -1067,7 +1101,7 @@ underlying run across adjacent sections — noted explicitly where it happens.
 
 ### C0 — current (magnitude only)
 
-![](images_for_analysis/insilico_mmn__method_27__blocks.3__attn.png)
+
 
 Encoder, `method_27`. The windowed trough is `current_peak = -0.78` at
 `current_argmin_ms = 220.9` ms — right at the window's right edge (`current_interior = False`).
@@ -1080,9 +1114,9 @@ C0 alone calls this run "MMN present"; nothing else agrees.
 
 ### C0 — why magnitude alone is not sufficient (two more examples)
 
-![](images_for_analysis/insilico_mmn__method_72__blocks.3__attn.png)
 
-![](images_for_analysis/insilico_mmn__method_75__blocks.3__attn.png)
+
+
 
 Encoder, `method_72` and `method_75` — the two runs already flagged in Section 4's rationale as
 extreme outliers. Both have a huge windowed trough (`current_peak ≈ -6.5` for each, roughly 5–8×
@@ -1099,7 +1133,7 @@ smooth monotonic ramp, not an oscillatory dip-and-recover.
 
 ### S1 — interior argmin
 
-![](images_for_analysis/insilico_mmn__method_37__blocks.3__attn.png)
+
 
 Encoder, `method_37`. The trough is `current_peak = -0.42` at `current_argmin_ms = 210.9` ms,
 comfortably inside both the 100 ms and 240 ms boundaries (`current_interior = True`), so S1
@@ -1109,7 +1143,7 @@ evidence of a genuine dip-and-recover.
 
 ### S2 — trough + recovery
 
-![](images_for_analysis/insilico_mmn__method_60__blocks.3__attn.png)
+
 
 Encoder, `method_60`. The trough is `current_peak = -2.53` at `current_argmin_ms = 200.9` ms,
 recovering `recovery_frac = 0.576` (≥50%) of that depth within 120 ms, so
@@ -1119,7 +1153,7 @@ non-interior-but-recovering run exists in this particular 10-method slice.)
 
 ### S3 — interior & recovery
 
-![](images_for_analysis/insilico_mmn__method_60__blocks.3__attn.png)
+
 
 Encoder, `method_60` (same run as the S2 example above). Interior
 (`current_interior = True`) **and** recovers (`recovery_frac = 0.576`), so
@@ -1128,7 +1162,7 @@ S3 = S1 AND S2 passes cleanly. This run passes every criterion C0–S6 in the ta
 
 ### S4 — tone-end-relative dip + recovery
 
-![](images_for_analysis/insilico_mmn__method_55__blocks.3__attn.png)
+
 
 Encoder, `method_55`. The fixed-window argmin is actually positive
 (`current_peak = +1.79`), so even C0 fails here (`current__C0_current = False`) — there is no
@@ -1143,7 +1177,7 @@ either the fixed window's or the whole trace's own argmin.
 
 ### S5 — unbound dip + recovery
 
-![](images_for_analysis/insilico_mmn__method_44__blocks.3__attn.png)
+
 
 Encoder, `method_44`. In the fixed 100–240 ms window there is no dip at all
 (`current_peak = +0.26`, `current__C0_current = False`). Searching the entire trace finds a
@@ -1155,7 +1189,7 @@ a trough the fixed window misses entirely. (`global__S6_envelope_recovery = Fals
 
 ### S6 — envelope-guarded unbound search
 
-![](images_for_analysis/insilico_mmn__method_60__blocks.3__attn.png)
+
 
 Encoder, `method_60` (same run as the S2/S3 examples above — the only run in this slice that
 clears the full S2→S3→S6 chain). The unbound search finds its trough at
@@ -1215,15 +1249,15 @@ single criterion (e.g. C0 70/80 vs 42/80, S3 38/80 vs 8/80) — this section sho
 actually looks like on the same stimulus, by comparing the two mappings' response to identical
 `method_55` and `method_60` inputs (`whisper-tiny`, parcels, same ROI mean, same time-locking).
 
-**`method_55` — mTRF finds a textbook dip-and-recover; encoder finds nothing.**
+`**method_55` — mTRF finds a textbook dip-and-recover; encoder finds nothing.**
 
-![](images_for_analysis/insilico_mmn__method_55__blocks.0.png)
+
 
 mTRF: `current_peak = -1.43` at `current_argmin_ms = 120.9` ms — interior, recovering
 (`recovery_frac = 2.31`) — passes C0 through S3 and S6 cleanly (the same run used as the S3
 example earlier in this appendix's first draft).
 
-![](images_for_analysis/insilico_mmn__method_55__blocks.3__attn.png)
+
 
 Encoder, identical stimulus: `current_peak = +1.79` — **positive**, i.e. no dip at all in the
 100–240 ms window (`current__C0_current = False`). The two mappings don't just disagree on
@@ -1232,16 +1266,16 @@ still finds a real, if late, dip-and-recover for this run outside the fixed wind
 example above — but the fixed-window picture the rest of this document mostly reports on is a
 flat or rising curve here, not a trough.)
 
-**`method_60`**
+`**method_60`**
 
-![](images_for_analysis/insilico_mmn__method_60__blocks.0.png)
+
 
 mTRF, identical stimulus: `current_peak = -0.56`, off-center and *not* recovering
 (`recovery_frac = -0.101`, `current__S2_recovery = False`); the unbound search does find a
 deeper trough (`global_peak = -1.39`), but at `global_argmin_ms = 20.9` ms — implausibly early,
 outside the 90–250 ms envelope, so `global__S6_envelope_recovery = False` too.
 
-![](images_for_analysis/insilico_mmn__method_60__blocks.3__attn.png)
+
 
 Encoder, identical stimulus: `current_peak = -2.53` at `current_argmin_ms = 200.9` ms — interior,
 recovering (`recovery_frac = 0.576`), envelope-plausible — passes every criterion C0–S6 (the
