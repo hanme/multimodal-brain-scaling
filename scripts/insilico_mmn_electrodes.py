@@ -26,63 +26,18 @@ from pathlib import Path
 import argparse
 import numpy as np
 import h5py
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 
 from mbs.evaluation.evaluate_features_mtrf import lags_in_bins
 # electrode/montage builders live in the shared module; the mTRF fit + time-locking are reused
 # unchanged from the parcel driver (electrodes are just singleton-member targets).
-from eeg_targets import FS, TIME_STEP_MS, build_electrodes, montage_pos
+from eeg_targets import FS, TIME_STEP_MS, build_electrodes
+# plot_method/plot_topo/mmn_metric/FC_ROI now live in insilico_mmn.py (shared with
+# insilico_mmn_attn.py, so Row A/B/C render identically for mTRF and encoder).
 from insilico_mmn import (
-    METHODS, DEFAULT_SOA_CSV, fit_mapping, analyze_method, load_soa_table, soa_for_method,
+    METHODS, DEFAULT_SOA_CSV, DURATION_CSV, fit_mapping, analyze_method, load_soa_table,
+    soa_for_method, load_duration_map, compute_criteria_table, plot_method, plot_topo,
+    mmn_metric, FC_ROI,
 )
-
-# Fronto-central ROI for the automatic MMN criterion (Umbricht & Krljes 2005: MMN max fronto-central).
-FC_ROI = ["Fz", "FCz", "Cz", "FC1", "FC2", "F1", "F2"]
-
-
-def mmn_metric(res, electrodes, roi):
-    """ROI-averaged z-scored baseline_normalized_peak (already computed per-electrode by
-    analyze_method/finalize_method) -- the canonical verdict metric, never re-derived here."""
-    idx = [i for i, (ch, _, _) in enumerate(electrodes) if ch in roi]
-    if not idx:
-        return float("nan"), []
-    used = [electrodes[i][0] for i in idx]
-    return float(np.nanmean(res["peak"][idx])), used
-
-
-def plot_topo(method, label, source, res, electrodes, args, amp, roi_used, present, out_path):
-    rel, diff = res["rel_ms"], res["z_diff"]      # z_diff is the full baseline z-score, same units as peak
-    win = (rel >= -args.win_pre_ms) & (rel <= args.win_post_ms)
-    x = rel[win]
-    ymax = float(np.nanmax(np.abs(diff[win]))) or 1.0
-
-    fig = plt.figure(figsize=(11, 11))
-    for i, (ch, _, r) in enumerate(electrodes):
-        px, py = montage_pos(ch)
-        ax = fig.add_axes([0.5 + 0.42 * px - 0.045, 0.5 + 0.42 * py - 0.03, 0.09, 0.06])
-        in_roi = ch in roi_used
-        ax.plot(x, diff[win, i], color="tab:red" if in_roi else "tab:blue", lw=1.1)
-        ax.axvspan(args.mmn_lo_ms, args.mmn_hi_ms, color="orange", alpha=0.12)
-        ax.axvline(0, color="k", ls=":", lw=0.5)
-        ax.axhline(0, color="grey", lw=0.4)
-        ax.set_ylim(-ymax, ymax)
-        ax.set_xticks([]); ax.set_yticks([])
-        for s in ax.spines.values():
-            s.set_linewidth(0.4)
-        ax.set_title(ch, fontsize=7, pad=1, color="firebrick" if in_roi else "black")
-    verdict = "MMN PRESENT" if present else "no MMN"
-    fig.suptitle(
-        f"In-silico MMN (electrodes) — {method} ({label}, {source})  |  layer {args.layer}\n"
-        f"z-scored deviant - standard per electrode (red = fronto-central ROI); "
-        f"shaded = {args.mmn_lo_ms:.0f}-{args.mmn_hi_ms:.0f} ms band\n"
-        f"ROI mean baseline_normalized_peak = {amp:+.3g}  ->  {verdict}  (thresh {-args.mmn_thresh:+.3g})",
-        fontsize=11, y=0.98)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out_path, dpi=130)
-    plt.close(fig)
-    print(f"  wrote {out_path}   [{verdict}, ROI peak {amp:+.3g}]")
 
 
 def main():
@@ -138,6 +93,9 @@ def main():
     # fit the model->EEG mapping ONCE for this layer (electrodes as targets), apply to every method
     model, mu, sd, _ = fit_mapping(args, lags, electrodes)
     soa_table = load_soa_table(args.metadata_csv or DEFAULT_SOA_CSV)
+    duration_map = load_duration_map(DURATION_CSV)
+
+    fz_fcz_idx = [i for i, e in enumerate(electrodes) if e[0] in ("Fz", "FCz")]
 
     if args.methods == "all":
         run = METHODS
@@ -174,6 +132,15 @@ def main():
         present = bool(amp < -args.mmn_thresh)
         out_path = out_dir / f"insilico_mmn_electrodes__{method}__{args.layer}.png"
         plot_topo(method, label, source, res, electrodes, args, amp, roi_used, present, out_path)
+
+        # Row A: Fz/FCz only, deviant/standard/diff columns + C0-S6 criteria table.
+        if fz_fcz_idx:
+            ctable = compute_criteria_table(
+                res["rel_ms"], res["z_diff"][:, fz_fcz_idx],
+                [electrodes[i][0] for i in fz_fcz_idx], method, duration_map)
+            fz_fcz_path = out_dir / f"insilico_mmn_electrodes_fz_fcz__{method}__{args.layer}.png"
+            plot_method(method, label, source, res, electrodes, args, fz_fcz_path,
+                       row_filter=["Fz", "FCz"], criteria_table=ctable)
 
         g = h5.create_group(method)
         g.attrs.update(dict(context_final=label, source=source, soa_ms=soa_ms,

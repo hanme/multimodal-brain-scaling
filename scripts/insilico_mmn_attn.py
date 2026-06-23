@@ -36,8 +36,9 @@ import matplotlib.pyplot as plt
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # sibling insilico_mmn.py
 from insilico_mmn import (  # noqa: E402
-    FS, TIME_STEP_MS, METHODS, DEFAULT_SOA_CSV, finalize_method, load_soa_table, soa_for_method,
-    detect_final_tone_onset_s, plot_method,
+    FS, TIME_STEP_MS, METHODS, DEFAULT_SOA_CSV, DURATION_CSV, PLOT_ROWS, FC_ROI,
+    finalize_method, load_soa_table, soa_for_method, detect_final_tone_onset_s,
+    plot_method, plot_topo, mmn_metric, load_duration_map, compute_criteria_table,
 )
 from eeg_targets import load_split_targets  # noqa: E402
 from mbs.evaluation.attn_probe.checkpoint import load_probe_checkpoint, predict_timecourse  # noqa: E402
@@ -145,6 +146,11 @@ def main():
                    help="pre-onset baseline window end, in units of soa_ms")
     p.add_argument("--win_pre_ms", type=float, default=150.0)
     p.add_argument("--win_post_ms", type=float, default=500.0)
+    p.add_argument("--mmn_lo_ms", type=float, default=100.0,
+                   help="plot shading only (Row B topo) -- the verdict window is fixed inside finalize_method")
+    p.add_argument("--mmn_hi_ms", type=float, default=240.0, help="plot shading only, see --mmn_lo_ms")
+    p.add_argument("--mmn_thresh", type=float, default=0.0,
+                   help="ROI mean baseline_normalized_peak must be < -thresh to count as an MMN (Row B verdict)")
     p.add_argument("--window_idx", type=int, default=-1)
     p.add_argument("--device", default="cpu")
     p.add_argument("--out_dir", default="outputs/figures/insilico_mmn_small")
@@ -167,6 +173,7 @@ def main():
     if args.method in reg:
         _, label, source = reg[args.method]
     soa_ms = soa_for_method(args.method, load_soa_table(args.metadata_csv))
+    duration_map = load_duration_map(DURATION_CSV)
 
     out_dir = Path(args.out_dir)
     feat_dir = Path(args.mmn_features_root) / f"mmn-{args.method}-delta-t"
@@ -188,9 +195,37 @@ def main():
         return
     plot_args = SimpleNamespace(win_pre_ms=args.win_pre_ms, win_post_ms=args.win_post_ms,
                                 layer=layer, highpass_hz=ck["highpass_hz"], nc_r_threshold=0.2,
-                                level=level)
-    mmn_path = out_dir / f"insilico_mmn__{args.method}__{layer}__attn.png"
-    plot_method(args.method, label, source, res, parcels, plot_args, mmn_path)
+                                level=level, mmn_lo_ms=args.mmn_lo_ms, mmn_hi_ms=args.mmn_hi_ms,
+                                mmn_thresh=args.mmn_thresh)
+
+    if level == "parcels":
+        # Row C: frontal/central/temporal, deviant/standard/diff columns + criteria table.
+        # row_filter defaults to PLOT_ROWS inside plot_method -- same selection as insilico_mmn.py.
+        row_idx = [i for i, p in enumerate(parcels) if p[0] in PLOT_ROWS]
+        criteria_table = compute_criteria_table(
+            res["rel_ms"], res["z_diff"][:, row_idx], [parcels[i][0] for i in row_idx],
+            args.method, duration_map)
+        mmn_path = out_dir / f"insilico_mmn__{args.method}__{layer}__attn.png"
+        plot_method(args.method, label, source, res, parcels, plot_args, mmn_path,
+                   criteria_table=criteria_table)
+    else:
+        # Row A: Fz/FCz only, same columns + criteria table.
+        fz_fcz_idx = [i for i, p in enumerate(parcels) if p[0] in ("Fz", "FCz")]
+        if fz_fcz_idx:
+            criteria_table = compute_criteria_table(
+                res["rel_ms"], res["z_diff"][:, fz_fcz_idx], [parcels[i][0] for i in fz_fcz_idx],
+                args.method, duration_map)
+            fz_fcz_path = out_dir / f"insilico_mmn_fz_fcz__{args.method}__{layer}__attn.png"
+            plot_method(args.method, label, source, res, parcels, plot_args, fz_fcz_path,
+                       row_filter=["Fz", "FCz"], criteria_table=criteria_table)
+
+        # Row B: all electrodes, diff-only topographic montage (no table).
+        roi = [c for c in FC_ROI if any(c == p[0] for p in parcels)]
+        amp, roi_used = mmn_metric(res, parcels, roi)
+        present = bool(amp < -args.mmn_thresh)
+        topo_path = out_dir / f"insilico_mmn_electrodes__{args.method}__{layer}__attn.png"
+        plot_topo(args.method, label, source, res, parcels, plot_args, amp, roi_used, present,
+                 topo_path)
 
     # ---- raw arrays for downstream MMN metrics ----
     data_path = Path(args.data_dir) / f"predictions__{layer}__attn.h5"

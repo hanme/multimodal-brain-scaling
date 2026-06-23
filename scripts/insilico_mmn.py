@@ -43,7 +43,11 @@ from mbs.evaluation.evaluate_features_mtrf import (
     pearson_along_time,
 )
 # parcels/electrodes + dataset I/O live in the shared, dataset-agnostic module
-from eeg_targets import FS, TIME_STEP_MS, build_parcels, load_split_targets
+from eeg_targets import FS, TIME_STEP_MS, build_parcels, load_split_targets, montage_pos
+from analyze_mmn_criteria_s5_s6 import load_duration_map
+from mmn_criteria_table import compute_criteria_table, CRITERIA_COLUMNS
+
+DURATION_CSV = "data/metadata/literature_frequency_intensity_duration_metadata.csv"
 
 # MMN methods: literature classic-oddball (Definition 1) set, 10 pairs sourced from
 # data/metadata/literature_frequency_intensity_duration_metadata.csv. Each method has 1
@@ -260,18 +264,41 @@ def analyze_method(method, feat_dir, stim_dir, model, mu, sd, lags, parcels, arg
 PLOT_ROWS = ("frontal", "central", "temporal")
 
 
-def plot_method(method, label, source, res, parcels, args, out_path):
+def _draw_criteria_table(fig, criteria_table, row_names, rect):
+    """Render the C0-S6 1/0 table for `row_names` (electrode or parcel names) into a dedicated
+    axes at `rect` (figure-fraction [left, bottom, width, height]). `criteria_table` is the dict
+    returned by mmn_criteria_table.compute_criteria_table."""
+    ax = fig.add_axes(rect)
+    ax.axis("off")
+    cell_text = [[str(criteria_table[name][c]) for c in CRITERIA_COLUMNS] for name in row_names]
+    tbl = ax.table(cellText=cell_text, rowLabels=row_names, colLabels=CRITERIA_COLUMNS,
+                   loc="center", cellLoc="center")
+    tbl.auto_set_font_size(False)
+    tbl.set_fontsize(9)
+    tbl.scale(1, 1.5)
+    ax.text(0.5, -0.05, "1 = TRUE, 0 = FALSE", transform=ax.transAxes,
+            ha="center", va="top", fontsize=8, style="italic")
+
+
+def plot_method(method, label, source, res, parcels, args, out_path,
+                 row_filter=PLOT_ROWS, criteria_table=None):
+    """row_filter: keep only targets whose name is in this collection (None = keep all of
+    `parcels` as passed -- callers filter upstream, e.g. to ["Fz", "FCz"]). criteria_table:
+    optional dict from mmn_criteria_table.compute_criteria_table, rendered as an extra panel
+    below the grid (keyed by the SAME names left after row_filter)."""
     rel_ms, z_dev, z_std, z_diff, peak = (
         res["rel_ms"], res["z_dev"], res["z_std"], res["z_diff"], res["peak"])
     win = (rel_ms >= -args.win_pre_ms) & (rel_ms <= args.win_post_ms)
     x = rel_ms[win]
 
-    keep = [i for i, p in enumerate(parcels) if p[0] in PLOT_ROWS] or list(range(len(parcels)))
+    keep = ([i for i, p in enumerate(parcels) if p[0] in row_filter] if row_filter is not None
+            else list(range(len(parcels))))
     parcels = [parcels[i] for i in keep]
     z_dev, z_std, z_diff, peak = z_dev[:, keep], z_std[:, keep], z_diff[:, keep], peak[keep]
 
     n = len(parcels)
-    fig, axes = plt.subplots(n, 3, figsize=(13, 2.6 * n), sharex=True, squeeze=False)
+    table_h = (0.9 + 0.45 * len(parcels)) if criteria_table else 0.0
+    fig, axes = plt.subplots(n, 3, figsize=(13, 2.6 * n + table_h), sharex=True, squeeze=False)
     col_titles = ["deviant (z-scored)", "standard (z-scored)", "deviant - standard (MMN, z-scored)"]
     sigs = [z_dev, z_std, z_diff]
     for i, (pname, members, pr) in enumerate(parcels):
@@ -299,10 +326,69 @@ def plot_method(method, label, source, res, parcels, args, out_path):
         f"(baseline_normalized_peak). Each row its own y-scale.",
         fontsize=10)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.tight_layout(rect=[0, 0, 1, 0.97])
+    if criteria_table:
+        bottom_frac = table_h / (2.6 * n + table_h)
+        fig.tight_layout(rect=[0, bottom_frac, 1, 0.97])
+        row_names = [p[0] for p in parcels]
+        _draw_criteria_table(fig, criteria_table, row_names,
+                             rect=[0.12, 0.02, 0.76, bottom_frac - 0.04])
+    else:
+        fig.tight_layout(rect=[0, 0, 1, 0.97])
     fig.savefig(out_path, dpi=130)
     plt.close(fig)
     print(f"  wrote {out_path}")
+
+
+# Fronto-central ROI for the automatic electrode-level MMN criterion (Umbricht & Krljes 2005:
+# MMN max fronto-central). Shared by insilico_mmn_electrodes.py (mTRF) and insilico_mmn_attn.py
+# (encoder, electrode-level checkpoints) -- relocated here so both can import it identically.
+FC_ROI = ["Fz", "FCz", "Cz", "FC1", "FC2", "F1", "F2"]
+
+
+def mmn_metric(res, electrodes, roi):
+    """ROI-averaged z-scored baseline_normalized_peak (already computed per-electrode by
+    analyze_method/finalize_method) -- the canonical verdict metric, never re-derived here."""
+    idx = [i for i, (ch, _, _) in enumerate(electrodes) if ch in roi]
+    if not idx:
+        return float("nan"), []
+    used = [electrodes[i][0] for i in idx]
+    return float(np.nanmean(res["peak"][idx])), used
+
+
+def plot_topo(method, label, source, res, electrodes, args, amp, roi_used, present, out_path):
+    """Row B: topographic montage, ONE trace per electrode (deviant - standard, z-scored only --
+    no separate deviant/standard panels). Shared by insilico_mmn_electrodes.py (mTRF) and
+    insilico_mmn_attn.py (encoder, electrode-level checkpoints)."""
+    rel, diff = res["rel_ms"], res["z_diff"]      # z_diff is the full baseline z-score, same units as peak
+    win = (rel >= -args.win_pre_ms) & (rel <= args.win_post_ms)
+    x = rel[win]
+    ymax = float(np.nanmax(np.abs(diff[win]))) or 1.0
+
+    fig = plt.figure(figsize=(11, 11))
+    for i, (ch, _, r) in enumerate(electrodes):
+        px, py = montage_pos(ch)
+        ax = fig.add_axes([0.5 + 0.42 * px - 0.045, 0.5 + 0.42 * py - 0.03, 0.09, 0.06])
+        in_roi = ch in roi_used
+        ax.plot(x, diff[win, i], color="tab:red" if in_roi else "tab:blue", lw=1.1)
+        ax.axvspan(args.mmn_lo_ms, args.mmn_hi_ms, color="orange", alpha=0.12)
+        ax.axvline(0, color="k", ls=":", lw=0.5)
+        ax.axhline(0, color="grey", lw=0.4)
+        ax.set_ylim(-ymax, ymax)
+        ax.set_xticks([]); ax.set_yticks([])
+        for s in ax.spines.values():
+            s.set_linewidth(0.4)
+        ax.set_title(ch, fontsize=7, pad=1, color="firebrick" if in_roi else "black")
+    verdict = "MMN PRESENT" if present else "no MMN"
+    fig.suptitle(
+        f"In-silico MMN (electrodes) — {method} ({label}, {source})  |  layer {args.layer}\n"
+        f"z-scored deviant - standard per electrode (red = fronto-central ROI); "
+        f"shaded = {args.mmn_lo_ms:.0f}-{args.mmn_hi_ms:.0f} ms band\n"
+        f"ROI mean baseline_normalized_peak = {amp:+.3g}  ->  {verdict}  (thresh {-args.mmn_thresh:+.3g})",
+        fontsize=11, y=0.98)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=130)
+    plt.close(fig)
+    print(f"  wrote {out_path}   [{verdict}, ROI peak {amp:+.3g}]")
 
 
 def main():
@@ -355,6 +441,7 @@ def main():
     # fit the model->EEG mapping ONCE for this layer, apply to every method
     model, mu, sd, eval_metrics = fit_mapping(args, lags, parcels)
     soa_table = load_soa_table(args.metadata_csv)
+    duration_map = load_duration_map(DURATION_CSV)
 
     if args.methods == "all":
         run = METHODS
@@ -396,8 +483,16 @@ def main():
         res = analyze_method(method, feat_dir, stim_dir, model, mu, sd, lags, parcels, args, soa_ms)
         if res is None:
             continue
+        # Row C criteria table: C0-S6 per individual parcel (frontal/central/temporal), not the
+        # ROI-mean -- reuses mmn_criteria_table.compute_criteria_table (Task 3).
+        row_idx = [i for i, p in enumerate(parcels) if p[0] in PLOT_ROWS]
+        criteria_table = compute_criteria_table(
+            res["rel_ms"], res["z_diff"][:, row_idx], [parcels[i][0] for i in row_idx],
+            method, duration_map)
+
         out_path = out_dir / f"insilico_mmn__{method}__{args.layer}.png"
-        plot_method(method, label, source, res, parcels, args, out_path)
+        plot_method(method, label, source, res, parcels, args, out_path,
+                   criteria_table=criteria_table)
 
         g = h5.create_group(method)
         g.attrs.update(dict(context_final=label, source=source, soa_ms=soa_ms,
