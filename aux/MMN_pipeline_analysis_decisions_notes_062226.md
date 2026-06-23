@@ -95,7 +95,7 @@ The criterion choice trades off false positives (curve shapes that aren't a real
 | medium           | 14/20     | 3/20      | 3/20      | 2/20      | 6/20      | 6/20      | 1/20      |
 | **Total (n/80)** | **48/80** | **20/80** | **19/80** | **11/80** | **27/80** | **22/80** | **6/80**  |
 
-## 2. Mapping Method — Encoder vs. mTRF
+## 3. Mapping Method — Encoder vs. mTRF
 ### Encoder vs. mTRF Fit
 - mTRF traces are more expressive — more genuine dip-and-recover troughs — which is the likely
 driver of the gap: the appendix's same-stimulus comparison ("mTRF vs. Encoder — expressiveness
@@ -167,7 +167,7 @@ Winner: Fz (using C0)
 
 Winner: Central (using C0)  
 
-- **Recommendation: a single-site ROI — Fz for electrodes, central for parcels***
+- **Recommendation: a single-site ROI — Fz for electrodes, central for parcels**
 - But, have not ran all {CO, S1, ... S6} x {frontal, central, Fz, FCz, ...} to decide best possible combination. However, I think it is encouraging that these locations were identified by this metric as the best fit.
 - Have only ran {C0} x {frontal, central, Fz, FCz, mean of 2 parcels ('current2') (Above Tables, from Section 5 in results_analysis.md) + mean of 7 frontal electrodes('current7')} and {CO, S1, ... S6} x {central, FCz} (Section 6 in results_analysis.md)
 - See `results_analysis.md` Section 5 (Tables 15–22, present-counts and magnitude by ROI
