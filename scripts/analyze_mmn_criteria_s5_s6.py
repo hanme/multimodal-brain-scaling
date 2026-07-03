@@ -89,8 +89,8 @@ def load_duration_map(duration_csv):
 
 
 def parse_method_id(method_str):
-    """'method_27' -> 27."""
-    return int(method_str.rsplit("_", 1)[1])
+    """'method_27' -> 27, 'method_27_counter' -> 27."""
+    return int(method_str.split("_")[1])
 
 
 def tone_end_ms_for(method_id, duration_map):
