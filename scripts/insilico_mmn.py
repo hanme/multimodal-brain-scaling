@@ -57,6 +57,7 @@ DURATION_CSV = "data/metadata/literature_frequency_intensity_duration_metadata.c
 # physically identical in std & dev). Tuple = (stimulus-dir name, "standard->deviant" label,
 # source citation).
 METHODS = [
+    # Regular (standard → deviant)
     ("method_75", "1000→1200 Hz", "Karger_2014"),
     ("method_74", "1000→1500 Hz", "Domjan_2012"),
     ("method_72", "1000→1200 Hz", "Bodatsch_2011"),
@@ -67,6 +68,17 @@ METHODS = [
     ("method_43", "633→700 Hz",   "Michie_2000b"),
     ("method_44", "633→1000 Hz",  "Michie_2000c"),
     ("method_27", "1000→1064 Hz", "Schall_1999a"),
+    # Counterbalanced (standard/deviant frequencies swapped)
+    ("method_75_counter", "1200→1000 Hz", "Karger_2014"),
+    ("method_74_counter", "1500→1000 Hz", "Domjan_2012"),
+    ("method_72_counter", "1200→1000 Hz", "Bodatsch_2011"),
+    ("method_60_counter", "1500→1000 Hz", "Umbricht_2003a"),
+    ("method_53_counter", "1200→1000 Hz", "Salisbury_2002a"),
+    ("method_55_counter", "2000→1000 Hz", "Shinozaki_2002a"),
+    ("method_37_counter", "1050→1000 Hz", "Javitt_2000a"),
+    ("method_43_counter", "700→633 Hz",   "Michie_2000b"),
+    ("method_44_counter", "1000→633 Hz",  "Michie_2000c"),
+    ("method_27_counter", "1064→1000 Hz", "Schall_1999a"),
 ]
 
 DEFAULT_SOA_CSV = "data/metadata/literature_frequency_intensity_duration_metadata.csv"

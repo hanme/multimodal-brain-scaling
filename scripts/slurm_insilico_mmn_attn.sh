@@ -8,11 +8,16 @@
 # every (model, level, method) triple MUST get its own --data_dir/--out_dir, or later runs
 # silently clobber earlier ones sharing the same dir. This script enforces that automatically.
 #
-# 80 canonical slots = 4 models x 2 levels x 10 methods, flattened as:
-#   model = TASK / 20 ; level = (TASK / 10) % 2 ; method = METHODS[TASK % 10]
+# 160 canonical slots = 4 models x 2 levels x 20 methods (10 regular + 10 counter), flattened as:
+#   model = TASK / 40 ; level = (TASK / 20) % 2 ; method = METHODS[TASK % 20]
 #
-# Submit only the remaining (model, level, method) triples by their slot indices, e.g.:
-#   sbatch --array=3,7,41 scripts/slurm_insilico_mmn_attn.sh
+# Regular methods:    slots 0–9 (parcels) and 20–29 (electrodes) per model block
+# Counter methods:    slots 10–19 (parcels) and 30–39 (electrodes) per model block
+#
+# Submit only the counter slots (new):
+#   sbatch --array=10-19,30-39,50-59,70-79,90-99,110-119,130-139,150-159 scripts/slurm_insilico_mmn_attn.sh
+# Submit all 160:
+#   sbatch --array=0-159 scripts/slurm_insilico_mmn_attn.sh
 # Or a single triple via env vars (no array):
 #   sbatch --export=ALL,MODEL_ID=whisper-tiny,LEVEL=parcels,METHOD=method_37 scripts/slurm_insilico_mmn_attn.sh
 # Extra args after the script name are forwarded to insilico_mmn_attn.py.
@@ -36,8 +41,10 @@ mkdir -p logs outputs/figures/insilico_mmn outputs/insilico_mmn_predictions
 
 MODELS=(whisper-tiny whisper-base whisper-small whisper-medium)
 LEVELS=(parcels electrodes)
-# same order as the METHODS registry in insilico_mmn.py
-METHODS=(method_75 method_74 method_72 method_60 method_53 method_55 method_37 method_43 method_44 method_27)
+# same order as the METHODS registry in insilico_mmn.py (regular first, then counterbalanced)
+METHODS=(method_75 method_74 method_72 method_60 method_53 method_55 method_37 method_43 method_44 method_27
+         method_75_counter method_74_counter method_72_counter method_60_counter method_53_counter
+         method_55_counter method_37_counter method_43_counter method_44_counter method_27_counter)
 
 # committed §1.5 encoder layer per (model, level) — do not re-select
 declare -A ENC_LAYER=(
@@ -49,9 +56,9 @@ declare -A ENC_LAYER=(
 
 if [ -n "${SLURM_ARRAY_TASK_ID:-}" ]; then
     TASK=$SLURM_ARRAY_TASK_ID
-    MODEL_ID="${MODELS[$((TASK / 20))]}"
-    LEVEL="${LEVELS[$((TASK / 10 % 2))]}"
-    METHOD="${METHODS[$((TASK % 10))]}"
+    MODEL_ID="${MODELS[$((TASK / 40))]}"
+    LEVEL="${LEVELS[$((TASK / 20 % 2))]}"
+    METHOD="${METHODS[$((TASK % 20))]}"
 else
     MODEL_ID="${MODEL_ID:-whisper-base}"
     LEVEL="${LEVEL:-parcels}"
