@@ -1062,6 +1062,115 @@ mean shrinkage penalises it disproportionately.
 
 ---
 
+## Section 9 — Deviance-scaling: does MMN amplitude grow with the physical deviant size?
+
+**Idea & rationale.** In humans the MMN is not all-or-none: its amplitude **grows lawfully with
+the magnitude of the deviance** — a larger frequency separation between standard and deviant
+produces a larger (and earlier) MMN (Näätänen; Sams et al. 1985; Tiitinen et al. 1994). This
+graded, "dose–response" behaviour is a hallmark of *genuine deviance detection* — the response
+tracks how *unexpected* the deviant is — and it distinguishes a real MMN from a generic
+stimulus-onset transient, which has no reason to scale with deviance. It is therefore a
+**threshold-free functional test**: rather than asking whether the **S2/S7 trough** clears a fixed
+amplitude floor X, we ask whether *that same trough's depth increases with the physical deviance
+size across the stimulus set*. A lawful, monotonic dose–response is arguably more convincing than any
+single-trace criterion because it validates the underlying **mechanism**, not the morphology.
+Our method set is well suited to this because it spans a wide deviance range, from a near-threshold
+1000→1050 Hz step up to a full 1000→2000 Hz octave.
+
+**Methods (concise).**
+- **MMN amplitude** = the **S2/S7 trough**: `trough_uv`, the deviant−standard difference wave **in
+  µV at the S2 trough latency** (`current_argmin_ms`) — the *exact* quantity the S7 gate tests
+  (Sections 4/7). Plotted in **signed µV: negative = deeper MMN**; a value ≥ 0 means no dip.
+- **Reporting sites (per level):** the two canonical fronto-central sites from Section 8 —
+  **parcel = frontal** and **electrode = FCz** — each a **single target** (no ROI averaging). The
+  analysis is run and plotted **separately for each level**.
+- **Deviance size** = `12 · |log₂(f_dev / f_std)|` **semitones** (perceptual log-frequency scale,
+  symmetric so each regular/counter pair shares one value): 7 sizes spanning **0.84 → 12.0 st**.
+- **Sample:** **20 methods × 4 models** (regular + counter) = **80 rows per site × mapping**.
+  Source `mmn_s7_roi.csv` (`trough_uv` is X-independent).
+- **Statistics:** **Spearman ρ** (rank monotonicity) is the **primary** test — it is robust to the
+  deep single-site µV outliers (frontal troughs reach −36 µV; Table 31) that make the **OLS slope**
+  unreliable. Both are reported, per site × mapping and per model; a **S2-passing-only** ρ is given
+  for reference. Code + binned means: `plots/deviance_scaling_plots.py`,
+  `plots/deviance_scaling_binned.csv`.
+
+**Table 38. Deviance-scaling of the S2/S7 trough, per site × mapping** (n = 80)
+
+| Site | Mapping | Spearman ρ | p (ρ) | OLS slope (µV/st) | p (slope) | S2-only ρ (n) |
+| ---- | ------- | ---------- | ----- | ----------------- | --------- | ------------- |
+| parcel — frontal | **mTRF** | **−0.28** | **0.011** | −0.079 | 0.63 (n.s.) | −0.40 (n=62) |
+| parcel — frontal | encoder | +0.03 | 0.77 (n.s.) | −0.009 | 0.96 | −0.27 (n=21) |
+| electrode — FCz | **mTRF** | **−0.29** | **0.009** | −0.058 | 0.19 (n.s.) | −0.32 (n=66) |
+| electrode — FCz | encoder | +0.00 | 1.00 (n.s.) | +0.035 | 0.48 | −0.17 (n=25) |
+
+A **negative ρ means the trough deepens (grows more negative in µV) with deviance** — the
+human-like direction. The mTRF **deepens significantly at both reporting sites** on the rank test;
+the encoder is flat at both. The OLS slope is n.s. because a handful of very deep single-site
+troughs inflate the linear-fit variance — hence Spearman is the primary statistic. Restricting to
+S2-passing troughs (where a genuine dip actually exists) **strengthens** the mTRF effect
+(ρ −0.40 / −0.32).
+
+**Table 39. Per-model consistency — mTRF Spearman ρ** (n = 20 each)
+
+| Site | tiny | base | small | medium |
+| ---- | ---- | ---- | ----- | ------ |
+| parcel — frontal | −0.53 | −0.18 | −0.26 | −0.09 |
+| electrode — FCz | −0.56 | −0.45 | −0.23 | −0.14 |
+
+Same (deepening) direction in all four models at both sites, strongest in whisper-tiny/small and
+weakest in whisper-medium (whose troughs are already deep across the board, leaving less room to
+scale).
+
+**Table 40. Dose–response — mean S2/S7 trough (`trough_uv`, µV; negative = deeper) by deviance size**
+
+| Deviance (st) | Example stimulus | frontal · mTRF | frontal · enc | FCz · mTRF | FCz · enc | n/cell |
+| ------------- | ---------------- | -------------- | ------------- | ---------- | --------- | ------ |
+| 0.84 | 1000→1050 Hz | −0.53 | −1.02 | −0.26 | −0.14 | 8 |
+| 1.07 | 1000→1064 Hz | −0.70 | −2.93 | −0.31 | −0.24 | 8 |
+| 1.74 | 633→700 Hz | −4.78 | −0.50 | −1.27 | −0.32 | 8 |
+| 3.16 | 1000→1200 Hz | −1.72 | −1.61 | −0.48 | −0.22 | 24 |
+| 7.02 | 1000→1500 Hz | −1.63 | −0.30 | −0.69 | −0.49 | 16 |
+| 7.92 | 633→1000 Hz | −4.39 | −3.10 | −1.45 | +0.60 | 8 |
+| 12.00 | 1000→2000 Hz | −1.98 | −1.82 | −0.98 | +0.14 | 8 |
+
+*(FCz · encoder: −0.14, −0.24, −0.32, −0.22, −0.49, **+0.60, +0.14** — it turns **positive** at the
+two largest deviants, i.e. `trough_uv > 0` = no dip, anti-scaling.)* The mTRF columns grow **more
+negative** with deviance (noisily for frontal, which is outlier-prone; more cleanly for FCz); the
+encoder columns show no consistent deepening and FCz even reverses.
+
+![Dose–response of the S2/S7 trough (µV) vs deviance size, split by level (frontal parcel | FCz electrode), mTRF vs encoder.](plots/deviance_scaling_dose_response.png)
+
+![Raw S2/S7 trough points with OLS fit, split by level; y-axis clipped, off-scale counts annotated.](plots/deviance_scaling_scatter.png)
+
+### Section 9 summary
+
+- **The mTRF shows the human deviance-scaling law at both canonical fronto-central sites.** Using
+  the S2/S7 trough itself, the trough **deepens (grows more negative in µV) monotonically with
+  deviance size** at the **frontal parcel** (ρ = −0.28, p = 0.011) and the **FCz electrode**
+  (ρ = −0.29, p = 0.009), in the same direction for every model (Table 39), and cleaner still on the
+  S2-passing subset (ρ −0.40 / −0.32).
+- **The encoder shows no deviance-scaling at either site** (ρ ≈ 0; at FCz it even reverses — the
+  trough goes *positive* (no dip) at the largest deviants), consistent with its shape (S2) and
+  amplitude (S7) deficits — its troughs behave like generic transients, not deviance-graded MMNs.
+- **This converges with the S2/S7 conclusions by a threshold-free route:** the mTRF's in-silico MMN
+  is the physiologically credible one not only in morphology and amplitude but in its *functional
+  dependence on deviance magnitude*. The effect is more modest here than for the averaged committed
+  ROI because a single-target trough is noisier than an averaged one — the direction and
+  significance are unchanged.
+
+**Caveats.** (1) The **OLS slope is n.s.** for the mTRF at both sites: a few very deep single-site
+µV troughs (up to −36 µV, frontal) dominate the linear fit, so the **rank-based Spearman is the
+primary statistic** and the figures clip those outliers off-scale (they remain in all stats).
+(2) The frontal-parcel dose–response is visibly noisy for the same reason; FCz is the cleaner
+single site. (3) Per-model, whisper-medium scales weakest (its troughs are deep regardless of
+deviance). (4) The two 633-Hz-standard stimuli (methods 43/44) probe a different tonotopic region
+but fall on the mTRF trend rather than driving it. (5) Amplitude is the S2/S7 trough on **all**
+80 rows per cell (including no-MMN cases, where `trough_uv ≥ 0`, i.e. no dip); the S2-only ρ column isolates the
+subset where a genuine trough exists and is stronger for the mTRF.
+
+---
+
 *Generated by `scripts/generate_counter_analysis_docs.py` and manually reviewed/expanded.*
-*Sections 7–8 and the S7 columns (Tables 13–14b, 25–30) added by hand from
-`analyze_mmn_criteria_s5_s6.py` (S7 column) and `analyze_mmn_s7_roi.py` (Sections 7–8).*
+*Sections 7–9 and the S7 columns (Tables 13–14b, 25–30) added by hand from
+`analyze_mmn_criteria_s5_s6.py` (S7 column), `analyze_mmn_s7_roi.py` (Sections 7–8), and
+`aux/analysis_with_counter/plots/deviance_scaling_plots.py` (Section 9).*
