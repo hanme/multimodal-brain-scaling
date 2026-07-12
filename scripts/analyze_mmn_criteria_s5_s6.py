@@ -34,7 +34,7 @@ This script adds:
   S7  -- the S2 ("current" window) criterion PLUS an ABSOLUTE microvolt amplitude floor:
          TRUE iff current__S2_recovery passes AND the mean-baseline-corrected deviant-standard
          difference wave, IN MICROVOLTS, at the S2 trough latency (current_argmin_ms, nearest
-         sample, ROI-averaged) is <= -X uV. X = --dip_uv_threshold (default 0.5 uV, PROVISIONAL
+         sample, ROI-averaged) is <= -X uV. X = --dip_uv_threshold (default 1.0 uV, PROVISIONAL
          -- literature value pending). By construction S7 is a subset of S2, so S7 counts can
          only be <= S2 counts.
          CRITICAL: C0-S6 all run on compute_z_diff (z-scored, dimensionless baseline-SD units).
@@ -277,9 +277,9 @@ def main():
                    default="data/metadata/literature_frequency_intensity_duration_metadata.csv",
                    help="per-method tone-duration lookup for the tone-end-relative S4/S5")
     # ---- S7 microvolt amplitude gate ----
-    p.add_argument("--dip_uv_threshold", type=float, default=0.5,
+    p.add_argument("--dip_uv_threshold", type=float, default=1.0,
                    help="S7 amplitude floor X (uV): S7 = S2 AND (uV diff wave at the S2 trough "
-                        "latency <= -X uV). Default 0.5 uV is PROVISIONAL (literature value pending).")
+                        "latency <= -X uV). Default 1.0 uV is PROVISIONAL (literature value pending).")
     p.add_argument("--native_to_uv", type=float, default=1e6,
                    help="native EEG unit -> uV factor. mTRF predicts in the EEG HDF5's native unit "
                         "(MNE loads BrainVision in Volts ~1e-6), so 1e6 converts Volts->uV; encoder "

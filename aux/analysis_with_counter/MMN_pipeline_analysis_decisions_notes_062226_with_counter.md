@@ -62,30 +62,55 @@ deviant waveforms and verified to have the same file structure (16 WAV files per
 
 Decision unchanged: C0 (magnitude only, baseline-normalised peak < 0 in 100–240 ms)
 is the primary criterion; S2 (interior trough + 50% recovery) is the recommended
-reported criterion; S6 (S5 + latency envelope 90–250 ms) is the most conservative
-usable criterion.
+reported criterion. The strictest usable criterion is now **S7** (S2 **plus** an
+absolute microvolt amplitude floor: the deviant−standard difference wave at the S2
+trough latency must reach ≤ −X µV, headline **X = 1.0 µV**, provisional), which
+supersedes S6 (S5 + latency envelope 90–250 ms) as the most conservative filter. S6
+constrains *when* the trough occurs; S7 constrains *how deep* it is in real amplitude
+units. Because the model's ridge/encoder predictions are amplitude-shrunk by
+regularization, X is calibrated to the model's own predicted-µV distribution (median
+S2-passing trough ≈ −0.9 µV), **not** to the literature EEG scale (human MMN ≈ 1–5 µV,
+~3 µV typical peak; Duncan et al. 2009): 1.0 µV is only ≈ 33% of a typical ~3 µV human
+peak on the native scale, but because the model's predictions are ~4× amplitude-shrunk,
+1.0 µV sits at roughly the **median** trough depth on the model's own scale — so it now
+removes slightly more than half of the S2-passing mTRF troughs, not merely the shallowest
+tail. See
+`results_analysis_with_counter.md` Section 4 (criterion note) and Section 7 for the
+full ROI / X-sweep breakdown. **S7 ⊆ S2 by construction**, so S7 ≤ S2 in every cell.
 
 Tables 29 and 30 are now over **n/40 per model** (20 methods × 2 levels).
 
 **Table 29. mTRF, combined (Fz + central ROI)** (n/40 per model)
 
-| Model | C0 (n/40) | S1 (n/40) | S2 (n/40) | S3 (n/40) | S4 (n/40) | S5 (n/40) | S6 (n/40) |
-| ------ | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
-| tiny | 35/40 | 16/40 | 30/40 | 13/40 | 22/40 | 31/40 | 15/40 |
-| base | 32/40 | 16/40 | 32/40 | 16/40 | 23/40 | 33/40 | 19/40 |
-| small | 37/40 | 26/40 | 37/40 | 26/40 | 26/40 | 39/40 | 20/40 |
-| medium | 38/40 | 27/40 | 38/40 | 27/40 | 20/40 | 26/40 | 11/40 |
-| **Total** | **142/160** | **85/160** | **137/160** | **82/160** | **91/160** | **129/160** | **65/160** |
+| Model | C0 (n/40) | S1 (n/40) | S2 (n/40) | S3 (n/40) | S4 (n/40) | S5 (n/40) | S6 (n/40) | S7 (n/40) |
+| ------ | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
+| tiny | 35/40 | 16/40 | 30/40 | 13/40 | 22/40 | 31/40 | 15/40 | 5/40 |
+| base | 32/40 | 16/40 | 32/40 | 16/40 | 23/40 | 33/40 | 19/40 | 4/40 |
+| small | 37/40 | 26/40 | 37/40 | 26/40 | 26/40 | 39/40 | 20/40 | 1/40 |
+| medium | 38/40 | 27/40 | 38/40 | 27/40 | 20/40 | 26/40 | 11/40 | 23/40 |
+| **Total** | **142/160** | **85/160** | **137/160** | **82/160** | **91/160** | **129/160** | **65/160** | **33/160** |
 
 **Table 30. Encoder, combined (Fz + central ROI)** (n/40 per model)
 
-| Model | C0 (n/40) | S1 (n/40) | S2 (n/40) | S3 (n/40) | S4 (n/40) | S5 (n/40) | S6 (n/40) |
-| ------ | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
-| tiny | 26/40 | 14/40 | 9/40 | 7/40 | 6/40 | 10/40 | 4/40 |
-| base | 27/40 | 11/40 | 17/40 | 7/40 | 15/40 | 20/40 | 6/40 |
-| small | 25/40 | 12/40 | 12/40 | 7/40 | 13/40 | 12/40 | 6/40 |
-| medium | 23/40 | 5/40 | 8/40 | 4/40 | 10/40 | 20/40 | 5/40 |
-| **Total** | **101/160** | **42/160** | **46/160** | **25/160** | **44/160** | **62/160** | **21/160** |
+| Model | C0 (n/40) | S1 (n/40) | S2 (n/40) | S3 (n/40) | S4 (n/40) | S5 (n/40) | S6 (n/40) | S7 (n/40) |
+| ------ | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
+| tiny | 26/40 | 14/40 | 9/40 | 7/40 | 6/40 | 10/40 | 4/40 | 1/40 |
+| base | 27/40 | 11/40 | 17/40 | 7/40 | 15/40 | 20/40 | 6/40 | 2/40 |
+| small | 25/40 | 12/40 | 12/40 | 7/40 | 13/40 | 12/40 | 6/40 | 3/40 |
+| medium | 23/40 | 5/40 | 8/40 | 4/40 | 10/40 | 20/40 | 5/40 | 4/40 |
+| **Total** | **101/160** | **42/160** | **46/160** | **25/160** | **44/160** | **62/160** | **21/160** | **10/160** |
+
+**S7 (amplitude-gated, X = 1.0 µV).** On the combined Fz/central ROI the mTRF keeps
+**33/160** amplitude-qualified MMNs vs the encoder's **10/160** — S7 lands below S6 in
+aggregate (33 vs 65/160 mTRF; 10 vs 21/160 encoder) and at or below S6 in every model ×
+mapping cell except whisper-medium mTRF (23 S7 vs 11 S6, its troughs being unusually
+deep), yet preserves the same mTRF≫encoder ordering seen throughout. Requiring a genuine
+microvolt-scale trough (not just a z-scored dip) therefore *reinforces*, rather than
+overturns, the decision to prefer the mTRF. Note the single-site Fz/central ROI yields
+shallower troughs than the averaged ROI, so S7 retains a smaller fraction of S2 here
+(33/137 = 24% mTRF) than under the full ROI (58/136 = 43%,
+`results_analysis_with_counter.md` Table 13). Full ROI-option and X-sweep detail:
+Section 7 of `results_analysis_with_counter.md`.
 
 ### Comparison to original Tables 29/30 (n/20)
 

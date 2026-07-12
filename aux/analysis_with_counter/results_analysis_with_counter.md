@@ -590,63 +590,86 @@ Notable pattern: methods 43 and 44 (633 Hz standard) show low regular totals (8/
 > same definitions. The relative ordering of criteria and the mTRF-vs-encoder gap
 > are unaffected by this minor implementation difference.
 
+> **New criterion S7 (amplitude-gated MMN).** S7 = **S2 AND** the deviant−standard
+> difference wave, **in microvolts**, at the S2 trough latency ≤ **−X µV** (headline
+> **X = 1.0 µV**, *provisional — pending a literature amplitude threshold; TODO*). Unlike
+> C0–S6, which score a **z-scored** (dimensionless, baseline-SD-unit) difference, S7 tests
+> an **absolute amplitude** taken from a *separate* mean-only baseline-corrected difference
+> wave (`analyze_mmn_criteria_s5_s6.py --dip_uv_threshold`, column `current__S7_uv_gated`).
+> Units are made comparable across mappings: the mTRF predicts native EEG **Volts** (×1e6 →
+> µV); the encoder predicts **z-units**, converted to native µV via the per-target `eeg_sd`
+> in the checkpoint `model__<layer>.pt` (the additive mean cancels in deviant−standard). **By
+> construction S7 ⊆ S2**, so S7 ≤ S2 in every cell below.
+>
+> **Scale caveat:** ridge/encoder predictions systematically **under-estimate** true MMN
+> amplitude, so the model's predicted µV scale need **not** match literature EEG µV (a
+> literature MMN is ≈ 1–5 µV, ~3 µV typical peak; Duncan et al. 2009). X is therefore
+> calibrated to the **model's own** predicted-µV distribution, not to the literature:
+> across the 20-method set the median S2-passing trough is ≈ **−0.9 µV** (mTRF, current
+> ROI). On the native EEG scale **1.0 µV** is only ≈ 33% of a typical ~3 µV human peak
+> MMN, but because the model's predictions are ~4× amplitude-shrunk, on the model's own
+> scale 1.0 µV sits **just beyond** the median trough magnitude — so it removes slightly
+> **more than half** of the S2-passing mTRF troughs (not merely the shallowest 0 → −0.5 µV
+> tail), keeping the deeper, clearer ones. See **Section 7** for the full ROI / X-sweep
+> breakdown and the µV-trough distribution.
+
 ### Results — mTRF (n/40 per model = 20 methods × 2 levels)
 
 **Table 13. MMN-present counts per criterion, by model — mTRF**
 
-| Model | C0 (n/40) | S1 (n/40) | S2 (n/40) | S3 (n/40) | S4 (n/40) | S5 (n/40) | S6 (n/40) |
-| ------ | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
-| tiny | 38/40 | 13/40 | 35/40 | 13/40 | 24/40 | 31/40 | 17/40 |
-| base | 32/40 | 15/40 | 31/40 | 15/40 | 18/40 | 29/40 | 15/40 |
-| small | 38/40 | 24/40 | 38/40 | 24/40 | 26/40 | 37/40 | 16/40 |
-| medium | 34/40 | 25/40 | 32/40 | 23/40 | 18/40 | 28/40 | 13/40 |
-| **Total** | **142/160** | **77/160** | **136/160** | **75/160** | **86/160** | **125/160** | **61/160** |
+| Model | C0 (n/40) | S1 (n/40) | S2 (n/40) | S3 (n/40) | S4 (n/40) | S5 (n/40) | S6 (n/40) | S7 (n/40) |
+| ------ | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
+| tiny | 38/40 | 13/40 | 35/40 | 13/40 | 24/40 | 31/40 | 17/40 | 17/40 |
+| base | 32/40 | 15/40 | 31/40 | 15/40 | 18/40 | 29/40 | 15/40 | 7/40 |
+| small | 38/40 | 24/40 | 38/40 | 24/40 | 26/40 | 37/40 | 16/40 | 8/40 |
+| medium | 34/40 | 25/40 | 32/40 | 23/40 | 18/40 | 28/40 | 13/40 | 26/40 |
+| **Total** | **142/160** | **77/160** | **136/160** | **75/160** | **86/160** | **125/160** | **61/160** | **58/160** |
 
-The mTRF shape-criterion picture is broadly preserved: C0 and S2 remain very high (89–95% and 85–95% per model), S1/S3 penalise substantially (edge-rejection effect unchanged), and S6 is the most restrictive. The S2/C0 retention rate across models is 35/38, 31/32, 38/38, 32/34 — roughly 92–100%, essentially identical to the original 92–100% in `results_analysis.md`. Counter methods do not degrade shape quality.
+The mTRF shape-criterion picture is broadly preserved: C0 and S2 remain very high (89–95% and 85–95% per model), S1/S3 penalise substantially (edge-rejection effect unchanged), and S6 is the most restrictive. The S2/C0 retention rate across models is 35/38, 31/32, 38/38, 32/34 — roughly 92–100%, essentially identical to the original 92–100% in `results_analysis.md`. Counter methods do not degrade shape quality. **S7 (amplitude gate at 1.0 µV) tightens S2 to 58/160 — an S7/S2 retention of 43%** (58 of 136 S2-positives clear the 1.0 µV floor); it now sits just below S6 (61/160) rather than between S6 and S2, removing slightly more than half of the genuine mTRF troughs along with the shallow-amplitude ones. whisper-medium retains the most (26/32 = 81%), whisper-small the least (8/38 = 21%), reflecting its shallower predicted troughs.
 
 **Table 13b. Regular vs counter breakdown — mTRF** (n/20 per set)
 
-| Model | Set | C0 (n/20) | S1 (n/20) | S2 (n/20) | S3 (n/20) | S4 (n/20) | S5 (n/20) | S6 (n/20) |
-| ------ | ------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
-| tiny | regular | 20/20 | 8/20 | 17/20 | 8/20 | 16/20 | 19/20 | 10/20 |
-| tiny | counter | 18/20 | 5/20 | 18/20 | 5/20 | 8/20 | 12/20 | 7/20 |
-| base | regular | 12/20 | 4/20 | 12/20 | 4/20 | 6/20 | 15/20 | 7/20 |
-| base | counter | 20/20 | 11/20 | 19/20 | 11/20 | 12/20 | 14/20 | 8/20 |
-| small | regular | 19/20 | 11/20 | 19/20 | 11/20 | 14/20 | 17/20 | 6/20 |
-| small | counter | 19/20 | 13/20 | 19/20 | 13/20 | 12/20 | 20/20 | 10/20 |
-| medium | regular | 19/20 | 17/20 | 17/20 | 15/20 | 10/20 | 14/20 | 9/20 |
-| medium | counter | 15/20 | 8/20 | 15/20 | 8/20 | 8/20 | 14/20 | 4/20 |
+| Model | Set | C0 (n/20) | S1 (n/20) | S2 (n/20) | S3 (n/20) | S4 (n/20) | S5 (n/20) | S6 (n/20) | S7 (n/20) |
+| ------ | ------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
+| tiny | regular | 20/20 | 8/20 | 17/20 | 8/20 | 16/20 | 19/20 | 10/20 | 8/20 |
+| tiny | counter | 18/20 | 5/20 | 18/20 | 5/20 | 8/20 | 12/20 | 7/20 | 9/20 |
+| base | regular | 12/20 | 4/20 | 12/20 | 4/20 | 6/20 | 15/20 | 7/20 | 2/20 |
+| base | counter | 20/20 | 11/20 | 19/20 | 11/20 | 12/20 | 14/20 | 8/20 | 5/20 |
+| small | regular | 19/20 | 11/20 | 19/20 | 11/20 | 14/20 | 17/20 | 6/20 | 3/20 |
+| small | counter | 19/20 | 13/20 | 19/20 | 13/20 | 12/20 | 20/20 | 10/20 | 5/20 |
+| medium | regular | 19/20 | 17/20 | 17/20 | 15/20 | 10/20 | 14/20 | 9/20 | 16/20 |
+| medium | counter | 15/20 | 8/20 | 15/20 | 8/20 | 8/20 | 14/20 | 4/20 | 10/20 |
 
-Counter methods maintain high S2 rates (15–19/20) across all models, confirming that their C0 positives are predominantly genuine dip-and-recover troughs rather than ramps — the same shape quality as the regular stimuli.
+Counter methods maintain high S2 rates (15–19/20) across all models, confirming that their C0 positives are predominantly genuine dip-and-recover troughs rather than ramps — the same shape quality as the regular stimuli. S7 remains roughly balanced across regular and counter overall (e.g. tiny 8/9); base and small skew slightly counter (2/5 and 3/5) while medium skews regular (16/10), but there is no systematic direction bias — counter troughs are broadly as deep in µV as the regular ones.
 
 ### Results — Encoder (n/40 per model)
 
 **Table 14. MMN-present counts per criterion, by model — encoder**
 
-| Model | C0 (n/40) | S1 (n/40) | S2 (n/40) | S3 (n/40) | S4 (n/40) | S5 (n/40) | S6 (n/40) |
-| ------ | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
-| tiny | 24/40 | 11/40 | 8/40 | 5/40 | 7/40 | 15/40 | 7/40 |
-| base | 27/40 | 11/40 | 16/40 | 5/40 | 14/40 | 19/40 | 6/40 |
-| small | 22/40 | 13/40 | 12/40 | 8/40 | 10/40 | 9/40 | 4/40 |
-| medium | 22/40 | 5/40 | 5/40 | 2/40 | 8/40 | 22/40 | 6/40 |
-| **Total** | **95/160** | **40/160** | **41/160** | **20/160** | **39/160** | **65/160** | **23/160** |
+| Model | C0 (n/40) | S1 (n/40) | S2 (n/40) | S3 (n/40) | S4 (n/40) | S5 (n/40) | S6 (n/40) | S7 (n/40) |
+| ------ | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
+| tiny | 24/40 | 11/40 | 8/40 | 5/40 | 7/40 | 15/40 | 7/40 | 3/40 |
+| base | 27/40 | 11/40 | 16/40 | 5/40 | 14/40 | 19/40 | 6/40 | 6/40 |
+| small | 22/40 | 13/40 | 12/40 | 8/40 | 10/40 | 9/40 | 4/40 | 8/40 |
+| medium | 22/40 | 5/40 | 5/40 | 2/40 | 8/40 | 22/40 | 6/40 | 4/40 |
+| **Total** | **95/160** | **40/160** | **41/160** | **20/160** | **39/160** | **65/160** | **23/160** | **21/160** |
 
-The encoder's shape-gating collapse is preserved: S2/C0 retention is 8/24, 16/27, 12/22, 5/22 (33–59%) — slightly higher than the original 38% in `results_analysis.md`, but still far below mTRF's 92–100%. Adding counter methods does not rescue the encoder's shape problem.
+The encoder's shape-gating collapse is preserved: S2/C0 retention is 8/24, 16/27, 12/22, 5/22 (33–59%) — slightly higher than the original 38% in `results_analysis.md`, but still far below mTRF's 92–100%. Adding counter methods does not rescue the encoder's shape problem. **S7 lands at 21/160** — an S7/S2 retention of 51% (21 of 41), slightly *above* the mTRF's 43% at this X: when the encoder *does* produce a genuine S2 trough, that trough is usually of adequate µV amplitude. So even at the tighter 1.0 µV floor S7 does not disproportionately punish the encoder; the encoder's deficit is upstream (it rarely passes S2 at all: 41/160 vs mTRF 136/160), not in amplitude.
 
 **Table 14b. Regular vs counter breakdown — encoder** (n/20 per set)
 
-| Model | Set | C0 (n/20) | S1 (n/20) | S2 (n/20) | S3 (n/20) | S4 (n/20) | S5 (n/20) | S6 (n/20) |
-| ------ | ------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
-| tiny | regular | 11/20 | 4/20 | 3/20 | 2/20 | 2/20 | 4/20 | 2/20 |
-| tiny | counter | 13/20 | 7/20 | 5/20 | 3/20 | 5/20 | 11/20 | 5/20 |
-| base | regular | 13/20 | 6/20 | 9/20 | 4/20 | 7/20 | 10/20 | 4/20 |
-| base | counter | 14/20 | 5/20 | 7/20 | 1/20 | 7/20 | 9/20 | 2/20 |
-| small | regular | 6/20 | 3/20 | 4/20 | 2/20 | 3/20 | 2/20 | 0/20 |
-| small | counter | 16/20 | 10/20 | 8/20 | 6/20 | 7/20 | 7/20 | 4/20 |
-| medium | regular | 12/20 | 2/20 | 0/20 | 0/20 | 1/20 | 6/20 | 1/20 |
-| medium | counter | 10/20 | 3/20 | 5/20 | 2/20 | 7/20 | 16/20 | 5/20 |
+| Model | Set | C0 (n/20) | S1 (n/20) | S2 (n/20) | S3 (n/20) | S4 (n/20) | S5 (n/20) | S6 (n/20) | S7 (n/20) |
+| ------ | ------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
+| tiny | regular | 11/20 | 4/20 | 3/20 | 2/20 | 2/20 | 4/20 | 2/20 | 0/20 |
+| tiny | counter | 13/20 | 7/20 | 5/20 | 3/20 | 5/20 | 11/20 | 5/20 | 3/20 |
+| base | regular | 13/20 | 6/20 | 9/20 | 4/20 | 7/20 | 10/20 | 4/20 | 2/20 |
+| base | counter | 14/20 | 5/20 | 7/20 | 1/20 | 7/20 | 9/20 | 2/20 | 4/20 |
+| small | regular | 6/20 | 3/20 | 4/20 | 2/20 | 3/20 | 2/20 | 0/20 | 2/20 |
+| small | counter | 16/20 | 10/20 | 8/20 | 6/20 | 7/20 | 7/20 | 4/20 | 6/20 |
+| medium | regular | 12/20 | 2/20 | 0/20 | 0/20 | 1/20 | 6/20 | 1/20 | 0/20 |
+| medium | counter | 10/20 | 3/20 | 5/20 | 2/20 | 7/20 | 16/20 | 5/20 | 4/20 |
 
-Notably, whisper-small counter methods show substantially higher C0 (16 vs 6/20) and S2 (8 vs 4/20) counts. Whisper-medium counter shows higher S5 (16 vs 6/20) and S6 (5 vs 1/20) — suggesting the counter direction for medium produces more genuine recovering troughs at later latencies, outside the fixed 100–240 ms window.
+Notably, whisper-small counter methods show substantially higher C0 (16 vs 6/20) and S2 (8 vs 4/20) counts. Whisper-medium counter shows higher S5 (16 vs 6/20) and S6 (5 vs 1/20) — suggesting the counter direction for medium produces more genuine recovering troughs at later latencies, outside the fixed 100–240 ms window. S7 follows S2: the encoder's amplitude-qualified troughs concentrate in the counter direction (small 2 reg vs 6 counter; medium 0 reg vs 4 counter), i.e. the few encoder MMNs that clear the µV floor come disproportionately from the swapped-frequency stimuli.
 
 ---
 
@@ -789,75 +812,184 @@ making ROI choice less impactful than for mTRF.
 
 **Table 25. Electrodes — Fz only — mTRF** (n/20 per model)
 
-| Model | C0 (n/20) | S1 (n/20) | S2 (n/20) | S3 (n/20) | S4 (n/20) | S5 (n/20) | S6 (n/20) |
-| ------ | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
-| tiny | 18/20 | 9/20 | 15/20 | 6/20 | 11/20 | 14/20 | 7/20 |
-| base | 16/20 | 8/20 | 16/20 | 8/20 | 11/20 | 18/20 | 11/20 |
-| small | 18/20 | 12/20 | 18/20 | 12/20 | 12/20 | 20/20 | 8/20 |
-| medium | 19/20 | 14/20 | 19/20 | 14/20 | 10/20 | 13/20 | 5/20 |
-| **Total** | **71/80** | **43/80** | **68/80** | **40/80** | **44/80** | **65/80** | **31/80** |
+| Model | C0 (n/20) | S1 (n/20) | S2 (n/20) | S3 (n/20) | S4 (n/20) | S5 (n/20) | S6 (n/20) | S7 (n/20) |
+| ------ | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
+| tiny | 18/20 | 9/20 | 15/20 | 6/20 | 11/20 | 14/20 | 7/20 | 3/20 |
+| base | 16/20 | 8/20 | 16/20 | 8/20 | 11/20 | 18/20 | 11/20 | 3/20 |
+| small | 18/20 | 12/20 | 18/20 | 12/20 | 12/20 | 20/20 | 8/20 | 0/20 |
+| medium | 19/20 | 14/20 | 19/20 | 14/20 | 10/20 | 13/20 | 5/20 | 12/20 |
+| **Total** | **71/80** | **43/80** | **68/80** | **40/80** | **44/80** | **65/80** | **31/80** | **18/80** |
 
 **Table 26. Parcels — central only — mTRF** (n/20 per model)
 
-| Model | C0 (n/20) | S1 (n/20) | S2 (n/20) | S3 (n/20) | S4 (n/20) | S5 (n/20) | S6 (n/20) |
-| ------ | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
-| tiny | 17/20 | 7/20 | 15/20 | 7/20 | 11/20 | 17/20 | 8/20 |
-| base | 16/20 | 8/20 | 16/20 | 8/20 | 12/20 | 15/20 | 8/20 |
-| small | 19/20 | 14/20 | 19/20 | 14/20 | 14/20 | 19/20 | 12/20 |
-| medium | 19/20 | 13/20 | 19/20 | 13/20 | 10/20 | 13/20 | 6/20 |
-| **Total** | **71/80** | **42/80** | **69/80** | **42/80** | **47/80** | **64/80** | **34/80** |
+| Model | C0 (n/20) | S1 (n/20) | S2 (n/20) | S3 (n/20) | S4 (n/20) | S5 (n/20) | S6 (n/20) | S7 (n/20) |
+| ------ | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
+| tiny | 17/20 | 7/20 | 15/20 | 7/20 | 11/20 | 17/20 | 8/20 | 2/20 |
+| base | 16/20 | 8/20 | 16/20 | 8/20 | 12/20 | 15/20 | 8/20 | 1/20 |
+| small | 19/20 | 14/20 | 19/20 | 14/20 | 14/20 | 19/20 | 12/20 | 1/20 |
+| medium | 19/20 | 13/20 | 19/20 | 13/20 | 10/20 | 13/20 | 6/20 | 11/20 |
+| **Total** | **71/80** | **42/80** | **69/80** | **42/80** | **47/80** | **64/80** | **34/80** | **15/80** |
 
 **Table 27. Electrodes — Fz only — encoder** (n/20 per model)
 
-| Model | C0 (n/20) | S1 (n/20) | S2 (n/20) | S3 (n/20) | S4 (n/20) | S5 (n/20) | S6 (n/20) |
-| ------ | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
-| tiny | 13/20 | 7/20 | 4/20 | 3/20 | 2/20 | 3/20 | 1/20 |
-| base | 14/20 | 3/20 | 11/20 | 3/20 | 8/20 | 12/20 | 3/20 |
-| small | 13/20 | 6/20 | 4/20 | 3/20 | 9/20 | 5/20 | 4/20 |
-| medium | 11/20 | 3/20 | 4/20 | 2/20 | 3/20 | 8/20 | 2/20 |
-| **Total** | **51/80** | **19/80** | **23/80** | **11/80** | **22/80** | **28/80** | **10/80** |
+| Model | C0 (n/20) | S1 (n/20) | S2 (n/20) | S3 (n/20) | S4 (n/20) | S5 (n/20) | S6 (n/20) | S7 (n/20) |
+| ------ | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
+| tiny | 13/20 | 7/20 | 4/20 | 3/20 | 2/20 | 3/20 | 1/20 | 0/20 |
+| base | 14/20 | 3/20 | 11/20 | 3/20 | 8/20 | 12/20 | 3/20 | 0/20 |
+| small | 13/20 | 6/20 | 4/20 | 3/20 | 9/20 | 5/20 | 4/20 | 1/20 |
+| medium | 11/20 | 3/20 | 4/20 | 2/20 | 3/20 | 8/20 | 2/20 | 0/20 |
+| **Total** | **51/80** | **19/80** | **23/80** | **11/80** | **22/80** | **28/80** | **10/80** | **1/80** |
 
 **Table 28. Parcels — central only — encoder** (n/20 per model)
 
-| Model | C0 (n/20) | S1 (n/20) | S2 (n/20) | S3 (n/20) | S4 (n/20) | S5 (n/20) | S6 (n/20) |
-| ------ | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
-| tiny | 13/20 | 7/20 | 5/20 | 4/20 | 4/20 | 7/20 | 3/20 |
-| base | 13/20 | 8/20 | 6/20 | 4/20 | 7/20 | 8/20 | 3/20 |
-| small | 12/20 | 6/20 | 8/20 | 4/20 | 4/20 | 7/20 | 2/20 |
-| medium | 12/20 | 2/20 | 4/20 | 2/20 | 7/20 | 12/20 | 3/20 |
-| **Total** | **50/80** | **23/80** | **23/80** | **14/80** | **22/80** | **34/80** | **11/80** |
+| Model | C0 (n/20) | S1 (n/20) | S2 (n/20) | S3 (n/20) | S4 (n/20) | S5 (n/20) | S6 (n/20) | S7 (n/20) |
+| ------ | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
+| tiny | 13/20 | 7/20 | 5/20 | 4/20 | 4/20 | 7/20 | 3/20 | 1/20 |
+| base | 13/20 | 8/20 | 6/20 | 4/20 | 7/20 | 8/20 | 3/20 | 2/20 |
+| small | 12/20 | 6/20 | 8/20 | 4/20 | 4/20 | 7/20 | 2/20 | 2/20 |
+| medium | 12/20 | 2/20 | 4/20 | 2/20 | 7/20 | 12/20 | 3/20 | 4/20 |
+| **Total** | **50/80** | **23/80** | **23/80** | **14/80** | **22/80** | **34/80** | **11/80** | **9/80** |
 
 ### Combined (parcels + electrodes, Fz/central ROI)
 
 **Table 29. mTRF, combined (Fz + central)** (n/40 per model)
 
-| Model | C0 (n/40) | S1 (n/40) | S2 (n/40) | S3 (n/40) | S4 (n/40) | S5 (n/40) | S6 (n/40) |
-| ------ | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
-| tiny | 35/40 | 16/40 | 30/40 | 13/40 | 22/40 | 31/40 | 15/40 |
-| base | 32/40 | 16/40 | 32/40 | 16/40 | 23/40 | 33/40 | 19/40 |
-| small | 37/40 | 26/40 | 37/40 | 26/40 | 26/40 | 39/40 | 20/40 |
-| medium | 38/40 | 27/40 | 38/40 | 27/40 | 20/40 | 26/40 | 11/40 |
-| **Total** | **142/160** | **85/160** | **137/160** | **82/160** | **91/160** | **129/160** | **65/160** |
+| Model | C0 (n/40) | S1 (n/40) | S2 (n/40) | S3 (n/40) | S4 (n/40) | S5 (n/40) | S6 (n/40) | S7 (n/40) |
+| ------ | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
+| tiny | 35/40 | 16/40 | 30/40 | 13/40 | 22/40 | 31/40 | 15/40 | 5/40 |
+| base | 32/40 | 16/40 | 32/40 | 16/40 | 23/40 | 33/40 | 19/40 | 4/40 |
+| small | 37/40 | 26/40 | 37/40 | 26/40 | 26/40 | 39/40 | 20/40 | 1/40 |
+| medium | 38/40 | 27/40 | 38/40 | 27/40 | 20/40 | 26/40 | 11/40 | 23/40 |
+| **Total** | **142/160** | **85/160** | **137/160** | **82/160** | **91/160** | **129/160** | **65/160** | **33/160** |
 
-**Comparison to original Table 29 (n/20):** As fractions — C0: 88% (vs 86% original), S2: 86% (vs 80%), S6: 41% (vs 39%). The mTRF Fz/central picture is essentially unchanged or slightly improved when counter methods are added.
+**Comparison to original Table 29 (n/20):** As fractions — C0: 88% (vs 86% original), S2: 86% (vs 80%), S6: 41% (vs 39%). The mTRF Fz/central picture is essentially unchanged or slightly improved when counter methods are added. **S7 (1.0 µV floor) = 33/160 (21%)** — now well below S6 (65/160), and by a different mechanism (amplitude, not latency envelope); on the narrower Fz/central ROI the single-site troughs are shallower, so S7 retains just 33/137 = 24% of S2 here vs 58/136 = 43% under the full ROI (Table 13).
 
 **Table 30. Encoder, combined (Fz + central)** (n/40 per model)
 
-| Model | C0 (n/40) | S1 (n/40) | S2 (n/40) | S3 (n/40) | S4 (n/40) | S5 (n/40) | S6 (n/40) |
-| ------ | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
-| tiny | 26/40 | 14/40 | 9/40 | 7/40 | 6/40 | 10/40 | 4/40 |
-| base | 27/40 | 11/40 | 17/40 | 7/40 | 15/40 | 20/40 | 6/40 |
-| small | 25/40 | 12/40 | 12/40 | 7/40 | 13/40 | 12/40 | 6/40 |
-| medium | 23/40 | 5/40 | 8/40 | 4/40 | 10/40 | 20/40 | 5/40 |
-| **Total** | **101/160** | **42/160** | **46/160** | **25/160** | **44/160** | **62/160** | **21/160** |
+| Model | C0 (n/40) | S1 (n/40) | S2 (n/40) | S3 (n/40) | S4 (n/40) | S5 (n/40) | S6 (n/40) | S7 (n/40) |
+| ------ | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
+| tiny | 26/40 | 14/40 | 9/40 | 7/40 | 6/40 | 10/40 | 4/40 | 1/40 |
+| base | 27/40 | 11/40 | 17/40 | 7/40 | 15/40 | 20/40 | 6/40 | 2/40 |
+| small | 25/40 | 12/40 | 12/40 | 7/40 | 13/40 | 12/40 | 6/40 | 3/40 |
+| medium | 23/40 | 5/40 | 8/40 | 4/40 | 10/40 | 20/40 | 5/40 | 4/40 |
+| **Total** | **101/160** | **42/160** | **46/160** | **25/160** | **44/160** | **62/160** | **21/160** | **10/160** |
 
-**Comparison to original Table 30 (n/20):** C0: 63% (vs 60%), S2: 29% (vs 24%), S6: 13% (vs 7.5%). The encoder's absolute counts improve with counter methods (97/160 C0-positive vs 48/80=60%), but the S2/C0 retention ratio stays low (46/101=46%) — shape quality is not rescued by adding counter stimuli.
+**Comparison to original Table 30 (n/20):** C0: 63% (vs 60%), S2: 29% (vs 24%), S6: 13% (vs 7.5%). The encoder's absolute counts improve with counter methods (97/160 C0-positive vs 48/80=60%), but the S2/C0 retention ratio stays low (46/101=46%) — shape quality is not rescued by adding counter stimuli. **S7 = 10/160**, now falling below S6 (21/160), and retains only 10/46 = 22% of S2 on the Fz/central ROI — so on the single-site ROI the encoder loses roughly three-quarters of its (already scarce) S2 troughs to the amplitude floor.
 
 ### Summary
 
 The Section 4 and Section 6 findings from `results_analysis.md` are preserved with 20 methods:
-**encoder still collapses far more than mTRF under shape gating** (S2/C0 retention: 96% for mTRF Fz/central vs 46% for encoder), the edge-rejection penalty on mTRF under S1/S3 persists, and the mTRF-vs-encoder gap at S6 is maintained (65/142=46% mTRF S6/C0 vs 21/101=21% encoder). The narrowing to Fz/central still does not rescue the encoder's shape problem, confirming all original Section 6 conclusions.
+**encoder still collapses far more than mTRF under shape gating** (S2/C0 retention: 96% for mTRF Fz/central vs 46% for encoder), the edge-rejection penalty on mTRF under S1/S3 persists, and the mTRF-vs-encoder gap at S6 is maintained (65/142=46% mTRF S6/C0 vs 21/101=21% encoder). The narrowing to Fz/central still does not rescue the encoder's shape problem, confirming all original Section 6 conclusions. **The new S7 amplitude gate (1.0 µV) reinforces this**: mTRF keeps 33/160 amplitude-qualified MMNs vs the encoder's 10/160 (Fz/central), so requiring a genuine microvolt-scale trough — not just a z-scored dip — widens rather than closes the mTRF−encoder gap. S7 is now the strictest usable criterion (amplitude-gated), landing below S6 in aggregate (33 vs 65/160 mTRF; 10 vs 21/160 encoder) and at or below S6 in every model × mapping cell except whisper-medium mTRF; see **Section 7** for the full ROI-option and X-sweep breakdown.
+
+---
+
+## Section 7 — Amplitude-gated MMN (S2 vs S7) across ROI options
+
+> **Code:** `scripts/analyze_mmn_s7_roi.py`
+> **Data:** `outputs/results_with_counter/mmn_s7_roi.csv` (8,640 rows = 20 methods × 4 models
+> × 2 mappings × 9 ROI options × 6 X-thresholds).
+>
+> This section asks how the shape verdict **S2** and the amplitude-gated verdict **S7** behave
+> at each candidate *reporting site* rather than the committed averaged ROI. MMN is classically
+> reported at single fronto-central sites, so the ROI options are the **frontal** and **central
+> parcels** plus **each electrode of the frontal/central 10-20 clusters** (Fz, F3, F4, FCz —
+> frontal; Cz, C3, C4 — central; all 7 survive the NC floor). Each option is a **single target**
+> (no averaging). S7 = S2 AND the microvolt deviant−standard trough at the S2 latency ≤ −X µV,
+> headline **X = 1.0 µV** (provisional). All 20 methods (regular + counter) are pooled.
+>
+> **Scale caveat (repeated):** these are the model's **regularization-shrunk predicted µV**, not
+> literature EEG µV. A literature MMN is ≈ 1–5 µV; the model's S2-passing troughs sit at a median
+> of ≈ −0.7 to −0.9 µV, so X is calibrated to the model's own scale, not the literature's.
+
+### µV-trough distribution (the calibration data)
+
+Deepest µV trough in the 100–240 ms window, over the **S2-passing** single-target traces (the
+ones S7 can gate), one row per (mapping, ROI-kind):
+
+**Table 31. Predicted µV-trough distribution (S2-passing single-target traces)**
+
+| Mapping × kind | n | min | median | max | ≤−0.25 | ≤−0.5 | ≤−1.0 | ≤−1.5 | ≤−2.0 | ≤−2.5 |
+| -------------- | --- | ----- | ------ | ---- | ------ | ----- | ----- | ----- | ----- | ----- |
+| mTRF × parcel | 131 | −36.28 | −0.80 | +0.80 | 104 | 86 | 56 | 41 | 30 | 21 |
+| mTRF × electrode | 453 | −77.01 | −0.86 | +1.55 | 362 | 293 | 213 | 152 | 113 | 88 |
+| encoder × parcel | 44 | −19.14 | −0.88 | +4.72 | 34 | 29 | 20 | 14 | 12 | 12 |
+| encoder × electrode | 156 | −14.52 | −0.70 | +4.49 | 102 | 89 | 63 | 50 | 37 | 31 |
+
+The median S2-passing trough is ≈ −0.8 µV for every mapping × kind, so **1.0 µV sits just beyond
+the median and removes slightly more than half of the genuine troughs** (the ≤−1.0 µV column of
+Table 31 keeps only ≈ 40–47% of each S2-passing set), not merely the shallow (0 → −0.5 µV) tail.
+A handful of very deep mTRF
+troughs (min −36 to −77 µV) are noisy single electrodes; S7 rightly keeps them (they are far past
+any threshold), and the ROI-mean criteria of Sections 4/6 average that noise down.
+
+### S2 → S7 by ROI option, per model (X = 1.0 µV)
+
+Each cell is **S2 → S7** present-count, n/20 per model; **Total** is n/80 (20 methods × 4 models).
+
+**Table 32. mTRF — S2 → S7 per ROI option**
+
+| ROI option | kind | tiny | base | small | medium | Total (n/80) |
+| ---------- | ---- | ---- | ---- | ----- | ------ | ------------ |
+| frontal | parcel | 18→10 | 16→9 | 13→7 | 15→15 | 62→41 |
+| central | parcel | 15→2 | 16→1 | 19→1 | 19→11 | 69→15 |
+| Fz | electrode | 15→3 | 16→3 | 18→0 | 19→12 | 68→18 |
+| F3 | electrode | 18→15 | 16→13 | 18→14 | 14→12 | 66→54 |
+| F4 | electrode | 16→13 | 15→12 | 19→14 | 13→12 | 63→51 |
+| FCz | electrode | 16→5 | 16→2 | 19→1 | 15→9 | 66→17 |
+| Cz | electrode | 16→8 | 16→7 | 16→3 | 16→12 | 64→30 |
+| C3 | electrode | 15→4 | 17→1 | 18→2 | 13→7 | 63→14 |
+| C4 | electrode | 15→10 | 15→3 | 17→5 | 16→11 | 63→29 |
+
+**Table 33. Encoder — S2 → S7 per ROI option**
+
+| ROI option | kind | tiny | base | small | medium | Total (n/80) |
+| ---------- | ---- | ---- | ---- | ----- | ------ | ------------ |
+| frontal | parcel | 5→2 | 5→2 | 7→4 | 4→3 | 21→11 |
+| central | parcel | 5→1 | 6→2 | 8→2 | 4→4 | 23→9 |
+| Fz | electrode | 4→0 | 11→0 | 4→1 | 4→0 | 23→1 |
+| F3 | electrode | 7→3 | 7→5 | 4→3 | 4→3 | 22→14 |
+| F4 | electrode | 4→2 | 5→5 | 3→3 | 4→3 | 16→13 |
+| FCz | electrode | 7→0 | 10→1 | 5→4 | 3→2 | 25→7 |
+| Cz | electrode | 3→1 | 5→0 | 5→2 | 13→6 | 26→9 |
+| C3 | electrode | 5→0 | 10→2 | 4→3 | 3→2 | 22→7 |
+| C4 | electrode | 5→2 | 7→4 | 4→3 | 6→3 | 22→12 |
+
+### S7 vs the amplitude threshold X
+
+Total S7 present-count as X rises (pooled over all 9 ROI options × 20 methods × 4 models = 720
+cells per mapping; S2 is the X→0 reference):
+
+**Table 34. S7 falling with the amplitude threshold X**
+
+| X (µV) | 0.25 | 0.5 | 1.0 | 1.5 | 2.0 | 2.5 |
+| ------ | ---- | --- | --- | --- | --- | --- |
+| mTRF S7 (of S2 = 584) | 466 | 379 | 269 | 193 | 143 | 109 |
+| encoder S7 (of S2 = 200) | 136 | 118 | 83 | 64 | 49 | 43 |
+
+### Section 7 summary
+
+- **S7 tightens S2 at every site**, but by how much depends strongly on the reporting ROI. For the
+  mTRF, the **lateral frontal electrodes F3/F4 have the deepest predicted troughs** (S7/S2 = 54/66
+  = 82% and 51/63 = 81%), while the **classic midline MMN sites are far shallower** — Fz retains
+  only 18/68 = 26%, FCz 17/66 = 26%, central parcel 15/69 = 22%. So the amplitude floor bites
+  hardest exactly where MMN is conventionally reported; the µV depth of the model's predicted MMN
+  is greater off-midline.
+- **The encoder starts far lower on S2 and the 1.0 µV floor all but eliminates its best midline
+  site** (Fz 1/23 = 4%); its strongest site is now the lateral-frontal F3 (22 S2 → 14 S7).
+- **S7 declines smoothly and monotonically with X** (Table 34), confirming the {0.25 … 2.5} µV
+  sweep is well-centred: at the lenient 0.25 µV end S7 ≈ 0.8 × S2, at the strict 2.5 µV end
+  S7 ≈ 0.2 × S2. There is no threshold at which the sweep is off-scale.
+- **The mTRF−encoder gap persists and widens under the amplitude gate** at every ROI option, in the
+  same direction as Sections 4/6: requiring a genuine microvolt-scale trough — not merely a z-scored
+  dip — is additional evidence that the mTRF's in-silico MMN is the more physiologically credible.
+- **Reporting-site recommendation:** if a single amplitude-qualified electrode is wanted, **F3/F4**
+  (mTRF) carry the deepest and most consistently S7-positive troughs; the committed averaged ROIs of
+  Sections 4/6 remain the most robust because they average down the single-site noise visible in the
+  −36 to −77 µV tail of Table 31. **X = 1.0 µV is provisional** pending the literature amplitude
+  review; the full sweep is retained in `mmn_s7_roi.csv` so a revised X is a one-line recompute.
 
 ---
 
 *Generated by `scripts/generate_counter_analysis_docs.py` and manually reviewed/expanded.*
+*Section 7 and the S7 columns (Tables 13–14b, 25–30) added by hand from
+`analyze_mmn_criteria_s5_s6.py` (S7 column) and `analyze_mmn_s7_roi.py` (Section 7).*
