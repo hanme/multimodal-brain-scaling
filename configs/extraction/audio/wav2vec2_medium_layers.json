@@ -1,0 +1,14 @@
+[
+  {"name": "encoder.layers.0", "position": 0.0},
+  {"name": "encoder.layers.1", "position": 0.0909},
+  {"name": "encoder.layers.2", "position": 0.1818},
+  {"name": "encoder.layers.3", "position": 0.2727},
+  {"name": "encoder.layers.4", "position": 0.3636},
+  {"name": "encoder.layers.5", "position": 0.4545},
+  {"name": "encoder.layers.6", "position": 0.5455},
+  {"name": "encoder.layers.7", "position": 0.6364},
+  {"name": "encoder.layers.8", "position": 0.7273},
+  {"name": "encoder.layers.9", "position": 0.8182},
+  {"name": "encoder.layers.10", "position": 0.9091},
+  {"name": "encoder.layers.11", "position": 1.0}
+]

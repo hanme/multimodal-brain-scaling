@@ -26,7 +26,7 @@ from tqdm.auto import tqdm
 
 from mbs.core import str2bool
 from mbs.extraction.data.datasets_audio import AudioSegmentDataset
-from mbs.extraction.modeling.backbones.audio_models import load_whisper
+from mbs.extraction.modeling.backbones.audio_models import load_model_audio
 from mbs.extraction.modeling.encoder_hooks import HookedEncoder
 
 
@@ -44,10 +44,11 @@ WHISPER_T = 1500            # encoder output bins  (stride-2 convs: 3000→1500)
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Delta-T (causal) feature extraction for Whisper-family audio models."
+        description="Delta-T (causal) feature extraction for audio models "
+                    "(Whisper log-mel; wav2vec2 raw waveform)."
     )
     parser.add_argument("--model_id", type=str, required=True,
-                        help="Audio model id, e.g. whisper-base.")
+                        help="Audio model id, e.g. whisper-base, wav2vec2-medium, wav2vec2-large.")
     parser.add_argument("--data_root", type=str, required=True,
                         help="Directory containing .wav stimulus files.")
     parser.add_argument("--target_feature_layers", type=str, required=True,
@@ -138,6 +139,88 @@ def extract_delta_t(
 
 
 # ---------------------------------------------------------------------------
+# Core Delta-T logic — wav2vec2 (raw-waveform models; NO mel front-end)
+# ---------------------------------------------------------------------------
+# wav2vec2 has no mel spectrogram: it consumes the raw 16 kHz waveform and a stack of
+# strided convs downsamples it by `conv_stride` (=320) to ~50 Hz frames, exactly like Whisper's
+# 3000-mel → 1500-bin 2:1 map lands on 50 Hz. The causal analog of `_truncate_mel` therefore lives
+# in the WAVEFORM domain: for encoder frame t, keep samples [0, (t+1)*conv_stride) and replace the
+# future with silence, then read the encoder output at position t. Normalization stats are taken
+# from the FULL window and held fixed across t (mirroring Whisper's full-clip mel normalization),
+# so early frames don't see degenerate per-truncation statistics.
+
+
+def _wav2vec2_norm_stats(waveform_full: np.ndarray, do_normalize: bool, eps: float):
+    """(mean, std) for zero-mean/unit-var input normalization, from the FULL window.
+
+    Matches HF Wav2Vec2FeatureExtractor.zero_mean_unit_var_norm: (x - mean) / sqrt(var + eps).
+    Returns (0.0, 1.0) — an identity transform — when the checkpoint sets do_normalize=False.
+    """
+    if not do_normalize:
+        return 0.0, 1.0
+    w = waveform_full.astype(np.float64)
+    mean = float(w.mean())
+    std = float(np.sqrt(w.var() + eps))
+    return mean, std
+
+
+def _truncate_waveform(waveform_full: np.ndarray, t: int, conv_stride: int,
+                       mean: float, std: float) -> np.ndarray:
+    """Return normalized input_values with samples >= (t+1)*conv_stride replaced by silence."""
+    raw = waveform_full.copy()
+    cut = (t + 1) * conv_stride
+    if cut < raw.shape[0]:
+        raw[cut:] = 0.0
+    return ((raw - mean) / std).astype(np.float32)
+
+
+def extract_delta_t_waveform(
+    waveform_full: np.ndarray,   # [n_samples]  raw 16 kHz mono, on CPU
+    hooked_encoder: HookedEncoder,
+    layer_aliases: list,
+    t_values: list,
+    batch_t: int,
+    device: torch.device,
+    conv_stride: int,
+    do_normalize: bool,
+    norm_eps: float,
+) -> dict:
+    """wav2vec2 counterpart of extract_delta_t. Returns alias -> [T_out, d] float16."""
+    mean, std = _wav2vec2_norm_stats(waveform_full, do_normalize, norm_eps)
+    T_out = len(t_values)
+    accum = {alias: [] for alias in layer_aliases}
+
+    for start in range(0, T_out, batch_t):
+        batch_ts = t_values[start: start + batch_t]
+
+        # Batch of causally-truncated (and normalized) waveforms, one per requested frame.
+        batch = torch.from_numpy(
+            np.stack([_truncate_waveform(waveform_full, t, conv_stride, mean, std) for t in batch_ts])
+        ).to(device)  # [B, n_samples]
+
+        with torch.no_grad():
+            feats = hooked_encoder(batch)   # dict alias -> [B, T_frames, d]
+
+        for alias in layer_aliases:
+            arr = feats[alias]              # [B, T_frames, d]
+            for i, t in enumerate(batch_ts):
+                vec = arr[i, t, :].cpu().float().numpy().astype(np.float16)
+                accum[alias].append(vec)
+
+    return {alias: np.stack(accum[alias], axis=0) for alias in layer_aliases}
+
+
+def _infer_wav2vec2_frame_count(
+    waveform_full: np.ndarray, hooked_encoder: HookedEncoder, alias: str, device: torch.device,
+) -> int:
+    """Number of encoder frames the model emits for a full window (one forward pass)."""
+    inp = torch.from_numpy(waveform_full.astype(np.float32))[None].to(device)  # [1, n_samples]
+    with torch.no_grad():
+        feats = hooked_encoder(inp)
+    return int(feats[alias].shape[1])
+
+
+# ---------------------------------------------------------------------------
 # HDF5 I/O (same schema as extract_features.py temporal output)
 # ---------------------------------------------------------------------------
 
@@ -182,8 +265,10 @@ def main(args):
         layer_list_raw = json.load(f)
     target_layers = [entry["name"] for entry in layer_list_raw]  # e.g. ["blocks.0", ...]
 
+    is_wav2vec2 = args.model_id.startswith("wav2vec2-")
+
     # Build HookedEncoder  (same construction as _create_audio_hook_feature_extractor)
-    backbone, transform = load_whisper(args.model_id, model_cache_dir=args.model_cache_dir)
+    backbone, transform = load_model_audio(args.model_id, model_cache_dir=args.model_cache_dir)
     backbone = backbone.to(device).eval()
 
     return_nodes = {f"backbone.{layer}": layer.replace(".", "-") for layer in target_layers}
@@ -200,7 +285,7 @@ def main(args):
         window_duration=args.window_duration,
         stride=args.window_stride,
         target_sr=16000,
-        transform=None,   # we need raw waveform for mel truncation
+        transform=None,   # we need the raw waveform (mel truncation for Whisper; direct input for wav2vec2)
     )
 
     n_dataset = len(dataset)
@@ -208,7 +293,15 @@ def main(args):
     end = n_dataset if args.n_stimuli <= 0 else min(start + args.n_stimuli, n_dataset)
     total = end - start
 
-    t_values = list(range(0, WHISPER_T, args.t_stride))
+    # Encoder time grid: Whisper is a fixed 1500-bin (50 Hz) grid; wav2vec2's frame count depends on
+    # the window length + conv strides, so infer it once from a full-window forward pass.
+    if is_wav2vec2:
+        conv_stride = transform.conv_stride
+        T_frames = _infer_wav2vec2_frame_count(dataset[start][0], hooked_encoder, layer_aliases[0], device)
+        t_values = list(range(0, T_frames, args.t_stride))
+        print(f"wav2vec2: conv_stride={conv_stride}  full-window frames={T_frames}  do_normalize={transform.do_normalize}")
+    else:
+        t_values = list(range(0, WHISPER_T, args.t_stride))
     T_out = len(t_values)
     print(f"Stimuli: {total} (idx {start}..{end-1} of {n_dataset})  |  "
           f"Time bins: {T_out} (t_stride={args.t_stride})  |  batch_t: {args.batch_t}")
@@ -222,18 +315,30 @@ def main(args):
     for stim_idx in tqdm(range(start, end), desc="Stimuli"):
         waveform_np, stim_id = dataset[stim_idx]
 
-        # Compute full mel once for this stimulus
-        mel_full = transform(waveform_np).to(device)  # [n_mels, 3000]
-
         t_stim = time.time()
-        feats = extract_delta_t(
-            mel_full=mel_full.cpu(),  # keep on CPU for cloning; batches sent to device inside
-            hooked_encoder=hooked_encoder,
-            layer_aliases=layer_aliases,
-            t_values=t_values,
-            batch_t=args.batch_t,
-            device=device,
-        )
+        if is_wav2vec2:
+            feats = extract_delta_t_waveform(
+                waveform_full=np.asarray(waveform_np, dtype=np.float32),
+                hooked_encoder=hooked_encoder,
+                layer_aliases=layer_aliases,
+                t_values=t_values,
+                batch_t=args.batch_t,
+                device=device,
+                conv_stride=transform.conv_stride,
+                do_normalize=transform.do_normalize,
+                norm_eps=transform.norm_eps,
+            )
+        else:
+            # Compute full mel once for this stimulus
+            mel_full = transform(waveform_np).to(device)  # [n_mels, 3000]
+            feats = extract_delta_t(
+                mel_full=mel_full.cpu(),  # keep on CPU for cloning; batches sent to device inside
+                hooked_encoder=hooked_encoder,
+                layer_aliases=layer_aliases,
+                t_values=t_values,
+                batch_t=args.batch_t,
+                device=device,
+            )
         elapsed_stim = time.time() - t_stim
 
         accum_feats.append(feats)
