@@ -293,6 +293,12 @@ def main(args):
     end = n_dataset if args.n_stimuli <= 0 else min(start + args.n_stimuli, n_dataset)
     total = end - start
 
+    # Over-provisioned SLURM arrays: a task whose start is past the last window has nothing to do.
+    # Return before touching dataset[start] (which would IndexError) so extra array tasks no-op safely.
+    if total <= 0:
+        print(f"No stimuli for this task (start={start} >= n_dataset={n_dataset}); nothing to do.")
+        return
+
     # Encoder time grid: Whisper is a fixed 1500-bin (50 Hz) grid; wav2vec2's frame count depends on
     # the window length + conv strides, so infer it once from a full-window forward pass.
     if is_wav2vec2:

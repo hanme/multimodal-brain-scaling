@@ -44,46 +44,46 @@ This is the `--data_root` the extractor must use so window IDs (`{stem}_{start_s
 
 ---
 
+## Everything runs as SLURM jobs — nothing on the login node
+
+Three scripts, all `sbatch`-submittable. Array over-provisioning is safe (a task past the last
+window no-ops), and the sweep script **merges the delta-t chunks itself**, so there are no manual
+`python`/`cp` steps. Chain the stages with `--dependency` on the returned job ids.
+
+| Stage | Script | Notes |
+| --- | --- | --- |
+| Extract D2 features | `scripts/slurm_extract_delta_t_d2.sh` | GPU array; per-model `MODEL_ID/WINDOW_DUR/WINDOW_STRIDE` |
+| Build 10 s EEG | `scripts/slurm_build_surprisal_10s.sh` | CPU; only needed for wav2vec2 |
+| Layer sweep (merge + sweep) | `scripts/slurm_eeg_mapping_sweep_d2.sh` | CPU array over model × level; picks 30 s vs 10 s EEG automatically |
+
 ## Track A — whisper-large (UNBLOCKED, uses existing surprisal_30s.h5)
 ```bash
-cd /work/upschrimpf1/sigfstea/multimodal-brain-scaling && source env.sh
+cd /work/upschrimpf1/sigfstea/multimodal-brain-scaling
 
-# 1. size the array (prints "Stimuli: N ..." = window count at 30 s / 10 s)
-export MODEL_ID=whisper-large WINDOW_DUR=30 WINDOW_STRIDE=10
-export DATA_ROOT=/work/upschrimpf1/sigfstea/multimodal-brain-scaling-temporal-analysis/data/cortical_suprisal_dataset/audiobooks
-python -m mbs.extraction.extract_features_delta_t --model_id "$MODEL_ID" --data_root "$DATA_ROOT" \
-  --target_feature_layers configs/extraction/audio/whisper_large_layers.json \
-  --output_dir /tmp/probe --window_duration 30 --window_stride 10 --n_stimuli 1   # note N
+# 1. extract (GPU). Over-provision the array freely — extra tasks no-op. CHUNK_SIZE*(maxidx+1) >= #windows.
+EXJ=$(sbatch --parsable --array=0-19 --export=ALL,MODEL_ID=whisper-large,WINDOW_DUR=30,WINDOW_STRIDE=10,CHUNK_SIZE=16 \
+      scripts/slurm_extract_delta_t_d2.sh)
 
-# 2. extract (GPU recommended — 32 blocks; CPU works but slow). CHUNK_SIZE*(maxidx+1) >= N
-export CHUNK_SIZE=16
-sbatch --array=0-19 --export=ALL scripts/slurm_extract_delta_t_d2.sh
-
-# 3. merge
-mkdir -p outputs/features/whisper-large-delta-t-surprisal/merged
-cp outputs/features/whisper-large-delta-t-surprisal/chunk_*/feats*.h5 \
-   outputs/features/whisper-large-delta-t-surprisal/merged/
-
-# 4. layer sweep (both levels) against the EXISTING 30 s EEG
-for LVL in parcels electrodes; do
-  python scripts/eeg_mapping_sweep.py --model_id whisper-large --target_level $LVL \
-    --features_dir outputs/features/whisper-large-delta-t-surprisal/merged \
-    --neural outputs/neural_data/surprisal_30s.h5 \
-    --out outputs/results/eeg_mapping/whisper-large__${LVL}__D2.json
-done
+# 2. sweep both levels after extraction finishes (merge is done inside the sweep job)
+sbatch --dependency=afterok:$EXJ --array=0,1 scripts/slurm_eeg_mapping_sweep_d2.sh
 ```
 
-## Track B — wav2vec2-medium & wav2vec2-large (extraction UNBLOCKED; sweep BLOCKED on surprisal_10s.h5)
-
-**Extraction** (same script, 10 s / 5 s):
+## Track B — wav2vec2-medium & wav2vec2-large (10 s / 5 s; needs surprisal_10s.h5)
 ```bash
-cd /work/upschrimpf1/sigfstea/multimodal-brain-scaling && source env.sh
-export DATA_ROOT=/work/upschrimpf1/sigfstea/multimodal-brain-scaling-temporal-analysis/data/cortical_suprisal_dataset/audiobooks
-for M in wav2vec2-medium wav2vec2-large; do
-  export MODEL_ID=$M WINDOW_DUR=10 WINDOW_STRIDE=5 CHUNK_SIZE=32
-  sbatch --array=0-19 --export=ALL scripts/slurm_extract_delta_t_d2.sh
-done
-# then merge each into outputs/features/${M}-delta-t-surprisal/merged/  (as in Track A step 3)
+cd /work/upschrimpf1/sigfstea/multimodal-brain-scaling
+
+# 1. build the 10 s EEG target (independent — can run any time)
+B10=$(sbatch --parsable scripts/slurm_build_surprisal_10s.sh)
+
+# 2. extract each wav2vec2 model (GPU)
+EXM=$(sbatch --parsable --array=0-19 --export=ALL,MODEL_ID=wav2vec2-medium,WINDOW_DUR=10,WINDOW_STRIDE=5,CHUNK_SIZE=32 \
+      scripts/slurm_extract_delta_t_d2.sh)
+EXL=$(sbatch --parsable --array=0-19 --export=ALL,MODEL_ID=wav2vec2-large,WINDOW_DUR=10,WINDOW_STRIDE=5,CHUNK_SIZE=32 \
+      scripts/slurm_extract_delta_t_d2.sh)
+
+# 3. sweep (tasks 2-5 = wav2vec2 medium/large × parcels/electrodes) once features + 10 s EEG exist.
+#    PCA_VAR tames the wide electrode sweeps.
+PCA_VAR=0.95 sbatch --dependency=afterok:$B10:$EXM:$EXL --array=2-5 --export=ALL scripts/slurm_eeg_mapping_sweep_d2.sh
 ```
 
 ### ⚠️ BLOCKER: build `surprisal_10s.h5` (needed before the wav2vec2 sweep)
@@ -107,45 +107,12 @@ temporal-analysis project) already exposes `--window_duration/--window_stride/--
 (defaults) → same held-out parts as the 30 s file (test = AUNP02, BROP02, BROP03), so test r stays
 comparable to whisper.
 
-```bash
-# Run in the TEMPORAL-ANALYSIS project (it owns the surprisal formatter + raw P*.h5).
-cd /work/upschrimpf1/sigfstea/multimodal-brain-scaling-temporal-analysis
-source .venv/bin/activate        # or: uv run --  (that project's env)
-# confirm the exact --data_root/--audio_root against the usage example: sed -n '14,25p' src/mbs/data_prep/format_eeg_hdf5_surprisal.py
-python -m mbs.data_prep.format_eeg_hdf5_surprisal \
-  --data_root  data/cortical_suprisal_dataset \
-  --audio_root data/cortical_suprisal_dataset/audiobooks \
-  --output_path outputs/neural_data/surprisal_10s.h5 \
-  --window_duration 10.0 --window_stride 5.0 --target_sr 50 \
-  --n_test_parts 3 --seed 42 --overwrite true
-
-# copy into the multimodal-brain-scaling clone so the sweep can read it:
-cp outputs/neural_data/surprisal_10s.h5 \
-   /work/upschrimpf1/sigfstea/multimodal-brain-scaling/outputs/neural_data/
-
-# sanity check:
-python - <<'PY'
-import h5py
-f = h5py.File("outputs/neural_data/surprisal_10s.h5","r")
-print("window_s:", f.attrs.get("window_duration_s"), "stride_s:", f.attrs.get("window_stride_s"))
-for s in ("train","test"):
-    node = f[s]["stimulus_ids"]
-    ids = node[()] if not isinstance(node, h5py.Group) else node[list(node.keys())[0]][()]
-    print(s, "windows:", len(ids), "e.g.", (ids[0].decode() if hasattr(ids[0],"decode") else ids[0]))
-PY
-```
-
-**Then the sweep:**
-```bash
-for M in wav2vec2-medium wav2vec2-large; do
-  for LVL in parcels electrodes; do
-    python scripts/eeg_mapping_sweep.py --model_id $M --target_level $LVL \
-      --features_dir outputs/features/${M}-delta-t-surprisal/merged \
-      --neural outputs/neural_data/surprisal_10s.h5 \
-      --out outputs/results/eeg_mapping/${M}__${LVL}__D2.json
-  done
-done
-```
+This is packaged as **`scripts/slurm_build_surprisal_10s.sh`** (CPU): it runs the formatter in the
+temporal-analysis project's `.venv` at `10/5/50`, copies `surprisal_10s.h5` into the mbs clone's
+`outputs/neural_data/`, and prints a sanity check. Before first submit, confirm `--data_root`/
+`--audio_root` inside the script against the formatter's usage docstring
+(`sed -n '14,25p' src/mbs/data_prep/format_eeg_hdf5_surprisal.py`). The sweep step (Track B) is what
+consumes it.
 
 ## Acceptance / sanity gate
 `eeg_mapping_sweep.py` writes `chosen_layer` + `test_r_chosen` per model × level. Spot-check the mean
