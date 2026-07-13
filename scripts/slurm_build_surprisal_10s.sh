@@ -7,8 +7,8 @@
 # Re-runs the EXISTING parametrized formatter (format_eeg_hdf5_surprisal) that produced
 # surprisal_30s.h5, at window=10 s / stride=5 s. Keeps --n_test_parts 3 --seed 42 so the
 # held-out parts match the 30 s file (test = AUNP02, BROP02, BROP03) -> comparable test r.
-# CPU only. Confirm --data_root/--audio_root against the formatter's usage docstring:
-#   sed -n '14,25p' src/mbs/data_prep/format_eeg_hdf5_surprisal.py
+# CPU only. --data_root = the cortical_suprisal_dataset dir (P00-P12.h5); audio is derived as
+# <data_root>/audiobooks. Override the dir with CS_DIR=... if it ever moves.
 #
 #   sbatch scripts/slurm_build_surprisal_10s.sh          # from either clone; paths are absolute
 # =============================================================================
@@ -34,8 +34,9 @@ SEED="${SEED:-42}"
 
 TA_DIR=/work/upschrimpf1/sigfstea/multimodal-brain-scaling-temporal-analysis
 MBS_CLONE=/work/upschrimpf1/sigfstea/multimodal-brain-scaling
-DATA_ROOT="${DATA_ROOT:-data/cortical_suprisal_dataset}"
-AUDIO_ROOT="${AUDIO_ROOT:-data/cortical_suprisal_dataset/audiobooks}"
+# Dataset dir (holds P00–P12.h5 + audiobooks/ + stimulus_order.csv). Absolute + a dedicated var
+# name so a `DATA_ROOT` exported in your shell for feature extraction cannot leak in via sbatch.
+CS_DIR="${CS_DIR:-$TA_DIR/data/cortical_suprisal_dataset}"
 OUT_LOCAL="outputs/neural_data/surprisal_10s.h5"
 
 cd "$TA_DIR"
@@ -51,13 +52,15 @@ export PYTHONPATH="$TA_DIR/src${PYTHONPATH:+:$PYTHONPATH}"
 echo "=== build surprisal_10s.h5  (window=${WINDOW_DUR}s stride=${WINDOW_STRIDE}s sr=${TARGET_SR}) ==="
 echo "Python: $PY"; "$PY" --version
 echo "PYTHONPATH: $PYTHONPATH"
+echo "data_root: $CS_DIR"
+[ -e "$CS_DIR/P00.h5" ] || { echo "ERROR: no P00.h5 under $CS_DIR (wrong data_root?)"; exit 1; }
 "$PY" -c "import mbs.data_prep.format_eeg_hdf5_surprisal as m; print('formatter:', m.__file__)" \
   || { echo "ERROR: cannot import the surprisal formatter (check .venv / PYTHONPATH)."; exit 1; }
 echo "Start: $(date)"
 
+# --audio_root omitted: the formatter derives it as <data_root>/audiobooks, matching the 30 s build.
 "$PY" -m mbs.data_prep.format_eeg_hdf5_surprisal \
-    --data_root      "$DATA_ROOT" \
-    --audio_root     "$AUDIO_ROOT" \
+    --data_root      "$CS_DIR" \
     --output_path    "$OUT_LOCAL" \
     --window_duration "$WINDOW_DUR" \
     --window_stride   "$WINDOW_STRIDE" \
