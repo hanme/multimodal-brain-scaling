@@ -13,17 +13,9 @@ import h5py
 import torch
 
 try:
-    import os
-    if os.environ.get("MBS_NO_SKLEARNEX"):
-        # Opt-out switch. sklearnex's patched RidgeCV does not implement the efficient
-        # gcv_mode='eigen' path, so it re-solves per (alpha x target) instead of doing one
-        # eigendecomposition — making the mTRF layer sweep ~50-100x slower. Set MBS_NO_SKLEARNEX=1
-        # to run stock scikit-learn (numerically the reference implementation; same results).
-        print("MBS_NO_SKLEARNEX set — using stock scikit-learn (sklearnex patch skipped).")
-    else:
-        import sklearnex
-        sklearnex.patch_sklearn()
-        print("Successfully patched sklearn with sklearnex for optimized performance.")
+    import sklearnex
+    sklearnex.patch_sklearn()
+    print("Successfully patched sklearn with sklearnex for optimized performance.")
 except ImportError:
     print("sklearnex not found. Proceeding without it.")
 
