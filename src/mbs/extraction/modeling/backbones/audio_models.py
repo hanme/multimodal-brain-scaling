@@ -138,11 +138,14 @@ def load_wav2vec2(model_id: str, **kwargs) -> Tuple[Wav2Vec2BackboneWrapper, Wav
         )
     hf_id = WAV2VEC2_CHECKPOINTS[model_id]
     cache_dir = kwargs.get("model_cache_dir", None)
+    # force_download=True re-fetches the weights even if cached — use it from the prefetch job to
+    # overwrite a cache corrupted by concurrent array-task downloads onto the shared filesystem.
+    force = bool(kwargs.get("force_download", False))
 
-    model = Wav2Vec2Model.from_pretrained(hf_id, cache_dir=cache_dir)
+    model = Wav2Vec2Model.from_pretrained(hf_id, cache_dir=cache_dir, force_download=force)
     model.eval()  # disables SpecAugment time/feature masking (train-only), so extraction is deterministic
 
-    feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained(hf_id, cache_dir=cache_dir)
+    feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained(hf_id, cache_dir=cache_dir, force_download=force)
     conv_stride = int(np.prod(model.config.conv_stride))         # 5*2*2*2*2*2*2 = 320
 
     wrapped = Wav2Vec2BackboneWrapper(model)

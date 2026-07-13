@@ -46,22 +46,31 @@ This is the `--data_root` the extractor must use so window IDs (`{stem}_{start_s
 
 ## Everything runs as SLURM jobs — nothing on the login node
 
-Three scripts, all `sbatch`-submittable. Array over-provisioning is safe (a task past the last
-window no-ops), and the sweep script **merges the delta-t chunks itself**, so there are no manual
-`python`/`cp` steps. Chain the stages with `--dependency` on the returned job ids.
+Four scripts, all `sbatch`-submittable. **Prefetch the model weights first** (single process) — the
+extraction array must NOT be the first thing to download a model, or concurrent tasks corrupt the
+shared `cache/model_weights` (HF file-locking is unreliable on `/work`). Array over-provisioning is
+safe (a task past the last window no-ops), and the sweep script **merges the delta-t chunks itself**.
+Chain stages with `--dependency` on the returned job ids.
 
 | Stage | Script | Notes |
 | --- | --- | --- |
+| **Prefetch weights** | `scripts/slurm_prefetch_audio_models.sh` | CPU; **run FIRST**, one process; force-downloads all 3 models |
 | Extract D2 features | `scripts/slurm_extract_delta_t_d2.sh` | CPU array (jed, `--partition=standard`); per-model `MODEL_ID/WINDOW_DUR/WINDOW_STRIDE` |
 | Build 10 s EEG | `scripts/slurm_build_surprisal_10s.sh` | CPU; only needed for wav2vec2 |
 | Layer sweep (merge + sweep) | `scripts/slurm_eeg_mapping_sweep_d2.sh` | CPU array over model × level; picks 30 s vs 10 s EEG automatically |
 
-## Track A — whisper-large (UNBLOCKED, uses existing surprisal_30s.h5)
 ```bash
 cd /work/upschrimpf1/sigfstea/multimodal-brain-scaling
 
-# 1. extract (CPU/jed). Over-provision the array freely — extra tasks no-op. CHUNK_SIZE*(maxidx+1) >= #windows.
-EXJ=$(sbatch --parsable --array=0-19 --export=ALL,MODEL_ID=whisper-large,WINDOW_DUR=30,WINDOW_STRIDE=10,CHUNK_SIZE=16 \
+# 0. PREFETCH all model weights once (heals any cache already corrupted by a racing array).
+PF=$(sbatch --parsable scripts/slurm_prefetch_audio_models.sh)
+```
+
+## Track A — whisper-large (UNBLOCKED, uses existing surprisal_30s.h5)
+```bash
+# 1. extract (CPU/jed), after prefetch. Over-provision the array freely — extra tasks no-op.
+EXJ=$(sbatch --parsable --dependency=afterok:$PF \
+      --array=0-19 --export=ALL,MODEL_ID=whisper-large,WINDOW_DUR=30,WINDOW_STRIDE=10,CHUNK_SIZE=16 \
       scripts/slurm_extract_delta_t_d2.sh)
 
 # 2. sweep both levels after extraction finishes (merge is done inside the sweep job)
@@ -70,15 +79,15 @@ sbatch --dependency=afterok:$EXJ --array=0,1 scripts/slurm_eeg_mapping_sweep_d2.
 
 ## Track B — wav2vec2-medium & wav2vec2-large (10 s / 5 s; needs surprisal_10s.h5)
 ```bash
-cd /work/upschrimpf1/sigfstea/multimodal-brain-scaling
-
 # 1. build the 10 s EEG target (independent — can run any time)
 B10=$(sbatch --parsable scripts/slurm_build_surprisal_10s.sh)
 
-# 2. extract each wav2vec2 model (CPU/jed)
-EXM=$(sbatch --parsable --array=0-19 --export=ALL,MODEL_ID=wav2vec2-medium,WINDOW_DUR=10,WINDOW_STRIDE=5,CHUNK_SIZE=32 \
+# 2. extract each wav2vec2 model (CPU/jed), after prefetch
+EXM=$(sbatch --parsable --dependency=afterok:$PF \
+      --array=0-19 --export=ALL,MODEL_ID=wav2vec2-medium,WINDOW_DUR=10,WINDOW_STRIDE=5,CHUNK_SIZE=32 \
       scripts/slurm_extract_delta_t_d2.sh)
-EXL=$(sbatch --parsable --array=0-19 --export=ALL,MODEL_ID=wav2vec2-large,WINDOW_DUR=10,WINDOW_STRIDE=5,CHUNK_SIZE=32 \
+EXL=$(sbatch --parsable --dependency=afterok:$PF \
+      --array=0-19 --export=ALL,MODEL_ID=wav2vec2-large,WINDOW_DUR=10,WINDOW_STRIDE=5,CHUNK_SIZE=32 \
       scripts/slurm_extract_delta_t_d2.sh)
 
 # 3. sweep (tasks 2-5 = wav2vec2 medium/large × parcels/electrodes) once features + 10 s EEG exist.
