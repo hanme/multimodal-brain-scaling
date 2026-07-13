@@ -19,41 +19,30 @@
 # ⚠️  The wav2vec2 (10 s) features need a 10 s / 5 s EEG target (surprisal_10s.h5) for the
 #     mapping sweep — surprisal_30s.h5 will NOT align. See the handoff runbook.
 #
-# GPU vs CPU: the extractor auto-selects the device and does NOT hard-fail without a GPU.
-# For CPU (jed partition), comment out --partition/--gres and raise --cpus-per-task.
+# CPU-only: the extractor auto-selects device -> CPU on jed. No probe needed — over-provision the
+# array (a task past the last window no-ops). The sweep job merges the chunks, so no manual cp.
 #
-# Usage (from the repo root, after `source env.sh`):
-#   # size the array first (prints "Stimuli: N (idx ...)" = window count):
-#   export MODEL_ID=whisper-large WINDOW_DUR=30 WINDOW_STRIDE=10
-#   python -m mbs.extraction.extract_features_delta_t --model_id "$MODEL_ID" \
-#     --data_root "$DATA_ROOT" \
-#     --target_feature_layers "configs/extraction/audio/${MODEL_ID//-/_}_layers.json" \
-#     --output_dir /tmp/probe --window_duration "$WINDOW_DUR" --window_stride "$WINDOW_STRIDE" --n_stimuli 1
-#   # submit (CHUNK_SIZE * (max array idx + 1) must cover the window count):
-#   export MODEL_ID=whisper-large WINDOW_DUR=30 WINDOW_STRIDE=10 CHUNK_SIZE=16
-#   sbatch --array=0-19 --export=ALL scripts/slurm_extract_delta_t_d2.sh
-#   export MODEL_ID=wav2vec2-medium WINDOW_DUR=10 WINDOW_STRIDE=5 CHUNK_SIZE=32
-#   sbatch --array=0-19 --export=ALL scripts/slurm_extract_delta_t_d2.sh
-#   export MODEL_ID=wav2vec2-large  WINDOW_DUR=10 WINDOW_STRIDE=5 CHUNK_SIZE=32
-#   sbatch --array=0-19 --export=ALL scripts/slurm_extract_delta_t_d2.sh
-#   # merge chunks:
-#   mkdir -p outputs/features/${MODEL_ID}-delta-t-surprisal/merged
-#   cp outputs/features/${MODEL_ID}-delta-t-surprisal/chunk_*/feats*.h5 \
-#      outputs/features/${MODEL_ID}-delta-t-surprisal/merged/
+# Usage (all sbatch; params via --export):
+#   sbatch --array=0-19 --export=ALL,MODEL_ID=whisper-large,WINDOW_DUR=30,WINDOW_STRIDE=10,CHUNK_SIZE=16 \
+#     scripts/slurm_extract_delta_t_d2.sh
+#   sbatch --array=0-19 --export=ALL,MODEL_ID=wav2vec2-medium,WINDOW_DUR=10,WINDOW_STRIDE=5,CHUNK_SIZE=32 \
+#     scripts/slurm_extract_delta_t_d2.sh
+#   sbatch --array=0-19 --export=ALL,MODEL_ID=wav2vec2-large,WINDOW_DUR=10,WINDOW_STRIDE=5,CHUNK_SIZE=32 \
+#     scripts/slurm_extract_delta_t_d2.sh
+#   # then run scripts/slurm_eeg_mapping_sweep_d2.sh (it merges + sweeps).
 # =============================================================================
 
-# ── SBATCH directives ────────────────────────────────────────────────────────
-# NOTE: confirm --chdir (your working clone) and --partition/--gres for your cluster.
-#       These follow the GPU (kuma / l40s) convention used by scripts/kuma_probe_*.sh.
+# ── SBATCH directives (jed / CPU — no GPU; 5 GB RAM per CPU) ──────────────────
+# Matches the sigfstea-clone jed convention in scripts/slurm_insilico_mmn.sh
+# (--partition=standard, source env.sh). The extractor runs CPU-only here.
 #SBATCH --chdir /work/upschrimpf1/sigfstea/multimodal-brain-scaling
 #SBATCH --job-name=delta_t_d2
+#SBATCH --partition=standard
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=4
-#SBATCH --mem-per-cpu=8G
-#SBATCH --partition l40s
-#SBATCH --gres=gpu:1
-#SBATCH --time=12:00:00
+#SBATCH --cpus-per-task=8
+#SBATCH --mem-per-cpu=5G
+#SBATCH --time=24:00:00
 #SBATCH --output=/work/upschrimpf1/sigfstea/multimodal-brain-scaling/logs/delta_t_%x_%A_%a.out
 #SBATCH --error=/work/upschrimpf1/sigfstea/multimodal-brain-scaling/logs/delta_t_%x_%A_%a.err
 
@@ -85,14 +74,11 @@ echo "Node: ${SLURM_NODELIST}   CPUs: ${SLURM_CPUS_PER_TASK}"
 echo "Start: $(date)"
 echo "========================================================================"
 
-# ── Environment ───────────────────────────────────────────────────────────────
+# ── Environment (CPU-only on jed) ─────────────────────────────────────────────
 cd "$PROJECT_DIR" || { echo "ERROR: cannot cd to $PROJECT_DIR"; exit 1; }
 source env.sh
 echo "Python: $(which python)"
-python -c "import torch; print('torch', torch.__version__, '| cuda', torch.cuda.is_available())"
-if ! python -c "import torch,sys; sys.exit(0 if torch.cuda.is_available() else 1)"; then
-    echo "WARNING: CUDA not available — running on CPU (fine, just slower for large models)."
-fi
+python -c "import torch; print('torch', torch.__version__, '| running on CPU')"
 echo ""
 
 # ── Validate inputs ───────────────────────────────────────────────────────────

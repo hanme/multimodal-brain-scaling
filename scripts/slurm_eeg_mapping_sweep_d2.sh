@@ -18,10 +18,11 @@
 # =============================================================================
 #SBATCH --chdir /work/upschrimpf1/sigfstea/multimodal-brain-scaling
 #SBATCH --job-name=eeg_sweep_d2
+#SBATCH --partition=standard
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=32
-#SBATCH --mem-per-cpu=6900M
+#SBATCH --mem-per-cpu=5G
 #SBATCH --time=72:00:00
 #SBATCH --output=/work/upschrimpf1/sigfstea/multimodal-brain-scaling/logs/eeg_sweep_d2_%A_%a.out
 #SBATCH --error=/work/upschrimpf1/sigfstea/multimodal-brain-scaling/logs/eeg_sweep_d2_%A_%a.err

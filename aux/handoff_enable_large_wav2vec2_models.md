@@ -52,7 +52,7 @@ window no-ops), and the sweep script **merges the delta-t chunks itself**, so th
 
 | Stage | Script | Notes |
 | --- | --- | --- |
-| Extract D2 features | `scripts/slurm_extract_delta_t_d2.sh` | GPU array; per-model `MODEL_ID/WINDOW_DUR/WINDOW_STRIDE` |
+| Extract D2 features | `scripts/slurm_extract_delta_t_d2.sh` | CPU array (jed, `--partition=standard`); per-model `MODEL_ID/WINDOW_DUR/WINDOW_STRIDE` |
 | Build 10 s EEG | `scripts/slurm_build_surprisal_10s.sh` | CPU; only needed for wav2vec2 |
 | Layer sweep (merge + sweep) | `scripts/slurm_eeg_mapping_sweep_d2.sh` | CPU array over model × level; picks 30 s vs 10 s EEG automatically |
 
@@ -60,7 +60,7 @@ window no-ops), and the sweep script **merges the delta-t chunks itself**, so th
 ```bash
 cd /work/upschrimpf1/sigfstea/multimodal-brain-scaling
 
-# 1. extract (GPU). Over-provision the array freely — extra tasks no-op. CHUNK_SIZE*(maxidx+1) >= #windows.
+# 1. extract (CPU/jed). Over-provision the array freely — extra tasks no-op. CHUNK_SIZE*(maxidx+1) >= #windows.
 EXJ=$(sbatch --parsable --array=0-19 --export=ALL,MODEL_ID=whisper-large,WINDOW_DUR=30,WINDOW_STRIDE=10,CHUNK_SIZE=16 \
       scripts/slurm_extract_delta_t_d2.sh)
 
@@ -75,7 +75,7 @@ cd /work/upschrimpf1/sigfstea/multimodal-brain-scaling
 # 1. build the 10 s EEG target (independent — can run any time)
 B10=$(sbatch --parsable scripts/slurm_build_surprisal_10s.sh)
 
-# 2. extract each wav2vec2 model (GPU)
+# 2. extract each wav2vec2 model (CPU/jed)
 EXM=$(sbatch --parsable --array=0-19 --export=ALL,MODEL_ID=wav2vec2-medium,WINDOW_DUR=10,WINDOW_STRIDE=5,CHUNK_SIZE=32 \
       scripts/slurm_extract_delta_t_d2.sh)
 EXL=$(sbatch --parsable --array=0-19 --export=ALL,MODEL_ID=wav2vec2-large,WINDOW_DUR=10,WINDOW_STRIDE=5,CHUNK_SIZE=32 \
@@ -125,9 +125,10 @@ held-out test r is in the whisper ballpark (else the model/layer/features are br
 
 Deliverable to the screen prompt: per model × level → chosen layer, mean test r, feature path.
 
-## CPU vs GPU
-The extractor auto-selects device (`cuda` if available, else CPU) and does not hard-fail on CPU.
-Delta-t cost = O(frames) full forward passes per window — same structure as the whisper delta-t you
-already ran CPU-only. wav2vec2-medium ≈ whisper-base on CPU (practical); wav2vec2-large is ~4× heavier
-per frame → prefer GPU or use more/smaller array tasks. For a CPU job: comment out `--partition`/
-`--gres` in `slurm_extract_delta_t_d2.sh` and raise `--cpus-per-task`.
+## Cluster (jed / CPU only — no GPU)
+All three scripts run on jed CPU (`--partition=standard`, `--mem-per-cpu=5G` = 1 CPU per 5 GB RAM,
+`source env.sh`), matching `scripts/slurm_insilico_mmn.sh`. The extractor auto-selects CPU. Delta-t
+cost = O(frames) full forward passes per window — the same structure as the whisper delta-t already
+run CPU-only. wav2vec2-medium ≈ whisper-base on CPU (practical); wav2vec2-large / whisper-large are
+heavier, so extraction runs 8 CPUs/task for 24 h and parallelizes across the array (raise `CHUNK_SIZE`
++ array size, or bump `--cpus-per-task`, if a task runs long). The sweep uses 32 CPUs/task.

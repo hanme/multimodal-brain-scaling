@@ -14,10 +14,11 @@
 # =============================================================================
 #SBATCH --chdir /work/upschrimpf1/sigfstea/multimodal-brain-scaling-temporal-analysis
 #SBATCH --job-name=build_surprisal_10s
+#SBATCH --partition=standard
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=4
-#SBATCH --mem-per-cpu=8G
+#SBATCH --mem-per-cpu=5G
 #SBATCH --time=4:00:00
 #SBATCH --output=/work/upschrimpf1/sigfstea/multimodal-brain-scaling-temporal-analysis/logs/build_surprisal_10s_%j.out
 #SBATCH --error=/work/upschrimpf1/sigfstea/multimodal-brain-scaling-temporal-analysis/logs/build_surprisal_10s_%j.err
