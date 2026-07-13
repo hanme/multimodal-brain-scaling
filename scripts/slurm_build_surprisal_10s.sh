@@ -44,9 +44,15 @@ mkdir -p logs outputs/neural_data
 # Use the temporal-analysis project's own venv (it owns the surprisal formatter + deps).
 PY="$TA_DIR/.venv/bin/python"
 [ -x "$PY" ] || PY=python
+# src-layout: the temporal-analysis `mbs` package isn't installed into .venv, so put src/ on the
+# path so `python -m mbs.data_prep.format_eeg_hdf5_surprisal` resolves the current source.
+export PYTHONPATH="$TA_DIR/src${PYTHONPATH:+:$PYTHONPATH}"
 
 echo "=== build surprisal_10s.h5  (window=${WINDOW_DUR}s stride=${WINDOW_STRIDE}s sr=${TARGET_SR}) ==="
 echo "Python: $PY"; "$PY" --version
+echo "PYTHONPATH: $PYTHONPATH"
+"$PY" -c "import mbs.data_prep.format_eeg_hdf5_surprisal as m; print('formatter:', m.__file__)" \
+  || { echo "ERROR: cannot import the surprisal formatter (check .venv / PYTHONPATH)."; exit 1; }
 echo "Start: $(date)"
 
 "$PY" -m mbs.data_prep.format_eeg_hdf5_surprisal \
