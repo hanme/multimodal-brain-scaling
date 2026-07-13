@@ -1,20 +1,48 @@
 # Handoff — enable whisper-large + wav2vec2 for the mTRF D2 mapping
 
-**Date:** 2026-07-12. Prereq for `aux/prompt_24freq_7models_metric_selection.md` (the 24×7 screen).
+**Started:** 2026-07-12. **Completed:** 2026-07-13. Prereq for
+`aux/prompt_24freq_7models_metric_selection.md` (the 24×7 screen).
 Scope of THIS work: make whisper-large, wav2vec2-medium, wav2vec2-large usable by the delta-t
 extractor + `eeg_mapping_sweep.py`, and hand back a chosen layer + held-out test r per model × level.
 **No MMN stimuli / in-silico MMN / S2–S7 scoring here.**
 
-## Decisions locked in
-| Model | HF / whisper id | Layers | D2 window | EEG target |
-| ----- | --------------- | ------ | --------- | ---------- |
-| whisper-large   | `large-v3` (128 mel, 32 blocks) | 32 | **30 s / 10 s** | `surprisal_30s.h5` ✅ exists |
-| wav2vec2-medium | `facebook/wav2vec2-base` (pretrained) | 12 | **10 s / 5 s** | `surprisal_10s.h5` ⚠️ must be built |
-| wav2vec2-large  | `facebook/wav2vec2-large` (pretrained) | 24 | **10 s / 5 s** | `surprisal_10s.h5` ⚠️ must be built |
+## STATUS (2026-07-13): whisper-large ✅ done · wav2vec2 ⏳ sweeps running
+
+- **whisper-large — COMPLETE and validated.** CV-chosen layer `blocks.21` for both levels; mean
+  held-out test r = **+0.160 (parcels)**, **+0.180 (electrodes)** — above the whisper-small/medium
+  ballpark, so it passes the sanity gate. Ready to use in the screen now.
+- **wav2vec2-medium / wav2vec2-large — sweeps still running** (`{model}__{level}__D2.json` not yet
+  written). **Interim: use `encoder.layers.0` as a placeholder `--layer`** for all four wav2vec2
+  configs so the screen can proceed; swap in the real `chosen_layer` from the JSONs when the sweeps
+  finish (4 values: {medium,large} × {parcels,electrodes}). See **Results** below.
+
+Full numbers in the **Results** section.
+
+**Deviations from the original plan** (see "Execution log" for details):
+- **wav2vec2 D2 mapping uses 10 s windows at 10 s stride** (not 5 s). Features were extracted once at
+  10 s / **5 s** and **reused** — the 10 s/10 s windows are exactly the even-offset subset (same
+  waveforms → identical feature vectors + IDs), so no re-extraction was needed; only the EEG was
+  rebuilt at 10 s/10 s and the sweep matches the subset by window ID.
+- **wav2vec2 sweeps used `PCA_VAR=0.95`** (whisper used `pca_var=None`) to keep the wide-design mTRF
+  tractable → wav2vec2 test r is **not strictly apples-to-apples** with the whisper ballpark. ⚠️
+- A **prefetch job** was added (concurrent array downloads corrupt the shared HF cache), and every
+  job runs **jed CPU only** (`--partition=standard`, 5 GB/CPU, no GPU).
+- The layer sweep is **slow under sklearnex** (its patched RidgeCV lacks the `gcv_mode='eigen'`
+  fast path); an `MBS_NO_SKLEARNEX` opt-out was added, then reverted at the user's request.
+
+## Decisions locked in (as executed)
+| Model | HF / whisper id | Layers | Features (window/stride) | mTRF window | EEG target | PCA |
+| ----- | --------------- | ------ | ------------------------ | ----------- | ---------- | --- |
+| whisper-large   | `large-v3` (128 mel, 32 blocks) | 32 | 30 s / 10 s | 30 s / 10 s | `surprisal_30s.h5` ✅ | `pca_var=None` |
+| wav2vec2-medium | `facebook/wav2vec2-base` (pretrained) | 12 | 10 s / 5 s | **10 s / 10 s** | `surprisal_10s.h5` (10 s/10 s) ✅ | `PCA_VAR=0.95` |
+| wav2vec2-large  | `facebook/wav2vec2-large` (pretrained) | 24 | 10 s / 5 s | **10 s / 10 s** | `surprisal_10s.h5` (10 s/10 s) ✅ | `PCA_VAR=0.95` |
 
 - wav2vec2 = **pretrained** (self-supervised, no ASR fine-tuning).
 - Whisper delta-t path for tiny/base/small/medium is **unchanged** — the wav2vec2 support is a
   parallel code path; existing whisper features stay reproducible.
+- **wav2vec2 features are 10 s/5 s but the mapping is fit on 10 s/10 s** windows: the sweep matches
+  features↔EEG by window ID, and the 10 s/10 s EEG IDs are the even-offset subset of the 10 s/5 s
+  feature IDs — so the 5 s-stride windows at odd offsets are simply never matched (ignored).
 
 ## Local code changes (done + statically verified on CPU)
 - `src/mbs/extraction/modeling/backbones/audio_models.py`
@@ -78,6 +106,12 @@ sbatch --dependency=afterok:$EXJ --array=0,1 scripts/slurm_eeg_mapping_sweep_d2.
 ```
 
 ## Track B — wav2vec2-medium & wav2vec2-large (10 s / 5 s; needs surprisal_10s.h5)
+
+> **As-run note (2026-07-13):** the commands below are the original 10 s/**5 s** plan. The mapping was
+> ultimately fit at 10 s/**10 s** (rebuild the EEG with `--export=ALL,WINDOW_STRIDE=10` on
+> `slurm_build_surprisal_10s.sh`, keep the 10 s/5 s features, sweep with `PCA_VAR=0.95`). See the
+> "Execution log" below.
+
 ```bash
 # 1. build the 10 s EEG target (independent — can run any time)
 B10=$(sbatch --parsable scripts/slurm_build_surprisal_10s.sh)
@@ -122,6 +156,72 @@ temporal-analysis project's `.venv` at `10/5/50`, copies `surprisal_10s.h5` into
 `--audio_root` inside the script against the formatter's usage docstring
 (`sed -n '14,25p' src/mbs/data_prep/format_eeg_hdf5_surprisal.py`). The sweep step (Track B) is what
 consumes it.
+
+## Results (delivered to the screen prompt)
+
+Per model × level: CV-chosen layer + mean held-out test r, from
+`outputs/results/eeg_mapping/{model}__{level}__D2.json`. Regenerate with:
+```bash
+cd /work/upschrimpf1/sigfstea/multimodal-brain-scaling
+python - <<'PY'
+import json, statistics, os
+for M in ["whisper-large","wav2vec2-medium","wav2vec2-large"]:
+    for L in ["parcels","electrodes"]:
+        p=f"outputs/results/eeg_mapping/{M}__{L}__D2.json"
+        if not os.path.exists(p): print(f"{M:16s} {L:11s} MISSING"); continue
+        d=json.load(open(p)); tr=[x for x in d.get("test_r_chosen",[]) if x==x]
+        m=statistics.fmean(tr) if tr else float("nan")
+        print(f"{M:16s} {L:11s} chosen={str(d['chosen_layer']):18s} meanTESTr={m:+.3f} nT={len(tr)} pca={d.get('pca_var')}")
+PY
+```
+
+| Model | Level | chosen_layer | mean test r | features dir |
+| --- | --- | --- | --- | --- |
+| whisper-large | parcels | `blocks.21` | **+0.160** | `outputs/features/whisper-large-delta-t-surprisal/merged` |
+| whisper-large | electrodes | `blocks.21` | **+0.180** | `outputs/features/whisper-large-delta-t-surprisal/merged` |
+| wav2vec2-medium | parcels | _pending_ → use `encoder.layers.0` | _pending_ | `outputs/features/wav2vec2-medium-delta-t-surprisal/merged` |
+| wav2vec2-medium | electrodes | _pending_ → use `encoder.layers.0` | _pending_ | `outputs/features/wav2vec2-medium-delta-t-surprisal/merged` |
+| wav2vec2-large | parcels | _pending_ → use `encoder.layers.0` | _pending_ | `outputs/features/wav2vec2-large-delta-t-surprisal/merged` |
+| wav2vec2-large | electrodes | _pending_ → use `encoder.layers.0` | _pending_ | `outputs/features/wav2vec2-large-delta-t-surprisal/merged` |
+
+**wav2vec2 placeholder:** the four wav2vec2 sweeps were still running at doc time. Until each
+`{model}__{level}__D2.json` lands, pass **`--layer encoder.layers.0`** for the wav2vec2 in-silico runs;
+then replace with the real `chosen_layer` (4 values) and re-run those models. whisper-large's numbers
+above are final. (Regenerate the whole table with the command above.)
+
+## Execution log (2026-07-13) — what actually happened
+
+Scripts added during execution (all committed to `main`, jed/CPU, `--partition=standard`, 5 GB/CPU):
+- `scripts/slurm_prefetch_audio_models.sh` — **run first**; single process force-downloads all 3
+  models into `cache/model_weights`. Needed because a concurrent extraction array corrupted the
+  shared HF cache (`config.json` JSONDecodeError) — HF file locking is unreliable on `/work`.
+- `scripts/slurm_build_surprisal_10s.sh` — builds the Cortical Surprisal EEG at 10 s windows via the
+  formatter in the **temporal-analysis** project (`.../multimodal-brain-scaling-temporal-analysis`,
+  its own `.venv`; needs `PYTHONPATH=<that>/src`), then copies into the mbs clone. `--data_root` =
+  the `cortical_suprisal_dataset` dir (P00–P12.h5), audio derived as `<data_root>/audiobooks`.
+- `scripts/slurm_eeg_mapping_sweep_d2.sh` — array over the 3 new models × {parcels,electrodes};
+  self-merges chunks (atomic lock) and auto-selects the 30 s vs 10 s EEG.
+- `extract_features_delta_t.py` gained an over-provision guard (array tasks past the last window
+  no-op instead of `IndexError`), so arrays can be sized generously.
+
+Sequence that ran: prefetch → extract (whisper-large 30 s/10 s; wav2vec2 10 s/5 s) → build
+`surprisal_10s.h5` → sweep. whisper-large completed with `pca_var=None`. wav2vec2 was first run at
+10 s/5 s (very slow) then **switched to 10 s/10 s** to halve the mapping windows: the EEG was rebuilt
+at 10 s/10 s (old one kept as `surprisal_10s_stride5.h5`), the existing 10 s/5 s features were reused,
+and the sweeps re-run with `PCA_VAR=0.95`.
+
+**Known operational gotchas (for future runs / the screen):**
+- **sklearnex cripples the sweep.** `evaluation_helpers.py` unconditionally calls
+  `sklearnex.patch_sklearn()`; its patched `RidgeCV` doesn't implement `gcv_mode='eigen'`, so it
+  re-solves per (alpha × target) instead of one eigendecomposition → ~50–100× slower on the wide
+  electrode designs. Stock scikit-learn is the reference implementation (same results). Left enabled
+  per the user's choice; if a future sweep is intolerably slow, that's the first thing to disable.
+- **numpy's BLAS is capped at 2 threads** (`OpenBLAS … MAX_THREADS=2` in this env), so 32-CPU sweep
+  tasks only use ~2 cores for the linear algebra. Not fixed (needs a re-linked numpy); noted so nobody
+  expects CPU count alone to help the sweep.
+- **Comparability caveat:** wav2vec2 mappings differ from whisper's in two ways — 10 s/10 s vs 30 s/10 s
+  windows, and `PCA_VAR=0.95` vs `pca_var=None`. Treat the whisper test-r ballpark below as a
+  loose sanity gate for wav2vec2, not an exact comparison.
 
 ## Acceptance / sanity gate
 `eeg_mapping_sweep.py` writes `chosen_layer` + `test_r_chosen` per model × level. Spot-check the mean

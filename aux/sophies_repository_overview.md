@@ -1,9 +1,15 @@
 # Repository Operational Overview — `multimodal-brain-scaling` (auditory-EEG / MMN fork)
 
 **Generated:** 2026-06-18
-**Last updated:** 2026-06-21 (doc pass: relabeled the in-use MMN stimulus design as **Definition 1** — literature classic-oddball, frequency-deviant — after confirming via direct literature read-through that all 10 sourced papers use this design, not the final-tone-controlled design originally assumed. **Definition 2** is now reserved for that final-tone-controlled design, which is the target the stimulus set is being revised toward — no true Definition 2 literature source has been found yet. See §1.6, §1.7, §5, §13.8, §16.1–§16.2)
+**Last updated:** 2026-07-13 (enabled whisper-large + wav2vec2-{medium,large} for the D2 mTRF mapping — see the **2026-07-13** changelog line below, §1.4, §1.5, and `aux/handoff_enable_large_wav2vec2_models.md`. Earlier 2026-06-21 doc pass: relabeled the in-use MMN stimulus design as **Definition 1** — literature classic-oddball, frequency-deviant — after confirming via direct literature read-through that all 10 sourced papers use this design, not the final-tone-controlled design originally assumed. **Definition 2** is now reserved for that final-tone-controlled design, which is the target the stimulus set is being revised toward — no true Definition 2 literature source has been found yet. See §1.6, §1.7, §5, §13.8, §16.1–§16.2)
 
 **Changelog pointer:** the most recent work touches the **model→EEG mapping** (§4) and the **layer-selection CV** — the committed per-model layers in §1.5 were finalised on 2026-06-18 after switching from leaky random folds to group-by-part CV. See §4.1–§4.2 and Open Questions §13.1. The MMN-design terminology (Definition 1 vs 2) was relabeled on 2026-06-21 — see §16.1/§16.2.
+
+**2026-07-13 — three new models enabled for the D2 mTRF mapping** (prereq for the 24×7 screen; full log in `aux/handoff_enable_large_wav2vec2_models.md`):
+- **whisper-large** (`large-v3`), **wav2vec2-medium** (`facebook/wav2vec2-base`, 12 layers), **wav2vec2-large** (`facebook/wav2vec2-large`, 24 layers) — pretrained. Each now has D2/surprisal delta-t features (`outputs/features/{model}-delta-t-surprisal/merged`) and a CV-chosen mTRF layer per level in `outputs/results/eeg_mapping/{model}__{level}__D2.json`.
+- **New code:** `load_wav2vec2` in `audio_models.py` (raw-waveform backbone; `whisper-large`→`large-v3`); a raw-waveform causal path in `extract_features_delta_t.py` (whisper mel path byte-identical) + an over-provision guard; `configs/extraction/audio/wav2vec2_{medium,large}_layers.json`.
+- **New SLURM scripts (jed/CPU, `--partition=standard`, 5 GB/CPU):** `slurm_prefetch_audio_models.sh` (avoids concurrent-download HF-cache corruption — run first), `slurm_extract_delta_t_d2.sh`, `slurm_build_surprisal_10s.sh`, `slurm_eeg_mapping_sweep_d2.sh`.
+- **Caveats:** wav2vec2 was mapped on **10 s/10 s** windows (features extracted at 10 s/5 s and reused as the even-offset subset) with **`PCA_VAR=0.95`**, vs whisper's 30 s/10 s + `pca_var=None` — so wav2vec2 test r isn't strictly comparable to whisper's. The sweep is slow under sklearnex (patched `RidgeCV` lacks `gcv_mode='eigen'`); numpy's OpenBLAS is capped at 2 threads in this env.
 
 **Scope.** This document covers every executable / workflow-relevant script in the repository:
 - Python modules with a CLI / `__main__` (under `src/mbs/` and `scripts/`).
@@ -157,6 +163,8 @@ The auditory mapping is trained/tested on naturalistic-speech EEG, group-average
 | **D2** | `surprisal_30s.h5` | Weissbart "Cortical Surprisal" speech EEG (13 subj) | **Primary training set for the MMN deliverable** (healthy FCz, r≈0.99). 157 train / 43 test 30 s windows. |
 | **D3** | `d3_combined_30s.h5` | D1 ∪ D2 pooled | Used in pooling / per-dataset-scored experiments (no formatter for it in this checkout — see §13.4). |
 
+**D2 10 s variant (2026-07-13):** `surprisal_10s.h5` = the same Weissbart EEG re-formatted at **10 s windows / 10 s stride** (the wav2vec2 mapping target — 10 s clips match wav2vec2's regime). Built by re-running `format_eeg_hdf5_surprisal.py` (in the *temporal-analysis* project, not this checkout) with `--window_duration 10 --window_stride 10`, then copied into `outputs/neural_data/`. Stimulus IDs use 16 kHz sample offsets stepping by 160000, so they align with 10 s-window delta-t features. (An earlier 10 s/**5 s** build was kept as `surprisal_10s_stride5.h5`.)
+
 Noise ceiling (NC) is stored as **% variance explained** (`max_nc=100`); `load_neural_data` recovers Pearson r via `sqrt(nc/100)`. Channels/parcels are kept only if NC r > threshold (0.2 for the auditory targets).
 
 ### 1.5 Models and committed layers
@@ -171,6 +179,23 @@ Whisper layer lists live in `configs/extraction/audio/whisper_<size>_layers.json
 | whisper-base | `blocks.0` | `blocks.0` | `blocks.2` | `blocks.0` |
 | whisper-small | `blocks.3` | `blocks.1` | `blocks.10` | `blocks.10` |
 | whisper-medium | `blocks.11` | `blocks.12` | `blocks.4` | `blocks.3` |
+
+**New models (2026-07-13), Method A mTRF only** — source of truth `chosen_layer` in
+`outputs/results/eeg_mapping/{model}__{level}__D2.json`; per-model×level table in
+`aux/handoff_enable_large_wav2vec2_models.md` ("Results").
+
+| model | A mTRF · parcels | A mTRF · electrodes | mean test r (parc / elec) |
+|---|---|---|---|
+| whisper-large | `blocks.21` | `blocks.21` | +0.160 / +0.180 ✅ |
+| wav2vec2-medium | ⏳ pending (use `encoder.layers.0`) | ⏳ pending (use `encoder.layers.0`) | sweep running |
+| wav2vec2-large | ⏳ pending (use `encoder.layers.0`) | ⏳ pending (use `encoder.layers.0`) | sweep running |
+
+whisper-large blocks are `blocks.0`–`blocks.31`; wav2vec2 layers are `encoder.layers.0`–`{11 or 23}`.
+**Until the 4 wav2vec2 sweeps finish, use `--layer encoder.layers.0` as a placeholder** in the
+in-silico step; swap in the real `chosen_layer` when the JSONs land. **Method B (encoder) was not run
+for these three.** Mapping-config caveat: whisper-large used 30 s/10 s + `pca_var=None` (like the other
+whisper models); wav2vec2-{medium,large} used **10 s/10 s + `PCA_VAR=0.95`** (features extracted at
+10 s/5 s and reused as the even-offset subset). See the 2026-07-13 changelog line above.
 
 ### 1.6 Shapes & conventions worth stating once
 
