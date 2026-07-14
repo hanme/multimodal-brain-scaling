@@ -33,9 +33,8 @@ declare -A MTRF_PARCELS_LAYER=(
     [whisper-tiny]=blocks.0  [whisper-base]=blocks.0
     [whisper-small]=blocks.3 [whisper-medium]=blocks.11
     [whisper-large]=blocks.21
-    # wav2vec2 layers are PLACEHOLDERS (encoder.layers.0) until the D2 sweeps land -- swap in the
-    # real chosen_layer from outputs/results/eeg_mapping/{model}__parcels__D2.json and re-run.
-    [wav2vec2-medium]=encoder.layers.0 [wav2vec2-large]=encoder.layers.0
+    # wav2vec2 layers from the D2 sweep (outputs/results/eeg_mapping/{model}__parcels__D2.json).
+    [wav2vec2-medium]=encoder.layers.2 [wav2vec2-large]=encoder.layers.12
 )
 MODELS=(whisper-tiny whisper-base whisper-small whisper-medium whisper-large wav2vec2-medium wav2vec2-large)
 
