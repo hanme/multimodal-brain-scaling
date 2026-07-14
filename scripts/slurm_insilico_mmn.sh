@@ -52,14 +52,18 @@ TRAIN_FEATURES="outputs/features/${MODEL_ID}-delta-t-surprisal/merged"
 if [ "$MODEL_ID" = "whisper-base" ]; then MMN_ROOT="outputs/features"; else MMN_ROOT="outputs/features/${MODEL_ID}-mmn"; fi
 # wav2vec2 was mapped on 10 s D2 windows (surprisal_10s.h5); whisper on 30 s (surprisal_30s.h5).
 case "$MODEL_ID" in wav2vec2-*) TRAIN_NEURAL="outputs/neural_data/surprisal_10s.h5";; *) TRAIN_NEURAL="outputs/neural_data/surprisal_30s.h5";; esac
+# wav2vec2 MMN clips are 10 s and staged in a separate root; whisper clips are 30 s in the default.
+# stim_dir feeds the final-tone-onset used for time-locking, so it MUST match the feature clips.
+case "$MODEL_ID" in wav2vec2-*) STIM_ROOT="outputs/mmn_stimuli_wav2vec2";; *) STIM_ROOT="outputs/mmn_stimuli";; esac
 
-echo "Start: $(date) on $(hostname)   MODEL_ID=$MODEL_ID  layer=$LAYER  features=$TRAIN_FEATURES  neural=$TRAIN_NEURAL  mmn_root=$MMN_ROOT"
+echo "Start: $(date) on $(hostname)   MODEL_ID=$MODEL_ID  layer=$LAYER  features=$TRAIN_FEATURES  neural=$TRAIN_NEURAL  stim=$STIM_ROOT  mmn_root=$MMN_ROOT"
 
 OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-4} python scripts/insilico_mmn.py \
     --layer "$LAYER" \
     --train_features "$TRAIN_FEATURES" \
     --train_neural "$TRAIN_NEURAL" \
     --mmn_features_root "$MMN_ROOT" \
+    --stimuli_root "$STIM_ROOT" \
     --lag_max_ms 800 \
     --baseline_start_mult -3.0 --baseline_end_mult 0.0 \
     --out_dir "outputs/figures/insilico_mmn/${MODEL_ID}" \
