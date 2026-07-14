@@ -75,12 +75,15 @@ IDS="09 10 12 17 18 19 20 21 27 28 29 30 31 32 33 37 43 44 53 55 60 72 74 75"
 METHODS=""; for id in $IDS; do METHODS="$METHODS method_${id} method_${id}_counter"; done   # 48
 ```
 
-**1. Generate stimuli (filters change_type==Frequency internally):**
+**1. Generate stimuli (filters change_type==Frequency internally):** run on a compute node — the
+generator uses `--n_workers` = all cores, so don't run it on the login node.
 ```bash
-python scripts/00aa_generate_audio_stimuli.py \
-  --metadata_csv data/metadata/literature_frequency_intensity_duration_metadata.csv \
-  --output_dir outputs/stim_gen        # -> outputs/stim_gen/audio_outputs_{regular,counter}/{whisper,wav2vec2}/
+sbatch scripts/slurm_generate_stimuli.sh     # 16 cores, --n_workers=$SLURM_CPUS_PER_TASK, -> outputs/stim_gen/
+# (equivalent direct run, e.g. inside salloc: python scripts/00aa_generate_audio_stimuli.py \
+#   --metadata_csv data/metadata/literature_frequency_intensity_duration_metadata.csv \
+#   --output_dir outputs/stim_gen --n_workers 16)
 ```
+Emits `outputs/stim_gen/audio_outputs_{regular,counter}/{whisper,wav2vec2}/`.
 
 **2. Stage into per-family stimulus roots** (whisper 30 s clips vs wav2vec2 10 s clips; all 5 whisper
 models share the `whisper/` clips, both wav2vec2 share `wav2vec2/`):
