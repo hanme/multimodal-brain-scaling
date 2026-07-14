@@ -1,5 +1,15 @@
 # In-Silico MMN Results Analysis — With Counterbalanced Methods
 
+> ⚠️ **Data-vintage flag (2026-07).** **Sections 7, 8, 8b, 8c** have been updated to the **24-frequency
+> screen** — 24 methods × {regular, counter} = **48 conditions per model per site**, **mTRF only**, for
+> **5 whisper models** (tiny, base, small, medium, large); denominators **/48** and **/240**; source
+> `outputs/results_24freq_7models/mmn_s7_roi.csv`. **All other sections (0b, 1–6, 9) still report the
+> older 10-method / 4-model screen** (20 conditions per model, mTRF + encoder; denominators /20, /40,
+> /80, /160; source `outputs/results_with_counter/*.csv`). The two vintages are **not directly
+> comparable** and should be reconciled separately. Note also the new **model-dependent µV scale
+> caveat** in Section 7: whisper-large's predicted µV run ~40× the other models, so its absolute-µV S7
+> counts are scale-inflated.
+
 > **Extends `aux/results_analysis.md`** by adding 10 counterbalanced stimulus pairs
 > (standard/deviant frequencies swapped) to every analysis. Scope: 4 Whisper models
 > × 2 levels (parcels, electrodes) × 20 methods (10 regular + 10 counter) × 2 mappings
@@ -886,179 +896,263 @@ The Section 4 and Section 6 findings from `results_analysis.md` are preserved wi
 ## Section 7 — Amplitude-gated MMN (S2 vs S7) across ROI options
 
 > **Code:** `scripts/analyze_mmn_s7_roi.py`
-> **Data:** `outputs/results_with_counter/mmn_s7_roi.csv` (8,640 rows = 20 methods × 4 models
-> × 2 mappings × 9 ROI options × 6 X-thresholds).
+> **Data:** `outputs/results_24freq_7models/mmn_s7_roi.csv` — the **24-frequency screen**: 24 methods ×
+> {regular, counter} = **48 conditions per model per site**, **mTRF only**, for the **5 whisper models**
+> (tiny, base, small, medium, large). Predictions under `outputs/insilico_mmn_predictions/`.
 >
-> This section asks how the shape verdict **S2** and the amplitude-gated verdict **S7** behave
-> at each candidate *reporting site* rather than the committed averaged ROI. MMN is classically
-> reported at single fronto-central sites, so the ROI options are the **frontal** and **central
-> parcels** plus **each electrode of the frontal/central 10-20 clusters** (Fz, F3, F4, FCz —
-> frontal; Cz, C3, C4 — central; all 7 survive the NC floor). Each option is a **single target**
-> (no averaging). S7 = S2 AND the microvolt deviant−standard trough at the S2 latency ≤ −X µV,
-> headline **X = 1.0 µV** (provisional). All 20 methods (regular + counter) are pooled.
+> This section asks how the shape verdict **S2** and the amplitude-gated verdict **S7** behave at a
+> single fronto-central *reporting site* rather than the committed averaged ROI. The **µV-trough
+> calibration** (Table 31) is read over the full fronto-central ROI set — the **frontal** and
+> **central parcels** plus **each electrode of the frontal/central 10-20 clusters** (Fz, F3, F4, FCz —
+> frontal; Cz, C3, C4 — central). The per-model **criterion tables** (Tables 32–33) then report the two
+> canonical fronto-central sites, the **frontal parcel** and the **FCz electrode**. Each site is a
+> **single target** (no averaging); all 48 conditions (24 frequency methods × {regular, counter}) are
+> pooled per model. **Denominators: /48 per model per site, /240 pooled over the 5 models.**
 >
-> **Scale caveat (repeated):** these are the model's **regularization-shrunk predicted µV**, not
-> literature EEG µV. A literature MMN is ≈ 1–5 µV; the model's S2-passing troughs sit at a median
-> of ≈ −0.7 to −0.9 µV, so X is calibrated to the model's own scale, not the literature's.
+> **Encoder deferred.** The attention encoder was not run on the 24-method set, so Sections 7/8/8b/8c
+> are **mTRF-only**; the encoder comparison is deferred to a future encoder screen.
+>
+> **Definitions.** **S2** = interior trough in 100–240 ms with ≥50% recovery — X-independent.
+> **S7@X** = `S2 AND (trough_uv ≤ −X µV)`, so **S7 ⊆ S2** in every cell. **trough_uv** = the signed
+> deviant−standard µV depth at the S2 trough latency (negative = deeper MMN), carried X-independently in
+> the CSV. **When a single floor is quoted the headline is X = 0.5 µV;** the calibration sweep
+> {0.25 … 2.5} (Table 31) and the reporting sweep {0.5, 0.75, 1.0, 1.5} (Tables 32–33) are shown below.
+>
+> **Scale caveat — now model-dependent (important).** Predicted µV are regularization-shrunk and,
+> critically, the mTRF's predicted-amplitude scale **grows with model size**: the raw predicted
+> difference-wave RMS at the frontal parcel is ≈ 3.7 µV for whisper-tiny, ≈ 8 for medium, and ≈ **90 for
+> whisper-large** (a ~10× jump at large; the µV path applies **no** cross-model amplitude
+> standardization). So the *absolute* µV floor is **not comparable across models** — it confounds MMN
+> depth with the model's internal feature-norm scale. **whisper-large clears any µV floor trivially**
+> (median S2 trough ≈ −40 µV, ~40× the others); read its S7 counts as **scale-inflated**. The
+> scale-robust comparisons are the z-scored **S2** shape rate and the **within-model S7/S2 retention
+> ratio**, not the raw S7 count.
 
-### µV-trough distribution (the calibration data)
+### 7a · µV-trough calibration (Table 31)
 
-Deepest µV trough in the 100–240 ms window, over the **S2-passing** single-target traces (the
-ones S7 can gate), one row per (mapping, ROI-kind):
+Signed µV trough at the S2 latency, over the **S2-passing** traces (the ones S7 can gate), grouped by
+`mTRF × ROI-kind`. **`n` is the TOTAL number of traces** in the group (all model × method × direction ×
+roi_option rows — the denominator S2 is out of); **`no threshold (S2)`** is the S2-passing count (the
+X→0 point of the sweep); `min / med / max` are over the S2-passing troughs; each `≤ −X` column is the
+**S7 count** (`S2 AND trough_uv ≤ −X µV`). The parcel kind pools the frontal and central parcels
+(48 × 5 × 2 = 480 traces); the electrode kind pools the seven fronto-central electrodes (48 × 5 × 7 =
+1680).
 
-**Table 31. Predicted µV-trough distribution (S2-passing single-target traces)**
+**Table 31. Predicted µV-trough distribution and S7 counts over the fronto-central ROI set (mTRF)**
 
-| Mapping × kind | n | min | median | max | ≤−0.25 | ≤−0.5 | ≤−1.0 | ≤−1.5 | ≤−2.0 | ≤−2.5 |
-| -------------- | --- | ----- | ------ | ---- | ------ | ----- | ----- | ----- | ----- | ----- |
-| mTRF × parcel | 131 | −36.28 | −0.80 | +0.80 | 104 | 86 | 56 | 41 | 30 | 21 |
-| mTRF × electrode | 453 | −77.01 | −0.86 | +1.55 | 362 | 293 | 213 | 152 | 113 | 88 |
-| encoder × parcel | 44 | −19.14 | −0.88 | +4.72 | 34 | 29 | 20 | 14 | 12 | 12 |
-| encoder × electrode | 156 | −14.52 | −0.70 | +4.49 | 102 | 89 | 63 | 50 | 37 | 31 |
+| mTRF × kind | n (total) | min | med | max | no threshold (S2) | ≤ −0.25 | ≤ −0.5 | ≤ −0.75 | ≤ −1.0 | ≤ −1.5 | ≤ −2.0 | ≤ −2.5 |
+| ----------- | --------- | ------- | ----- | ------- | ----------------- | ------- | ------ | ------- | ------ | ------ | ------ | ------ |
+| mTRF × parcel | 480 | −382.78 | −0.97 | +148.04 | 405 | 329 | 291 | 242 | 197 | 146 | 127 | 102 |
+| mTRF × electrode | 1680 | −628.96 | −1.11 | +229.78 | 1315 | 1066 | 920 | 808 | 696 | 546 | 444 | 378 |
 
-The median S2-passing trough is ≈ −0.8 µV for every mapping × kind, so **1.0 µV sits just beyond
-the median and removes slightly more than half of the genuine troughs** (the ≤−1.0 µV column of
-Table 31 keeps only ≈ 40–47% of each S2-passing set), not merely the shallow (0 → −0.5 µV) tail.
-A handful of very deep mTRF
-troughs (min −36 to −77 µV) are noisy single electrodes; S7 rightly keeps them (they are far past
-any threshold), and the ROI-mean criteria of Sections 4/6 average that noise down.
+The median S2-passing trough is ≈ **−1.0 µV** (parcel −0.97, electrode −1.11). So the **X = 0.5 µV
+headline sits *shallower* than the typical trough** and keeps ≈ **70%** of S2 (parcel 291/405 = 72%,
+electrode 920/1315 = 70%) — it trims the shallow (0 → −0.5 µV) tail without amputating the bulk. Deeper
+floors cut in: **0.75 µV** keeps ≈ 60% (242/405 = 60%, 808/1315 = 61%) and **1.0 µV**, past the median,
+keeps ≈ ½ (197/405 = 49%, 696/1315 = 53%). The extreme min/max (−383 … +148 µV parcel; −629 … +230
+electrode) are two effects at once: genuinely noisy single-target outliers, **and** the whisper-large
+scale inflation — its predicted µV run ~40× the other models (median S2 trough ≈ −40 µV; see the scale
+caveat), so most of its troughs fall in the deep tail regardless of any real MMN. The ROI-mean criteria
+of Sections 4/6 average the single-target noise down.
 
-### S2 → S7 by ROI option, per model (X = 1.0 µV)
+### 7b · S2 → S7 at the two fronto-central reporting sites (Tables 32–33)
 
-Each cell is **S2 → S7** present-count, n/20 per model; **Total** is n/80 (20 methods × 4 models).
+Present-count **n/48 per model**; the **Total** column is **n/240** (48 conditions × 5 models). Rows are
+the shape verdict `S2` and the amplitude-gated `S7@X` for the reporting sweep X ∈ {0.5, 0.75, 1.0, 1.5}
+µV (each computed from `trough_uv`). By construction **S7 ⊆ S2**, so every S7 row ≤ the S2 row. The
+**X = 0.5 µV headline** row is bolded. **whisper-large's counts are scale-inflated** (its predicted µV
+run ~40× the others), so read its column as a scale artifact, not deeper physiology.
 
-**Table 32. mTRF — S2 → S7 per ROI option**
+**Table 32. mTRF — frontal parcel**
 
-| ROI option | kind | tiny | base | small | medium | Total (n/80) |
-| ---------- | ---- | ---- | ---- | ----- | ------ | ------------ |
-| frontal | parcel | 18→10 | 16→9 | 13→7 | 15→15 | 62→41 |
-| central | parcel | 15→2 | 16→1 | 19→1 | 19→11 | 69→15 |
-| Fz | electrode | 15→3 | 16→3 | 18→0 | 19→12 | 68→18 |
-| F3 | electrode | 18→15 | 16→13 | 18→14 | 14→12 | 66→54 |
-| F4 | electrode | 16→13 | 15→12 | 19→14 | 13→12 | 63→51 |
-| FCz | electrode | 16→5 | 16→2 | 19→1 | 15→9 | 66→17 |
-| Cz | electrode | 16→8 | 16→7 | 16→3 | 16→12 | 64→30 |
-| C3 | electrode | 15→4 | 17→1 | 18→2 | 13→7 | 63→14 |
-| C4 | electrode | 15→10 | 15→3 | 17→5 | 16→11 | 63→29 |
+| Criterion | whisper-tiny | whisper-base | whisper-small | whisper-medium | whisper-large | Total (n/240) |
+| --------- | ------------ | ------------ | ------------- | -------------- | ------------- | ------------- |
+| S2 | 39 | 44 | 41 | 38 | 37 | 199 |
+| **S7@0.5** | **34** | **35** | **34** | **27** | **28** | **158** |
+| S7@0.75 | 25 | 34 | 32 | 25 | 28 | 144 |
+| S7@1.0 | 23 | 30 | 20 | 23 | 28 | 124 |
+| S7@1.5 | 20 | 15 | 13 | 21 | 28 | 97 |
 
-**Table 33. Encoder — S2 → S7 per ROI option**
+**Table 33. mTRF — FCz electrode**
 
-| ROI option | kind | tiny | base | small | medium | Total (n/80) |
-| ---------- | ---- | ---- | ---- | ----- | ------ | ------------ |
-| frontal | parcel | 5→2 | 5→2 | 7→4 | 4→3 | 21→11 |
-| central | parcel | 5→1 | 6→2 | 8→2 | 4→4 | 23→9 |
-| Fz | electrode | 4→0 | 11→0 | 4→1 | 4→0 | 23→1 |
-| F3 | electrode | 7→3 | 7→5 | 4→3 | 4→3 | 22→14 |
-| F4 | electrode | 4→2 | 5→5 | 3→3 | 4→3 | 16→13 |
-| FCz | electrode | 7→0 | 10→1 | 5→4 | 3→2 | 25→7 |
-| Cz | electrode | 3→1 | 5→0 | 5→2 | 13→6 | 26→9 |
-| C3 | electrode | 5→0 | 10→2 | 4→3 | 3→2 | 22→7 |
-| C4 | electrode | 5→2 | 7→4 | 4→3 | 6→3 | 22→12 |
+| Criterion | whisper-tiny | whisper-base | whisper-small | whisper-medium | whisper-large | Total (n/240) |
+| --------- | ------------ | ------------ | ------------- | -------------- | ------------- | ------------- |
+| S2 | 41 | 39 | 42 | 35 | 38 | 195 |
+| **S7@0.5** | **26** | **21** | **18** | **26** | **30** | **121** |
+| S7@0.75 | 16 | 12 | 14 | 22 | 30 | 94 |
+| S7@1.0 | 12 | 5 | 12 | 20 | 30 | 79 |
+| S7@1.5 | 8 | 0 | 0 | 15 | 30 | 53 |
 
-### S7 vs the amplitude threshold X
+### 7c · Section 7 summary
 
-Total S7 present-count as X rises (pooled over all 9 ROI options × 20 methods × 4 models = 720
-cells per mapping; S2 is the X→0 reference):
-
-**Table 34. S7 falling with the amplitude threshold X**
-
-| X (µV) | 0.25 | 0.5 | 1.0 | 1.5 | 2.0 | 2.5 |
-| ------ | ---- | --- | --- | --- | --- | --- |
-| mTRF S7 (of S2 = 584) | 466 | 379 | 269 | 193 | 143 | 109 |
-| encoder S7 (of S2 = 200) | 136 | 118 | 83 | 64 | 49 | 43 |
-
-### Section 7 summary
-
-- **S7 tightens S2 at every site**, but by how much depends strongly on the reporting ROI. For the
-  mTRF, the **lateral frontal electrodes F3/F4 have the deepest predicted troughs** (S7/S2 = 54/66
-  = 82% and 51/63 = 81%), while the **classic midline MMN sites are far shallower** — Fz retains
-  only 18/68 = 26%, FCz 17/66 = 26%, central parcel 15/69 = 22%. So the amplitude floor bites
-  hardest exactly where MMN is conventionally reported; the µV depth of the model's predicted MMN
-  is greater off-midline.
-- **The encoder starts far lower on S2 and the 1.0 µV floor all but eliminates its best midline
-  site** (Fz 1/23 = 4%); its strongest site is now the lateral-frontal F3 (22 S2 → 14 S7).
-- **S7 declines smoothly and monotonically with X** (Table 34), confirming the {0.25 … 2.5} µV
-  sweep is well-centred: at the lenient 0.25 µV end S7 ≈ 0.8 × S2, at the strict 2.5 µV end
-  S7 ≈ 0.2 × S2. There is no threshold at which the sweep is off-scale.
-- **The mTRF−encoder gap persists and widens under the amplitude gate** at every ROI option, in the
-  same direction as Sections 4/6: requiring a genuine microvolt-scale trough — not merely a z-scored
-  dip — is additional evidence that the mTRF's in-silico MMN is the more physiologically credible.
-- **Reporting-site recommendation:** if a single amplitude-qualified electrode is wanted, **F3/F4**
-  (mTRF) carry the deepest and most consistently S7-positive troughs; the committed averaged ROIs of
-  Sections 4/6 remain the most robust because they average down the single-site noise visible in the
-  −36 to −77 µV tail of Table 31. **X = 1.0 µV is provisional** pending the literature amplitude
-  review; the full sweep is retained in `mmn_s7_roi.csv` so a revised X is a one-line recompute.
+- **Calibration (Table 31).** Median S2-passing trough ≈ **−1.0 µV** (parcel −0.97, electrode −1.11), so
+  the **X = 0.5 µV headline** sits shallower than the typical trough and keeps ≈ **70%** of S2 (72%
+  parcel, 70% electrode); 0.75 µV keeps ≈ 60%, and 1.0 µV ≈ ½ (49–53%). So 0.5 µV is the
+  lenient-but-nontrivial floor — it trims the shallow (0 → −0.5 µV) tail without amputating the bulk.
+- **mTRF S2 → S7@0.5, per model (Tables 32–33).** **Frontal parcel:** S2 199/240 → S7@0.5 158/240
+  (**79%** retained) — tiny 39→34, base 44→35, small 41→34, medium 38→27, large 37→28. **FCz electrode:**
+  S2 195/240 → 121/240 (**62%**) — tiny 41→26, base 39→21, small 42→18, medium 35→26, large 38→30.
+- **Yes — the 0.5 µV floor reorders the models vs S2, and the effect is partly a scale artifact.** At
+  **FCz** the S2 order small(42) > tiny(41) > base(39) > large(38) > medium(35) becomes large(30) >
+  tiny(26) = medium(26) > base(21) > small(18) under S7@0.5: **whisper-small leads on shape but collapses
+  to last** (shallowest troughs), while **whisper-large jumps to first — but only because its predicted
+  µV are ~40× larger** (see the scale caveat), not because its MMN is deeper. At the **frontal parcel**
+  the reshuffle is milder (whisper-base stays on top: 44 S2 → 35 S7@0.5). The floor ranks by predicted
+  trough *depth*, which for whisper-large is dominated by model-size scale inflation.
+- **Scale caveat — model-dependent.** The mTRF predicted-amplitude scale grows with model size (raw
+  difference-wave RMS ≈ 3.7 → 8 → 90 µV for tiny → medium → large; the µV path applies **no**
+  cross-model standardization), so the absolute-µV S7 floor **confounds MMN depth with feature-norm
+  scale**. Compare models with the z-scored **S2** rate and the **within-model S7/S2 retention**, not
+  the raw S7 count; whisper-large's S7 is scale-inflated and should not be read as a deeper MMN. The
+  full sweep is retained in `mmn_s7_roi.csv`, so a revised headline X is a one-line recompute from
+  `trough_uv`.
+- **Encoder deferred** — not run on the 24-method set; the mTRF-vs-encoder amplitude comparison awaits a
+  future encoder screen.
 
 ---
 
-## Section 8 — Fronto-central reporting sites (FCz / frontal) at X = 0.75 µV
+## Section 8 — Which fronto-central site to report under an absolute-µV criterion (X = 0.5 µV)
 
-**Why look at this.** The S7 amplitude gate is applied to the model's *predicted* µV, which are
-systematically **shrunk toward the mean by ridge/L2 regularization** (regression to the mean): a
-regularized regression only reproduces the explainable, stimulus-locked variance (amplitude scales
-roughly with the model's correlation r < 1), so predicted deflections are ≈ 3.5–4× smaller than a
-true scalp MMN. Crucially, that shrinkage is **not uniform across ROIs** — a single electrode is
-shallower and noisier than a spatially pooled parcel, so an absolute-µV floor can pass or fail the
-*same* underlying MMN depending only on the reporting site. This section therefore checks the two
-canonical fronto-central sites side by side: it asks whether the classic single-electrode MMN site
-(FCz) survives the amplitude gate as well as the pooled frontal parcel, or whether regression-to-the-
-mean shrinkage penalises it disproportionately.
+**The question.** MMN is classically reported at a single fronto-central site. Section 7 leaves two
+canonical options — the pooled **frontal parcel** and the single **FCz electrode**. They recover the
+MMN *shape* (S2) about equally well; this section asks which one to report once an **absolute-µV floor**
+(S7@0.5) is applied, and shows the choice is driven by amplitude, not shape. **mTRF only** (encoder
+deferred); pooled counts are **/240** (48 conditions × 5 models).
 
-> **Code / Data:** `scripts/analyze_mmn_s7_roi.py` → `outputs/results_with_counter/mmn_s7_roi.csv`.
-> S7 present-counts are recomputed at **X = 0.75 µV** directly from the X-independent
-> `trough_uv` column (0.75 is *between* the committed sweep points 0.5 and 1.0, so no cluster
-> re-run is needed — see the Section 7 note on recomputing S7 from `trough_uv`).
->
-> **Why these two ROIs.** MMN is classically reported at fronto-central sites, so this section
-> isolates the two canonical fronto-central reporting options from the Section 7 set — the
-> **FCz electrode** and the **frontal parcel** — and asks how the shape verdict **S2** and the
-> amplitude-gated verdict **S7** compare there. Each ROI is a **single target** (no averaging).
-> All 20 methods (regular + counter) are pooled; each per-model cell is **S2 → S7**, n/20; the
-> **combined** row sums the two ROIs (n/40 per model). Reported for **both mappings** at the
-> intermediate X = 0.75 µV headline (≈ the model's own typical, not shallowest, trough depth).
+> **Code / Data:** `scripts/analyze_mmn_s7_roi.py` → `outputs/results_24freq_7models/mmn_s7_roi.csv`.
+> Every number is recomputed at the **X = 0.5 µV** headline from the X-independent `trough_uv` column;
+> per-model splits and the {0.5 … 1.5} µV sweep are in Section 7's site-tables (Tables 32–33), and the
+> full floor sweeps (per model, pooled, discrete + continuous) are plotted in **Section 8b**.
 
-**Table 35. mTRF — FCz / frontal, S2 → S7 (X = 0.75 µV)**
+**1 · Shape (S2) is comparable at the two sites.** S2 fires on **199/240 (83%)** conditions at the
+frontal parcel and **195/240 (81%)** at FCz — the two sites recover the MMN *morphology* at essentially
+the same rate. So on shape alone there is nothing to choose between them.
 
-| ROI option | kind | tiny | base | small | medium | Total (n/80) | S7/S2 |
-| ---------- | ---- | ---- | ---- | ----- | ------ | ------------ | ----- |
-| FCz | electrode | 16→7 | 16→4 | 19→3 | 15→10 | 66→24 | 36% |
-| frontal | parcel | 18→12 | 16→11 | 13→8 | 15→15 | 62→46 | 74% |
-| **FCz + frontal** | combined | 34→19 | 32→15 | 32→11 | 30→25 | **128→70** | **55%** |
+**2 · The µV floor splits them.** Applying the 0.5 µV floor retains **79% (158/199)** of S2 at the
+frontal parcel but only **62% (121/195)** at FCz (Table 36). The *same* shape verdict survives an
+absolute-µV floor more often at the pooled parcel than at the single electrode.
 
-**Table 36. Encoder — FCz / frontal, S2 → S7 (X = 0.75 µV)**
+**Table 36. S2 → S7@0.5 retention at the two fronto-central sites** (mTRF, pooled /240)
 
-| ROI option | kind | tiny | base | small | medium | Total (n/80) | S7/S2 |
-| ---------- | ---- | ---- | ---- | ----- | ------ | ------------ | ----- |
-| FCz | electrode | 7→1 | 10→4 | 5→4 | 3→2 | 25→11 | 44% |
-| frontal | parcel | 5→3 | 5→2 | 7→4 | 4→3 | 21→12 | 57% |
-| **FCz + frontal** | combined | 12→4 | 15→6 | 12→8 | 7→5 | **46→23** | **50%** |
+| Site | S2 (/240) | S7@0.5 (/240) | S7@0.5 / S2 |
+| ---- | --------- | ------------- | ----------- |
+| frontal parcel | 199 | 158 | **79%** |
+| FCz electrode | 195 | 121 | **62%** |
 
-**Table 37. Median S2-passing predicted µV trough at each ROI** (the calibration that drives the S7/S2 gap)
+**3 · The cause is amplitude, not shape.** The frontal-parcel S2-passing troughs are ≈ **2× deeper** in
+µV than FCz's: median **−1.46 µV (parcel) vs −0.72 µV (FCz)** (Table 37). A parcel pools a spatial
+region, so its predicted difference wave is deeper and less noisy than a single electrode's; a fixed
+0.5 µV floor therefore removes more FCz troughs while keeping more parcel ones. Section 8b's
+trough-distribution figure makes this visible: the FCz distribution sits to the *right* (shallower) of
+the frontal parcel's. The split is **robust to the whisper-large scale artifact**: excluding
+whisper-large, retention is still **80% (parcel) vs 58% (FCz)** and the median troughs are −1.22 vs
+−0.67 µV — so the parcel's advantage is not an artefact of large's inflated µV.
 
-| Mapping | FCz (electrode) | frontal (parcel) |
-| ------- | --------------- | ---------------- |
-| mTRF | −0.56 µV (n=66) | −1.57 µV (n=62) |
-| encoder | −0.34 µV (n=25) | −1.26 µV (n=21) |
+**Table 37. Median S2-passing predicted µV trough at each site** (mTRF; the calibration behind the split)
 
-### Section 8 summary
+| Site | median S2 trough (µV) | n (S2) |
+| ---- | --------------------- | ------ |
+| frontal parcel | −1.46 | 199 |
+| FCz electrode | −0.72 | 195 |
 
-- **The two sites detect the S2 shape at comparable rates**, but the µV amplitude gate splits them
-  sharply. For the mTRF, S2 is similar (FCz 66/80 vs frontal 62/80), yet S7 retains **74%** of S2 at
-  the frontal parcel vs only **36%** at FCz; for the encoder the split is milder (57% vs 44%).
-- **The gap is an amplitude effect, not a shape effect (Table 37).** The frontal *parcel* pools a
-  spatial region, so its predicted troughs are ≈ 2.5–3× deeper in µV (median −1.57 vs −0.56 µV, mTRF)
-  than the single FCz electrode; the 0.75 µV floor therefore removes most FCz troughs while keeping
-  most frontal-parcel ones. The single-electrode FCz trace is both shallower and noisier, exactly the
-  single-site behaviour the averaged ROIs of Sections 4/6 are designed to smooth over.
-- **The mTRF ≫ encoder ordering is preserved at both fronto-central sites** (combined 70/160 = 44% mTRF
-  vs 23/160 = 14% encoder), consistent with every other criterion — requiring a genuine microvolt-scale
-  trough at the *classic* MMN reporting sites does not close the gap.
-- **Per-model:** whisper-medium is amplitude-robust at both sites (FCz 10/15, frontal 15/15 mTRF),
-  whereas whisper-small collapses hardest at FCz (19 S2 → 3 S7) — its predicted troughs are the
-  shallowest, so the floor bites it most at the single electrode.
-- **Reporting recommendation for a fronto-central MMN:** if a single canonical electrode (FCz) is
-  required, S7 at 0.75 µV is stringent (it discards ≈ ⅔ of mTRF S2 troughs); the **frontal parcel is
-  the more amplitude-robust fronto-central choice** and is the recommended reporting site when an
-  absolute-amplitude criterion is in play. By construction S7 ⊆ S2, so S7 ≤ S2 holds in every cell above.
+**4 · Recommendation.** When an absolute-µV criterion is in play, the **frontal parcel is the more
+amplitude-robust fronto-central reporting site**: it keeps ≈ ⅘ of its mTRF S2 troughs at 0.5 µV, whereas
+**FCz discards ≈ ⅖** of them purely because a single electrode's predicted trough is shallower — not
+because the shape is worse. Report the frontal parcel when S7 matters; FCz at 0.5 µV is the stricter,
+more conservative choice and will understate the count. By construction S7 ⊆ S2, so S7 ≤ S2 in every
+cell above. **Encoder comparison deferred** to a future encoder screen.
+
+---
+
+## Section 8b — mTRF amplitude-floor figures (24-method screen)
+
+Figures for Sections 7–8 on the **24-method / 5-model mTRF screen**, each a **2×2 grid of
+fronto-central sites** — frontal parcel · FCz electrode on top, central parcel · Fz electrode on the
+bottom. Generated by `aux/analysis_with_counter/plots/sec8b_mtrf_plots.py`; S7@X is computed from the
+X-independent `trough_uv`. (The superseded 10-method / 4-model figures are kept under
+`plots/old_sec78_plots/`.)
+
+**Read.**
+- **The floor cuts S2 monotonically, and the frontal parcel is uniquely robust.** At the 0.5 µV
+  headline the **frontal parcel keeps 79%** of S2, vs 65% central parcel, 62% FCz, 56% Fz. The
+  frontal parcel's median trough is −1.46 µV; the other three fronto-central single sites sit near
+  −0.7 µV (central parcel −0.71, FCz −0.72, Fz −0.62) — so **spatial pooling helps only where the MMN
+  is actually large, the frontal midline**, not at the central parcel.
+- **Per model,** whisper-small has the shallowest troughs (collapses fastest under the floor) and
+  **whisper-large is the flat line at the top** — its predicted µV are ~40× the others (a scale
+  artifact; Section 7 caveat), so it clears every floor including 2.5 µV.
+- **Trough distribution (symlog x):** four models cluster near the 0.25–1.5 µV floors; whisper-large
+  sits ~40× deeper in every panel.
+
+**Figure 1 — MMN count /48 per model vs the discrete amplitude floor {0.25 … 2.5} µV:**
+![mTRF MMN present-count /48 per whisper model vs floor X; 2×2 sites (frontal parcel · FCz top, central parcel · Fz bottom).](plots/sec8b_x_vs_mmn_per_model.png)
+
+**Figure 2 — pooled count /240 vs the discrete floor:**
+![mTRF MMN present-count /240 pooled over the 5 models vs floor X; 2×2 sites (frontal parcel · FCz top, central parcel · Fz bottom).](plots/sec8b_x_vs_mmn_pooled.png)
+
+**Figure 3 — per-model, continuous floor X:**
+![Continuous-X companion: mTRF present-count /48 as survival curves S7(X), per model; 2×2 sites, reporting floors {0.25 … 2.5} marked.](plots/sec8b_x_vs_mmn_per_model_continuous.png)
+
+**Figure 4 — pooled, continuous floor X:**
+![Continuous-X companion: mTRF present-count /240 as a survival curve S7(X), pooled; 2×2 sites, reporting floors {0.25 … 2.5} marked.](plots/sec8b_x_vs_mmn_pooled_continuous.png)
+
+**Figure 5 — trough_uv distribution per model (symlog x, whisper-large ~40× deeper):**
+![mTRF S2-passing trough_uv distribution per whisper model; 2×2 fronto-central sites, dotted amplitude floors {0.25 … 2.5} µV overlaid, symlog x-axis.](plots/sec8b_trough_uv_distribution.png)
+
+---
+
+## Section 8c — Fz vs FCz: the two midline MMN electrodes, compared in µV
+
+Section 8 contrasted a *parcel* with a single *electrode*. This subsection zooms into the two canonical
+single-electrode midline sites — **Fz** and **FCz** — and asks how the model's predicted MMN **trough
+amplitude (µV)** differs between them, matched condition-for-condition. **mTRF only** (encoder deferred).
+
+> **Data:** `outputs/results_24freq_7models/mmn_s7_roi.csv`, `roi ∈ {Fz, FCz}` (electrode kind).
+> `trough_uv` = deviant−standard µV at the S2 trough latency (negative = deeper), X-independent. The
+> paired test uses the conditions with an **S2 dip at both** electrodes (mTRF **n = 183**), matched on
+> (model × method × direction).
+
+**Table 37c. Fz vs FCz — shape and predicted µV trough (mTRF, /240)**
+
+| Electrode | S2 (/240) | median S2 trough (µV) | S7@0.5 / S2 |
+| --------- | --------- | --------------------- | ----------- |
+| Fz | 205 | −0.62 | 114/205 = 56% |
+| FCz | 195 | −0.72 | 121/195 = 62% |
+
+**What the data show.**
+- **They capture the same response.** S2 fires at comparable rates (Fz 205/240 vs FCz 195/240), and the
+  two electrodes' predicted trough depths are **strongly correlated** across matched conditions
+  (Pearson **r = +0.76** over the four normal-scale models; whisper-large's ~40× scale inflates the raw
+  pooled r to +0.91) — Fz and FCz are reading one underlying frontal MMN.
+- **FCz is the modestly deeper of the two.** Across the 183 conditions with an S2 dip at both sites,
+  **FCz has the deeper predicted trough in 123/183 (67%)** overall; the median paired difference is
+  Fz − FCz = **+0.14 µV** (Fz the shallower), Wilcoxon **p = 0.001**. This FCz-deeper direction holds
+  within each of the four normal-scale models (FCz deeper in 62–92% of pairs) and **reverses only for
+  whisper-large** (37%), where the µV scale artifact dominates. Median S2-passing trough **−0.72 µV
+  (FCz) vs −0.62 µV (Fz)**. Consequently the 0.5 µV floor retains slightly more of FCz's S2
+  (**62% vs 56%**).
+- **Both remain shallow single midline electrodes**, far shallower than the pooled **frontal parcel**
+  (median −1.46 µV, 79% retained; Section 8) — so for an absolute-µV criterion an ROI/parcel still beats
+  either lone electrode.
+
+![Fz vs FCz predicted MMN trough (µV), matched mTRF conditions with an S2 dip at both sites; points above the y = x line are conditions where FCz is deeper.](plots/sec8c_fz_vs_fcz_trough.png)
+
+(The FCz | Fz panels of the Section-8b trough-distribution figure show the same per-model picture.)
+
+**Literature context (brief).** Both Fz and FCz are excellent electrodes for capturing the auditory
+MMN, and our predicted-µV comparison is consistent with the standard EEG account:
+- **Fz is the historical standard.** The MMN is a frontally-distributed ERP whose scalp topography
+  peaks over frontal/frontocentral regions; standard caps use **Fz** as the primary frontal node, so it
+  is the most widely cited benchmark for MMN amplitude/latency across clinical and cognitive studies.
+  Use Fz when replicating classic, foundational oddball paradigms.
+- **FCz is often preferred in modern high-density studies.** The MMN generator sits in auditory cortex
+  and projects a field whose absolute maximum frequently lands **slightly below Fz — at FCz**, or
+  between the two. Our data agree: FCz is the modestly deeper site. Use FCz in high-density
+  (≥ 64-channel) montages aimed at the absolute scalp peak.
+- **Or use both.** Grouping fronto-central electrodes (Fz, FCz, F1, F2) into a **region-of-interest
+  cluster** gives the most robust measurement — the spatial-pooling advantage Section 8 quantifies: the
+  pooled frontal parcel's predicted trough is ~2× deeper and survives the amplitude floor far better
+  than either lone electrode.
 
 ---
 
