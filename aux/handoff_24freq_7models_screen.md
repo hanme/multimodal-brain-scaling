@@ -99,24 +99,23 @@ for id in $IDS; do
 done   # each dir now holds 16 wavs (1 standard + 15 deviants)
 ```
 
-**3. MMN feature extraction** — 336 array jobs (7 models × 48 dirs × 16 tasks). Throttle if the queue
-caps submissions.
+**3. MMN feature extraction** — **7 submissions** (one 48-task array per model; each task does a whole
+method in a single call, so the model loads once). Uses `slurm_mmn_extract_batch.sh`.
 ```bash
-# whisper (30 s window, default MMN_STIM_ROOT=outputs/mmn_stimuli)
+# whisper (30 s window, default stim root)
 for m in whisper-tiny whisper-base whisper-small whisper-medium whisper-large; do
-  for meth in $METHODS; do
-    sbatch --export=ALL,MODEL_ID=$m,MMN_METHOD=$meth --array=0-15 scripts/slurm_mmn_extract.sh
-  done
+  sbatch --export=ALL,MODEL_ID=$m --array=0-47 scripts/slurm_mmn_extract_batch.sh
 done
-# wav2vec2 (10 s window + 10 s stimuli root)
+# wav2vec2 (10 s window + 10 s stim root)
 for m in wav2vec2-medium wav2vec2-large; do
-  for meth in $METHODS; do
-    sbatch --export=ALL,MODEL_ID=$m,MMN_METHOD=$meth,MMN_STIM_ROOT=$PWD/outputs/mmn_stimuli_wav2vec2,WINDOW_DUR=10.0,WINDOW_STRIDE=10.0 \
-           --array=0-15 scripts/slurm_mmn_extract.sh
-  done
+  sbatch --export=ALL,MODEL_ID=$m,MMN_STIM_ROOT=$PWD/outputs/mmn_stimuli_wav2vec2,WINDOW_DUR=10.0,WINDOW_STRIDE=10.0 \
+         --array=0-47 scripts/slurm_mmn_extract_batch.sh
 done
+# cap concurrency per array with %, e.g. --array=0-47%12
 ```
-→ features at `outputs/features/{model}-mmn/mmn-method_XX-delta-t/` (whisper-base: `outputs/features/`).
+→ features at `outputs/features/{model}-mmn/mmn-method_XX-delta-t/` (whisper-base: `outputs/features/`),
+16 `feats_delta_t-*.h5` per method dir. (Per-clip variant if ever needed: `slurm_mmn_extract.sh` with
+`MMN_METHOD=method_XX --array=0-15`, one method per submission.)
 
 **4. In-silico MMN** — after all extractions finish (the driver skips any method with a missing feature
 dir). One job per model does all 48 methods; the wrappers set layer/`train_neural`/`data_dir` per model:
