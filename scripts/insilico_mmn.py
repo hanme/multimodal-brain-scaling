@@ -49,37 +49,37 @@ from mmn_criteria_table import compute_criteria_table, CRITERIA_COLUMNS
 
 DURATION_CSV = "data/metadata/literature_frequency_intensity_duration_metadata.csv"
 
-# MMN methods: literature classic-oddball (Definition 1) set, 10 pairs sourced from
-# data/metadata/literature_frequency_intensity_duration_metadata.csv. Each method has 1
-# standard file (repeating tone) + 15 deviant files (N in {3,5,7} x var in {1..5}); the
-# deviant train's LAST tone differs in frequency from the standard's repeating tone (unlike
-# the older identity-MMN design this registry used to describe, where the final tone was
-# physically identical in std & dev). Tuple = (stimulus-dir name, "standard->deviant" label,
-# source citation).
-METHODS = [
-    # Regular (standard → deviant)
-    ("method_75", "1000→1200 Hz", "Karger_2014"),
-    ("method_74", "1000→1500 Hz", "Domjan_2012"),
-    ("method_72", "1000→1200 Hz", "Bodatsch_2011"),
-    ("method_60", "1000→1500 Hz", "Umbricht_2003a"),
-    ("method_53", "1000→1200 Hz", "Salisbury_2002a"),
-    ("method_55", "1000→2000 Hz", "Shinozaki_2002a"),
-    ("method_37", "1000→1050 Hz", "Javitt_2000a"),
-    ("method_43", "633→700 Hz",   "Michie_2000b"),
-    ("method_44", "633→1000 Hz",  "Michie_2000c"),
-    ("method_27", "1000→1064 Hz", "Schall_1999a"),
-    # Counterbalanced (standard/deviant frequencies swapped)
-    ("method_75_counter", "1200→1000 Hz", "Karger_2014"),
-    ("method_74_counter", "1500→1000 Hz", "Domjan_2012"),
-    ("method_72_counter", "1200→1000 Hz", "Bodatsch_2011"),
-    ("method_60_counter", "1500→1000 Hz", "Umbricht_2003a"),
-    ("method_53_counter", "1200→1000 Hz", "Salisbury_2002a"),
-    ("method_55_counter", "2000→1000 Hz", "Shinozaki_2002a"),
-    ("method_37_counter", "1050→1000 Hz", "Javitt_2000a"),
-    ("method_43_counter", "700→633 Hz",   "Michie_2000b"),
-    ("method_44_counter", "1000→633 Hz",  "Michie_2000c"),
-    ("method_27_counter", "1064→1000 Hz", "Schall_1999a"),
-]
+# MMN methods: the literature classic-oddball (Definition 1) FREQUENCY set, derived from
+# data/metadata/literature_frequency_intensity_duration_metadata.csv (all rows with
+# change_type == "Frequency" -- 24 methods). Each method has 1 standard file (repeating tone)
+# + 15 deviant files (N in {3,5,7} x var in {1..5}); the deviant train's LAST tone differs in
+# frequency from the standard's repeating tone. The registry is built from the CSV (rather than
+# hardcoded) so it stays in sync with the sheet: 24 regular + 24 counterbalanced (std/deviant
+# swapped) = 48 conditions. Tuple = (stimulus-dir name, "standard->deviant" label, source).
+
+
+def _fmt_hz(value):
+    """Format a frequency for the label, dropping a trailing '.0' (all lit freqs are integers)."""
+    f = float(value)
+    return str(int(f)) if f == int(f) else f"{f:g}"
+
+
+def build_methods_from_csv(csv_path=DURATION_CSV):
+    """(name, 'std->dev Hz', source) registry for the 24 Frequency methods x {regular, counter}."""
+    regular, counter = [], []
+    with open(csv_path, newline="") as f:
+        for row in csv.DictReader(f):
+            if row.get("change_type", "").strip().lower() != "frequency":
+                continue
+            mid = int(row["method_id"])
+            std, dev = _fmt_hz(row["standard_freq"]), _fmt_hz(row["deviant_freq"])
+            src = row.get("source", "").strip()
+            regular.append((f"method_{mid:02d}", f"{std}→{dev} Hz", src))
+            counter.append((f"method_{mid:02d}_counter", f"{dev}→{std} Hz", src))
+    return regular + counter
+
+
+METHODS = build_methods_from_csv()
 
 DEFAULT_SOA_CSV = "data/metadata/literature_frequency_intensity_duration_metadata.csv"
 

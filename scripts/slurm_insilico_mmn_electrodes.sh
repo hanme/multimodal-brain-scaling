@@ -32,8 +32,12 @@ mkdir -p logs outputs/figures/insilico_mmn_electrodes outputs/insilico_mmn_predi
 declare -A MTRF_ELECTRODES_LAYER=(
     [whisper-tiny]=blocks.0  [whisper-base]=blocks.0
     [whisper-small]=blocks.1 [whisper-medium]=blocks.12
+    [whisper-large]=blocks.21
+    # wav2vec2 layers are PLACEHOLDERS (encoder.layers.0) until the D2 sweeps land -- swap in the
+    # real chosen_layer from outputs/results/eeg_mapping/{model}__electrodes__D2.json and re-run.
+    [wav2vec2-medium]=encoder.layers.0 [wav2vec2-large]=encoder.layers.0
 )
-MODELS=(whisper-tiny whisper-base whisper-small whisper-medium)
+MODELS=(whisper-tiny whisper-base whisper-small whisper-medium whisper-large wav2vec2-medium wav2vec2-large)
 
 if [ -n "${SLURM_ARRAY_TASK_ID:-}" ]; then
     MODEL_ID="${MODELS[$SLURM_ARRAY_TASK_ID]}"
@@ -46,12 +50,15 @@ TRAIN_FEATURES="outputs/features/${MODEL_ID}-delta-t-surprisal/merged"
 # whisper-base keeps its historical MMN-features root (outputs/features); every other model's
 # MMN delta_T features live under a model-scoped root so they don't collide.
 if [ "$MODEL_ID" = "whisper-base" ]; then MMN_ROOT="outputs/features"; else MMN_ROOT="outputs/features/${MODEL_ID}-mmn"; fi
+# wav2vec2 was mapped on 10 s D2 windows (surprisal_10s.h5); whisper on 30 s (surprisal_30s.h5).
+case "$MODEL_ID" in wav2vec2-*) TRAIN_NEURAL="outputs/neural_data/surprisal_10s.h5";; *) TRAIN_NEURAL="outputs/neural_data/surprisal_30s.h5";; esac
 
-echo "Start: $(date) on $(hostname)   MODEL_ID=$MODEL_ID  layer=$LAYER  features=$TRAIN_FEATURES  mmn_root=$MMN_ROOT"
+echo "Start: $(date) on $(hostname)   MODEL_ID=$MODEL_ID  layer=$LAYER  features=$TRAIN_FEATURES  neural=$TRAIN_NEURAL  mmn_root=$MMN_ROOT"
 
 OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-4} python scripts/insilico_mmn_electrodes.py \
     --layer "$LAYER" \
     --train_features "$TRAIN_FEATURES" \
+    --train_neural "$TRAIN_NEURAL" \
     --mmn_features_root "$MMN_ROOT" \
     --lag_max_ms 800 \
     --baseline_start_mult -3.0 --baseline_end_mult 0.0 \
