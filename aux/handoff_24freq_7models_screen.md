@@ -99,23 +99,33 @@ for id in $IDS; do
 done   # each dir now holds 16 wavs (1 standard + 15 deviants)
 ```
 
-**3. MMN feature extraction** — **7 submissions** (one 48-task array per model; each task does a whole
-method in a single call, so the model loads once). Uses `slurm_mmn_extract_batch.sh`.
+**3. MMN feature extraction.** Two wrappers, per the speed vs submission-count tradeoff:
+- **Per-clip (recommended for speed; 336 submissions):** `slurm_mmn_extract.sh`, one submission per
+  (model, method) with `--array=0-15` so a method's 16 clips run as PARALLEL tasks (a method finishes
+  in ~one clip's wall-time). Reloads the model per task.
+- **Per-method batch (7 submissions; slower):** `slurm_mmn_extract_batch.sh`, one 48-task array per
+  model (`--array=0-47[%N]`), each task extracts all 16 clips serially (model loads once).
+
+Per-clip fan-out:
 ```bash
-# whisper (30 s window, default stim root)
+METHODS=""; for id in $IDS; do METHODS="$METHODS method_${id} method_${id}_counter"; done   # 48
+# whisper — 30 s window, default stim root
 for m in whisper-tiny whisper-base whisper-small whisper-medium whisper-large; do
-  sbatch --export=ALL,MODEL_ID=$m --array=0-47 scripts/slurm_mmn_extract_batch.sh
+  for meth in $METHODS; do
+    sbatch --export=ALL,MODEL_ID=$m,MMN_METHOD=$meth --array=0-15 scripts/slurm_mmn_extract.sh
+  done
 done
-# wav2vec2 (10 s window + 10 s stim root)
+# wav2vec2 — 10 s window + 10 s stim root
 for m in wav2vec2-medium wav2vec2-large; do
-  sbatch --export=ALL,MODEL_ID=$m,MMN_STIM_ROOT=$PWD/outputs/mmn_stimuli_wav2vec2,WINDOW_DUR=10.0,WINDOW_STRIDE=10.0 \
-         --array=0-47 scripts/slurm_mmn_extract_batch.sh
+  for meth in $METHODS; do
+    sbatch --export=ALL,MODEL_ID=$m,MMN_METHOD=$meth,MMN_STIM_ROOT=$PWD/outputs/mmn_stimuli_wav2vec2,WINDOW_DUR=10.0,WINDOW_STRIDE=10.0 \
+           --array=0-15 scripts/slurm_mmn_extract.sh
+  done
 done
-# cap concurrency per array with %, e.g. --array=0-47%12
+# add `; sleep 0.3` after sbatch if the scheduler rejects rapid submissions.
 ```
 → features at `outputs/features/{model}-mmn/mmn-method_XX-delta-t/` (whisper-base: `outputs/features/`),
-16 `feats_delta_t-*.h5` per method dir. (Per-clip variant if ever needed: `slurm_mmn_extract.sh` with
-`MMN_METHOD=method_XX --array=0-15`, one method per submission.)
+16 `feats_delta_t-*.h5` per method dir.
 
 **4. In-silico MMN** — after all extractions finish (the driver skips any method with a missing feature
 dir). One job per model does all 48 methods; the wrappers set layer/`train_neural`/`data_dir` per model:
