@@ -1,0 +1,17 @@
+site,model,n,rho,p_rho,slope,p_slope,s2_only_rho,n_s2
+parcel (frontal),POOLED (7 models),336,-0.019,0.7226,-1.1638,0.0551,-0.037,261
+electrode (FCz),POOLED (7 models),336,-0.228,0.0,-0.5551,0.0693,-0.198,265
+parcel (frontal),whisper-tiny,48,-0.345,0.0162,-0.1781,0.0098,-0.611,39
+parcel (frontal),whisper-base,48,0.033,0.8228,0.0136,0.7734,0.131,44
+parcel (frontal),whisper-small,48,-0.234,0.1091,-0.1309,0.0128,-0.262,41
+parcel (frontal),whisper-medium,48,0.318,0.0276,0.4112,0.1126,0.391,38
+parcel (frontal),whisper-large,48,-0.327,0.0231,-8.1038,0.0431,-0.381,37
+parcel (frontal),wav2vec2-medium,48,0.302,0.0368,0.2796,0.0029,0.312,41
+parcel (frontal),wav2vec2-large,48,0.116,0.4341,-0.438,0.0646,-0.154,21
+electrode (FCz),whisper-tiny,48,-0.383,0.0071,-0.1112,0.0004,-0.601,41
+electrode (FCz),whisper-base,48,-0.502,0.0003,-0.0654,0.0003,-0.493,39
+electrode (FCz),whisper-small,48,-0.217,0.1377,-0.0419,0.0434,-0.433,42
+electrode (FCz),whisper-medium,48,-0.011,0.9433,0.0283,0.6907,0.345,35
+electrode (FCz),whisper-large,48,-0.288,0.0468,-3.3055,0.0684,-0.34,38
+electrode (FCz),wav2vec2-medium,48,-0.081,0.5836,0.009,0.7381,0.083,41
+electrode (FCz),wav2vec2-large,48,-0.298,0.0396,-0.3991,0.0079,-0.057,29
