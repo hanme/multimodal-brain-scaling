@@ -931,7 +931,9 @@ The Section 4 and Section 6 findings from `results_analysis.md` are preserved wi
 > **S7@X** = `S2 AND (trough_uv ≤ −X µV)`, so **S7 ⊆ S2** in every cell. **trough_uv** = the signed
 > deviant−standard µV depth at the S2 trough latency (negative = deeper MMN), carried X-independently in
 > the CSV. **When a single floor is quoted the headline is X = 0.5 µV;** the calibration sweep
-> {0.25 … 2.5} (Table 31) and the reporting sweep {0.5, 0.75, 1.0, 1.5} (Tables 32–33) are shown below.
+> {0.25 … 2.5} (Table 31) and the reporting sweep {0.25, 0.5, 0.75, 1.0, 1.5, 2.5} (Tables 32–33) are
+> shown below — the **0.25 and 2.5 bookends are always reported** in every Section 7/8/8b/8c table and
+> figure, since the models converge at the lenient end and separate hardest at the strict end.
 >
 > **Scale caveat 1 — X is calibrated to the model, not to the literature (the ~4× shrinkage).** The
 > mTRF's predicted µV are **regularization-shrunk** (~4×), so the model's predicted µV scale need **not**
@@ -991,8 +993,10 @@ of any real MMN. The ROI-mean criteria of Sections 4/6 average the single-target
 ### 7b · S2 → S7 at the two fronto-central reporting sites (Tables 32–33)
 
 Present-count **n/48 per model**; the **Total** column is **n/336** (48 conditions × 7 models). Rows are
-the shape verdict `S2` and the amplitude-gated `S7@X` for the reporting sweep X ∈ {0.5, 0.75, 1.0, 1.5}
-µV (each computed from `trough_uv`). By construction **S7 ⊆ S2**, so every S7 row ≤ the S2 row. The
+the shape verdict `S2` and the amplitude-gated `S7@X` for the reporting sweep X ∈ {**0.25**, 0.5, 0.75,
+1.0, 1.5, **2.5**} µV (each computed from `trough_uv`). The **0.25 and 2.5 bookends are always shown**:
+0.25 is where the models nearly converge and 2.5 is where they are furthest apart, so a sweep stopping at
+1.5 hides both ends of the floor's effect. By construction **S7 ⊆ S2**, so every S7 row ≤ the S2 row. The
 **X = 0.5 µV headline** row is bolded. **whisper-large's counts are scale-inflated** (its predicted µV
 run ~40× the others), and the **Total** column pools whisper with the differently-trained wav2vec2 models
 (caveat 3) — read both as summaries, not controlled contrasts.
@@ -1002,27 +1006,33 @@ run ~40× the others), and the **Total** column pools whisper with the different
 | Criterion | whisper-tiny | whisper-base | whisper-small | whisper-medium | whisper-large | wav2vec2-medium | wav2vec2-large | Total (n/336) |
 | --------- | ------------ | ------------ | ------------- | -------------- | ------------- | --------------- | -------------- | ------------- |
 | S2 | 39 | 44 | 41 | 38 | 37 | 41 | 21 | 261 |
+| S7@0.25 | 36 | 39 | 36 | 29 | 28 | 35 | 15 | 218 |
 | **S7@0.5** | **34** | **35** | **34** | **27** | **28** | **35** | **14** | **207** |
 | S7@0.75 | 25 | 34 | 32 | 25 | 28 | 35 | 13 | 192 |
 | S7@1.0 | 23 | 30 | 20 | 23 | 28 | 33 | 12 | 169 |
 | S7@1.5 | 20 | 15 | 13 | 21 | 28 | 31 | 10 | 138 |
+| S7@2.5 | 6 | 5 | 7 | 16 | 28 | 25 | 6 | 93 |
 
 **Table 33. mTRF — FCz electrode**
 
 | Criterion | whisper-tiny | whisper-base | whisper-small | whisper-medium | whisper-large | wav2vec2-medium | wav2vec2-large | Total (n/336) |
 | --------- | ------------ | ------------ | ------------- | -------------- | ------------- | --------------- | -------------- | ------------- |
 | S2 | 41 | 39 | 42 | 35 | 38 | 41 | 29 | 265 |
+| S7@0.25 | 30 | 30 | 27 | 32 | 30 | 35 | 27 | 211 |
 | **S7@0.5** | **26** | **21** | **18** | **26** | **30** | **33** | **22** | **176** |
 | S7@0.75 | 16 | 12 | 14 | 22 | 30 | 24 | 20 | 138 |
 | S7@1.0 | 12 | 5 | 12 | 20 | 30 | 16 | 17 | 112 |
 | S7@1.5 | 8 | 0 | 0 | 15 | 30 | 12 | 7 | 72 |
+| S7@2.5 | 4 | 0 | 0 | 4 | 30 | 1 | 4 | 43 |
 
 ### 7c · Section 7 summary
 
 - **Calibration (Table 31).** Median S2-passing trough ≈ **−1.0 µV** (parcel −0.99, electrode −1.18), so
   the **X = 0.5 µV headline** sits shallower than the typical trough and keeps ≈ **70%** of S2 (71%
-  parcel, 72% electrode); 0.75 µV keeps 60–64%, 1.0 µV ≈ ½ (50–55%), and 1.5 µV only 37–43%. So 0.5 µV is
-  the lenient-but-nontrivial floor — it trims the shallow (0 → −0.5 µV) tail without amputating the bulk.
+  parcel, 72% electrode). Across the full reported sweep: **0.25 µV keeps 81–82%** (the lenient bookend),
+  0.75 µV keeps 60–64%, 1.0 µV ≈ ½ (50–55%), 1.5 µV 37–43%, and the **2.5 µV bookend only 26–29%**. So
+  0.5 µV is the lenient-but-nontrivial floor — it trims the shallow (0 → −0.5 µV) tail without amputating
+  the bulk, whereas 2.5 µV discards roughly three-quarters of the S2 troughs.
 - **mTRF S2 → S7@0.5 attrition, per model (Tables 32–33).** **Frontal parcel:** S2 261/336 → S7@0.5
   207/336 (**79%** retained) — tiny 39→34 (87%), base 44→35 (80%), small 41→34 (83%), medium 38→27 (71%),
   large 37→28 (76%), wav2vec2-medium 41→35 (85%), wav2vec2-large 21→14 (67%). **FCz electrode:** S2
@@ -1069,7 +1079,7 @@ deferred); pooled counts are **/336** (48 conditions × 7 models).
 
 > **Code / Data:** `scripts/analyze_mmn_s7_roi.py` → `outputs/results_24freq_7models/mmn_s7_roi.csv`.
 > Every number is recomputed at the **X = 0.5 µV** headline from the X-independent `trough_uv` column;
-> per-model splits and the {0.5 … 1.5} µV sweep are in Section 7's site-tables (Tables 32–33), and the
+> per-model splits and the {0.25 … 2.5} µV sweep are in Section 7's site-tables (Tables 32–33), and the
 > floor sweeps (per model and pooled) are plotted in **Section 8b**.
 >
 > **The /336 pool mixes whisper and wav2vec2**, which are not a strictly controlled comparison
@@ -1086,12 +1096,20 @@ between them.
 frontal parcel but only **66% (176/265)** at FCz (Table 36). The *same* shape verdict survives an
 absolute-µV floor markedly more often at the pooled parcel than at the single electrode.
 
-**Table 36. S2 → S7@0.5 retention at the two fronto-central sites** (mTRF, pooled /336)
+**Table 36. S2 → S7 retention at the two fronto-central sites, across the floor sweep** (mTRF, pooled
+/336). Cells are `S7@X count (% of that site's S2)`; the **0.5 headline** column is bolded, and the
+**0.25 / 2.5 bookends** are shown because the site gap *only exists in the middle of the range*.
 
-| Site | S2 (/336) | S7@0.5 (/336) | S7@0.5 / S2 |
-| ---- | --------- | ------------- | ----------- |
-| frontal parcel | 261 | 207 | **79%** |
-| FCz electrode | 265 | 176 | **66%** |
+| Site | S2 (/336) | S7@0.25 | **S7@0.5** | S7@0.75 | S7@1.0 | S7@1.5 | S7@2.5 |
+| ---- | --------- | ------- | ---------- | ------- | ------ | ------ | ------ |
+| frontal parcel | 261 | 218 (84%) | **207 (79%)** | 192 (74%) | 169 (65%) | 138 (53%) | 93 (36%) |
+| FCz electrode | 265 | 211 (80%) | **176 (66%)** | 138 (52%) | 112 (42%) | 72 (27%) | 43 (16%) |
+
+**The bookends show the split is floor-dependent.** At **X = 0.25** the two sites are nearly tied (84% vs
+80% — a 4-point gap); the gap opens at the 0.5 headline (79% vs 66%, 13 points) and is **widest at
+X = 2.5** (36% vs 16% — the parcel keeps *more than twice* the share FCz does). So "the frontal parcel is
+more amplitude-robust" is a statement about floors at or above ~0.5 µV; at a very lenient floor the choice
+of site barely matters.
 
 **3 · The cause is amplitude, not shape.** The frontal-parcel S2-passing troughs are ≈ **2× deeper** in
 µV than FCz's: median **−1.72 µV (parcel) vs −0.79 µV (FCz)** (Table 37). A parcel pools a spatial
@@ -1131,27 +1149,32 @@ under `plots/old_sec78_plots/`; the superseded 5-model 2×2-site figures under
 `plots/old_sec78_plots/5model_24freq/`.)
 
 **Read.**
-- **The floor cuts S2 monotonically, and the frontal parcel is uniquely robust.** At the 0.5 µV
-  headline the **frontal parcel keeps 79%** of S2 (207/261) vs **66%** at FCz (176/265), and the gap
-  widens with X (at 1.5 µV: 138 vs 72 /336). The frontal parcel's median trough is −1.72 µV against FCz's
-  −0.79 µV — **spatial pooling buys depth**, which is exactly what an absolute-µV floor rewards.
+- **The floor cuts S2 monotonically, and the frontal parcel is uniquely robust — but only above ~0.5 µV.**
+  The bookends bracket the effect: at **X = 0.25** the sites are nearly tied (218/261 = 84% vs 211/265 =
+  80%), at the **0.5 headline** the parcel keeps **79%** vs **66%**, and by **X = 2.5** the parcel keeps
+  **36%** (93/336) against FCz's **16%** (43/336) — more than double. The frontal parcel's median trough is
+  −1.72 µV against FCz's −0.79 µV — **spatial pooling buys depth**, which is exactly what an absolute-µV
+  floor rewards.
 - **Per model,** whisper-small has the shallowest FCz troughs (median −0.39 µV) and collapses fastest
-  (42 S2 → 18 at 0.5 → **0** at 1.5), with whisper-base close behind (also 0 at 1.5); **whisper-large is
-  the flat line at the top** — its predicted µV are ~40× the others (a scale artifact; Section 7 caveat
-  2), so it clears every floor unchanged from 0.5 to 1.5. **wav2vec2-medium is the most floor-robust
-  normal-scale model** (deepest frontal troughs, median −3.45 µV; 41 S2 → 31 at 1.5 µV), while
-  **wav2vec2-large starts lowest on shape** (21/48 frontal S2) and therefore stays lowest at every floor.
+  (42 S2 → 27 at 0.25 → 18 at 0.5 → **0** at both 1.5 and 2.5), with whisper-base identical at the strict
+  end (**0** at 1.5 and 2.5); **whisper-large is the flat line at the top** — its predicted µV are ~40× the
+  others (a scale artifact; Section 7 caveat 2), so it is **completely unchanged across the entire sweep**
+  (28/48 frontal and 30/48 FCz at *every* floor from 0.25 to 2.5). The 2.5 bookend is what makes that
+  artifact unmissable: at the strictest floor whisper-large retains 30/48 at FCz while every other model
+  is at 4 or below. **wav2vec2-medium is the most floor-robust normal-scale model** (deepest frontal
+  troughs, median −3.45 µV; 41 S2 → 25 even at 2.5 µV), while **wav2vec2-large starts lowest on shape**
+  (21/48 frontal S2) and therefore stays lowest at every floor.
 - **Trough distribution (symlog x):** six models cluster around the 0.5–1.5 µV floors; whisper-large sits
   ~40× deeper in both panels. Every model's FCz distribution sits shallower than its frontal-parcel one —
   the per-model version of the site split.
 
-**Figure 1 — MMN count /48 per model vs the amplitude floor X ∈ {S2 (X→0), 0.5, 0.75, 1.0, 1.5} µV:**
+**Figure 1 — MMN count /48 per model vs the amplitude floor X ∈ {S2 (X→0), 0.25, 0.5, 0.75, 1.0, 1.5, 2.5} µV:**
 ![mTRF MMN present-count /48 per model vs floor X; 2 panels (frontal parcel | FCz electrode), 7 model lines.](plots/sec8b_x_vs_mmn_per_model.png)
 
 **Figure 2 — pooled count /336 vs the same floors, S2 total as the X→0 reference:**
 ![mTRF MMN present-count /336 pooled over the 7 models vs floor X; 2 panels (frontal parcel | FCz electrode).](plots/sec8b_x_vs_mmn_pooled.png)
 
-**Figure 3 — trough_uv distribution per model over its S2-passing conditions (symlog x; dotted floors at −0.5/−0.75/−1.0/−1.5 µV):**
+**Figure 3 — trough_uv distribution per model over its S2-passing conditions (symlog x; dotted floors at −0.25/−0.5/−0.75/−1.0/−1.5/−2.5 µV):**
 ![mTRF S2-passing trough_uv distribution per model; 2 panels (frontal parcel | FCz electrode), dotted amplitude floors overlaid, symlog x-axis.](plots/sec8b_trough_uv_distribution.png)
 
 ---
@@ -1170,10 +1193,17 @@ amplitude (µV)** differs between them, matched condition-for-condition. **mTRF 
 
 **Table 37c. Fz vs FCz — shape and predicted µV trough (mTRF, /336)**
 
-| Electrode | S2 (/336) | median S2 trough (µV) | S7@0.5 / S2 |
-| --------- | --------- | --------------------- | ----------- |
-| Fz | 275 | −0.78 | 170/275 = 62% |
-| FCz | 265 | −0.79 | 176/265 = 66% |
+Retention cells are `S7@X / S2` as a % of that electrode's S2; the **0.5 headline** is bolded and the
+**0.25 / 2.5 bookends** are shown alongside the rest of the sweep.
+
+| Electrode | S2 (/336) | median S2 trough (µV) | S7@0.25 | **S7@0.5** | S7@0.75 | S7@1.0 | S7@1.5 | S7@2.5 |
+| --------- | --------- | --------------------- | ------- | ---------- | ------- | ------ | ------ | ------ |
+| Fz | 275 | −0.78 | 77% | **62%** | 52% | 35% | 24% | 17% |
+| FCz | 265 | −0.79 | 80% | **66%** | 52% | 42% | 27% | 16% |
+
+The two electrodes track each other across the whole sweep (they cross at 0.75 and again near 2.5), which
+is the point: **Fz and FCz are near-interchangeable at every floor**, and both fall far below the frontal
+parcel (84% → 36% over the same sweep; Table 36).
 
 **What the data show.**
 - **They capture the same response.** S2 fires at comparable rates (Fz 275/336 vs FCz 265/336), and the
@@ -1190,7 +1220,8 @@ amplitude (µV)** differs between them, matched condition-for-condition. **mTRF 
   the six normal-scale models (FCz deeper in 62–92% of pairs: tiny 92%, small 83%, wav2vec2-medium 71%,
   base 63%, medium 62%) and **reverses only for whisper-large** (37%, where the µV scale artifact
   dominates) and **wav2vec2-large** (37%). Consequently the 0.5 µV floor retains slightly more of FCz's
-  S2 (**66% vs 62%**).
+  S2 (**66% vs 62%**) — though across the full sweep the two are near-interchangeable (Table 37c: 80% vs
+  77% at the 0.25 bookend; 16% vs 17% at 2.5, where Fz is marginally *ahead*).
 - **Both remain shallow single midline electrodes**, far shallower than the pooled **frontal parcel**
   (median −1.72 µV, 79% retained; Section 8) — so for an absolute-µV criterion an ROI/parcel still beats
   either lone electrode.

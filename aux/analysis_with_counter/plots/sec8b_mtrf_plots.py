@@ -11,14 +11,19 @@ Each Section-8b figure is a 2-panel row of the two canonical reporting sites:
     frontal parcel  |  FCz electrode
 
 Section 8b (3 figures):
-  1. sec8b_x_vs_mmn_per_model.png      — count /48 vs floor X ∈ {S2(X→0), 0.5, 0.75, 1.0, 1.5}
+  1. sec8b_x_vs_mmn_per_model.png      — count /48 vs floor X ∈ {S2(X→0), 0.25, 0.5, 0.75, 1.0,
+                                         1.5, 2.5}
   2. sec8b_x_vs_mmn_pooled.png         — count /336 vs the same floors, pooled over the 7 models
   3. sec8b_trough_uv_distribution.png  — trough_uv (µV) per model over its S2-passing conditions,
-                                         dotted floors at −0.5/−0.75/−1.0/−1.5 µV (symlog x —
-                                         whisper-large's predicted µV are ~40× the others, a
-                                         scale artifact)
+                                         dotted floors at −0.25/−0.5/−0.75/−1.0/−1.5/−2.5 µV
+                                         (symlog x — whisper-large's predicted µV are ~40× the
+                                         others, a scale artifact)
 Section 8c (1 figure):
   4. sec8c_fz_vs_fcz_trough.png        — paired Fz vs FCz predicted trough (µV), matched conditions
+
+The 0.25 and 2.5 µV bookends are ALWAYS plotted: X = 0.25 is where the site/model spread nearly
+closes and X = 2.5 is where it is widest, so a sweep stopping at 1.5 hides both ends of the floor's
+effect. X = 0.5 remains the reported headline.
 """
 import numpy as np, pandas as pd
 from scipy import stats
@@ -60,9 +65,11 @@ SITES = [("parcel", "frontal", "frontal parcel"),
          ("electrode", "FCz", "FCz electrode")]
 LEGEND_PANEL = 1                  # FCz (right) carries the per-model legend
 
-# amplitude floors on the x-axis; S2 is the X->0 reference (first, evenly-spaced slot)
-X_FLOORS = [0.5, 0.75, 1.0, 1.5]
-XLAB = ["S2\n(X→0)", "0.5", "0.75", "1.0", "1.5"]
+# amplitude floors on the x-axis; S2 is the X->0 reference (first, evenly-spaced slot).
+# The 0.25 and 2.5 bookends are ALWAYS shown: 0.25 is where the site/model spread nearly closes and
+# 2.5 is where it is widest, so dropping them hides both ends of the floor's effect.
+X_FLOORS = [0.25, 0.5, 0.75, 1.0, 1.5, 2.5]
+XLAB = ["S2\n(X→0)", "0.25", "0.5", "0.75", "1.0", "1.5", "2.5"]
 XPOS = list(range(len(X_FLOORS) + 1))
 I05 = X_FLOORS.index(0.5) + 1     # present_counts / x-slot index of the 0.5 headline
 POOL_COLOR = "#0072B2"
@@ -87,7 +94,7 @@ def site_df(kind, roi):
 
 
 def present_counts(sub):
-    """[S2, S7@0.5, S7@0.75, S7@1.0, S7@1.5] present-count for a subframe."""
+    """[S2, S7@0.25, S7@0.5, S7@0.75, S7@1.0, S7@1.5, S7@2.5] present-count for a subframe."""
     out = [int(sub.s2.sum())]
     for X in X_FLOORS:
         out.append(int(((sub.s2) & (sub.trough_uv <= -X)).sum()))
@@ -165,7 +172,7 @@ plt.close(fig)
 
 # ============ FIG 3: trough_uv distribution per model, symlog x, frontal | FCz ============
 fig, axes = plt.subplots(1, 2, figsize=(12.0, 6.0), sharex=True, sharey=True)
-FLOORS = [-0.5, -0.75, -1.0, -1.5]
+FLOORS = [-0.25, -0.5, -0.75, -1.0, -1.5, -2.5]
 XLIM = (-700, 20)
 rng = np.random.default_rng(0)
 for i, (ax, (kind, roi, title)) in enumerate(zip(axes.flat, SITES)):
@@ -200,7 +207,7 @@ for i, (ax, (kind, roi, title)) in enumerate(zip(axes.flat, SITES)):
     ax.set_ylim(0.4, N_MODELS + 0.95)
     ax.set_title(title, fontweight="bold", loc="left")
     ax.set_xlabel("S2/S7 trough  (µV, symlog;  negative = deeper MMN)")
-axes.flat[0].annotate("dotted = X floors {0.5, 0.75, 1.0, 1.5} µV · x-axis is symlog",
+axes.flat[0].annotate("dotted = X floors {0.25, 0.5, 0.75, 1.0, 1.5, 2.5} µV · x-axis is symlog",
                       xy=(0.02, 0.98), xycoords="axes fraction", ha="left", va="top",
                       fontsize=7.2, color="#888")
 fig.suptitle("mTRF S2-passing trough distribution per model, and how each X floor cuts it — by site",
@@ -262,7 +269,7 @@ fig.savefig(f"{OUT}/sec8c_fz_vs_fcz_trough.png", bbox_inches="tight")
 plt.close(fig)
 
 print("saved 4 figures to", OUT)
-print("rows = [S2, S7@0.5, S7@0.75, S7@1.0, S7@1.5]")
+print("rows = [S2] + [S7@X for X in " + str(X_FLOORS) + "]")
 for kind, roi, title in SITES:
     sub = site_df(kind, roi)
     print(f"\n{title} (mtrf):")
