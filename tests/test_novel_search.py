@@ -338,3 +338,142 @@ def test_phase2_subset_csv_is_a_verbatim_row_copy(scored_grid, tmp_path):
     for mid in (1001, 1003):
         got = sub[sub.method_id == mid].iloc[0].drop("method_id")
         pd.testing.assert_series_equal(got, full.loc[mid], check_names=False)
+
+
+# ──────────────────────────────────────────────────────────
+# Phase-2 ranking: consensus set and rank stability
+# ──────────────────────────────────────────────────────────
+
+def _ranked_frame(rows):
+    """A minimal ranking frame in the shape rank_directions() emits."""
+    df = pd.DataFrame(rows)
+    df = df.sort_values(["n_agree", "mean_uv"], ascending=[False, True],
+                        na_position="last", kind="mergesort").reset_index(drop=True)
+    df.insert(0, "rank", np.arange(1, len(df) + 1))
+    return df
+
+
+def test_consensus_requires_BOTH_directions_at_the_top_tier():
+    """One-directional agreement is a frequency preference, not a deviance response -- the
+    whole reason the counterbalanced design exists. It must not reach the consensus set."""
+    import rank_novel_phase2 as p2
+    n = len(MODELS)
+    ranked = _ranked_frame([
+        # both directions 6/6 -> consensus
+        dict(pair_id=1001, direction="regular", n_agree=n, mean_uv=-2.0),
+        dict(pair_id=1001, direction="counter", n_agree=n, mean_uv=-1.8),
+        # only one direction 6/6 -> excluded
+        dict(pair_id=1002, direction="regular", n_agree=n, mean_uv=-3.0),
+        dict(pair_id=1002, direction="counter", n_agree=n - 1, mean_uv=-2.9),
+        # deeper but neither at top tier -> excluded
+        dict(pair_id=1003, direction="regular", n_agree=n - 1, mean_uv=-5.0),
+        dict(pair_id=1003, direction="counter", n_agree=n - 1, mean_uv=-5.0),
+    ])
+    cons = p2.build_consensus(ranked, MODELS)
+    assert list(cons["pair_id"]) == [1001]
+    assert cons.iloc[0]["mean_uv_both"] == pytest.approx(-1.9)
+    assert cons.iloc[0]["direction_gap_uv"] == pytest.approx(0.2)
+
+
+def test_consensus_is_sorted_strongest_first():
+    import rank_novel_phase2 as p2
+    n = len(MODELS)
+    ranked = _ranked_frame([
+        dict(pair_id=p, direction=d, n_agree=n, mean_uv=uv)
+        for p, uv in [(1001, -1.0), (1002, -3.0), (1003, -2.0)] for d in ("regular", "counter")
+    ])
+    cons = p2.build_consensus(ranked, MODELS)
+    assert list(cons["pair_id"]) == [1002, 1003, 1001]
+    assert cons["mean_uv_both"].is_monotonic_increasing
+
+
+def test_consensus_is_empty_rather_than_erroring_when_nothing_qualifies():
+    import rank_novel_phase2 as p2
+    ranked = _ranked_frame([dict(pair_id=1001, direction=d, n_agree=2, mean_uv=-1.0)
+                            for d in ("regular", "counter")])
+    assert p2.build_consensus(ranked, MODELS).empty
+
+
+def test_rank_stability_reranks_phase1_within_the_shared_subset(tmp_path, capsys):
+    """Phase-1 ranks index the full 1056-instance list; correlating them raw against Phase-2's
+    1..N would compare against a population Phase 2 never scored."""
+    import rank_novel_phase2 as p2
+    pairs = [1001, 1002, 1003, 1004]
+    ph1 = pd.DataFrame([
+        dict(pair_id=p, direction=d, rank=r, n_agree=6, mean_uv=-1.0)
+        for r, (p, d) in enumerate(((p, d) for p in pairs for d in ("regular", "counter")),
+                                   start=500)])   # ranks far from 1..N
+    ph1_csv = tmp_path / "phase1_ranked_directions.csv"
+    ph1.to_csv(ph1_csv, index=False)
+
+    ph2 = _ranked_frame([dict(pair_id=p, direction=d, n_agree=6, mean_uv=-1.0 - 0.1 * i)
+                         for i, (p, d) in enumerate((p, d) for p in pairs
+                                                    for d in ("regular", "counter"))])
+    merged = p2.rank_stability(str(ph1_csv), ph2)
+    out = capsys.readouterr().out
+    assert "Spearman rho" in out and "n=8 shared" in out
+    assert {"phase1_rank", "rank_shift"} <= set(merged.columns)
+    assert merged["phase1_rank"].notna().all()
+
+
+def test_rank_stability_survives_a_missing_phase1_file(tmp_path, capsys):
+    import rank_novel_phase2 as p2
+    ph2 = _ranked_frame([dict(pair_id=1001, direction="regular", n_agree=6, mean_uv=-1.0)])
+    merged = p2.rank_stability(str(tmp_path / "absent.csv"), ph2)
+    assert "not found" in capsys.readouterr().out
+    assert merged["phase1_rank"].isna().all()
+
+
+# ──────────────────────────────────────────────────────────
+# Figures
+# ──────────────────────────────────────────────────────────
+
+def _fake_ranking(pairs, seed):
+    rng = np.random.default_rng(seed)
+    freqs = APPROVED_GRID
+    rows = []
+    for i, p in enumerate(pairs):
+        lo, hi = freqs[i % (len(freqs) - 1)], freqs[(i % (len(freqs) - 1)) + 1]
+        for d in ("regular", "counter"):
+            n_ag = int(rng.integers(0, len(MODELS) + 1))
+            row = dict(pair_id=p, direction=d, n_agree=n_ag,
+                       mean_uv=-rng.random() - 0.75 if n_ag else np.nan,
+                       f_low=lo, f_high=hi,
+                       semitones=12 * np.log2(hi / lo),
+                       pct_deviance=100 * (hi / lo - 1))
+            for m in MODELS:
+                row[f"s7__{m}"] = bool(rng.random() < n_ag / len(MODELS))
+                row[f"trough_uv__{m}"] = -rng.random()
+            rows.append(row)
+    return _ranked_frame(rows)
+
+
+def test_plot_script_writes_all_three_figures(tmp_path):
+    results, figs = tmp_path / "results", tmp_path / "figs"
+    results.mkdir()
+    pairs = list(range(1001, 1041))
+    _fake_ranking(pairs, 1).to_csv(results / "phase1_ranked_directions.csv", index=False)
+    _fake_ranking(pairs[:12], 2).to_csv(results / "phase2_final_ranking.csv", index=False)
+
+    script = REPO / "aux/analysis_novel_search/plots/novel_search_plots.py"
+    r = subprocess.run([sys.executable, str(script), "--results_dir", str(results),
+                        "--out_dir", str(figs)], capture_output=True, text=True, cwd=REPO)
+    assert r.returncode == 0, r.stdout + r.stderr
+    for name in ("novel_n_agree_heatmap.png", "novel_deviance_scaling.png",
+                 "novel_rank_stability.png"):
+        assert (figs / name).stat().st_size > 5000, name
+
+
+def test_plot_script_runs_on_phase1_alone(tmp_path):
+    """Phase 1 lands weeks before Phase 2; the figures must not wait on it."""
+    results, figs = tmp_path / "results", tmp_path / "figs"
+    results.mkdir()
+    _fake_ranking(list(range(1001, 1041)), 1).to_csv(
+        results / "phase1_ranked_directions.csv", index=False)
+    script = REPO / "aux/analysis_novel_search/plots/novel_search_plots.py"
+    r = subprocess.run([sys.executable, str(script), "--results_dir", str(results),
+                        "--out_dir", str(figs)], capture_output=True, text=True, cwd=REPO)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert (figs / "novel_n_agree_heatmap.png").exists()
+    assert not (figs / "novel_rank_stability.png").exists()
+    assert "Phase 2 not scored yet" in r.stdout
