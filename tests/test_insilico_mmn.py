@@ -1,4 +1,4 @@
-"""Tests for the in-silico MMN drivers under scripts/: the literature METHODS registry +
+"""Tests for the in-silico MMN drivers under scripts/: the CSV-driven method registry +
 SOA lookup, the finalize_method() mean-vs-z-score split, the previously-broken
 load_split_parcels imports (regression), and the combined results table builder.
 
@@ -22,9 +22,14 @@ if SCRIPTS_DIR not in sys.path:
 import insilico_mmn as im  # noqa: E402
 
 # Real SOA values from data/metadata/literature_frequency_intensity_duration_metadata.csv,
-# keyed by method_id, for the 10 methods in METHODS.
+# keyed by method_id. A subset of the 24 Frequency methods -- spot-checks, not the full set.
 EXPECTED_SOA_MS = {75: 500.0, 74: 1000.0, 72: 500.0, 60: 300.0, 53: 333.0,
                    55: 500.0, 37: 310.0, 43: 510.0, 44: 510.0, 27: 900.0}
+
+# The 24 change_type=="Frequency" method_ids in the literature sheet; each yields a regular and a
+# counterbalanced condition, so the registry is 48 entries.
+LITERATURE_FREQ_IDS = {9, 10, 12, 17, 18, 19, 20, 21, 27, 28, 29, 30, 31, 32, 33,
+                       37, 43, 44, 53, 55, 60, 72, 74, 75}
 
 
 # ──────────────────────────────────────────────────────────
@@ -50,22 +55,46 @@ def test_no_module_imports_the_removed_load_split_parcels_name():
 # METHODS registry + SOA table
 # ──────────────────────────────────────────────────────────
 
-def test_methods_registry_is_the_10_literature_methods():
-    ids = [int(m[0].split("_")[1]) for m in im.METHODS]
-    assert len(im.METHODS) == 10
-    assert set(ids) == set(EXPECTED_SOA_MS)
-    assert len(set(ids)) == 10  # no duplicate method ids
-    for method, label, source in im.METHODS:
+def test_methods_registry_is_the_24_literature_frequency_methods_x_2_directions():
+    methods = im.build_methods_from_csv()
+    ids = [int(m[0].split("_")[1]) for m in methods]
+    assert len(methods) == 2 * len(LITERATURE_FREQ_IDS)  # 24 regular + 24 counter
+    assert set(ids) == LITERATURE_FREQ_IDS
+    names = [m[0] for m in methods]
+    assert len(set(names)) == len(names)  # no duplicate condition names
+    assert sum(n.endswith("_counter") for n in names) == len(LITERATURE_FREQ_IDS)
+    for method, label, source in methods:
         assert method.startswith("method_")
         assert "→" in label  # "standard->deviant" label, not the old DOWN/UP direction string
         assert source and source[0].isupper()  # citation, e.g. "Javitt_2000a"
 
 
+def test_registry_is_not_built_at_import_time():
+    """The novel-grid search drives the same modules off a different --metadata_csv, so the
+    registry must be a function of that arg, not a module-level constant baked in at import."""
+    assert not hasattr(im, "METHODS")
+
+
+def test_build_methods_from_csv_follows_the_given_csv(tmp_path):
+    csv_path = tmp_path / "grid.csv"
+    csv_path.write_text(
+        "source,method_id,paradigm,change_type,standard_freq,deviant_freq,standard_soa\n"
+        "novel_grid,1001,oddball,Frequency,200,225,580\n"
+        "novel_grid,1002,oddball,Frequency,200,253,580\n"
+        "novel_grid,1003,oddball,Duration,200,200,580\n"  # non-Frequency rows are dropped
+    )
+    methods = im.build_methods_from_csv(str(csv_path))
+    assert [m[0] for m in methods] == ["method_1001", "method_1002",
+                                       "method_1001_counter", "method_1002_counter"]
+    assert methods[0][1] == "200→225 Hz" and methods[2][1] == "225→200 Hz"
+
+
 def test_soa_for_method_matches_metadata_csv():
     soa_table = im.load_soa_table()
-    for method, _, _ in im.METHODS:
+    for method, _, _ in im.build_methods_from_csv():
         n = int(method.split("_")[1])
-        assert im.soa_for_method(method, soa_table) == pytest.approx(EXPECTED_SOA_MS[n])
+        if n in EXPECTED_SOA_MS:  # spot-checked subset
+            assert im.soa_for_method(method, soa_table) == pytest.approx(EXPECTED_SOA_MS[n])
 
 
 # ──────────────────────────────────────────────────────────

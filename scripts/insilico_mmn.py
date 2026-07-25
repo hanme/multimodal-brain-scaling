@@ -49,13 +49,18 @@ from mmn_criteria_table import compute_criteria_table, CRITERIA_COLUMNS
 
 DURATION_CSV = "data/metadata/literature_frequency_intensity_duration_metadata.csv"
 
-# MMN methods: the literature classic-oddball (Definition 1) FREQUENCY set, derived from
-# data/metadata/literature_frequency_intensity_duration_metadata.csv (all rows with
-# change_type == "Frequency" -- 24 methods). Each method has 1 standard file (repeating tone)
-# + 15 deviant files (N in {3,5,7} x var in {1..5}); the deviant train's LAST tone differs in
-# frequency from the standard's repeating tone. The registry is built from the CSV (rather than
-# hardcoded) so it stays in sync with the sheet: 24 regular + 24 counterbalanced (std/deviant
-# swapped) = 48 conditions. Tuple = (stimulus-dir name, "standard->deviant" label, source).
+# MMN methods: the classic-oddball (Definition 1) FREQUENCY set, derived from the metadata CSV
+# named by --metadata_csv (all rows with change_type == "Frequency"). Each method has 1 standard
+# file (repeating tone) + up to 15 deviant files (N in {3,5,7} x var in {1..5}); the deviant
+# train's LAST tone differs in frequency from the standard's repeating tone. The registry is built
+# from the CSV (rather than hardcoded) so it stays in sync with the sheet: n regular + n
+# counterbalanced (std/deviant swapped) = 2n conditions.
+# Tuple = (stimulus-dir name, "standard->deviant" label, source).
+#
+# The registry is built inside main() from args.metadata_csv -- NOT at import time -- so the same
+# drivers serve the 24-method literature screen (default CSV, 48 conditions) and the novel-grid
+# search (data/metadata/novel_grid_frequency_metadata.csv, 992 conditions). Callers that need the
+# literature set explicitly should call build_methods_from_csv() with no argument.
 
 
 def _fmt_hz(value):
@@ -65,7 +70,7 @@ def _fmt_hz(value):
 
 
 def build_methods_from_csv(csv_path=DURATION_CSV):
-    """(name, 'std->dev Hz', source) registry for the 24 Frequency methods x {regular, counter}."""
+    """(name, 'std->dev Hz', source) registry for the Frequency methods x {regular, counter}."""
     regular, counter = [], []
     with open(csv_path, newline="") as f:
         for row in csv.DictReader(f):
@@ -79,9 +84,7 @@ def build_methods_from_csv(csv_path=DURATION_CSV):
     return regular + counter
 
 
-METHODS = build_methods_from_csv()
-
-DEFAULT_SOA_CSV = "data/metadata/literature_frequency_intensity_duration_metadata.csv"
+DEFAULT_SOA_CSV = DURATION_CSV
 
 
 def load_soa_table(csv_path=DEFAULT_SOA_CSV):
@@ -452,14 +455,18 @@ def main():
 
     # fit the model->EEG mapping ONCE for this layer, apply to every method
     model, mu, sd, eval_metrics = fit_mapping(args, lags, parcels)
+    # Registry, SOA table and duration map all come from the SAME csv, so a non-default
+    # --metadata_csv (e.g. the novel grid) switches the whole driver over consistently.
+    methods_registry = build_methods_from_csv(args.metadata_csv)
     soa_table = load_soa_table(args.metadata_csv)
-    duration_map = load_duration_map(DURATION_CSV)
+    duration_map = load_duration_map(args.metadata_csv)
+    print(f"Method registry: {len(methods_registry)} conditions from {args.metadata_csv}")
 
     if args.methods == "all":
-        run = METHODS
+        run = methods_registry
     else:
         want = [m.strip() for m in args.methods.split(",")]
-        reg = {m[0]: m for m in METHODS}
+        reg = {m[0]: m for m in methods_registry}
         run = [reg.get(w, (w, w, "")) for w in want]
 
     out_dir = Path(args.out_dir)

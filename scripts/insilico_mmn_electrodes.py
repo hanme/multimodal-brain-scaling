@@ -12,10 +12,11 @@ held-out eval, and the time-locking are identical. Only the plotting/scoring dif
     averaged over a fronto-central ROI; negative beyond --mmn_thresh => "MMN present". Stored +
     printed alongside the figure.
 
-The 10-pair literature classic-oddball set (METHODS in insilico_mmn.py, sourced from
-data/metadata/literature_frequency_intensity_duration_metadata.csv) is fixed; this script just
-screens it at the electrode level. Run AFTER the per-method delta_T features exist
-(scripts/slurm_mmn_extract.sh).
+The condition set is built from --metadata_csv (insilico_mmn.build_methods_from_csv: every
+change_type=="Frequency" row x {regular, counter}) -- the 24-method literature sheet by default,
+or data/metadata/novel_grid_frequency_metadata.csv for the novel-grid search. This script just
+screens whatever it is given at the electrode level. Run AFTER the per-method delta_T features
+exist (scripts/slurm_mmn_extract_batch.sh).
 
   # default trains on D2 (Cortical Surprisal, human-speech audiobook EEG, healthy fronto-central);
   # --train_neural/--train_features override the dataset (old --broderick_* names still work).
@@ -34,10 +35,14 @@ from eeg_targets import FS, TIME_STEP_MS, build_electrodes
 # plot_method/plot_topo/mmn_metric/FC_ROI now live in insilico_mmn.py (shared with
 # insilico_mmn_attn.py, so Row A/B/C render identically for mTRF and encoder).
 from insilico_mmn import (
-    METHODS, DEFAULT_SOA_CSV, DURATION_CSV, fit_mapping, analyze_method, load_soa_table,
-    soa_for_method, load_duration_map, compute_criteria_table, plot_method, plot_topo,
-    mmn_metric, FC_ROI,
+    build_methods_from_csv, DEFAULT_SOA_CSV, DURATION_CSV, fit_mapping, analyze_method,
+    load_soa_table, soa_for_method, load_duration_map, compute_criteria_table, plot_method,
+    plot_topo, mmn_metric, FC_ROI,
 )
+
+
+def _str2bool(s):
+    return str(s).strip().lower() not in ("0", "false", "no", "off")
 
 
 def main():
@@ -81,6 +86,13 @@ def main():
                    help="ROI mean baseline_normalized_peak must be < -thresh to count as an MMN (0 = any negativity)")
     p.add_argument("--out_dir", default="outputs/figures/insilico_mmn_electrodes")
     p.add_argument("--data_dir", default="outputs/insilico_mmn_predictions")
+    # Per-method figures cost ~2 matplotlib renders each (one a full ~50-subplot montage). That is
+    # fine for the 48-condition literature screen but dominates walltime on the 992-condition novel
+    # grid, so large screens run with --save_plots false and the winners are re-run with it true.
+    # The prediction h5 is written either way -- all downstream scoring reads that, not the PNGs.
+    p.add_argument("--save_plots", type=_str2bool, default=True,
+                   help="write the per-method topo + Fz/FCz figures (default true). Set false for "
+                        "large screens; the prediction h5 is unaffected.")
     args = p.parse_args()
 
     lags = lags_in_bins(0.0, args.lag_max_ms, TIME_STEP_MS, TIME_STEP_MS)
@@ -92,15 +104,20 @@ def main():
 
     # fit the model->EEG mapping ONCE for this layer (electrodes as targets), apply to every method
     model, mu, sd, _ = fit_mapping(args, lags, electrodes)
-    soa_table = load_soa_table(args.metadata_csv or DEFAULT_SOA_CSV)
-    duration_map = load_duration_map(DURATION_CSV)
+    # Registry, SOA table and duration map all come from the SAME csv, so a non-default
+    # --metadata_csv (e.g. the novel grid) switches the whole driver over consistently.
+    metadata_csv = args.metadata_csv or DEFAULT_SOA_CSV
+    methods_registry = build_methods_from_csv(metadata_csv)
+    soa_table = load_soa_table(metadata_csv)
+    duration_map = load_duration_map(metadata_csv)
+    print(f"Method registry: {len(methods_registry)} conditions from {metadata_csv}")
 
     fz_fcz_idx = [i for i, e in enumerate(electrodes) if e[0] in ("Fz", "FCz")]
 
     if args.methods == "all":
-        run = METHODS
+        run = methods_registry
     else:
-        reg = {m[0]: m for m in METHODS}
+        reg = {m[0]: m for m in methods_registry}
         run = [reg.get(w.strip(), (w.strip(), w.strip(), "")) for w in args.methods.split(",")]
 
     out_dir = Path(args.out_dir)
@@ -130,17 +147,18 @@ def main():
             continue
         amp, roi_used = mmn_metric(res, electrodes, roi)
         present = bool(amp < -args.mmn_thresh)
-        out_path = out_dir / f"insilico_mmn_electrodes__{method}__{args.layer}.png"
-        plot_topo(method, label, source, res, electrodes, args, amp, roi_used, present, out_path)
+        if args.save_plots:
+            out_path = out_dir / f"insilico_mmn_electrodes__{method}__{args.layer}.png"
+            plot_topo(method, label, source, res, electrodes, args, amp, roi_used, present, out_path)
 
-        # Row A: Fz/FCz only, deviant/standard/diff columns + C0-S6 criteria table.
-        if fz_fcz_idx:
-            ctable = compute_criteria_table(
-                res["rel_ms"], res["z_diff"][:, fz_fcz_idx],
-                [electrodes[i][0] for i in fz_fcz_idx], method, duration_map)
-            fz_fcz_path = out_dir / f"insilico_mmn_electrodes_fz_fcz__{method}__{args.layer}.png"
-            plot_method(method, label, source, res, electrodes, args, fz_fcz_path,
-                       row_filter=["Fz", "FCz"], criteria_table=ctable)
+            # Row A: Fz/FCz only, deviant/standard/diff columns + C0-S6 criteria table.
+            if fz_fcz_idx:
+                ctable = compute_criteria_table(
+                    res["rel_ms"], res["z_diff"][:, fz_fcz_idx],
+                    [electrodes[i][0] for i in fz_fcz_idx], method, duration_map)
+                fz_fcz_path = out_dir / f"insilico_mmn_electrodes_fz_fcz__{method}__{args.layer}.png"
+                plot_method(method, label, source, res, electrodes, args, fz_fcz_path,
+                           row_filter=["Fz", "FCz"], criteria_table=ctable)
 
         g = h5.create_group(method)
         g.attrs.update(dict(context_final=label, source=source, soa_ms=soa_ms,

@@ -36,7 +36,7 @@ import matplotlib.pyplot as plt
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # sibling insilico_mmn.py
 from insilico_mmn import (  # noqa: E402
-    FS, TIME_STEP_MS, METHODS, DEFAULT_SOA_CSV, DURATION_CSV, PLOT_ROWS, FC_ROI,
+    FS, TIME_STEP_MS, build_methods_from_csv, DEFAULT_SOA_CSV, DURATION_CSV, PLOT_ROWS, FC_ROI,
     finalize_method, load_soa_table, soa_for_method, detect_final_tone_onset_s,
     plot_method, plot_topo, mmn_metric, load_duration_map, compute_criteria_table,
 )
@@ -169,11 +169,11 @@ def main():
           f"lookback={ck['lookback']}  hp={ck['highpass_hz']}Hz")
 
     label, source = args.method, ""
-    reg = {m[0]: m for m in METHODS}
+    reg = {m[0]: m for m in build_methods_from_csv(args.metadata_csv)}
     if args.method in reg:
         _, label, source = reg[args.method]
     soa_ms = soa_for_method(args.method, load_soa_table(args.metadata_csv))
-    duration_map = load_duration_map(DURATION_CSV)
+    duration_map = load_duration_map(args.metadata_csv)
 
     out_dir = Path(args.out_dir)
     feat_dir = Path(args.mmn_features_root) / f"mmn-{args.method}-delta-t"
