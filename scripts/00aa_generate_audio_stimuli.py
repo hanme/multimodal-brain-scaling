@@ -42,7 +42,7 @@ import numpy as np
 import pandas as pd
 import soundfile as sf
 from pathlib import Path
-from typing import Dict, Any, Tuple, List
+from typing import Dict, Any, Tuple, List, NamedTuple
 from multiprocessing import Pool, cpu_count
 import logging
 import warnings
@@ -75,6 +75,31 @@ DURATION_GROUPS = {
 
 TRIAL_LEVELS = [3, 5, 7]     # N values: standard tones between final two deviants
 NUM_VARIATIONS = 5           # Stochastic deviant variations per trial level
+
+# Defaults only. The effective grid comes from --trial_levels/--num_variations/--models and is
+# carried in a StimulusGrid so it survives pickling into multiprocessing workers (macOS spawns
+# rather than forks, so mutating the module constants in main() would NOT reach the workers).
+#
+# The novel-grid search generates in two passes: Phase 1 writes the 1 standard + 1 N7/var1 deviant
+# per direction (--trial_levels 7 --num_variations 1), and Phase 2 fills in the remaining 14
+# deviants into the SAME directories. That reuse is only sound because
+# generate_deviant_sequence() seeds on (method_id, N, v) alone -- see its docstring -- so neither
+# the grid size nor the row count perturbs an already-generated file.
+
+
+class StimulusGrid(NamedTuple):
+    """Which deviant stimuli to synthesize, and for which model families."""
+    trial_levels: Tuple[int, ...] = tuple(TRIAL_LEVELS)
+    num_variations: int = NUM_VARIATIONS
+    models: Tuple[str, ...] = tuple(MODEL_DURATIONS)
+
+    @property
+    def files_per_direction(self) -> int:
+        """1 standard + one deviant per (N, variation), per model."""
+        return 1 + len(self.trial_levels) * self.num_variations
+
+
+DEFAULT_GRID = StimulusGrid()
 
 # =============================================================================
 # UTILITY FUNCTIONS
@@ -200,7 +225,8 @@ def compute_tone_slots(total_duration_ms: float, tone_duration_ms: float,
     return K, leftover
 
 
-def validate_tone_slots(K: int, method_id: int, model_name: str) -> None:
+def validate_tone_slots(K: int, method_id: int, model_name: str,
+                        trial_levels=None) -> None:
     """
     Assert that K is large enough to accommodate every configured trial level.
 
@@ -209,14 +235,15 @@ def validate_tone_slots(K: int, method_id: int, model_name: str) -> None:
     metadata.
 
     Args:
-        K:          Number of available tone slots.
-        method_id:  Metadata row identifier (for error reporting).
-        model_name: Model name string (for error reporting).
+        K:            Number of available tone slots.
+        method_id:    Metadata row identifier (for error reporting).
+        model_name:   Model name string (for error reporting).
+        trial_levels: N values to check (default: the module TRIAL_LEVELS).
 
     Raises:
         ValueError: If K < N + 2 for any trial level N.
     """
-    for N in TRIAL_LEVELS:
+    for N in (TRIAL_LEVELS if trial_levels is None else trial_levels):
         required = N + 2
         if K < required:
             raise ValueError(
@@ -349,12 +376,13 @@ def build_audio_from_sequence(sequence: List[str], standard_freq: float,
 
 def process_row_model_config(row: pd.Series, model_name: str,
                              config_output_dir: Path,
-                             is_counterbalanced: bool) -> List[Dict[str, Any]]:
+                             is_counterbalanced: bool,
+                             grid: StimulusGrid = DEFAULT_GRID) -> List[Dict[str, Any]]:
     """
     Generate all WAV files for one metadata row, one model, one configuration,
     and return metadata records describing each generated file.
 
-    Produces a single standard WAV and (len(TRIAL_LEVELS) x NUM_VARIATIONS)
+    Produces a single standard WAV and (len(grid.trial_levels) x grid.num_variations)
     deviant WAVs, written to {config_output_dir}/{model_name}/.
 
     Args:
@@ -363,6 +391,7 @@ def process_row_model_config(row: pd.Series, model_name: str,
         config_output_dir:   Root directory for this configuration
                              (audio_outputs_regular or audio_outputs_counter).
         is_counterbalanced:  If True, swap standard and deviant frequencies.
+        grid:                Which (N, variation) deviants to synthesize.
 
     Returns:
         List of dicts, one per generated WAV, each containing metadata fields.
@@ -382,7 +411,7 @@ def process_row_model_config(row: pd.Series, model_name: str,
     total_duration_ms = MODEL_DURATIONS[model_name]
     duration_s = total_duration_ms // 1000
     K, leftover_ms = compute_tone_slots(total_duration_ms, tone_duration_ms, isi_ms)
-    validate_tone_slots(K, method_id, model_name)
+    validate_tone_slots(K, method_id, model_name, grid.trial_levels)
 
     model_dir = config_output_dir / model_name
     records = []
@@ -418,8 +447,8 @@ def process_row_model_config(row: pd.Series, model_name: str,
     })
 
     # Deviant stimuli
-    for N in TRIAL_LEVELS:
-        for v in range(1, NUM_VARIATIONS + 1):
+    for N in grid.trial_levels:
+        for v in range(1, grid.num_variations + 1):
             deviant_seq = generate_deviant_sequence(K, N, v, method_id)
             deviant_audio = build_audio_from_sequence(
                 deviant_seq, standard_freq, deviant_freq,
@@ -441,7 +470,8 @@ def process_row_model_config(row: pd.Series, model_name: str,
     return records
 
 
-def process_row(row: pd.Series, output_dir: Path) -> Dict[str, Any]:
+def process_row(row: pd.Series, output_dir: Path,
+                grid: StimulusGrid = DEFAULT_GRID) -> Dict[str, Any]:
     """
     Generate all WAV files for one metadata row across every model and both
     configurations (regular and counterbalanced). Collect metadata records,
@@ -450,6 +480,7 @@ def process_row(row: pd.Series, output_dir: Path) -> Dict[str, Any]:
     Args:
         row:        Pandas Series for one metadata row.
         output_dir: Base output directory.
+        grid:       Which deviants and which model families to synthesize.
 
     Returns:
         Dict with keys:
@@ -460,7 +491,7 @@ def process_row(row: pd.Series, output_dir: Path) -> Dict[str, Any]:
           'metadata_counter' (list of dicts — one per unique duration/stimulus)
     """
     method_id = int(row['method_id'])
-    models = list(MODEL_DURATIONS.keys())
+    models = list(grid.models)
 
     result = {
         'method_id': method_id,
@@ -479,7 +510,7 @@ def process_row(row: pd.Series, output_dir: Path) -> Dict[str, Any]:
 
             for model_name in models:
                 records = process_row_model_config(
-                    row, model_name, config_dir, is_counterbalanced=is_counter
+                    row, model_name, config_dir, is_counterbalanced=is_counter, grid=grid
                 )
 
                 # Only keep metadata records for the first model encountered
@@ -506,17 +537,18 @@ def _process_chunk(args: Tuple) -> List[Dict[str, Any]]:
     Worker target for multiprocessing: process a contiguous slice of rows.
 
     Args:
-        args: Tuple of (chunk_df, output_dir, chunk_index).
+        args: Tuple of (chunk_df, output_dir, chunk_index, grid).
 
     Returns:
         List of per-row result dicts from process_row().
     """
-    chunk_df, output_dir, _ = args
-    return [process_row(row, output_dir) for _, row in chunk_df.iterrows()]
+    chunk_df, output_dir, _, grid = args
+    return [process_row(row, output_dir, grid) for _, row in chunk_df.iterrows()]
 
 
 def generate_all_stimuli(metadata_df: pd.DataFrame, output_dir: Path,
-                         n_workers: int = 1) -> Dict[str, Any]:
+                         n_workers: int = 1,
+                         grid: StimulusGrid = DEFAULT_GRID) -> Dict[str, Any]:
     """
     Top-level generation loop: iterate over all metadata rows, optionally
     distributing work across a multiprocessing pool. Collects metadata records
@@ -526,6 +558,9 @@ def generate_all_stimuli(metadata_df: pd.DataFrame, output_dir: Path,
         metadata_df: Filtered (and optionally chunked) metadata dataframe.
         output_dir:  Base output directory.
         n_workers:   Number of parallel worker processes.
+        grid:        Which deviants and which model families to synthesize.
+                     Passed explicitly (not read from module state) so it
+                     survives pickling into spawned workers.
 
     Returns:
         Dict with 'successful', 'failed' counts and 'metadata_regular',
@@ -537,14 +572,14 @@ def generate_all_stimuli(metadata_df: pd.DataFrame, output_dir: Path,
         chunk_size = (n_rows + n_workers - 1) // n_workers
         chunks = [metadata_df.iloc[i:i + chunk_size]
                   for i in range(0, n_rows, chunk_size)]
-        args_list = [(chunk, output_dir, i) for i, chunk in enumerate(chunks)]
+        args_list = [(chunk, output_dir, i, grid) for i, chunk in enumerate(chunks)]
 
         with Pool(processes=n_workers) as pool:
             chunk_results = pool.map(_process_chunk, args_list)
 
         all_results = [r for batch in chunk_results for r in batch]
     else:
-        all_results = _process_chunk((metadata_df, output_dir, 0))
+        all_results = _process_chunk((metadata_df, output_dir, 0, grid))
 
     # Aggregate counts and metadata
     output = {
@@ -604,10 +639,46 @@ def main():
                         help='SLURM array chunk index (0-indexed)')
     parser.add_argument('--n_chunks', type=int, default=1,
                         help='Total SLURM array chunk count')
+    # Deviant-grid controls. Defaults reproduce the literature run exactly (16 wavs per method
+    # per direction per model). The novel search uses "--trial_levels 7 --num_variations 1" for
+    # its Phase-1 screen, then the defaults for Phase 2 into the same directories; the (method_id,
+    # N, v) seeding makes the overlapping files byte-identical regenerations.
+    parser.add_argument('--trial_levels', type=str,
+                        default=','.join(str(n) for n in TRIAL_LEVELS),
+                        help=f'comma-separated N values (default: {",".join(map(str, TRIAL_LEVELS))})')
+    parser.add_argument('--num_variations', type=int, default=NUM_VARIATIONS,
+                        help=f'stochastic deviant variations per N (default: {NUM_VARIATIONS})')
+    parser.add_argument('--models', type=str, default=','.join(MODEL_DURATIONS),
+                        help=f'comma-separated model families to synthesize for '
+                             f'(default: {",".join(MODEL_DURATIONS)})')
 
     args = parser.parse_args()
     if args.n_workers is None:
         args.n_workers = cpu_count()
+
+    try:
+        trial_levels = tuple(int(n) for n in args.trial_levels.split(',') if n.strip())
+    except ValueError:
+        print(f"ERROR: --trial_levels must be comma-separated integers, got {args.trial_levels!r}")
+        return 1
+    if not trial_levels:
+        print("ERROR: --trial_levels is empty")
+        return 1
+    if args.num_variations < 1:
+        print(f"ERROR: --num_variations must be >= 1, got {args.num_variations}")
+        return 1
+
+    models = tuple(m.strip() for m in args.models.split(',') if m.strip())
+    unknown = [m for m in models if m not in MODEL_DURATIONS]
+    if unknown:
+        print(f"ERROR: unknown model(s) {unknown}; known: {list(MODEL_DURATIONS)}")
+        return 1
+    if not models:
+        print("ERROR: --models is empty")
+        return 1
+
+    grid = StimulusGrid(trial_levels=trial_levels, num_variations=args.num_variations,
+                        models=models)
 
     print("=" * 60)
     print("Phase 0aa: Generate Audio Stimuli")
@@ -615,8 +686,11 @@ def main():
     print(f"Metadata CSV: {args.metadata_csv}")
     print(f"Output dir:   {args.output_dir}")
     print(f"Workers:      {args.n_workers}")
-    print(f"Trial levels: {TRIAL_LEVELS}")
-    print(f"Variations:   {NUM_VARIATIONS}")
+    print(f"Trial levels: {list(grid.trial_levels)}")
+    print(f"Variations:   {grid.num_variations}")
+    print(f"Models:       {list(grid.models)}")
+    print(f"Wavs/row:     {grid.files_per_direction * len(grid.models) * 2} "
+          f"({grid.files_per_direction} per model per direction)")
     if args.n_chunks > 1:
         print(f"SLURM chunk:  {args.chunk_idx + 1} of {args.n_chunks}")
     print()
@@ -666,7 +740,7 @@ def main():
 
     # Create output directories (audio + metadata)
     output_dir = Path(args.output_dir)
-    for model_name in MODEL_DURATIONS:
+    for model_name in grid.models:
         (output_dir / "audio_outputs_regular" / model_name).mkdir(
             parents=True, exist_ok=True)
         (output_dir / "audio_outputs_counter" / model_name).mkdir(
@@ -680,7 +754,7 @@ def main():
 
     # Generate audio and collect metadata
     results = generate_all_stimuli(metadata_df, output_dir,
-                                   n_workers=args.n_workers)
+                                   n_workers=args.n_workers, grid=grid)
 
     # Write metadata CSVs
     if args.n_chunks > 1:
@@ -699,7 +773,7 @@ def main():
     write_metadata_csv(results['metadata_counter'], ctr_meta_path)
 
     # Summary
-    files_per_row = (1 + len(TRIAL_LEVELS) * NUM_VARIATIONS) * len(MODEL_DURATIONS) * 2
+    files_per_row = grid.files_per_direction * len(grid.models) * 2
 
     print()
     print("=" * 60)

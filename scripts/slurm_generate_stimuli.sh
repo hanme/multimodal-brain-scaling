@@ -8,6 +8,11 @@
 #
 # Submit:   sbatch scripts/slurm_generate_stimuli.sh
 #           sbatch --export=ALL,OUTPUT_DIR=outputs/stim_gen,METADATA_CSV=... scripts/slurm_generate_stimuli.sh
+# Extra args are forwarded verbatim to the python script, e.g. the novel-grid Phase-1 screen
+# (1 standard + 1 N7/var1 deviant per direction, whisper + wav2vec2 only):
+#   sbatch --export=ALL,METADATA_CSV=data/metadata/novel_grid_frequency_metadata.csv,\
+# OUTPUT_DIR=outputs/stim_gen_novel scripts/slurm_generate_stimuli.sh \
+#          --trial_levels 7 --num_variations 1 --models whisper,wav2vec2
 # Bump --cpus-per-task below (and it flows into --n_workers) for more parallelism.
 # =============================================================================
 
@@ -31,11 +36,16 @@ source env.sh
 mkdir -p logs "$OUTPUT_DIR"
 
 echo "Start: $(date) on $(hostname)   cores=${SLURM_CPUS_PER_TASK:-1}  metadata=$METADATA_CSV  out=$OUTPUT_DIR"
+echo "  extra args: $*"
 
+# "$@" LAST so trailing flags (--trial_levels/--num_variations/--models) reach the generator and
+# win over the defaults above. Without it they are silently dropped and the full 16-clip grid is
+# synthesized -- an 8x overshoot on the novel-grid Phase-1 screen.
 python scripts/00aa_generate_audio_stimuli.py \
     --metadata_csv "$METADATA_CSV" \
     --output_dir   "$OUTPUT_DIR" \
-    --n_workers    "${SLURM_CPUS_PER_TASK:-4}"
+    --n_workers    "${SLURM_CPUS_PER_TASK:-4}" \
+    "$@"
 
 EXIT_CODE=$?
 [ $EXIT_CODE -eq 0 ] && echo "SUCCESS generate_stimuli" || echo "FAILED generate_stimuli exit=${EXIT_CODE}"
