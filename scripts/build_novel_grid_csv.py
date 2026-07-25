@@ -1,15 +1,38 @@
 #!/usr/bin/env python
-"""Build the novel tone-pair grid: every unordered pair of a log-spaced frequency grid.
+"""Build the novel tone-pair grid: every unordered pair of a semitone-spaced frequency grid.
 
 The literature screen (24 methods) tests whatever pairs published MMN studies happened to use.
 This builds the search space for the complementary question -- do pairs that DON'T appear in the
 literature drive stronger, more model-consistent responses? -- as a dense grid over
-[200, 7500] Hz.
+[200, 7500] Hz. The literature's own frequency methods all sit between 600 and 1000 Hz, so this
+deliberately overshoots them in both directions.
 
-Grid: N frequencies log-spaced from F_LO to F_HI, so every adjacent step is the same ratio
-(32 points over 200->7500 Hz = 1.1240x = 2.02 semitones = 12.5% deviance per step). Log spacing
-matters because pitch perception is ratio-based: a linear grid would be perceptually dense at the
-top and sparse at the bottom.
+The grid is a LADDER plus EXTRAS:
+
+  ladder   32 points from 200 Hz in exact 2.000-semitone steps -> 200 ... 7184 Hz.
+           Spacing is in semitones, not Hz, because pitch is ratio-based: an equal-Hz grid over
+           this range would put a 13.5-semitone gap at the bottom and 0.55-semitone steps at the
+           top, a 24x difference in perceptual step size. Equal ratio steps also mean "k steps
+           apart" denotes the same deviance everywhere, and that the two directions of a pair
+           carry equal deviance magnitude (+2.000 st one way, -2.000 st the other), which is what
+           makes the frequency-preference test interpretable.
+           A whole-tone step additionally puts octaves exactly on the grid (6 x 2 = 12 st), so
+           200/400/800/1600/3200/6400 are all grid points and true 2:1 pairs exist. At the
+           2.0241 st that 32 points evenly spanning 200-7500 would have implied, 12/2.0241 = 5.93
+           is not an integer and NO pair anywhere in the grid would be an exact octave.
+
+  extras   7500 Hz, appended to hold the top of the intended range (it is also just under the
+           8 kHz Nyquist of the 16 kHz sample rate every model takes -- a higher tone would
+           alias). This makes ONE irregular step, 7184 -> 7500 = 0.745 st = 4.4%.
+           That irregularity is deliberate and is the grid's only sub-2-semitone pair: it is
+           finer than every literature frequency method (the finest four are 0.84, 1.07, 1.74
+           and 1.99 st), so it is the one probe of near-threshold deviance here. Read it with
+           care -- it sits at 7184-7500 Hz, far above the literature's 600-1000 Hz band, so it
+           has no published counterpart to compare against. The other 31 pairs that 7500 adds
+           are near-replicas of the corresponding 7184 pairs, 0.745 st away.
+
+Irregular spacing does not disturb the analysis: deviance is computed per pair from the actual
+frequencies, never from a step count.
 
 Unordered pairs only: {f_i -> f_j} and {f_j -> f_i} are the SAME pair, because the generator
 synthesizes both directions of every row (audio_outputs_regular / audio_outputs_counter). So
@@ -18,14 +41,14 @@ ordered combination exactly once. Emitting reversed rows too would double the co
 
 The diagonal (f_i == f_j) is excluded deliberately: the "deviant" sequence would synthesize to a
 waveform byte-identical to the standard, so deviant - standard is exactly zero by construction --
-a degenerate control, not an informative one. The graded control is the smallest-Deltaf pairs
-(adjacent grid steps).
+a degenerate control, not an informative one. The graded control is the smallest-Deltaf pairs.
 
 method_id starts at 1001 so it can never collide with the literature ids (1-76), which share the
 method_{id} stimulus-directory namespace.
 
-  python scripts/build_novel_grid_csv.py            # -> data/metadata/novel_grid_frequency_metadata.csv
-  python scripts/build_novel_grid_csv.py --n_freqs 8 --out /tmp/small.csv --index_out /tmp/i.csv
+  python scripts/build_novel_grid_csv.py          # -> data/metadata/novel_grid_frequency_metadata.csv
+  python scripts/build_novel_grid_csv.py --n_ladder 5 --extra_freqs "" --out /tmp/small.csv \
+      --index_out /tmp/i.csv
 """
 
 import argparse
@@ -52,18 +75,28 @@ SOA_MS = 580          # = TONE_DUR_MS + ISI_MS
 INTENSITY_DB = 80
 P_DEVIANT_PC = 10
 
-F_LO, F_HI, N_FREQS = 200.0, 7500.0, 32
+F_LO = 200.0             # ladder start, Hz
+SEMITONE_STEP = 2.0      # one whole tone; 6 steps = exactly one octave
+N_LADDER = 32            # 200 ... 7184 Hz
+EXTRA_FREQS = (7500,)    # appended; see the module docstring for why it is irregular
 FIRST_METHOD_ID = 1001
 
 
-def build_grid(n_freqs=N_FREQS, f_lo=F_LO, f_hi=F_HI):
-    """n log-spaced frequencies, rounded to integer Hz.
+def build_grid(f_lo=F_LO, semitone_step=SEMITONE_STEP, n_ladder=N_LADDER,
+               extra_freqs=EXTRA_FREQS):
+    """The ladder (rounded to integer Hz) plus any extras, sorted and de-duplicated.
+
+    Anchoring every rung to f_lo -- f_lo * 2**(step*i/12) -- rather than interpolating between
+    two endpoints keeps the step exact and the octaves exact. Interpolating instead between 200
+    and a rounded 7184 would accumulate endpoint-rounding error and shift rung 27 from 4525 to
+    4526.
 
     Rounded values are what gets written, so the synthesized tone and the metadata agree; the
-    ratio between adjacent rounded steps is therefore only approximately constant (the rounding
-    is at most 0.5 Hz, i.e. <0.25% at the bottom of the range and negligible at the top).
+    ratio between adjacent ROUNDED rungs is therefore only approximately constant (at most half
+    a hertz, i.e. ~0.25% at the bottom of the range and negligible at the top).
     """
-    return [round(f_lo * (f_hi / f_lo) ** (i / (n_freqs - 1))) for i in range(n_freqs)]
+    ladder = [round(f_lo * 2 ** (semitone_step * i / 12)) for i in range(n_ladder)]
+    return sorted(set(ladder) | {int(f) for f in extra_freqs})
 
 
 def build_rows(freqs, first_id=FIRST_METHOD_ID):
@@ -108,8 +141,12 @@ def verify(freqs, rows):
     n = len(freqs)
     assert len(set(freqs)) == n, (
         f"grid has duplicate frequencies after rounding: {n - len(set(freqs))} collisions. "
-        f"Widen the range or reduce --n_freqs.")
+        f"Widen the range or reduce --n_ladder / --semitone_step.")
+    assert freqs == sorted(freqs), "grid must be ascending"
     assert len(rows) == n * (n - 1) // 2, f"expected {n * (n - 1) // 2} rows, got {len(rows)}"
+    # 8 kHz Nyquist at the 16 kHz sample rate every model takes; a higher tone would alias to a
+    # different frequency than the metadata claims.
+    assert max(freqs) < 8000, f"{max(freqs)} Hz is at or above the 8 kHz Nyquist limit"
 
     valid = set(freqs)
     seen = set()
@@ -130,11 +167,18 @@ def verify(freqs, rows):
 def main():
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--n_freqs", type=int, default=N_FREQS,
-                   help=f"grid points, log-spaced (default {N_FREQS} -> "
-                        f"{N_FREQS * (N_FREQS - 1) // 2} pairs)")
-    p.add_argument("--f_lo", type=float, default=F_LO, help=f"lowest frequency, Hz (default {F_LO:g})")
-    p.add_argument("--f_hi", type=float, default=F_HI, help=f"highest frequency, Hz (default {F_HI:g})")
+    p.add_argument("--f_lo", type=float, default=F_LO,
+                   help=f"ladder start, Hz (default {F_LO:g})")
+    p.add_argument("--semitone_step", type=float, default=SEMITONE_STEP,
+                   help=f"ladder step in semitones (default {SEMITONE_STEP:g}; 2 = a whole tone, "
+                        f"so 6 steps is exactly an octave)")
+    p.add_argument("--n_ladder", type=int, default=N_LADDER,
+                   help=f"ladder rungs (default {N_LADDER})")
+    p.add_argument("--extra_freqs", type=str,
+                   default=",".join(str(f) for f in EXTRA_FREQS),
+                   help=f"comma-separated extra frequencies merged into the ladder, in Hz "
+                        f"(default {','.join(str(f) for f in EXTRA_FREQS)}). Pass an empty "
+                        f"string for a pure ladder.")
     p.add_argument("--first_method_id", type=int, default=FIRST_METHOD_ID,
                    help=f"first method_id (default {FIRST_METHOD_ID}; must exceed the "
                         f"literature range 1-76)")
@@ -144,10 +188,13 @@ def main():
                    help="per-pair frequency/deviance index for the ranking step to join against")
     args = p.parse_args()
 
-    assert args.n_freqs >= 2, "--n_freqs must be at least 2"
-    assert 0 < args.f_lo < args.f_hi, "need 0 < --f_lo < --f_hi"
+    assert args.n_ladder >= 1, "--n_ladder must be at least 1"
+    assert args.f_lo > 0, "--f_lo must be positive"
+    assert args.semitone_step > 0, "--semitone_step must be positive"
+    extras = tuple(float(x) for x in args.extra_freqs.split(",") if x.strip())
 
-    freqs = build_grid(args.n_freqs, args.f_lo, args.f_hi)
+    freqs = build_grid(args.f_lo, args.semitone_step, args.n_ladder, extras)
+    assert len(freqs) >= 2, "need at least 2 distinct frequencies to form a pair"
     rows, index = build_rows(freqs, args.first_method_id)
     verify(freqs, rows)
 
@@ -161,15 +208,31 @@ def main():
             w.writeheader()
             w.writerows(data)
 
-    step_ratio = (args.f_hi / args.f_lo) ** (1 / (args.n_freqs - 1))
-    print(f"grid: {len(freqs)} frequencies, {args.f_lo:g}-{args.f_hi:g} Hz, log-spaced")
-    print(f"  step ratio {step_ratio:.4f} = {12 * math.log2(step_ratio):.3f} semitones "
-          f"= {100 * (step_ratio - 1):.1f}% deviance (the finest the grid can resolve)")
+    steps = [12.0 * math.log2(b / a) for a, b in zip(freqs, freqs[1:])]
+    finest = min(i["semitones"] for i in index)
+    print(f"grid: {len(freqs)} frequencies, {freqs[0]}-{freqs[-1]} Hz")
+    print(f"  ladder: {args.n_ladder} rungs from {args.f_lo:g} Hz in {args.semitone_step:g}-semitone "
+          f"steps -> {round(args.f_lo * 2 ** (args.semitone_step * (args.n_ladder - 1) / 12))} Hz")
+    if extras:
+        print(f"  extras: {', '.join(f'{e:g}' for e in extras)} Hz")
+    # Adjacent steps differ only by integer-Hz rounding UNLESS an extra sits off the ladder, in
+    # which case the irregular rung is the interesting one -- it is the grid's finest deviance.
+    irregular = [(a, b, s) for a, b, s in zip(freqs, freqs[1:], steps)
+                 if abs(s - args.semitone_step) > 0.1]
+    print(f"  adjacent steps {min(steps):.3f}-{max(steps):.3f} semitones; "
+          f"finest pair {finest:.3f} st = {100 * (2 ** (finest / 12) - 1):.2f}% "
+          f"(the finest deviance the grid can resolve)")
+    for a, b, s in irregular:
+        print(f"    irregular rung {a} -> {b} = {s:.3f} st = {100 * (b / a - 1):.2f}%")
+    octaves = [f for f in freqs if abs(round(12 * math.log2(f / freqs[0])) % 12) < 1e-6
+               and abs(12 * math.log2(f / freqs[0]) - round(12 * math.log2(f / freqs[0]))) < 1e-6]
+    print(f"  exact octaves of {freqs[0]} Hz on the grid: "
+          f"{', '.join(str(f) for f in octaves) if len(octaves) > 1 else 'none'}")
     print(f"  {freqs}")
     print(f"pairs: {len(rows)} unordered -> {2 * len(rows)} direction-instances "
           f"(method_id {rows[0]['method_id']}-{rows[-1]['method_id']}, "
           f"plus a _counter dir for each)")
-    print(f"  deviance range {index[0]['pct_deviance']:.1f}% - "
+    print(f"  deviance range {min(i['pct_deviance'] for i in index):.1f}% - "
           f"{max(i['pct_deviance'] for i in index):.1f}%")
     print(f"tone: {TONE_DUR_MS} ms, ISI {ISI_MS} ms, SOA {SOA_MS} ms, {INTENSITY_DB} dB, "
           f"p_deviant {P_DEVIANT_PC}%")

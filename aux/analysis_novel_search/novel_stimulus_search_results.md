@@ -8,10 +8,10 @@
 > by hand.
 
 > **Extends** `aux/analysis_with_counter/results_analysis_with_counter.md`, which screened the
-> **24 literature frequency methods** × 7 models. This memo screens a **496-pair novel frequency
+> **24 literature frequency methods** × 7 models. This memo screens a **528-pair novel frequency
 > grid** × 6 models (whisper-large excluded — it alone was 51% of the literature screen's cost),
 > mTRF only, at the FCz electrode, at a fixed µV floor of X = 0.75.
-> 496 unordered pairs × {regular, counter} = **992 direction-instances** in Phase 1; the
+> 528 unordered pairs × {regular, counter} = **1,056 direction-instances** in Phase 1; the
 > top **145 pairs** (= 290 direction-instances) are re-evaluated in Phase 2.
 
 > **The question.** The literature screen tested whatever pairs published MMN studies happened to
@@ -38,9 +38,12 @@ amplitude-shrunk. X = 0.75 µV is calibrated to the *model's own* trough distrib
 pure tones. This caveat applies equally to the literature screen, so the *comparison* in Section 4
 is fair, but it limits any absolute claim about these stimuli.
 
-**4 — Minimum resolvable deviance is 12.5%** (one grid step = 2.024 semitones). This is a
-coarse-to-fine search of a wide space, **not a threshold study**; nothing here speaks to
-near-threshold deviance.
+**4 — The grid is coarse, with one exception.** Every ladder step is 2.000 semitones (12.25%), so
+that is the resolution almost everywhere — coarser than 4 of the 24 literature frequency methods
+(0.84, 1.07, 1.74, 1.99 st). The single exception is 7184↔7500 Hz at **0.745 st (4.4%)**, finer
+than any literature method but sitting far above their 600–1000 Hz band, with no published
+counterpart to compare against. Treat this as a coarse-to-fine search of a wide space, **not a
+threshold study**, and do not generalise the one fine pair to the rest of the range.
 
 **5 — wav2vec2 comparability.** Mapped on 10 s windows with `PCA_VAR=0.95`, vs whisper's 30 s and
 `pca_var=None`. Its test r is a loose sanity gate only, not a like-for-like quality figure.
@@ -52,27 +55,30 @@ near-threshold deviance.
 > **Code:** `scripts/build_novel_grid_csv.py`, `scripts/slurm_mmn_extract_batch.sh`
 > **Data:** `data/metadata/novel_grid_frequency_metadata.csv`,
 > `outputs/results_novel_search/grid_index.csv`
-> **Design.** 32 frequencies log-spaced over 200–7500 Hz (ratio 1.1240 = 2.024 semitones = 12.5%
-> per step) → 496 unordered pairs. Both directions of each pair are synthesized by the existing
-> counterbalancing, so the 496 rows cover all **992 ordered** combinations. The diagonal is
+> **Design.** 33 frequencies: a 32-rung ladder from 200 Hz in exact 2.000-semitone steps (to
+> 7184 Hz), plus 7500 Hz. Semitone spacing keeps every step the same perceptual size and puts
+> octaves exactly on the grid (200/400/800/1600/3200/6400); the 7500 extra holds the top of the
+> range and creates one irregular 0.745 st rung. → 528 unordered pairs. Both directions of each
+> pair are synthesized by the existing counterbalancing, so the 528 rows cover all **1,056
+> ordered** combinations. The diagonal is
 > excluded by construction: a same-frequency "deviant" synthesizes to a waveform byte-identical to
 > the standard, so the difference is exactly zero. The graded control is the smallest-Δf pairs.
 
 **Table 1. Extraction spend, each phase against its own budget** — from `sacct`, not the estimate.
-The phase sizes are fixed by design (496 pairs, then the top 145); the budgets are what they are
+The phase sizes are fixed by design (528 pairs, then the top 145); the budgets are what they are
 measured against, not an input to the selection.
 
 | | dirs | clips/dir | budget CHF | predicted CHF | **actual CHF** |
 |---|---|---|---|---|---|
-| Phase 1 | 992 | 2 | 110 | ≈115.9 | ‹TBD› |
+| Phase 1 | 1,056 | 2 | 110 | ≈123.4 | ‹TBD› |
 | Phase 2 | 290 | 14 (new only) | 220 | ≈221.6 | ‹TBD› |
-| **total** | | | 330 | ≈337.5 | **‹TBD›** |
+| **total** | | | 330 | ≈345.0 | **‹TBD›** |
 
 Reported separately, **not** charged to the budget: in-silico MMN (~1.9 CHF Phase 1, ~0.6 CHF
 Phase 2, both with `--save_plots false`), audio synthesis, ranking, plots.
 
 The predictions already include the per-array-task model-load overhead (≈0.27 core-h), which the
-raw per-clip cost table omits; at 2 clips per task that is ≈8.8 CHF of the Phase-1 figure and is
+raw per-clip cost table omits; at 2 clips per task that is ≈9.4 CHF of the Phase-1 figure and is
 why both phases are expected to run modestly over. The pair count does **not** move in response —
 it is a flat 145 by design. See §17.4 of the repository overview.
 
@@ -92,7 +98,7 @@ it is a flat 145 by design. See §17.4 of the repository overview.
 > *only* the agreeing models — averaging in models that failed S2 would mix in latencies that are
 > not MMN latencies. Undefined when `n_agree = 0`.
 
-**Table 2. Direction-instances by n_agree tier (Phase 1, /992).** ‹TBD›
+**Table 2. Direction-instances by n_agree tier (Phase 1, /1056).** ‹TBD›
 
 **Table 3. n_agree vs deviance, by octile.** ‹TBD — plus Spearman ρ(pct_deviance, n_agree)›
 
@@ -100,7 +106,7 @@ A monotone rise then plateau is the expected deviance-scaling signature. **A fla
 would say the metric is not tracking deviance at all** and would undercut every ranking below —
 read this table before Section 4.
 
-![n_agree over the 32×32 frequency grid; standard frequency on the vertical axis, deviant frequency on the horizontal, single-hue sequential ramp from light (0 models agree) to dark (all 6). The excluded diagonal is grey.](plots/novel_n_agree_heatmap.png)
+![n_agree over the 33×33 frequency grid; standard frequency on the vertical axis, deviant frequency on the horizontal, single-hue sequential ramp from light (0 models agree) to dark (all 6). The excluded diagonal is grey.](plots/novel_n_agree_heatmap.png)
 
 ![Two panels: per-model S7 rate versus deviance in semitones (six Okabe-Ito series, each with a distinct marker), and mean n_agree versus deviance with standard-error bars.](plots/novel_deviance_scaling.png)
 
@@ -114,7 +120,7 @@ read this table before Section 4.
 > **Code:** `scripts/rank_novel_phase2.py`
 > **Data:** `outputs/results_novel_search/phase2_final_ranking.csv`
 > **Method.** Spearman ρ between the Phase-1 and Phase-2 rankings over the 290 shared
-> direction-instances. Phase-1 ranks are positions in the full 992-instance list, so they are
+> direction-instances. Phase-1 ranks are positions in the full 1,056-instance list, so they are
 > **re-ranked within the shared subset** before correlating — otherwise the comparison would be
 > against a population Phase 2 never scored.
 

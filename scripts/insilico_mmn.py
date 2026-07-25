@@ -59,7 +59,7 @@ DURATION_CSV = "data/metadata/literature_frequency_intensity_duration_metadata.c
 #
 # The registry is built inside main() from args.metadata_csv -- NOT at import time -- so the same
 # drivers serve the 24-method literature screen (default CSV, 48 conditions) and the novel-grid
-# search (data/metadata/novel_grid_frequency_metadata.csv, 992 conditions). Callers that need the
+# search (data/metadata/novel_grid_frequency_metadata.csv, 1056 conditions). Callers that need the
 # literature set explicitly should call build_methods_from_csv() with no argument.
 
 

@@ -1,12 +1,13 @@
 """Tests for the novel tone-pair search: grid construction, scoring, ranking, selection, cost.
 
 The expensive parts of this search run on the cluster, so the parts that decide WHAT gets run
-there -- the grid, the ranking criteria and the budget-driven selection walk -- are exercised here
+there -- the grid, the ranking criteria and the selection walk -- are exercised here
 against a synthetic in-silico prediction set. The fixture writes prediction HDF5s in the exact
 layout insilico_mmn_electrodes.py produces, so analyze_mmn_s7_roi.py scores them for real rather
 than through a stub.
 """
 
+import math
 import subprocess
 import sys
 from pathlib import Path
@@ -33,24 +34,47 @@ MODELS = nsc.SEARCH_MODELS
 # Grid construction
 # ──────────────────────────────────────────────────────────
 
-def test_grid_is_log_spaced_and_matches_the_committed_values():
+APPROVED_GRID = [200, 224, 252, 283, 317, 356, 400, 449, 504, 566, 635, 713, 800, 898,
+                 1008, 1131, 1270, 1425, 1600, 1796, 2016, 2263, 2540, 2851, 3200, 3592,
+                 4032, 4525, 5080, 5702, 6400, 7184, 7500]
+
+
+def test_grid_matches_the_approved_frequency_list_exactly():
+    assert bg.build_grid() == APPROVED_GRID
+
+
+def test_ladder_is_exact_whole_tones_with_one_deliberate_extra():
     freqs = bg.build_grid()
-    assert freqs[0] == 200 and freqs[-1] == 7500 and len(freqs) == 32
-    assert freqs == [200, 225, 253, 284, 319, 359, 403, 453, 510, 573, 644, 724, 813, 914,
-                     1028, 1155, 1298, 1460, 1641, 1844, 2073, 2330, 2619, 2943, 3309, 3719,
-                     4180, 4699, 5281, 5936, 6672, 7500]
-    ratios = [b / a for a, b in zip(freqs, freqs[1:])]
-    assert max(ratios) - min(ratios) < 0.01, "log spacing broken by rounding"
+    ladder, extra = freqs[:-1], freqs[-1]
+    steps = [12 * math.log2(b / a) for a, b in zip(ladder, ladder[1:])]
+    # 2.000 st exactly, up to integer-Hz rounding of each rung
+    assert max(abs(s - 2.0) for s in steps) < 0.05, steps
+    assert extra == 7500
+    # the one irregular rung, and the grid's only sub-2-semitone pair
+    assert 12 * math.log2(extra / ladder[-1]) == pytest.approx(0.745, abs=0.01)
+
+
+def test_octaves_of_the_ladder_start_land_exactly_on_the_grid():
+    """A whole-tone step means 6 steps = 12 semitones, so true 2:1 pairs exist. At the 2.024 st
+    an evenly-spanned 200-7500 grid would imply, no pair anywhere would be an exact octave."""
+    freqs = set(bg.build_grid())
+    assert {200, 400, 800, 1600, 3200, 6400} <= freqs
+
+
+def test_top_of_grid_stays_below_nyquist():
+    """16 kHz sample rate for every model; a tone at or above 8 kHz would alias."""
+    assert max(bg.build_grid()) < 8000
 
 
 def test_grid_rows_are_unordered_pairs_with_no_diagonal():
     freqs = bg.build_grid()
     rows, index = bg.build_rows(freqs)
-    bg.verify(freqs, rows)  # raises on duplicates / diagonal / off-grid / id collision
-    assert len(rows) == 496 == len(index) == 32 * 31 // 2
+    bg.verify(freqs, rows)  # raises on duplicates / diagonal / off-grid / id collision / Nyquist
+    n = len(freqs)
+    assert len(rows) == 528 == len(index) == n * (n - 1) // 2
     assert all(r["standard_freq"] < r["deviant_freq"] for r in rows)
-    assert [r["method_id"] for r in rows] == list(range(1001, 1497))
-    assert index[0]["pct_deviance"] == pytest.approx(12.5, abs=0.1)
+    assert [r["method_id"] for r in rows] == list(range(1001, 1529))
+    assert min(i["pct_deviance"] for i in index) == pytest.approx(4.4, abs=0.1)
 
 
 def test_grid_schema_matches_the_literature_sheet_exactly():
@@ -114,7 +138,8 @@ def scored_grid(tmp_path):
     grid_csv = tmp_path / "grid.csv"
     index_csv = tmp_path / "grid_index.csv"
     subprocess.run([sys.executable, str(SCRIPTS / "build_novel_grid_csv.py"),
-                    "--n_freqs", "5", "--out", str(grid_csv), "--index_out", str(index_csv)],
+                    "--n_ladder", "5", "--extra_freqs", "",
+                    "--out", str(grid_csv), "--index_out", str(index_csv)],
                    check=True, capture_output=True, cwd=REPO)
 
     pairs = pd.read_csv(grid_csv)["method_id"].tolist()
@@ -235,14 +260,13 @@ def test_selection_walk_stops_at_the_requested_pair_count(scored_grid):
 # Cost model
 # ──────────────────────────────────────────────────────────
 
-def test_phase1_cost_is_the_predicted_116_chf():
-    """992 method dirs x 2 clips, one array task each. The brief's 107 CHF omitted the per-task
-    model-load overhead, which is amortised over 2 clips here rather than the 16 the per-clip
-    figures were measured on."""
-    base = nsc.extraction_cost_chf(992, 2, overhead_core_h=0.0)
-    with_overhead = nsc.extraction_cost_chf(992, 2)
-    assert base == pytest.approx(107.05, abs=0.5)
-    assert with_overhead == pytest.approx(115.9, abs=1.0)
+def test_phase1_cost_is_the_predicted_123_chf():
+    """1056 method dirs x 2 clips, one array task each. The per-clip figures were measured on
+    16-clip batches, so the model-load overhead they omit is amortised 2 ways here, not 16."""
+    base = nsc.extraction_cost_chf(1056, 2, overhead_core_h=0.0)
+    with_overhead = nsc.extraction_cost_chf(1056, 2)
+    assert base == pytest.approx(113.9, abs=0.5)
+    assert with_overhead == pytest.approx(123.4, abs=1.0)
 
 
 def test_phase2_takes_a_flat_145_pairs():

@@ -5,7 +5,7 @@ Reads outputs/results_novel_search/{phase1_ranked_directions,phase2_final_rankin
 ranking emitted by rank_novel_phase1.py / rank_novel_phase2.py. mTRF only, FCz, X = 0.75 uV,
 6 models -- the same slice the ranking is defined on.
 
-  1. novel_n_agree_heatmap.png     n_agree over the full 32x32 frequency space. Every off-diagonal
+  1. novel_n_agree_heatmap.png     n_agree over the full 33x33 frequency space. Every off-diagonal
                                    cell is one direction-instance: row = standard, column =
                                    deviant, so (i,j) and (j,i) are the two directions of one pair
                                    and asymmetry about the diagonal IS the frequency-preference
@@ -92,7 +92,7 @@ def _models_in(df):
 
 
 # ──────────────────────────────────────────────────────────
-# 1. n_agree over the 32x32 frequency space
+# 1. n_agree over the 33x33 frequency space
 # ──────────────────────────────────────────────────────────
 
 def plot_heatmap(ph1, models):
@@ -203,7 +203,7 @@ def plot_rank_stability(ph1, ph2, models):
         print(f"  skipped rank stability: only {len(merged)} shared direction-instances")
         return
 
-    # Phase-1 ranks are positions in the full 992-instance list; re-rank within the shared
+    # Phase-1 ranks are positions in the full 1056-instance list; re-rank within the shared
     # subset so both axes count the same population.
     x = merged["rank_p1"].rank().values
     y = merged["rank_p2"].values

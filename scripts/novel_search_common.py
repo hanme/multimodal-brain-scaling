@@ -9,7 +9,7 @@ Vocabulary
 ----------
 pair              one unordered {f_low, f_high} pair == one method_id == one row of the grid CSV.
 direction         'regular' (f_low -> f_high) or 'counter' (f_high -> f_low).
-direction-instance  one (pair, direction). 496 pairs -> 992 of these. This is the unit of
+direction-instance  one (pair, direction). 528 pairs -> 1056 of these. This is the unit of
                   ranking, matching the existing convention that regular and counter each count
                   as one MMN observation.
 n_agree           how many of the 6 models show S7 at FCz for this direction-instance (0-6).
