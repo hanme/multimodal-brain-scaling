@@ -817,6 +817,8 @@ All cluster scripts `cd` to the handover repo root and `source env.sh`. **jed** 
 | `slurm_insilico_mmn.sh` | `insilico_mmn.py` | optional layer array `blocks.{0..5}`; forwards extra args via `"$@"` |
 | `slurm_insilico_mmn_electrodes.sh` | `insilico_mmn_electrodes.py` | optional layer array; topographic. `MMN_FEATURES_ROOT`/`STIM_ROOT`/`METADATA_CSV`/`DATA_DIR`/`OUT_DIR` overrides — **set `DATA_DIR` for any non-literature screen or it overwrites the committed literature predictions** (§17.6); 12 h |
 | `slurm_generate_stimuli.sh` | `00aa_generate_audio_stimuli.py` | `METADATA_CSV`/`OUTPUT_DIR`; forwards extra args via `"$@"` (`--trial_levels`/`--num_variations`/`--models`, §17.2); 1 h, 16 CPU |
+| `stage_novel_stimuli.sh` (**login node**, not sbatch) | `cp` + `mkdir` | flat generator tree → per-condition dirs + `METHOD_LIST` (§17.3) |
+| `submit_novel_extraction.sh` (**login node**, not sbatch) | `sbatch slurm_mmn_extract_batch.sh` | 6 models × the array splits `MaxArraySize` requires; `DRY_RUN=1` to preview (§17.3) |
 | `slurm_insilico_mmn_attn.sh` | `insilico_mmn_attn.py` | checkpoint-driven; all args via `"$@"` |
 
 **Legacy/example (local, not SLURM):** `train_example.sh`, `extract_example.sh`, `evaluate_example.sh`, `fit_curves_example.sh` (§10).
@@ -1154,7 +1156,9 @@ All are back-compatible: defaults reproduce the literature runs exactly.
 | `scripts/rank_novel_phase1.py` | Ranks the 1,056 direction-instances, runs the selection walk, emits `phase1_ranked_directions.csv`, `phase2_selected_pairs.csv`, `outputs/novel_methods_phase2.txt`. |
 | `scripts/build_novel_phase2_csv.py` | Verbatim row-subset of the grid CSV for the selected pairs → `data/metadata/novel_grid_phase2_subset.csv`. |
 | `scripts/rank_novel_phase2.py` | Final ranking, `consensus_set.csv`, and the Phase-1↔Phase-2 Spearman ρ. |
-| `aux/analysis_novel_search/plots/novel_search_plots.py` | The three figures. Runs as soon as Phase 1 lands; skips figure 3 until Phase 2 exists. |
+| `aux/analysis_novel_search/plots/novel_search_plots.py` | The three figures (`--results_dir`/`--out_dir` overridable). Runs as soon as Phase 1 lands; skips figure 3 until Phase 2 exists. |
+| `scripts/stage_novel_stimuli.sh` | Bridges the generator's flat output tree to the per-condition dirs the extractor and `insilico_mmn` read, and emits the `METHOD_LIST`. Idempotent, so the Phase-2 top-up re-stages in place. Self-verifying: fails naming any method with no source wavs. |
+| `scripts/submit_novel_extraction.sh` | Submits the extraction arrays for all 6 models, encoding the per-model window/stimulus-root/feature-root differences once. Queries `MaxArraySize` and splits via `TASK_OFFSET`. `DRY_RUN=1` prints the sbatch lines. |
 
 **Ranking criteria** (identical in both phases). The unit is the **direction-instance**, not the pair — 528 pairs → 1,056 instances, matching the existing convention that regular and counter each count as one MMN observation.
 - `n_agree` = how many of the 6 models show S7 at FCz, X = 0.75 µV (0–6).
@@ -1207,45 +1211,24 @@ scontrol show config | grep -i MaxArraySize      # 1056-task arrays EXCEED a 100
 df -h /work/upschrimpf1/sigfstea                 # need ~920 GB free
 ```
 
-**Stage C — synthesize audio (~minutes).** The trailing flags are the whole point of the `"$@"` fix; without them you get 16 clips per method, not 2.
+**Stage C — synthesize audio (~minutes), then stage it.** The trailing flags are the whole point of the `"$@"` fix; without them you get 16 clips per method, not 2.
 ```bash
 sbatch --export=ALL,METADATA_CSV=data/metadata/novel_grid_frequency_metadata.csv,\
 OUTPUT_DIR=outputs/stim_gen_novel scripts/slurm_generate_stimuli.sh \
        --trial_levels 7 --num_variations 1 --models whisper,wav2vec2
 
-SRC=outputs/stim_gen_novel
-for id in $(seq 1001 1528); do
-  for fam_root in "whisper:outputs/mmn_stimuli_novel" "wav2vec2:outputs/mmn_stimuli_novel_wav2vec2"; do
-    fam=${fam_root%%:*}; root=${fam_root##*:}
-    mkdir -p $root/method_${id} $root/method_${id}_counter
-    cp $SRC/audio_outputs_regular/$fam/method_${id}_*.wav $root/method_${id}/
-    cp $SRC/audio_outputs_counter/$fam/method_${id}_*.wav $root/method_${id}_counter/
-  done
-done
-# verify: 1056 dirs per family root, exactly 2 wavs each
-for root in outputs/mmn_stimuli_novel outputs/mmn_stimuli_novel_wav2vec2; do
-  echo "$root: $(ls -d $root/method_* | wc -l) dirs, $(ls $root/method_*/*.wav | wc -l) wavs"
-done
+# generator writes a FLAT tree; the extractor and insilico_mmn read per-condition dirs.
+# stage_novel_stimuli.sh bridges them and emits the METHOD_LIST, then self-verifies.
+scripts/stage_novel_stimuli.sh          # → outputs/mmn_stimuli_novel{,_wav2vec2}/method_<id>{,_counter}/
+                                        # → outputs/novel_methods_phase1.txt (1056 entries)
 ```
+It prints the per-root directory and wav counts and the set of clips-per-dir; expect `1056 dirs, 2112 wavs, clips-per-dir {2}` for each root. It exits non-zero naming any method whose source wavs are missing — a partial generation must not quietly shrink the grid, since the in-silico driver skips a missing feature dir without erroring.
 
-**Stage D — Phase-1 extraction (the ~123 CHF step).**
+**Stage D — Phase-1 extraction (the ~123 CHF step).** `submit_novel_extraction.sh` submits all 6 models, picking the 10 s window and wav2vec2 stimulus root for the wav2vec2 pair, a per-model feature root (which is what keeps whisper-base off the literature run's bare `outputs/features`), and stimulus-id naming. It queries `MaxArraySize` and splits the 1056-entry list into as many arrays as needed — two per model at the common 1001 cap, offset by `TASK_OFFSET`.
 ```bash
-for id in $(seq 1001 1528); do echo "method_${id}"; echo "method_${id}_counter"; done \
-  > outputs/novel_methods_phase1.txt          # 1056 lines
-
-for m in whisper-tiny whisper-base whisper-small whisper-medium; do        # 30 s window
-  sbatch --export=ALL,MODEL_ID=$m,METHOD_LIST=$PWD/outputs/novel_methods_phase1.txt,\
-MMN_STIM_ROOT=$PWD/outputs/mmn_stimuli_novel,MMN_FEATURES_ROOT=outputs/features/${m}-mmn-novel,\
-MMN_NAME_BY_STIM_ID=true --array=0-527%200 scripts/slurm_mmn_extract_batch.sh
-done
-for m in wav2vec2-medium wav2vec2-large; do                                 # 10 s window + root
-  sbatch --export=ALL,MODEL_ID=$m,METHOD_LIST=$PWD/outputs/novel_methods_phase1.txt,\
-MMN_STIM_ROOT=$PWD/outputs/mmn_stimuli_novel_wav2vec2,WINDOW_DUR=10.0,WINDOW_STRIDE=10.0,\
-MMN_FEATURES_ROOT=outputs/features/${m}-mmn-novel,MMN_NAME_BY_STIM_ID=true \
-         --array=0-527%200 scripts/slurm_mmn_extract_batch.sh
-done
+DRY_RUN=1 scripts/submit_novel_extraction.sh    # read the 12 sbatch lines first
+scripts/submit_novel_extraction.sh
 ```
-The list is **1056 long, so every model needs two submissions** (a 1000-task cap would reject one array of that size, and 528+528 splits it evenly): the commands above cover indices 0–527, then repeat each with `TASK_OFFSET=528` added to the `--export` list to cover 528–1055.
 
 ⚠️ **Cost gate — one model × 10 methods first.** Compare against these **per-method (2-clip)** predictions, which *include* the per-task overhead; the raw per-clip figures do not and will read as a false overrun.
 
@@ -1301,11 +1284,16 @@ python scripts/build_novel_phase2_csv.py
 sbatch --export=ALL,METADATA_CSV=data/metadata/novel_grid_phase2_subset.csv,\
 OUTPUT_DIR=outputs/stim_gen_novel_phase2 scripts/slurm_generate_stimuli.sh \
        --trial_levels 3,5,7 --num_variations 5 --models whisper,wav2vec2
-# restage exactly as Stage C, over the selected ids only → each dir goes 2 wavs → 16
+
+# same staging script, pointed at the subset; the dirs go from 2 wavs to 16 in place
+METADATA_CSV=data/metadata/novel_grid_phase2_subset.csv \
+SRC=outputs/stim_gen_novel_phase2 \
+METHOD_LIST_OUT=outputs/novel_methods_phase2.txt \
+    scripts/stage_novel_stimuli.sh      # expect clips-per-dir {16}
 ```
 Then **checksum the overlap**: the regenerated standard and `N7_var1` deviant must be byte-identical to Phase 1's, or the Phase-1 features are invalid for reuse and the 28-clip saving evaporates. (Verified locally in advance — `generate_deviant_sequence` seeds on `(method_id, N, v)` alone, independent of grid size, row count and worker count.)
 
-**Stage I — Phase-2 extraction (the ~222 CHF step).** No index arithmetic: with `MMN_NAME_BY_STIM_ID=true` and `MMN_OVERWRITE` unset, pointing the extractor at the now-16-wav directory extracts **exactly the 14 missing clips** and skips the 2 that exist. Re-run Stage D's submissions with `METHOD_LIST=$PWD/outputs/novel_methods_phase2.txt` and `--array=0-289` (290 dirs = 145 pairs × 2 directions). Verify the plan implies **4,060** new clips (290 × 14), not 4,640 (290 × 16) — the 16-clip figure means you are re-extracting Phase 1 and wasting ~30 CHF. Run the same cost gate on one model × 5 methods.
+**Stage I — Phase-2 extraction (the ~222 CHF step).** No index arithmetic: with `MMN_NAME_BY_STIM_ID=true` and `MMN_OVERWRITE` unset, pointing the extractor at the now-16-wav directory extracts **exactly the 14 missing clips** and skips the 2 that exist. Re-run Stage D's submitter against the Phase-2 list — `METHOD_LIST=$PWD/outputs/novel_methods_phase2.txt scripts/submit_novel_extraction.sh` (290 dirs = 145 pairs × 2 directions, one array per model). Verify the plan implies **4,060** new clips (290 × 14), not 4,640 (290 × 16) — the 16-clip figure means you are re-extracting Phase 1 and wasting ~30 CHF. Run the same cost gate on one model × 5 methods.
 
 **Stage J — Phase-2 in-silico, final ranking, deliverables.** Re-run Stage E with `METADATA_CSV=data/metadata/novel_grid_phase2_subset.csv` and `DATA_DIR=outputs/insilico_mmn_predictions_novel_phase2/${m}`, sync, then:
 ```bash

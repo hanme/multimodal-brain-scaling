@@ -23,7 +23,10 @@ Figures 1-2 need only Phase 1; figure 3 needs both. Whatever is missing is skipp
 so this is runnable as soon as Phase 1 lands.
 
   python aux/analysis_novel_search/plots/novel_search_plots.py
+  python aux/analysis_novel_search/plots/novel_search_plots.py \
+      --results_dir outputs/results_novel_search_rerun --out_dir /tmp/figs
 """
+import argparse
 import sys
 from pathlib import Path
 
@@ -77,8 +80,8 @@ mpl.rcParams.update({
 })
 
 
-def _load(name):
-    path = RESULTS / name
+def _load(results_dir, name):
+    path = Path(results_dir) / name
     if not path.exists():
         print(f"  skipped: {path} not found")
         return None
@@ -95,7 +98,7 @@ def _models_in(df):
 # 1. n_agree over the 33x33 frequency space
 # ──────────────────────────────────────────────────────────
 
-def plot_heatmap(ph1, models):
+def plot_heatmap(ph1, models, out_dir=OUT):
     freqs = sorted(set(ph1["f_low"]) | set(ph1["f_high"]))
     idx = {f: i for i, f in enumerate(freqs)}
     n = len(freqs)
@@ -135,7 +138,7 @@ def plot_heatmap(ph1, models):
              "effect. Grey diagonal = excluded by design (a same-\nfrequency deviant synthesizes "
              "to the standard's waveform, so the difference is exactly zero).",
              ha="center", va="top", fontsize=8, color=MUTED, linespacing=1.5)
-    fig.savefig(OUT / "novel_n_agree_heatmap.png", bbox_inches="tight")
+    fig.savefig(Path(out_dir) / "novel_n_agree_heatmap.png", bbox_inches="tight")
     plt.close(fig)
     filled = np.isfinite(grid).sum()
     print(f"  wrote novel_n_agree_heatmap.png  ({filled} cells filled of {n * n - n} off-diagonal)")
@@ -145,7 +148,7 @@ def plot_heatmap(ph1, models):
 # 2. Deviance scaling
 # ──────────────────────────────────────────────────────────
 
-def plot_deviance_scaling(ph1, models, n_bins=8):
+def plot_deviance_scaling(ph1, models, out_dir=OUT, n_bins=8):
     d = ph1.dropna(subset=["semitones"]).copy()
     if d.empty:
         print("  skipped deviance scaling: no semitone column")
@@ -187,7 +190,7 @@ def plot_deviance_scaling(ph1, models, n_bins=8):
                  f"n = {len(d)})")
 
     fig.tight_layout()
-    fig.savefig(OUT / "novel_deviance_scaling.png", bbox_inches="tight")
+    fig.savefig(Path(out_dir) / "novel_deviance_scaling.png", bbox_inches="tight")
     plt.close(fig)
     print(f"  wrote novel_deviance_scaling.png  (ρ = {rho:+.3f})")
 
@@ -196,7 +199,7 @@ def plot_deviance_scaling(ph1, models, n_bins=8):
 # 3. Phase-1 -> Phase-2 rank stability
 # ──────────────────────────────────────────────────────────
 
-def plot_rank_stability(ph1, ph2, models):
+def plot_rank_stability(ph1, ph2, models, out_dir=OUT):
     merged = ph2.merge(ph1[["pair_id", "direction", "rank", "n_agree"]],
                        on=["pair_id", "direction"], suffixes=("_p2", "_p1"))
     if len(merged) < 3:
@@ -253,16 +256,26 @@ def plot_rank_stability(ph1, ph2, models):
     cbar.outline.set_visible(False)
 
     fig.tight_layout()
-    fig.savefig(OUT / "novel_rank_stability.png", bbox_inches="tight")
+    fig.savefig(Path(out_dir) / "novel_rank_stability.png", bbox_inches="tight")
     plt.close(fig)
     print(f"  wrote novel_rank_stability.png  (ρ = {rho:+.3f}, {unchanged:.0f}% tier-stable)")
 
 
 def main():
-    OUT.mkdir(parents=True, exist_ok=True)
-    print(f"reading {RESULTS}")
-    ph1 = _load("phase1_ranked_directions.csv")
-    ph2 = _load("phase2_final_ranking.csv")
+    p = argparse.ArgumentParser(description=__doc__,
+                                formatter_class=argparse.RawDescriptionHelpFormatter)
+    # Defaults are the committed locations; overridable so a re-run can be rendered without
+    # clobbering the figures the memo links to (and so this is testable).
+    p.add_argument("--results_dir", default=str(RESULTS),
+                   help="directory holding the phase1/phase2 ranking CSVs")
+    p.add_argument("--out_dir", default=str(OUT), help="where to write the PNGs")
+    args = p.parse_args()
+
+    out_dir = Path(args.out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    print(f"reading {args.results_dir}")
+    ph1 = _load(args.results_dir, "phase1_ranked_directions.csv")
+    ph2 = _load(args.results_dir, "phase2_final_ranking.csv")
     if ph1 is None:
         raise SystemExit("phase1_ranked_directions.csv is required -- run rank_novel_phase1.py")
 
@@ -272,12 +285,12 @@ def main():
         raise SystemExit("ranking CSV lacks frequency columns -- rerun rank_novel_phase1.py "
                          "with --grid_index")
 
-    plot_heatmap(ph1, models)
-    plot_deviance_scaling(ph1, models)
+    plot_heatmap(ph1, models, out_dir)
+    plot_deviance_scaling(ph1, models, out_dir)
     if ph2 is None:
         print("  skipped rank stability: Phase 2 not scored yet")
     else:
-        plot_rank_stability(ph1, ph2, models)
+        plot_rank_stability(ph1, ph2, models, out_dir)
 
 
 if __name__ == "__main__":
