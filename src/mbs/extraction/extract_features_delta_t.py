@@ -76,8 +76,18 @@ def parse_args():
     parser.add_argument("--model_cache_dir", type=str, default="cache/model_weights",
                         help="Cache directory for model weights.")
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--name_by_stim_id", type=str2bool, default=False,
+                        help="Name each HDF5 after the stimulus it holds "
+                             "(feats_delta_t-<stim_id>-seed_42.h5) instead of the "
+                             "start/batch counters. Requires --save_every 1. Makes output "
+                             "filenames independent of how a directory's clips are indexed, so "
+                             "clips added to a directory later cannot collide with earlier ones, "
+                             "and enables the --overwrite false resume below.")
     parser.add_argument("--overwrite", type=str2bool, default=False,
-                        help="Overwrite existing output files.")
+                        help="Re-extract stimuli whose output HDF5 already exists. Only has "
+                             "effect with --name_by_stim_id true (the legacy start/batch names "
+                             "carry no stimulus identity, so 'already present' is not decidable "
+                             "and every stimulus is always re-extracted).")
     return parser.parse_args()
 
 
@@ -224,16 +234,31 @@ def _infer_wav2vec2_frame_count(
 # HDF5 I/O (same schema as extract_features.py temporal output)
 # ---------------------------------------------------------------------------
 
+def _batch_path(output_dir: Path, batch_idx: int, stim_start_idx: int,
+                stim_ids: list, name_by_stim_id: bool) -> Path:
+    """Output path for one HDF5 batch file.
+
+    Default (legacy) naming encodes stim_start_idx (global offset for this SLURM task) and
+    batch_idx (within-task batch counter), which is unique across parallel tasks but says
+    nothing about WHICH stimuli are inside. That is a hazard whenever a directory gains clips
+    between runs: the same name then refers to a different stimulus and the earlier file is
+    silently clobbered. --name_by_stim_id instead names the file after its stimulus, which is
+    stable under later additions and makes a resume decidable.
+    """
+    if name_by_stim_id:
+        assert len(stim_ids) == 1, (
+            f"--name_by_stim_id requires --save_every 1 (got a batch of {len(stim_ids)})")
+        return output_dir / f"feats_delta_t-{stim_ids[0]}-seed_42.h5"
+    return output_dir / f"feats_delta_t-start_{stim_start_idx:05d}-batch_{batch_idx}-seed_42.h5"
+
+
 def _write_batch(output_dir: Path, batch_idx: int, batch_size: int,
                  stim_start_idx: int,
                  stim_features: list, stim_ids: list, model_id: str,
-                 backbone_source: str, target_layers: list, config: dict):
-    """Write one HDF5 batch file from accumulated stimuli.
-
-    Filename encodes stim_start_idx (global offset for this SLURM task) and
-    batch_idx (within-task batch counter), ensuring uniqueness across parallel tasks.
-    """
-    path = output_dir / f"feats_delta_t-start_{stim_start_idx:05d}-batch_{batch_idx}-seed_42.h5"
+                 backbone_source: str, target_layers: list, config: dict,
+                 name_by_stim_id: bool = False):
+    """Write one HDF5 batch file from accumulated stimuli."""
+    path = _batch_path(output_dir, batch_idx, stim_start_idx, stim_ids, name_by_stim_id)
     with h5py.File(path, "w") as hf:
         # stim_features: list of dicts  alias -> [T_out, d]
         layer_aliases = list(stim_features[0].keys())
@@ -257,8 +282,31 @@ def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
 
+    if args.name_by_stim_id and args.save_every != 1:
+        raise SystemExit(
+            f"--name_by_stim_id names each file after the single stimulus it holds, so it "
+            f"requires --save_every 1 (got --save_every {args.save_every}).")
+
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
+
+    # A directory must use ONE naming scheme. load_layer_features() globs *.h5 and concatenates,
+    # so a dir holding both schemes yields each clip twice -- and because the id->row map keeps
+    # only the last occurrence of each id, the feature rows and the ids silently fall out of
+    # alignment rather than failing. Refuse up front.
+    legacy_present = any(output_dir.glob("feats_delta_t-start_*.h5"))
+    stim_named_present = any(p for p in output_dir.glob("feats_delta_t-*.h5")
+                             if not p.name.startswith("feats_delta_t-start_"))
+    if args.name_by_stim_id and legacy_present:
+        raise SystemExit(
+            f"{output_dir} already holds start/batch-named features; extracting with "
+            f"--name_by_stim_id true would mix naming schemes and misalign load_layer_features(). "
+            f"Use a fresh --output_dir, or clear the directory first.")
+    if not args.name_by_stim_id and stim_named_present:
+        raise SystemExit(
+            f"{output_dir} already holds stimulus-named features; extracting with "
+            f"--name_by_stim_id false would mix naming schemes and misalign "
+            f"load_layer_features(). Pass --name_by_stim_id true.")
 
     # Load layer list
     with open(args.target_feature_layers) as f:
@@ -316,10 +364,22 @@ def main(args):
     accum_feats = []
     accum_ids = []
     file_idx = 0
+    n_skipped = 0
     t_total_start = time.time()
 
     for stim_idx in tqdm(range(start, end), desc="Stimuli"):
         waveform_np, stim_id = dataset[stim_idx]
+
+        # Resume: with stimulus-named files we can tell whether this exact clip is already
+        # extracted and skip the forward pass. This is what lets the novel search's Phase 2 point
+        # at a directory that has grown from 2 to 16 clips and pay only for the 14 new ones.
+        if args.name_by_stim_id and not args.overwrite:
+            existing = _batch_path(output_dir, file_idx, args.stim_start_idx,
+                                   [stim_id], True)
+            if existing.exists():
+                n_skipped += 1
+                tqdm.write(f"  stim {stim_idx+1}/{total}: {stim_id} already extracted -> skipped")
+                continue
 
         t_stim = time.time()
         if is_wav2vec2:
@@ -364,6 +424,7 @@ def main(args):
                 backbone_source="audio",
                 target_layers=target_layers,
                 config=vars(args),
+                name_by_stim_id=args.name_by_stim_id,
             )
             file_idx += 1
             accum_feats = []
@@ -376,7 +437,19 @@ def main(args):
         tqdm.write(f"  stim {stim_idx+1}/{total}: {elapsed_stim:.1f}s  "
                    f"ETA {eta/3600:.1f}h  ({rate*3600:.0f} stim/hr)")
 
-    print(f"\nDone. {file_idx} HDF5 files written to {output_dir}")
+    # A skipped final stimulus takes the `continue` above, so the in-loop `stim_idx == end - 1`
+    # flush can be missed; drain whatever is still accumulated.
+    if accum_feats:
+        _write_batch(
+            output_dir=output_dir, batch_idx=file_idx, batch_size=args.save_every,
+            stim_start_idx=args.stim_start_idx, stim_features=accum_feats, stim_ids=accum_ids,
+            model_id=args.model_id, backbone_source="audio", target_layers=target_layers,
+            config=vars(args), name_by_stim_id=args.name_by_stim_id,
+        )
+        file_idx += 1
+
+    print(f"\nDone. {file_idx} HDF5 files written to {output_dir}"
+          + (f"  ({n_skipped} stimuli already present -> skipped)" if n_skipped else ""))
     print(f"Feature shape per stimulus: [T_out={T_out}, d_model] per layer")
 
 
