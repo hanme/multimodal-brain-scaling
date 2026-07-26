@@ -382,9 +382,11 @@ def test_check_passes_a_complete_extraction(tmp_path):
 
 
 def test_check_catches_a_missing_directory(tmp_path):
+    """One method, absent: every dir is missing, so this takes the "nothing extracted yet"
+    path rather than enumerating."""
     (tmp_path / "feat").mkdir()
     r = _check(tmp_path, tmp_path / "feat")
-    assert r.returncode == 1 and "directory missing" in r.stdout
+    assert r.returncode == 1 and "NO feature directories exist yet" in r.stdout
 
 
 def test_check_catches_a_missing_clip(tmp_path):
