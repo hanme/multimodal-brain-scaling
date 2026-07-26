@@ -255,3 +255,83 @@ def test_submission_refuses_a_missing_stimulus_root(tmp_path):
 @pytest.mark.parametrize("script", [STAGE, SUBMIT])
 def test_scripts_are_syntactically_valid(script):
     assert subprocess.run(["bash", "-n", str(script)], capture_output=True).returncode == 0
+
+
+# ──────────────────────────────────────────────────────────
+# In-silico submission
+# ──────────────────────────────────────────────────────────
+
+INSILICO_SUBMIT = REPO / "scripts/submit_novel_insilico.sh"
+
+
+def _insilico_dry(tmp_path, ids=(1001, 1002), **over):
+    csv_path = _csv(tmp_path / "grid.csv", ids)
+    for d in ("mmn_stimuli_novel", "mmn_stimuli_novel_wav2vec2"):
+        (tmp_path / d).mkdir(exist_ok=True)
+    env = dict(os.environ)
+    env.update(DRY_RUN="1", METADATA_CSV=str(csv_path),
+               WHISPER_STIM=str(tmp_path / "mmn_stimuli_novel"),
+               WAV2VEC2_STIM=str(tmp_path / "mmn_stimuli_novel_wav2vec2"))
+    env.update({k: str(v) for k, v in over.items()})
+    return subprocess.run(["bash", str(INSILICO_SUBMIT)], capture_output=True,
+                          text=True, env=env, cwd=REPO)
+
+
+def test_insilico_submits_one_job_per_model_with_every_path_redirected(tmp_path):
+    r = _insilico_dry(tmp_path)
+    assert r.returncode == 0, r.stdout + r.stderr
+    lines = [l for l in r.stdout.splitlines() if l.startswith("sbatch")]
+    assert len(lines) == 6
+    for model in ("whisper-tiny", "whisper-base", "whisper-small", "whisper-medium",
+                  "wav2vec2-medium", "wav2vec2-large"):
+        line = next(l for l in lines if f"MODEL_ID={model}," in l)
+        assert f"MMN_FEATURES_ROOT=outputs/features/{model}-mmn-novel" in line
+        assert f"DATA_DIR=outputs/insilico_mmn_predictions_novel/{model}" in line
+        assert "METADATA_CSV=" in line and "STIM_ROOT=" in line
+        assert "--save_plots false" in line
+
+
+def test_insilico_refuses_to_write_into_the_literature_predictions_root(tmp_path):
+    """The failure this script exists to prevent: the wrapper defaults DATA_DIR to the
+    literature root, and overwriting it destroys the comparison baseline."""
+    for root in ("outputs/insilico_mmn_predictions",
+                 "outputs/insilico_mmn_predictions/whisper-tiny"):
+        r = _insilico_dry(tmp_path, PREDICTIONS_ROOT=root)
+        assert r.returncode != 0, root
+        assert "REFUSING" in r.stdout + r.stderr
+
+
+def test_insilico_allows_the_novel_roots(tmp_path):
+    for root in ("outputs/insilico_mmn_predictions_novel",
+                 "outputs/insilico_mmn_predictions_novel_phase2"):
+        r = _insilico_dry(tmp_path, PREDICTIONS_ROOT=root)
+        assert r.returncode == 0, r.stdout + r.stderr
+        assert f"DATA_DIR={root}/whisper-tiny" in r.stdout
+
+
+def test_insilico_wav2vec2_gets_the_10s_stimulus_root(tmp_path):
+    r = _insilico_dry(tmp_path, MODELS="whisper-small wav2vec2-large")
+    lines = {l.split("MODEL_ID=")[1].split(",")[0]: l
+             for l in r.stdout.splitlines() if l.startswith("sbatch")}
+    assert "mmn_stimuli_novel_wav2vec2" in lines["wav2vec2-large"]
+    assert "mmn_stimuli_novel_wav2vec2" not in lines["whisper-small"]
+
+
+def test_insilico_can_re_run_the_winners_with_plots(tmp_path):
+    r = _insilico_dry(tmp_path, MODELS="whisper-tiny", SAVE_PLOTS="true",
+                      METHODS="method_1042,method_1042_counter",
+                      PREDICTIONS_ROOT="outputs/insilico_mmn_predictions_novel_figs")
+    assert r.returncode == 0, r.stdout + r.stderr
+    line = next(l for l in r.stdout.splitlines() if l.startswith("sbatch"))
+    assert "--save_plots true" in line
+    assert "--methods method_1042,method_1042_counter" in line
+
+
+def test_insilico_reports_the_condition_count_from_the_metadata(tmp_path):
+    r = _insilico_dry(tmp_path, ids=(1001, 1002, 1003))
+    assert "(6 conditions incl. counter)" in r.stdout      # 3 pairs x 2 directions
+
+
+def test_insilico_refuses_a_missing_metadata_csv(tmp_path):
+    r = _insilico_dry(tmp_path, METADATA_CSV=str(tmp_path / "absent.csv"))
+    assert r.returncode != 0 and "not found" in r.stdout + r.stderr

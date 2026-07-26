@@ -819,6 +819,7 @@ All cluster scripts `cd` to the handover repo root and `source env.sh`. **jed** 
 | `slurm_generate_stimuli.sh` | `00aa_generate_audio_stimuli.py` | `METADATA_CSV`/`OUTPUT_DIR`; forwards extra args via `"$@"` (`--trial_levels`/`--num_variations`/`--models`, §17.2); 1 h, 16 CPU |
 | `stage_novel_stimuli.sh` (**login node**, not sbatch) | `cp` + `mkdir` | flat generator tree → per-condition dirs + `METHOD_LIST` (§17.3) |
 | `submit_novel_extraction.sh` (**login node**, not sbatch) | `sbatch slurm_mmn_extract_batch.sh` | 6 models × the array splits `MaxArraySize` requires; `DRY_RUN=1` to preview (§17.3) |
+| `submit_novel_insilico.sh` (**login node**, not sbatch) | `sbatch slurm_insilico_mmn_electrodes.sh` | 6 models, all paths redirected; refuses the literature predictions root (§17.6) |
 | `slurm_insilico_mmn_attn.sh` | `insilico_mmn_attn.py` | checkpoint-driven; all args via `"$@"` |
 
 **Legacy/example (local, not SLURM):** `train_example.sh`, `extract_example.sh`, `evaluate_example.sh`, `fit_curves_example.sh` (§10).
@@ -1159,6 +1160,7 @@ All are back-compatible: defaults reproduce the literature runs exactly.
 | `aux/analysis_novel_search/plots/novel_search_plots.py` | The three figures (`--results_dir`/`--out_dir` overridable). Runs as soon as Phase 1 lands; skips figure 3 until Phase 2 exists. |
 | `scripts/stage_novel_stimuli.sh` | Bridges the generator's flat output tree to the per-condition dirs the extractor and `insilico_mmn` read, and emits the `METHOD_LIST`. Idempotent, so the Phase-2 top-up re-stages in place. Self-verifying: fails naming any method with no source wavs. |
 | `scripts/submit_novel_extraction.sh` | Submits the extraction arrays for all 6 models, encoding the per-model window/stimulus-root/feature-root differences once. Queries `MaxArraySize` and splits via `TASK_OFFSET`. `DRY_RUN=1` prints the sbatch lines. |
+| `scripts/submit_novel_insilico.sh` | Submits in-silico MMN for all 6 models with every path redirected, and **refuses** to write into the literature predictions root. Serves both phases and the figures-for-winners re-run. |
 
 **Ranking criteria** (identical in both phases). The unit is the **direction-instance**, not the pair — 528 pairs → 1,056 instances, matching the existing convention that regular and counter each count as one MMN observation.
 - `n_agree` = how many of the 6 models show S7 at FCz, X = 0.75 µV (0–6).
@@ -1245,19 +1247,12 @@ sacct -j <jobid> --format=JobID,State,ElapsedRaw,CPUTimeRAW,MaxRSS --parsable2 -
 ```
 Stop and re-cost if any model exceeds its prediction by >25%. Also check the first completed clip's h5 against the ~148.9 MB/clip expectation before fanning out.
 
-**Stage E — Phase-1 in-silico MMN (~1.9 CHF, outside the budget).** Every path must be redirected; `--save_plots false` is what keeps this inside 12 h.
+**Stage E — Phase-1 in-silico MMN (~2.0 CHF, outside the budget).** `submit_novel_insilico.sh` submits one job per model with every path redirected. That redirection is the point: `slurm_insilico_mmn_electrodes.sh` defaults each path to the **literature** run, so a screen that forgets `DATA_DIR` silently overwrites `outputs/insilico_mmn_predictions/<model>/` — the comparison baseline, with no backup. The script refuses any `PREDICTIONS_ROOT` under that path.
 ```bash
-for m in whisper-tiny whisper-base whisper-small whisper-medium wav2vec2-medium wav2vec2-large; do
-  case $m in wav2vec2-*) STIM=outputs/mmn_stimuli_novel_wav2vec2;; *) STIM=outputs/mmn_stimuli_novel;; esac
-  sbatch --export=ALL,MODEL_ID=$m,\
-METADATA_CSV=data/metadata/novel_grid_frequency_metadata.csv,\
-MMN_FEATURES_ROOT=outputs/features/${m}-mmn-novel,STIM_ROOT=$STIM,\
-DATA_DIR=outputs/insilico_mmn_predictions_novel/${m},\
-OUT_DIR=outputs/figures/insilico_mmn_electrodes_novel/${m} \
-         scripts/slurm_insilico_mmn_electrodes.sh --save_plots false
-done
+DRY_RUN=1 scripts/submit_novel_insilico.sh      # read the 6 sbatch lines first
+scripts/submit_novel_insilico.sh                # --save_plots false by default
 ```
-`--lag_max_ms 800` and the `-3.0 / 0.0` baseline multipliers are hardcoded in the wrapper and **must not** be overridden — they are what make these results comparable to the literature screen. Sanity check: the held-out r printed by `fit_mapping` should match the literature run's log for that model, confirming the frozen mapping refit is bit-identical.
+`--save_plots false` is what keeps this inside 12 h: at 1056 conditions the per-method figures are ~2 renders each, one a ~50-subplot montage. `--lag_max_ms 800` and the `-3.0 / 0.0` baseline multipliers are hardcoded in the wrapper and **must not** be overridden — they are what make these results comparable to the literature screen. Sanity check: the held-out r printed by `fit_mapping` should match the literature run's log for that model, confirming the frozen mapping refit is bit-identical.
 
 **Stage F — sync and score (local).**
 ```bash
@@ -1295,24 +1290,35 @@ Then **checksum the overlap**: the regenerated standard and `N7_var1` deviant mu
 
 **Stage I — Phase-2 extraction (the ~222 CHF step).** No index arithmetic: with `MMN_NAME_BY_STIM_ID=true` and `MMN_OVERWRITE` unset, pointing the extractor at the now-16-wav directory extracts **exactly the 14 missing clips** and skips the 2 that exist. Re-run Stage D's submitter against the Phase-2 list — `METHOD_LIST=$PWD/outputs/novel_methods_phase2.txt scripts/submit_novel_extraction.sh` (290 dirs = 145 pairs × 2 directions, one array per model). Verify the plan implies **4,060** new clips (290 × 14), not 4,640 (290 × 16) — the 16-clip figure means you are re-extracting Phase 1 and wasting ~30 CHF. Run the same cost gate on one model × 5 methods.
 
-**Stage J — Phase-2 in-silico, final ranking, deliverables.** Re-run Stage E with `METADATA_CSV=data/metadata/novel_grid_phase2_subset.csv` and `DATA_DIR=outputs/insilico_mmn_predictions_novel_phase2/${m}`, sync, then:
+**Stage J — Phase-2 in-silico, final ranking, deliverables.** Same submitter, pointed at the subset and a separate predictions root (the features stay in the Phase-1 roots — Phase 2 topped those directories up in place, so `FEATURES_TAG` does not change):
 ```bash
+METADATA_CSV=data/metadata/novel_grid_phase2_subset.csv \
+PREDICTIONS_ROOT=outputs/insilico_mmn_predictions_novel_phase2 \
+    scripts/submit_novel_insilico.sh
+# ...then rsync back as in Stage F, and:
 python scripts/analyze_mmn_s7_roi.py \
   --predictions_root outputs/insilico_mmn_predictions_novel_phase2 \
   --dip_uv_threshold 0.75 --out outputs/results_novel_search/phase2_mmn_s7_roi.csv
 python scripts/rank_novel_phase2.py
 python aux/analysis_novel_search/plots/novel_search_plots.py    # all three figures
 ```
-Finally, re-run the in-silico step **with** `--save_plots true --methods <consensus dirs>` to get per-pair waveform figures for the headline set only.
+Finally, per-pair waveform figures for the headline set only:
+```bash
+SAVE_PLOTS=true METHODS=method_1042,method_1042_counter \
+PREDICTIONS_ROOT=outputs/insilico_mmn_predictions_novel_figs \
+    scripts/submit_novel_insilico.sh
+```
 
 **Resource reference:**
 
-| Stage | Cluster | Time | CPUs |
+| Stage | Where | Time | CPUs |
 |---|---|---|---|
+| A — build grid | login node **and** local | seconds | — |
 | C — generate stimuli | jed (standard) | 1 h | 16 |
-| D / I — MMN extract | jed | 24 h/array task | 8 |
-| E / J — in-silico MMN | jed (standard) | 12 h | 12 |
-| A, F–H, plots | local | minutes | — |
+| C / H — `stage_novel_stimuli.sh` | login node (not sbatch) | ~minutes | — |
+| D / I — `submit_novel_extraction.sh` → MMN extract | login node → jed | 24 h/array task | 8 |
+| E / J — `submit_novel_insilico.sh` → in-silico MMN | login node → jed (standard) | 12 h | 12 |
+| F–G, plots | local | minutes | — |
 
 ### 17.6 Invariants and failure modes
 
@@ -1333,5 +1339,5 @@ Finally, re-run the in-silico step **with** `--save_plots true --methods <consen
 - **A method whose feature dir is missing is silently skipped** by the in-silico driver — a partial extraction quietly shrinks the grid rather than erroring. Count the feature dirs before Stage E.
 - **Never mix HDF5 naming schemes in one feature directory.** `load_layer_features` globs `*.h5` and concatenates, while the id→row map keeps only the *last* occurrence of each id, so a mixed directory misaligns features against ids **without raising**. `extract_features_delta_t.py` now refuses to start in that situation; the fix is a fresh `--output_dir`, never deleting half the files. This is also why `MMN_NAME_BY_STIM_ID` defaults to **false** — the committed literature features use the legacy names.
 - **`MMN_FEATURES_ROOT` must be set for whisper-base** in particular: it is the one model whose default MMN feature root is the bare `outputs/features`, which would collide with the literature features rather than sitting in a model-scoped subdirectory.
-- **Forgetting `DATA_DIR` in Stage E overwrites the literature predictions** — the comparison baseline. There is no backup; the wrapper defaults to the literature path by design for the literature run.
+- **Forgetting `DATA_DIR` in Stage E overwrites the literature predictions** — the comparison baseline. There is no backup; the wrapper defaults to the literature path by design for the literature run. `submit_novel_insilico.sh` sets it for you and refuses any `PREDICTIONS_ROOT` under `outputs/insilico_mmn_predictions/`, so use it rather than hand-rolling the sbatch line.
 - **`--save_plots false` is not optional at 1,056 conditions.** With plots on, expect ~4 h/model of single-threaded matplotlib on top of the compute, likely exceeding the 12 h walltime for the slower models.
