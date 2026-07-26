@@ -439,3 +439,24 @@ def test_check_expects_16_clips_after_phase2(tmp_path):
     _good_method(tmp_path / "feat")
     r = _check(tmp_path, tmp_path / "feat", clips=16)
     assert r.returncode == 1 and "2 h5 files, expected 16" in r.stdout
+
+
+def test_check_reports_nothing_extracted_yet_as_one_line(tmp_path):
+    """Run too early (the common case), the output should say so once, not list every dir."""
+    (tmp_path / "feat").mkdir()
+    r = _check(tmp_path, tmp_path / "feat",
+               methods=[f"method_{i}" for i in range(1001, 1021)])
+    assert r.returncode == 1
+    assert "NO feature directories exist yet" in r.stdout
+    assert "squeue" in r.stdout
+    assert r.stdout.count("directory missing") == 0, "should not enumerate all 20"
+
+
+def test_check_flags_a_partially_finished_array(tmp_path):
+    """Some dirs present, some absent -- a half-done or half-failed array."""
+    root = tmp_path / "feat"
+    _good_method(root, "method_1001")
+    r = _check(tmp_path, root, methods=["method_1001", "method_1002", "method_1003"])
+    assert r.returncode == 1
+    assert "1/3 clean" in r.stdout
+    assert "partially finished or partially failed" in r.stdout

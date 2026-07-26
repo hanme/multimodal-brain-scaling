@@ -129,7 +129,21 @@ def check_model(model_id, features_root, methods, expect_clips, show):
     n = len(methods)
     print(f"  root      : {root}")
     print(f"  layers    : {len(aliases)} ({aliases[0]} .. {aliases[-1]})")
+
+    # "nothing extracted yet" is the common case when this is run too early; say so in one line
+    # rather than listing every directory as a separate problem.
+    n_missing = sum(1 for p in all_problems if p.endswith("directory missing"))
+    if n_missing == n:
+        print(f"  methods   : 0/{n} -- NO feature directories exist yet under this root.")
+        print(f"              Has the extraction finished? Check with:")
+        print(f"                squeue -u $USER            # empty = done")
+        print(f"                sacct -j <jobid> --format=JobID,State | grep -c COMPLETED")
+        return False
+
     print(f"  methods   : {ok_dirs}/{n} clean, {n - ok_dirs} with problems")
+    if n_missing:
+        print(f"              {n_missing} of those are directories that do not exist -- a "
+              f"partially finished or partially failed array")
     if shapes:
         print(f"  shape/clip: {sorted(shapes)}  (T x d_model)"
               + ("   INCONSISTENT" if len(shapes) > 1 else ""))
