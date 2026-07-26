@@ -19,12 +19,29 @@
 # Idempotent: re-running over a directory that has gained clips (the novel search's Phase-2
 # top-up, 2 wavs -> 16) just copies the new ones.
 #
-#   scripts/stage_novel_stimuli.sh                       # defaults below = Phase 1
-#   METADATA_CSV=data/metadata/novel_grid_phase2_subset.csv \
-#   SRC=outputs/stim_gen_novel_phase2 METHOD_LIST_OUT=outputs/novel_methods_phase2.txt \
-#       scripts/stage_novel_stimuli.sh                   # Phase 2
+# Phase 1 is ~4,200 copies and Phase 2 ~9,300, so this belongs on a compute node rather than
+# the login node. It is a plain script with SBATCH directives, so it runs either way -- sbatch it
+# for the full grid, run it directly for a handful of methods.
+#
+#   sbatch scripts/slurm_stage_novel_stimuli.sh                       # Phase 1
+#   sbatch --export=ALL,METADATA_CSV=data/metadata/novel_grid_phase2_subset.csv,\
+# SRC=outputs/stim_gen_novel_phase2,METHOD_LIST_OUT=outputs/novel_methods_phase2.txt \
+#          scripts/slurm_stage_novel_stimuli.sh                       # Phase 2
 # =============================================================================
+
+#SBATCH --chdir /work/upschrimpf1/sigfstea/multimodal-brain-scaling
+#SBATCH --job-name=stage_novel
+#SBATCH --partition=standard
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=1
+#SBATCH --mem-per-cpu=4G
+#SBATCH --time=01:00:00
+#SBATCH --output=/work/upschrimpf1/sigfstea/multimodal-brain-scaling/logs/stage_novel_%j.out
+#SBATCH --error=/work/upschrimpf1/sigfstea/multimodal-brain-scaling/logs/stage_novel_%j.err
+
 set -uo pipefail
+mkdir -p logs
 
 METADATA_CSV="${METADATA_CSV:-data/metadata/novel_grid_frequency_metadata.csv}"
 SRC="${SRC:-outputs/stim_gen_novel}"

@@ -817,7 +817,7 @@ All cluster scripts `cd` to the handover repo root and `source env.sh`. **jed** 
 | `slurm_insilico_mmn.sh` | `insilico_mmn.py` | optional layer array `blocks.{0..5}`; forwards extra args via `"$@"` |
 | `slurm_insilico_mmn_electrodes.sh` | `insilico_mmn_electrodes.py` | optional layer array; topographic. `MMN_FEATURES_ROOT`/`STIM_ROOT`/`METADATA_CSV`/`DATA_DIR`/`OUT_DIR` overrides — **set `DATA_DIR` for any non-literature screen or it overwrites the committed literature predictions** (§17.6); 12 h |
 | `slurm_generate_stimuli.sh` | `00aa_generate_audio_stimuli.py` | `METADATA_CSV`/`OUTPUT_DIR`; forwards extra args via `"$@"` (`--trial_levels`/`--num_variations`/`--models`, §17.2); 1 h, 16 CPU |
-| `stage_novel_stimuli.sh` (**login node**, not sbatch) | `cp` + `mkdir` | flat generator tree → per-condition dirs + `METHOD_LIST` (§17.3) |
+| `slurm_stage_novel_stimuli.sh` (**login node**, not sbatch) | `cp` + `mkdir` | flat generator tree → per-condition dirs + `METHOD_LIST` (§17.3) |
 | `submit_novel_extraction.sh` (**login node**, not sbatch) | `sbatch slurm_mmn_extract_batch.sh` | 6 models × the array splits `MaxArraySize` requires; `DRY_RUN=1` to preview (§17.3) |
 | `submit_novel_insilico.sh` (**login node**, not sbatch) | `sbatch slurm_insilico_mmn_electrodes.sh` | 6 models, all paths redirected; refuses the literature predictions root (§17.6) |
 | `slurm_insilico_mmn_attn.sh` | `insilico_mmn_attn.py` | checkpoint-driven; all args via `"$@"` |
@@ -1158,7 +1158,7 @@ All are back-compatible: defaults reproduce the literature runs exactly.
 | `scripts/build_novel_phase2_csv.py` | Verbatim row-subset of the grid CSV for the selected pairs → `data/metadata/novel_grid_phase2_subset.csv`. |
 | `scripts/rank_novel_phase2.py` | Final ranking, `consensus_set.csv`, and the Phase-1↔Phase-2 Spearman ρ. |
 | `aux/analysis_novel_search/plots/novel_search_plots.py` | The three figures (`--results_dir`/`--out_dir` overridable). Runs as soon as Phase 1 lands; skips figure 3 until Phase 2 exists. |
-| `scripts/stage_novel_stimuli.sh` | Bridges the generator's flat output tree to the per-condition dirs the extractor and `insilico_mmn` read, and emits the `METHOD_LIST`. Idempotent, so the Phase-2 top-up re-stages in place. Self-verifying: fails naming any method with no source wavs. |
+| `scripts/slurm_slurm_stage_novel_stimuli.sh` | Bridges the generator's flat output tree to the per-condition dirs the extractor and `insilico_mmn` read, and emits the `METHOD_LIST`. Idempotent, so the Phase-2 top-up re-stages in place. Self-verifying: fails naming any method with no source wavs. |
 | `scripts/submit_novel_extraction.sh` | Submits the extraction arrays for all 6 models, encoding the per-model window/stimulus-root/feature-root differences once. Queries `MaxArraySize` and splits via `TASK_OFFSET`. `DRY_RUN=1` prints the sbatch lines. |
 | `scripts/submit_novel_insilico.sh` | Submits in-silico MMN for all 6 models with every path redirected, and **refuses** to write into the literature predictions root. Serves both phases and the figures-for-winners re-run. |
 
@@ -1224,8 +1224,8 @@ OUTPUT_DIR=outputs/stim_gen_novel scripts/slurm_generate_stimuli.sh \
        --trial_levels 7 --num_variations 1 --models whisper,wav2vec2
 
 # generator writes a FLAT tree; the extractor and insilico_mmn read per-condition dirs.
-# stage_novel_stimuli.sh bridges them and emits the METHOD_LIST, then self-verifies.
-scripts/stage_novel_stimuli.sh          # → outputs/mmn_stimuli_novel{,_wav2vec2}/method_<id>{,_counter}/
+# slurm_stage_novel_stimuli.sh bridges them and emits the METHOD_LIST, then self-verifies.
+scripts/slurm_slurm_stage_novel_stimuli.sh          # → outputs/mmn_stimuli_novel{,_wav2vec2}/method_<id>{,_counter}/
                                         # → outputs/novel_methods_phase1.txt (1056 entries)
 ```
 It prints the per-root directory and wav counts and the set of clips-per-dir; expect `1056 dirs, 2112 wavs, clips-per-dir {2}` for each root. It exits non-zero naming any method whose source wavs are missing — a partial generation must not quietly shrink the grid, since the in-silico driver skips a missing feature dir without erroring.
@@ -1288,7 +1288,7 @@ OUTPUT_DIR=outputs/stim_gen_novel_phase2 scripts/slurm_generate_stimuli.sh \
 METADATA_CSV=data/metadata/novel_grid_phase2_subset.csv \
 SRC=outputs/stim_gen_novel_phase2 \
 METHOD_LIST_OUT=outputs/novel_methods_phase2.txt \
-    scripts/stage_novel_stimuli.sh      # expect clips-per-dir {16 2}, NOT {16}
+    scripts/slurm_slurm_stage_novel_stimuli.sh      # expect clips-per-dir {16 2}, NOT {16}
 ```
 The mixed `{16 2}` is correct and expected: only the 145 selected pairs are topped up, and the other 383 keep the 2 clips Phase 1 gave them. A bare `{16}` would mean you regenerated the whole grid.
 
@@ -1321,7 +1321,7 @@ PREDICTIONS_ROOT=outputs/insilico_mmn_predictions_novel_figs \
 |---|---|---|---|
 | A — build grid | login node **and** local | seconds | — |
 | C — generate stimuli | jed (standard) | 1 h | 16 |
-| C / H — `stage_novel_stimuli.sh` | login node (not sbatch) | ~minutes | — |
+| C / H — `slurm_stage_novel_stimuli.sh` | login node (not sbatch) | ~minutes | — |
 | D / I — `submit_novel_extraction.sh` → MMN extract | login node → jed | 24 h/array task | 8 |
 | E / J — `submit_novel_insilico.sh` → in-silico MMN | login node → jed (standard) | 12 h | 12 |
 | F–G, plots | local | minutes | — |

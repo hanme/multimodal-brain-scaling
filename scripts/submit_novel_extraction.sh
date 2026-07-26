@@ -29,7 +29,7 @@ MODELS="${MODELS:-whisper-tiny whisper-base whisper-small whisper-medium wav2vec
 CONCURRENCY="${CONCURRENCY:-200}"
 DRY_RUN="${DRY_RUN:-0}"
 
-[ -f "$METHOD_LIST" ] || { echo "METHOD_LIST not found: $METHOD_LIST (run stage_novel_stimuli.sh)"; exit 1; }
+[ -f "$METHOD_LIST" ] || { echo "METHOD_LIST not found: $METHOD_LIST (run slurm_stage_novel_stimuli.sh)"; exit 1; }
 N=$(grep -c . "$METHOD_LIST")
 [ "$N" -gt 0 ] || { echo "METHOD_LIST is empty: $METHOD_LIST"; exit 1; }
 

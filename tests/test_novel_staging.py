@@ -4,7 +4,7 @@ Both replace loops that were previously inline in the runbook. That matters beca
 cluster the operator drives by copy-paste, twice (Phase 1 and Phase 2), over ~1000 directories --
 the worst possible place for a hand-retyped loop.
 
-stage_novel_stimuli.sh bridges the generator's flat output tree to the per-condition directories
+slurm_stage_novel_stimuli.sh bridges the generator's flat output tree to the per-condition directories
 the extractor and insilico_mmn read; nothing else in the repo does. submit_novel_extraction.sh
 encodes the per-model differences (10 s vs 30 s window and stimulus root, per-model feature root)
 that would otherwise be retyped per submission.
@@ -18,7 +18,7 @@ from pathlib import Path
 import pytest
 
 REPO = Path(__file__).resolve().parents[1]
-STAGE = REPO / "scripts/stage_novel_stimuli.sh"
+STAGE = REPO / "scripts/slurm_slurm_stage_novel_stimuli.sh"
 SUBMIT = REPO / "scripts/submit_novel_extraction.sh"
 
 HEADER = ("source,method_id,paradigm,change_type,standard_id,standard_freq,standard_dur,"
