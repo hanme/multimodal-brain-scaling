@@ -18,7 +18,7 @@ from pathlib import Path
 import pytest
 
 REPO = Path(__file__).resolve().parents[1]
-STAGE = REPO / "scripts/slurm_slurm_stage_novel_stimuli.sh"
+STAGE = REPO / "scripts/slurm_stage_novel_stimuli.sh"
 SUBMIT = REPO / "scripts/submit_novel_extraction.sh"
 
 HEADER = ("source,method_id,paradigm,change_type,standard_id,standard_freq,standard_dur,"
