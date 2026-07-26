@@ -1209,10 +1209,12 @@ python scripts/build_novel_grid_csv.py     # → data/metadata/novel_grid_freque
 ```
 The cluster needs the **metadata CSV** (Stages C and E); the local machine needs the **grid index** (Stage G, for the frequency/deviance columns).
 
-**Stage B — pre-flight checks (cluster, before spending anything).**
+**Stage B — pre-flight checks (cluster, before spending anything).** `df` reports the whole shared filesystem (5.5 P, 1.6 P free as of 2026-07-26), which says nothing about whether *you* may write ~920 GB — on a shared `/work` it is a per-user or per-group quota that binds, so check that too.
 ```bash
-scontrol show config | grep -i MaxArraySize      # 1056-task arrays EXCEED a 1000 cap; see Stage D
-df -h /work/upschrimpf1/sigfstea                 # need ~920 GB free
+scontrol show config | grep -i MaxArraySize      # measured 2026-07-26: 10001 -> 1056 fits in ONE array
+df -h /work/upschrimpf1/sigfstea                 # filesystem free space -- NOT your quota
+lfs quota -u $USER /work 2>/dev/null || mmlsquota --block-size auto 2>/dev/null || quota -s
+lfs quota -g upschrimpf1 /work 2>/dev/null       # the group quota is the one that usually binds
 ```
 
 **Stage C — synthesize audio (~minutes), then stage it.** The trailing flags are the whole point of the `"$@"` fix; without them you get 16 clips per method, not 2.
@@ -1228,9 +1230,9 @@ scripts/stage_novel_stimuli.sh          # → outputs/mmn_stimuli_novel{,_wav2ve
 ```
 It prints the per-root directory and wav counts and the set of clips-per-dir; expect `1056 dirs, 2112 wavs, clips-per-dir {2}` for each root. It exits non-zero naming any method whose source wavs are missing — a partial generation must not quietly shrink the grid, since the in-silico driver skips a missing feature dir without erroring.
 
-**Stage D — Phase-1 extraction (the ~123 CHF step).** `submit_novel_extraction.sh` submits all 6 models, picking the 10 s window and wav2vec2 stimulus root for the wav2vec2 pair, a per-model feature root (which is what keeps whisper-base off the literature run's bare `outputs/features`), and stimulus-id naming. It queries `MaxArraySize` and splits the 1056-entry list into as many arrays as needed — two per model at the common 1001 cap, offset by `TASK_OFFSET`.
+**Stage D — Phase-1 extraction (the ~123 CHF step).** `submit_novel_extraction.sh` submits all 6 models, picking the 10 s window and wav2vec2 stimulus root for the wav2vec2 pair, a per-model feature root (which is what keeps whisper-base off the literature run's bare `outputs/features`), and stimulus-id naming. It queries `MaxArraySize` and splits the 1056-entry list into as many arrays as needed. On jed that is **10001**, so the whole list fits in one `--array=0-1055%200` per model and `TASK_OFFSET` stays 0 — six submissions, not twelve. The splitting path still exists for a cluster with a tighter cap.
 ```bash
-DRY_RUN=1 scripts/submit_novel_extraction.sh    # read the 12 sbatch lines first
+DRY_RUN=1 scripts/submit_novel_extraction.sh    # read the 6 sbatch lines first
 scripts/submit_novel_extraction.sh
 ```
 
