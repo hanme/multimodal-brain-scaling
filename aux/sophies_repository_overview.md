@@ -1200,6 +1200,8 @@ Excluded from the 110/220 budgets, reported separately: grid construction, audio
 
 **Prerequisites:** everything in §17.2 pulled to the cluster; the frozen mTRF training features and the committed electrode layers already in place (§1.5). Local steps run in `mbs-env` with `PYTHONPATH="$(pwd)/src:$(pwd)/scripts"` (§16.5).
 
+**Run every cluster command from the repo root** (`cd /work/.../multimodal-brain-scaling`). The submitters hand `sbatch` a relative `scripts/slurm_*.sh` path and resolve `outputs/` against the current directory; from anywhere else they abort with a missing-path message rather than doing something odd. Stage A needs no environment at all (standard library only, so plain `python3` works before `source env.sh`); every other local step needs `mbs-env`.
+
 **Stage A — build the grid (seconds). Run it on BOTH machines.** `/data/` and `outputs/` are gitignored, so neither CSV travels with the repo — only the generator does. The output is deterministic (a pure function of the constants in the script), so running it in both places gives byte-identical files; do not rsync them.
 ```bash
 python scripts/build_novel_grid_csv.py     # → data/metadata/novel_grid_frequency_metadata.csv (528 rows)
@@ -1284,8 +1286,10 @@ OUTPUT_DIR=outputs/stim_gen_novel_phase2 scripts/slurm_generate_stimuli.sh \
 METADATA_CSV=data/metadata/novel_grid_phase2_subset.csv \
 SRC=outputs/stim_gen_novel_phase2 \
 METHOD_LIST_OUT=outputs/novel_methods_phase2.txt \
-    scripts/stage_novel_stimuli.sh      # expect clips-per-dir {16}
+    scripts/stage_novel_stimuli.sh      # expect clips-per-dir {16 2}, NOT {16}
 ```
+The mixed `{16 2}` is correct and expected: only the 145 selected pairs are topped up, and the other 383 keep the 2 clips Phase 1 gave them. A bare `{16}` would mean you regenerated the whole grid.
+
 Then **checksum the overlap**: the regenerated standard and `N7_var1` deviant must be byte-identical to Phase 1's, or the Phase-1 features are invalid for reuse and the 28-clip saving evaporates. (Verified locally in advance — `generate_deviant_sequence` seeds on `(method_id, N, v)` alone, independent of grid size, row count and worker count.)
 
 **Stage I — Phase-2 extraction (the ~222 CHF step).** No index arithmetic: with `MMN_NAME_BY_STIM_ID=true` and `MMN_OVERWRITE` unset, pointing the extractor at the now-16-wav directory extracts **exactly the 14 missing clips** and skips the 2 that exist. Re-run Stage D's submitter against the Phase-2 list — `METHOD_LIST=$PWD/outputs/novel_methods_phase2.txt scripts/submit_novel_extraction.sh` (290 dirs = 145 pairs × 2 directions, one array per model). Verify the plan implies **4,060** new clips (290 × 14), not 4,640 (290 × 16) — the 16-clip figure means you are re-extracting Phase 1 and wasting ~30 CHF. Run the same cost gate on one model × 5 methods.
