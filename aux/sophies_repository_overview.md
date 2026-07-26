@@ -1161,6 +1161,7 @@ All are back-compatible: defaults reproduce the literature runs exactly.
 | `scripts/slurm_stage_novel_stimuli.sh` | Bridges the generator's flat output tree to the per-condition dirs the extractor and `insilico_mmn` read, and emits the `METHOD_LIST`. Idempotent, so the Phase-2 top-up re-stages in place. Self-verifying: fails naming any method with no source wavs. |
 | `scripts/submit_novel_extraction.sh` | Submits the extraction arrays for all 6 models, encoding the per-model window/stimulus-root/feature-root differences once. Queries `MaxArraySize` and splits via `TASK_OFFSET`. `DRY_RUN=1` prints the sbatch lines. |
 | `scripts/submit_novel_insilico.sh` | Submits in-silico MMN for all 6 models with every path redirected, and **refuses** to write into the literature predictions root. Serves both phases and the figures-for-winners re-run. |
+| `scripts/check_novel_features.py` | Completeness + integrity check on extracted features: clip counts, naming scheme, every layer present, shape/dtype consistency, ids match filenames, exactly one standard, values finite and non-zero. Run after every extraction submission; exits non-zero on any problem. |
 
 **Ranking criteria** (identical in both phases). The unit is the **direction-instance**, not the pair — 528 pairs → 1,056 instances, matching the existing convention that regular and counter each count as one MMN observation.
 - `n_agree` = how many of the 6 models show S7 at FCz, X = 0.75 µV (0–6).
@@ -1249,7 +1250,14 @@ sacct -j <jobid> --format=JobID,State,ElapsedRaw,CPUTimeRAW,MaxRSS --parsable2 -
   | grep -vE '\.(batch|extern|[0-9]+)\|' \
   | awk -F'|' '{s+=$4; n++} END {printf "%.2f core-h/method, %.4f CHF/method\n", s/3600/n, s/3600/n*0.0055}'
 ```
-Stop and re-cost if any model exceeds its prediction by >25%. Also check the first completed clip's h5 against the ~148.9 MB/clip expectation before fanning out.
+Stop and re-cost if any model exceeds its prediction by >25%. Measured on jed 2026-07-26, whisper-tiny came in at **0.49** core-h/method against the 1.03 prediction — the per-task overhead is smaller than assumed, so treat the table as an upper bound.
+
+Then verify the output before fanning out, because a short or malformed extraction does not announce itself:
+```bash
+python scripts/check_novel_features.py --model_id whisper-tiny \
+  --method_list outputs/novel_methods_gate.txt --expect_clips 2
+```
+It reports clip counts, naming scheme, per-layer presence, shape/dtype, ids-vs-filenames, exactly-one-standard, and the projected full-grid disk from the measured MB/clip. After each full model: same command with `--method_list outputs/novel_methods_phase1.txt`; after Phase 2, `--models all --expect_clips 16`.
 
 **Stage E — Phase-1 in-silico MMN (~2.0 CHF, outside the budget).** `submit_novel_insilico.sh` submits one job per model with every path redirected. That redirection is the point: `slurm_insilico_mmn_electrodes.sh` defaults each path to the **literature** run, so a screen that forgets `DATA_DIR` silently overwrites `outputs/insilico_mmn_predictions/<model>/` — the comparison baseline, with no backup. The script refuses any `PREDICTIONS_ROOT` under that path.
 ```bash

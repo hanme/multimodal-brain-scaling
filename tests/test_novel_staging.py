@@ -13,6 +13,7 @@ that would otherwise be retyped per submission.
 import os
 import re
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -335,3 +336,106 @@ def test_insilico_reports_the_condition_count_from_the_metadata(tmp_path):
 def test_insilico_refuses_a_missing_metadata_csv(tmp_path):
     r = _insilico_dry(tmp_path, METADATA_CSV=str(tmp_path / "absent.csv"))
     assert r.returncode != 0 and "not found" in r.stdout + r.stderr
+
+
+# ──────────────────────────────────────────────────────────
+# Feature completeness / integrity check
+# ──────────────────────────────────────────────────────────
+
+CHECK = REPO / "scripts/check_novel_features.py"
+
+
+def _write_feats(d, stim_id, aliases=("blocks-0", "blocks-1", "blocks-2", "blocks-3"),
+                 T=5, dim=384, values=1.0):
+    import h5py, numpy as np
+    d.mkdir(parents=True, exist_ok=True)
+    with h5py.File(d / f"feats_delta_t-{stim_id}-seed_42.h5", "w") as f:
+        for a in aliases:
+            f.create_dataset(f"features/{a}",
+                             data=np.full((1, T, dim), values, np.float16))
+        f.create_dataset("ids", data=np.array([stim_id], dtype=h5py.string_dtype()))
+    return d
+
+
+def _good_method(root, method="method_1001"):
+    d = root / f"mmn-{method}-delta-t"
+    _write_feats(d, f"{method}_standard_0000000")
+    _write_feats(d, f"{method}_N7_var1_deviant_0000000")
+    return d
+
+
+def _check(tmp_path, root, methods=("method_1001",), clips=2):
+    ml = tmp_path / "ml.txt"
+    ml.write_text("\n".join(methods) + "\n")
+    return subprocess.run(
+        [sys.executable, str(CHECK), "--model_id", "whisper-tiny",
+         "--features_root", str(root), "--method_list", str(ml),
+         "--expect_clips", str(clips)], capture_output=True, text=True, cwd=REPO)
+
+
+def test_check_passes_a_complete_extraction(tmp_path):
+    _good_method(tmp_path / "feat")
+    r = _check(tmp_path, tmp_path / "feat")
+    assert r.returncode == 0, r.stdout
+    assert "ALL CHECKS PASSED" in r.stdout
+    assert "1/1 clean" in r.stdout
+
+
+def test_check_catches_a_missing_directory(tmp_path):
+    (tmp_path / "feat").mkdir()
+    r = _check(tmp_path, tmp_path / "feat")
+    assert r.returncode == 1 and "directory missing" in r.stdout
+
+
+def test_check_catches_a_missing_clip(tmp_path):
+    """The timed-out-task case: the in-silico driver would use the dir anyway."""
+    d = tmp_path / "feat" / "mmn-method_1001-delta-t"
+    _write_feats(d, "method_1001_N7_var1_deviant_0000000")
+    r = _check(tmp_path, tmp_path / "feat")
+    assert r.returncode == 1
+    assert "1 h5 files, expected 2" in r.stdout
+    assert "0 standards" in r.stdout
+
+
+def test_check_catches_mixed_naming_schemes(tmp_path):
+    d = _good_method(tmp_path / "feat")
+    (d / "feats_delta_t-start_00000-batch_0-seed_42.h5").write_bytes(b"")
+    r = _check(tmp_path, tmp_path / "feat")
+    assert r.returncode == 1 and "legacy start/batch-named" in r.stdout
+
+
+def test_check_catches_a_missing_layer(tmp_path):
+    d = tmp_path / "feat" / "mmn-method_1001-delta-t"
+    _write_feats(d, "method_1001_standard_0000000", aliases=("blocks-0", "blocks-1"))
+    _write_feats(d, "method_1001_N7_var1_deviant_0000000")
+    r = _check(tmp_path, tmp_path / "feat")
+    assert r.returncode == 1 and "missing layer(s)" in r.stdout
+
+
+def test_check_catches_an_unreadable_file(tmp_path):
+    d = _good_method(tmp_path / "feat")
+    next(d.glob("*standard*")).write_bytes(b"not an hdf5")
+    r = _check(tmp_path, tmp_path / "feat")
+    assert r.returncode == 1 and "unreadable" in r.stdout
+
+
+def test_check_catches_all_zero_features(tmp_path):
+    d = tmp_path / "feat" / "mmn-method_1001-delta-t"
+    _write_feats(d, "method_1001_standard_0000000", values=0.0)
+    _write_feats(d, "method_1001_N7_var1_deviant_0000000")
+    r = _check(tmp_path, tmp_path / "feat")
+    assert r.returncode == 1 and "all zeros" in r.stdout
+
+
+def test_check_catches_inconsistent_shapes(tmp_path):
+    d = tmp_path / "feat" / "mmn-method_1001-delta-t"
+    _write_feats(d, "method_1001_standard_0000000", T=5)
+    _write_feats(d, "method_1001_N7_var1_deviant_0000000", T=7)
+    r = _check(tmp_path, tmp_path / "feat")
+    assert "INCONSISTENT" in r.stdout
+
+
+def test_check_expects_16_clips_after_phase2(tmp_path):
+    _good_method(tmp_path / "feat")
+    r = _check(tmp_path, tmp_path / "feat", clips=16)
+    assert r.returncode == 1 and "2 h5 files, expected 16" in r.stdout
