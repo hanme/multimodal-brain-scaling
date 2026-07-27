@@ -174,16 +174,25 @@ def test_staging_refuses_missing_inputs(tmp_path, missing):
 # ──────────────────────────────────────────────────────────
 
 def _dry_run(tmp_path, n_conditions, max_array=1001, **over):
+    """A consistent world: METHOD_LIST, metadata CSV and staged dirs all agree, so the
+    grid-mismatch guard passes and the submission logic itself is what gets exercised."""
+    assert n_conditions % 2 == 0, "conditions come in regular/counter pairs"
+    ids = list(range(1001, 1001 + n_conditions // 2))
+    csv_path = _csv(tmp_path / "grid.csv", ids)
     ml = tmp_path / "methods.txt"
-    ml.write_text("\n".join(f"method_{1000 + i}" for i in range(n_conditions)) + "\n")
+    ml.write_text("\n".join(f"method_{i}{s}" for i in ids for s in ("", "_counter")) + "\n")
     for d in ("mmn_stimuli_novel", "mmn_stimuli_novel_wav2vec2"):
-        (tmp_path / d).mkdir(exist_ok=True)
+        root = tmp_path / d
+        root.mkdir(exist_ok=True)
+        for i in ids:
+            for s in ("", "_counter"):
+                (root / f"method_{i}{s}").mkdir(exist_ok=True)
     env = dict(os.environ)
-    env.update(DRY_RUN="1", METHOD_LIST=str(ml), MAX_ARRAY_FALLBACK=str(max_array),
+    env.update(DRY_RUN="1", METHOD_LIST=str(ml), METADATA_CSV=str(csv_path),
+               MAX_ARRAY_FALLBACK=str(max_array),
                WHISPER_STIM=str(tmp_path / "mmn_stimuli_novel"),
                WAV2VEC2_STIM=str(tmp_path / "mmn_stimuli_novel_wav2vec2"))
     env.update({k: str(v) for k, v in over.items()})
-    env.pop("PATH_TO_SCONTROL", None)
     r = subprocess.run(["bash", str(SUBMIT)], capture_output=True, text=True, env=env, cwd=REPO)
     assert r.returncode == 0, r.stdout + r.stderr
     return r.stdout
@@ -250,7 +259,8 @@ def test_submission_refuses_a_missing_stimulus_root(tmp_path):
     env.update(DRY_RUN="1", METHOD_LIST=str(ml), MODELS="whisper-tiny",
                WHISPER_STIM=str(tmp_path / "absent"))
     r = subprocess.run(["bash", str(SUBMIT)], capture_output=True, text=True, env=env, cwd=REPO)
-    assert r.returncode != 0 and "stimulus root missing" in r.stdout + r.stderr
+    assert r.returncode != 0
+    assert "REFUSING" in r.stdout + r.stderr
 
 
 @pytest.mark.parametrize("script", [STAGE, SUBMIT])
@@ -462,3 +472,77 @@ def test_check_flags_a_partially_finished_array(tmp_path):
     assert r.returncode == 1
     assert "1/3 clean" in r.stdout
     assert "partially finished or partially failed" in r.stdout
+
+
+# ──────────────────────────────────────────────────────────
+# Grid-mismatch guard: the failure that reached the cluster
+# ──────────────────────────────────────────────────────────
+
+def _submit_with(tmp_path, csv_ids, list_ids, stage_all=True):
+    """Submit with a METHOD_LIST built from list_ids and a CSV built from csv_ids."""
+    csv_path = _csv(tmp_path / "grid.csv", csv_ids)
+    ml = tmp_path / "methods.txt"
+    ml.write_text("\n".join(f"method_{i}{s}" for i in list_ids for s in ("", "_counter")) + "\n")
+    for d in ("mmn_stimuli_novel", "mmn_stimuli_novel_wav2vec2"):
+        root = tmp_path / d
+        root.mkdir(exist_ok=True)
+        if stage_all:
+            for i in list_ids:
+                for s in ("", "_counter"):
+                    (root / f"method_{i}{s}").mkdir(exist_ok=True)
+    env = dict(os.environ)
+    env.update(DRY_RUN="1", METHOD_LIST=str(ml), METADATA_CSV=str(csv_path),
+               MAX_ARRAY_FALLBACK="10001", MODELS="whisper-tiny",
+               WHISPER_STIM=str(tmp_path / "mmn_stimuli_novel"),
+               WAV2VEC2_STIM=str(tmp_path / "mmn_stimuli_novel_wav2vec2"))
+    return subprocess.run(["bash", str(SUBMIT)], capture_output=True, text=True,
+                          env=env, cwd=REPO)
+
+
+def test_submit_refuses_a_stale_method_list(tmp_path):
+    """The real incident: the grid was rebuilt to 903 pairs but the method list was still the
+    old 528-pair one, so every id referred to a different frequency pair in the audio than in
+    the CSV that scores it. Nothing downstream would have caught it."""
+    r = _submit_with(tmp_path, csv_ids=range(1001, 1011), list_ids=range(1001, 1006))
+    assert r.returncode != 0
+    out = r.stdout + r.stderr
+    assert "REFUSING" in out and "does not match METADATA_CSV" in out
+    assert "10 conditions" in out and "20 conditions" in out
+    assert "--array=" not in out, "must not submit anything"
+
+
+def test_submit_refuses_when_ids_differ_even_at_the_same_count(tmp_path):
+    """Same length, different conditions -- a count check alone would pass this."""
+    r = _submit_with(tmp_path, csv_ids=range(1001, 1006), list_ids=range(1101, 1106))
+    assert r.returncode != 0 and "does not match METADATA_CSV" in r.stdout + r.stderr
+
+
+def test_submit_accepts_a_matching_list(tmp_path):
+    r = _submit_with(tmp_path, csv_ids=range(1001, 1006), list_ids=range(1001, 1006))
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "--array=0-9%" in r.stdout
+
+
+def test_submit_refuses_when_the_audio_was_never_staged(tmp_path):
+    """List and CSV agree, but nothing is on disk."""
+    r = _submit_with(tmp_path, csv_ids=range(1001, 1006), list_ids=range(1001, 1006),
+                     stage_all=False)
+    assert r.returncode != 0
+    assert "were never staged" in r.stdout + r.stderr
+
+
+def test_insilico_refuses_features_that_predate_a_grid_rebuild(tmp_path):
+    """Same hazard on the scoring side: features extracted against the old grid."""
+    csv_path = _csv(tmp_path / "rebuilt_grid.csv", range(1001, 1006))
+    feats = REPO / "outputs/features/whisper-tiny-mmn-novel"
+    created = not feats.exists()
+    (feats / "mmn-method_1001-delta-t").mkdir(parents=True, exist_ok=True)
+    try:
+        r = _insilico_dry(tmp_path, MODELS="whisper-tiny", METADATA_CSV=str(csv_path))
+        assert r.returncode != 0
+        assert "mmn-method_1005-delta-t is missing" in r.stdout + r.stderr
+    finally:
+        import shutil
+        shutil.rmtree(feats / "mmn-method_1001-delta-t", ignore_errors=True)
+        if created:
+            shutil.rmtree(feats, ignore_errors=True)

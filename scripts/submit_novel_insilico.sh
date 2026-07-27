@@ -49,6 +49,24 @@ case "$PREDICTIONS_ROOT" in
         exit 1 ;;
 esac
 
+# The features being scored must cover the conditions this CSV names. If the grid was rebuilt
+# after extraction, method ids refer to different frequency pairs in the features than in the
+# CSV, and the scoring is silently wrong rather than absent.
+first_id=$(awk -F, 'NR>1 && $4=="Frequency" {print $2; exit}' "$METADATA_CSV")
+last_id=$(awk -F, 'NR>1 && $4=="Frequency" {id=$2} END {print id}' "$METADATA_CSV")
+for model in $MODELS; do
+    root="outputs/features/${model}-mmn-${FEATURES_TAG}"
+    [ -d "$root" ] || continue          # not extracted yet; the driver reports it per method
+    for id in "$first_id" "$last_id"; do
+        [ -d "$root/mmn-method_${id}-delta-t" ] || {
+            echo "REFUSING: $root/mmn-method_${id}-delta-t is missing."
+            echo "  $METADATA_CSV names method_${id}, but the extracted features do not have it."
+            echo "  The grid was rebuilt after extraction, so ids no longer line up. Re-extract"
+            echo "  against the current grid before scoring."
+            exit 1; }
+    done
+done
+
 N_COND=$(awk -F, 'NR>1 && $4=="Frequency" {n++} END {print 2*n}' "$METADATA_CSV")
 echo "metadata    : $METADATA_CSV ($N_COND conditions incl. counter)"
 echo "features    : outputs/features/<model>-mmn-${FEATURES_TAG}"

@@ -22,6 +22,7 @@ set -uo pipefail
 
 PROJECT_DIR="${PROJECT_DIR:-$PWD}"
 METHOD_LIST="${METHOD_LIST:-${PROJECT_DIR}/outputs/novel_methods_phase1.txt}"
+METADATA_CSV="${METADATA_CSV:-data/metadata/novel_grid_frequency_metadata.csv}"
 FEATURES_TAG="${FEATURES_TAG:-novel}"
 WHISPER_STIM="${WHISPER_STIM:-${PROJECT_DIR}/outputs/mmn_stimuli_novel}"
 WAV2VEC2_STIM="${WAV2VEC2_STIM:-${PROJECT_DIR}/outputs/mmn_stimuli_novel_wav2vec2}"
@@ -32,6 +33,39 @@ DRY_RUN="${DRY_RUN:-0}"
 [ -f "$METHOD_LIST" ] || { echo "METHOD_LIST not found: $METHOD_LIST (run slurm_stage_novel_stimuli.sh)"; exit 1; }
 N=$(grep -c . "$METHOD_LIST")
 [ "$N" -gt 0 ] || { echo "METHOD_LIST is empty: $METHOD_LIST"; exit 1; }
+
+# The method list and the metadata CSV MUST describe the same conditions. If the grid is
+# rebuilt and the stimuli are not re-staged, the ids silently remap: method_1001 is one
+# frequency pair in the staged audio and a different one in the CSV that scores it. Nothing
+# downstream catches that -- the features are internally consistent, just describing the wrong
+# pairs -- so refuse here, where it is still free.
+[ -f "$METADATA_CSV" ] || { echo "metadata CSV not found: $METADATA_CSV"; exit 1; }
+expected=$(awk -F, 'NR>1 && $4=="Frequency" {print "method_"$2; print "method_"$2"_counter"}' \
+           "$METADATA_CSV" | sort)
+actual=$(grep . "$METHOD_LIST" | sort)
+if [ "$expected" != "$actual" ]; then
+    n_exp=$(echo "$expected" | grep -c .)
+    echo "REFUSING: METHOD_LIST does not match METADATA_CSV."
+    echo "  $METHOD_LIST      : $N conditions"
+    echo "  $METADATA_CSV : $n_exp conditions"
+    echo "  The grid was rebuilt without re-staging the stimuli, so method ids refer to"
+    echo "  different frequency pairs in each. Re-run, in order:"
+    echo "    python scripts/build_novel_grid_csv.py"
+    echo "    rm -rf outputs/stim_gen_novel outputs/mmn_stimuli_novel outputs/mmn_stimuli_novel_wav2vec2"
+    echo "    rm -f  $METHOD_LIST"
+    echo "    sbatch scripts/slurm_generate_stimuli.sh ...   # then slurm_stage_novel_stimuli.sh"
+    exit 1
+fi
+
+# ...and the staged audio must actually be there for those conditions.
+for probe in "$(head -1 "$METHOD_LIST")" "$(tail -1 "$METHOD_LIST")"; do
+    for root in "$WHISPER_STIM" "$WAV2VEC2_STIM"; do
+        [ -d "$root/$probe" ] || {
+            echo "REFUSING: $root/$probe is missing -- the method list names conditions that"
+            echo "  were never staged. Run scripts/slurm_stage_novel_stimuli.sh first."
+            exit 1; }
+    done
+done
 
 # Cluster array cap. Query it rather than assume: a list longer than the cap is rejected at
 # submission, and the novel grid's 1806 entries exceed the common default of 1001.
