@@ -6,8 +6,8 @@ silent mistake is expensive:
 
   * an off-by-one or a wrapped negative index extracts the wrong method into the right directory,
     which no downstream check would catch;
-  * the novel grid's 1056-entry list needs two submissions per model with TASK_OFFSET, so the
-    offset arithmetic is load-bearing;
+  * TASK_OFFSET exists so a condition list longer than the cluster's MaxArraySize can be
+    submitted as several arrays, so the offset arithmetic is load-bearing;
   * slurm_generate_stimuli.sh silently dropping "$@" would synthesize the full 16-clip grid
     instead of the 2-clip screen -- an 8x cost overshoot with no error.
 
@@ -65,7 +65,7 @@ def test_method_list_indexes_by_array_task_id(method_list, task, expected):
 
 
 def test_task_offset_addresses_the_second_half_of_a_split_array(method_list):
-    """The 1056-entry novel list exceeds a 1000-task cap, so each model is submitted twice."""
+    """A list longer than MaxArraySize is submitted as several offset arrays."""
     assert _selected(_select(method_list, task_id=0, offset=3)) == "method_1002_counter"
     assert _selected(_select(method_list, task_id=2, offset=3)) == "method_1003_counter"
 
@@ -143,7 +143,7 @@ def test_insilico_wrapper_passes_metadata_csv_and_forwards_extra_args():
 
 
 def test_insilico_walltime_is_sized_for_the_full_grid():
-    """30 min sized the 48-condition literature screen; 1056 conditions need hours."""
+    """30 min sized the 48-condition literature screen; 1806 conditions need hours."""
     m = re.search(r"#SBATCH --time=(\d+):", INSILICO.read_text())
     assert m and int(m.group(1)) >= 12
 

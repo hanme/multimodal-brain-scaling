@@ -7,32 +7,32 @@ literature drive stronger, more model-consistent responses? -- as a dense grid o
 [200, 7500] Hz. The literature's own frequency methods all sit between 600 and 1000 Hz, so this
 deliberately overshoots them in both directions.
 
-The grid is a LADDER plus EXTRAS:
+The grid is a single uniform LADDER: 43 rungs from 200 Hz in exact 1.500-semitone steps, giving
+200 ... 7611 Hz at 8.8% deviance per step.
 
-  ladder   32 points from 200 Hz in exact 2.000-semitone steps -> 200 ... 7184 Hz.
-           Spacing is in semitones, not Hz, because pitch is ratio-based: an equal-Hz grid over
-           this range would put a 13.5-semitone gap at the bottom and 0.55-semitone steps at the
-           top, a 24x difference in perceptual step size. Equal ratio steps also mean "k steps
-           apart" denotes the same deviance everywhere, and that the two directions of a pair
-           carry equal deviance magnitude (+2.000 st one way, -2.000 st the other), which is what
-           makes the frequency-preference test interpretable.
-           A whole-tone step additionally puts octaves exactly on the grid (6 x 2 = 12 st), so
-           200/400/800/1600/3200/6400 are all grid points and true 2:1 pairs exist. At the
-           2.0241 st that 32 points evenly spanning 200-7500 would have implied, 12/2.0241 = 5.93
-           is not an integer and NO pair anywhere in the grid would be an exact octave.
+Why semitones rather than hertz. Pitch is ratio-based, so an equal-Hz grid over this range would
+put a 13.5-semitone gap at the bottom and 0.55-semitone steps at the top -- a 24x difference in
+perceptual step size, most of the points wasted in the treble. Equal ratio steps also mean "k
+steps apart" denotes the same deviance everywhere, and that the two directions of a pair carry
+equal deviance magnitude (+1.500 st one way, -1.500 st the other), which is what makes the
+frequency-preference test interpretable.
 
-  extras   7500 Hz, appended to hold the top of the intended range (it is also just under the
-           8 kHz Nyquist of the 16 kHz sample rate every model takes -- a higher tone would
-           alias). This makes ONE irregular step, 7184 -> 7500 = 0.745 st = 4.4%.
-           That irregularity is deliberate and is the grid's only sub-2-semitone pair: it is
-           finer than every literature frequency method (the finest four are 0.84, 1.07, 1.74
-           and 1.99 st), so it is the one probe of near-threshold deviance here. Read it with
-           care -- it sits at 7184-7500 Hz, far above the literature's 600-1000 Hz band, so it
-           has no published counterpart to compare against. The other 31 pairs that 7500 adds
-           are near-replicas of the corresponding 7184 pairs, 0.745 st away.
+Why 1.5 specifically. 12 / 1.5 = 8 exactly, so eight steps is one octave and 200/400/800/1600/
+3200/6400 are all grid points -- true 2:1 pairs exist. Any step that does not divide 12 evenly
+loses that: at the 1.494 st needed to land 43 points exactly on 7500 Hz, 12/1.494 = 8.03 and NO
+pair anywhere in the grid would be an exact octave.
 
-Irregular spacing does not disturb the analysis: deviance is computed per pair from the actual
-frequencies, never from a step count.
+Why the top is 7611 and not 7500. 200 -> 7500 Hz is 62.746 semitones, and 62.746 / 1.5 = 41.83
+steps -- not an integer, so a strict 1.5-semitone ladder cannot land on 7500. The choice is to
+stop short (6979 Hz), to append 7500 as an irregular rung, or to overshoot by one step. This
+overshoots: 7611 Hz is still comfortably under the 8 kHz Nyquist of the 16 kHz sample rate every
+model takes (above which a tone aliases to a frequency the metadata does not claim), and it keeps
+every step identical with no irregular rung to caveat in the analysis.
+
+The cost of a uniform 1.5-semitone grid is resolution: the finest deviance it can express is
+8.8%, coarser than 8 of the 24 literature frequency methods. This is a coarse-to-fine search of a
+wide space, not a threshold study; a follow-up would need a finer grid over whatever region this
+one flags.
 
 Unordered pairs only: {f_i -> f_j} and {f_j -> f_i} are the SAME pair, because the generator
 synthesizes both directions of every row (audio_outputs_regular / audio_outputs_counter). So
@@ -47,8 +47,7 @@ method_id starts at 1001 so it can never collide with the literature ids (1-76),
 method_{id} stimulus-directory namespace.
 
   python scripts/build_novel_grid_csv.py          # -> data/metadata/novel_grid_frequency_metadata.csv
-  python scripts/build_novel_grid_csv.py --n_ladder 5 --extra_freqs "" --out /tmp/small.csv \
-      --index_out /tmp/i.csv
+  python scripts/build_novel_grid_csv.py --n_ladder 5 --out /tmp/small.csv --index_out /tmp/i.csv
 """
 
 import argparse
@@ -76,9 +75,9 @@ INTENSITY_DB = 80
 P_DEVIANT_PC = 10
 
 F_LO = 200.0             # ladder start, Hz
-SEMITONE_STEP = 2.0      # one whole tone; 6 steps = exactly one octave
-N_LADDER = 32            # 200 ... 7184 Hz
-EXTRA_FREQS = (7500,)    # appended; see the module docstring for why it is irregular
+SEMITONE_STEP = 1.5      # 12 / 1.5 = 8 steps per octave exactly, so octaves land on the grid
+N_LADDER = 43            # 200 ... 7611 Hz (one step past 7500; see the module docstring)
+EXTRA_FREQS = ()         # none: a uniform ladder, no irregular rung
 FIRST_METHOD_ID = 1001
 
 
@@ -170,8 +169,8 @@ def main():
     p.add_argument("--f_lo", type=float, default=F_LO,
                    help=f"ladder start, Hz (default {F_LO:g})")
     p.add_argument("--semitone_step", type=float, default=SEMITONE_STEP,
-                   help=f"ladder step in semitones (default {SEMITONE_STEP:g}; 2 = a whole tone, "
-                        f"so 6 steps is exactly an octave)")
+                   help=f"ladder step in semitones (default {SEMITONE_STEP:g}; must divide 12 "
+                        f"evenly for octaves to land on the grid -- 1.5 gives 8 steps/octave)")
     p.add_argument("--n_ladder", type=int, default=N_LADDER,
                    help=f"ladder rungs (default {N_LADDER})")
     p.add_argument("--extra_freqs", type=str,

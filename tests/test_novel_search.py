@@ -34,36 +34,36 @@ MODELS = nsc.SEARCH_MODELS
 # Grid construction
 # ──────────────────────────────────────────────────────────
 
-APPROVED_GRID = [200, 224, 252, 283, 317, 356, 400, 449, 504, 566, 635, 713, 800, 898,
-                 1008, 1131, 1270, 1425, 1600, 1796, 2016, 2263, 2540, 2851, 3200, 3592,
-                 4032, 4525, 5080, 5702, 6400, 7184, 7500]
+APPROVED_GRID = [200, 218, 238, 259, 283, 308, 336, 367, 400, 436, 476, 519, 566, 617,
+                 673, 734, 800, 872, 951, 1037, 1131, 1234, 1345, 1467, 1600, 1745, 1903,
+                 2075, 2263, 2468, 2691, 2934, 3200, 3490, 3805, 4150, 4525, 4935, 5382,
+                 5869, 6400, 6979, 7611]
 
 
 def test_grid_matches_the_approved_frequency_list_exactly():
     assert bg.build_grid() == APPROVED_GRID
 
 
-def test_ladder_is_exact_whole_tones_with_one_deliberate_extra():
+def test_ladder_is_a_uniform_1_5_semitone_step_with_no_extras():
     freqs = bg.build_grid()
-    ladder, extra = freqs[:-1], freqs[-1]
-    steps = [12 * math.log2(b / a) for a, b in zip(ladder, ladder[1:])]
-    # 2.000 st exactly, up to integer-Hz rounding of each rung
-    assert max(abs(s - 2.0) for s in steps) < 0.05, steps
-    assert extra == 7500
-    # the one irregular rung, and the grid's only sub-2-semitone pair
-    assert 12 * math.log2(extra / ladder[-1]) == pytest.approx(0.745, abs=0.01)
+    steps = [12 * math.log2(b / a) for a, b in zip(freqs, freqs[1:])]
+    # 1.500 st exactly, up to integer-Hz rounding of each rung
+    assert max(abs(s - 1.5) for s in steps) < 0.05, steps
+    assert len(freqs) == 43
+    assert bg.EXTRA_FREQS == (), "the grid is a pure ladder; no irregular rung to caveat"
 
 
 def test_octaves_of_the_ladder_start_land_exactly_on_the_grid():
-    """A whole-tone step means 6 steps = 12 semitones, so true 2:1 pairs exist. At the 2.024 st
-    an evenly-spanned 200-7500 grid would imply, no pair anywhere would be an exact octave."""
+    """12 / 1.5 = 8 exactly, so eight steps is an octave and true 2:1 pairs exist. At the 1.494 st
+    needed to land 43 points exactly on 7500 Hz, 12/1.494 = 8.03 and no pair would be an octave."""
     freqs = set(bg.build_grid())
     assert {200, 400, 800, 1600, 3200, 6400} <= freqs
 
 
 def test_top_of_grid_stays_below_nyquist():
-    """16 kHz sample rate for every model; a tone at or above 8 kHz would alias."""
-    assert max(bg.build_grid()) < 8000
+    """16 kHz sample rate for every model; a tone at or above 8 kHz would alias. The ladder
+    overshoots the nominal 7500 top by one step to keep every step identical."""
+    assert 7500 < max(bg.build_grid()) < 8000
 
 
 def test_grid_rows_are_unordered_pairs_with_no_diagonal():
@@ -71,10 +71,10 @@ def test_grid_rows_are_unordered_pairs_with_no_diagonal():
     rows, index = bg.build_rows(freqs)
     bg.verify(freqs, rows)  # raises on duplicates / diagonal / off-grid / id collision / Nyquist
     n = len(freqs)
-    assert len(rows) == 528 == len(index) == n * (n - 1) // 2
+    assert len(rows) == 903 == len(index) == n * (n - 1) // 2
     assert all(r["standard_freq"] < r["deviant_freq"] for r in rows)
-    assert [r["method_id"] for r in rows] == list(range(1001, 1529))
-    assert min(i["pct_deviance"] for i in index) == pytest.approx(4.4, abs=0.1)
+    assert [r["method_id"] for r in rows] == list(range(1001, 1904))
+    assert min(i["pct_deviance"] for i in index) == pytest.approx(8.8, abs=0.1)
 
 
 def test_grid_schema_matches_the_literature_sheet_exactly():
@@ -138,7 +138,7 @@ def scored_grid(tmp_path):
     grid_csv = tmp_path / "grid.csv"
     index_csv = tmp_path / "grid_index.csv"
     subprocess.run([sys.executable, str(SCRIPTS / "build_novel_grid_csv.py"),
-                    "--n_ladder", "5", "--extra_freqs", "",
+                    "--n_ladder", "5",
                     "--out", str(grid_csv), "--index_out", str(index_csv)],
                    check=True, capture_output=True, cwd=REPO)
 
@@ -260,13 +260,14 @@ def test_selection_walk_stops_at_the_requested_pair_count(scored_grid):
 # Cost model
 # ──────────────────────────────────────────────────────────
 
-def test_phase1_cost_is_the_predicted_123_chf():
-    """1056 method dirs x 2 clips, one array task each. The per-clip figures were measured on
-    16-clip batches, so the model-load overhead they omit is amortised 2 ways here, not 16."""
-    base = nsc.extraction_cost_chf(1056, 2, overhead_core_h=0.0)
-    with_overhead = nsc.extraction_cost_chf(1056, 2)
-    assert base == pytest.approx(113.9, abs=0.5)
-    assert with_overhead == pytest.approx(123.4, abs=1.0)
+def test_phase1_cost_from_the_literature_per_clip_figures():
+    """1806 method dirs x 2 clips, one array task each. These are the LITERATURE-derived
+    predictions; jed measured whisper-tiny at 0.38x its prediction, so treat them as an upper
+    bound (see scripts/report_extraction_cost.sh)."""
+    base = nsc.extraction_cost_chf(1806, 2, overhead_core_h=0.0)
+    with_overhead = nsc.extraction_cost_chf(1806, 2)
+    assert base == pytest.approx(194.9, abs=1.0)
+    assert with_overhead == pytest.approx(211.0, abs=1.5)
 
 
 def test_phase2_takes_a_flat_145_pairs():
@@ -395,7 +396,7 @@ def test_consensus_is_empty_rather_than_erroring_when_nothing_qualifies():
 
 
 def test_rank_stability_reranks_phase1_within_the_shared_subset(tmp_path, capsys):
-    """Phase-1 ranks index the full 1056-instance list; correlating them raw against Phase-2's
+    """Phase-1 ranks index the full 1806-instance list; correlating them raw against Phase-2's
     1..N would compare against a population Phase 2 never scored."""
     import rank_novel_phase2 as p2
     pairs = [1001, 1002, 1003, 1004]

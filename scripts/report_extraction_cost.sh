@@ -18,7 +18,7 @@ set -uo pipefail
 
 CHF_PER_CORE_H=0.0055
 CLIPS_PER_DIR="${CLIPS_PER_DIR:-2}"     # 2 in Phase 1, 14 in Phase 2
-N_DIRS_FULL="${N_DIRS_FULL:-1056}"      # method dirs in a full Phase-1 model
+N_DIRS_FULL="${N_DIRS_FULL:-1806}"      # method dirs in a full Phase-1 model
 LOGDIR="${LOGDIR:-logs}"
 
 [ $# -gt 0 ] || { echo "usage: $0 <jobid> [<jobid> ...]"; exit 1; }

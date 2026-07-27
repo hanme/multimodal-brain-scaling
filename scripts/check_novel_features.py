@@ -150,8 +150,8 @@ def check_model(model_id, features_root, methods, expect_clips, show):
     if total_bytes:
         print(f"  size      : {total_bytes / 1e9:.2f} GB total, "
               f"{total_bytes / max(1, ok_dirs * expect_clips) / 1e6:.1f} MB/clip")
-        print(f"  projected : {total_bytes / max(1, n) * 528 * 2 / 1e9:.0f} GB "
-              f"for all 1056 dirs at this rate")
+        print(f"  projected : {total_bytes / max(1, n) * 903 * 2 / 1e9:.0f} GB "
+              f"for all 1806 dirs at this rate")
     if all_problems:
         print(f"  PROBLEMS  : {len(all_problems)}")
         for p in all_problems[:show]:

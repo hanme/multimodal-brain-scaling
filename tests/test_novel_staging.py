@@ -190,9 +190,9 @@ def _dry_run(tmp_path, n_conditions, max_array=1001, **over):
 
 
 def test_submission_covers_every_condition_exactly_once(tmp_path):
-    """1056 conditions against a 1001 cap must split into two arrays whose index ranges plus
+    """1806 conditions against a 1001 cap must split into two arrays whose index ranges plus
     offsets tile 0..1055 with no gap and no repeat."""
-    out = _dry_run(tmp_path, 1056, max_array=1001, MODELS="whisper-tiny")
+    out = _dry_run(tmp_path, 1806, max_array=1001, MODELS="whisper-tiny")
     covered = []
     for line in out.splitlines():
         if "sbatch" not in line:
@@ -200,7 +200,7 @@ def test_submission_covers_every_condition_exactly_once(tmp_path):
         off = int(re.search(r"TASK_OFFSET=(\d+)", line).group(1))
         lo, hi = map(int, re.search(r"--array=(\d+)-(\d+)%", line).groups())
         covered += list(range(off + lo, off + hi + 1))
-    assert sorted(covered) == list(range(1056))
+    assert sorted(covered) == list(range(1806))
 
 
 def test_submission_uses_one_array_when_the_list_fits(tmp_path):

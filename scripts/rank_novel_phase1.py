@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Phase 1 of the novel tone-pair search: rank all 1056 direction-instances, select for Phase 2.
+"""Phase 1 of the novel tone-pair search: rank all 1806 direction-instances, select for Phase 2.
 
 Input is the FCz / mTRF / X=0.75 slice of analyze_mmn_s7_roi.py's output over the novel grid,
 where each condition was scored from ONE deviant realization (N7/var1). Output is the ranking and

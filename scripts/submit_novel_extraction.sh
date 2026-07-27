@@ -34,7 +34,7 @@ N=$(grep -c . "$METHOD_LIST")
 [ "$N" -gt 0 ] || { echo "METHOD_LIST is empty: $METHOD_LIST"; exit 1; }
 
 # Cluster array cap. Query it rather than assume: a list longer than the cap is rejected at
-# submission, and the novel grid's 1056 entries exceed the common default of 1001.
+# submission, and the novel grid's 1806 entries exceed the common default of 1001.
 if MAX_ARRAY=$(scontrol show config 2>/dev/null | awk -F= '/MaxArraySize/ {gsub(/ /,"",$2); print $2}') \
    && [ -n "$MAX_ARRAY" ]; then
     echo "cluster MaxArraySize = $MAX_ARRAY"

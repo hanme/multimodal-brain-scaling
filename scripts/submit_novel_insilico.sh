@@ -9,7 +9,7 @@
 # baseline this whole search is measured against, and has no backup. Retyping five env vars per
 # model, twice (Phase 1 and Phase 2), is not worth that risk.
 #
-# --save_plots false is passed by default: at 1056 conditions the per-method figures are ~2
+# --save_plots false is passed by default: at 1806 conditions the per-method figures are ~2
 # matplotlib renders each, one a ~50-subplot montage, and would dominate the walltime. The
 # prediction h5 is written either way and is what all downstream scoring reads. Re-run the
 # winners with SAVE_PLOTS=true METHODS=<consensus dirs> for figures.

@@ -87,7 +87,7 @@ def main():
     p.add_argument("--out_dir", default="outputs/figures/insilico_mmn_electrodes")
     p.add_argument("--data_dir", default="outputs/insilico_mmn_predictions")
     # Per-method figures cost ~2 matplotlib renders each (one a full ~50-subplot montage). That is
-    # fine for the 48-condition literature screen but dominates walltime on the 1056-condition novel
+    # fine for the 48-condition literature screen but dominates walltime on the 1806-condition novel
     # grid, so large screens run with --save_plots false and the winners are re-run with it true.
     # The prediction h5 is written either way -- all downstream scoring reads that, not the PNGs.
     p.add_argument("--save_plots", type=_str2bool, default=True,

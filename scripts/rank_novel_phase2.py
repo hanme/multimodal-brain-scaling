@@ -53,7 +53,7 @@ def rank_stability(phase1_csv, ranked2):
         print(f"  only {len(both)} shared direction-instances -- rho not computed")
         return merged
 
-    # Phase-1 ranks are positions in the full 1056-instance list; re-rank within the shared subset so
+    # Phase-1 ranks are positions in the full 1806-instance list; re-rank within the shared subset so
     # the comparison is like-for-like.
     rho, pval = stats.spearmanr(both["phase1_rank"].rank(), both["rank"])
     print(f"  Spearman rho(Phase-1 rank, Phase-2 rank) = {rho:+.3f}  (p={pval:.2g}, "
