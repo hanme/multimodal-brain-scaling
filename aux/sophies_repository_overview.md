@@ -1,7 +1,7 @@
 # Repository Operational Overview — `multimodal-brain-scaling` (auditory-EEG / MMN fork)
 
 **Generated:** 2026-06-18
-**Last updated:** 2026-07-25 (new **§17 Stimuli Search Phase** — the novel tone-pair grid search, its pipeline prerequisites, cost model and run guide. Prior 2026-07-13 entry: enabled whisper-large + wav2vec2-{medium,large} for the D2 mTRF mapping — see the **2026-07-13** changelog line below, §1.4, §1.5, and `aux/handoff_enable_large_wav2vec2_models.md`. Earlier 2026-06-21 doc pass: relabeled the in-use MMN stimulus design as **Definition 1** — literature classic-oddball, frequency-deviant — after confirming via direct literature read-through that all 10 sourced papers use this design, not the final-tone-controlled design originally assumed. **Definition 2** is now reserved for that final-tone-controlled design, which is the target the stimulus set is being revised toward — no true Definition 2 literature source has been found yet. See §1.6, §1.7, §5, §13.8, §16.1–§16.2)
+**Last updated:** 2026-07-27 (**§17 Phase-1 results landed** — 184.74 CHF spent, top tier not distinguishable from chance, empty consensus set, 110 pairs recommended for Phase 2; see §17.3–§17.4 and `aux/analysis_novel_search/novel_stimulus_search_results.md`. Prior 2026-07-25 entry: new **§17 Stimuli Search Phase** — the novel tone-pair grid search, its pipeline prerequisites, cost model and run guide. Prior 2026-07-13 entry: enabled whisper-large + wav2vec2-{medium,large} for the D2 mTRF mapping — see the **2026-07-13** changelog line below, §1.4, §1.5, and `aux/handoff_enable_large_wav2vec2_models.md`. Earlier 2026-06-21 doc pass: relabeled the in-use MMN stimulus design as **Definition 1** — literature classic-oddball, frequency-deviant — after confirming via direct literature read-through that all 10 sourced papers use this design, not the final-tone-controlled design originally assumed. **Definition 2** is now reserved for that final-tone-controlled design, which is the target the stimulus set is being revised toward — no true Definition 2 literature source has been found yet. See §1.6, §1.7, §5, §13.8, §16.1–§16.2)
 
 **2026-07-25 — novel tone-pair stimulus search (§17):** a 903-pair semitone-spaced frequency grid screened in two budgeted phases against 6 models, mTRF-only, FCz, S7 @ 0.75 µV. Mappings and committed layers are frozen and reused. Required making the condition registry `--metadata_csv`-driven (it was built at import time from the literature sheet), giving the extractor stimulus-named HDF5s and a working `--overwrite` resume, and adding path overrides to the extraction/in-silico wrappers so a second screen cannot overwrite the literature features or predictions. New `scripts/{build_novel_grid_csv,novel_search_common,rank_novel_phase1,build_novel_phase2_csv,rank_novel_phase2}.py` + `tests/test_novel_search.py`.
 
@@ -11,7 +11,7 @@
 - **whisper-large** (`large-v3`), **wav2vec2-medium** (`facebook/wav2vec2-base`, 12 layers), **wav2vec2-large** (`facebook/wav2vec2-large`, 24 layers) — pretrained. Each now has D2/surprisal delta-t features (`outputs/features/{model}-delta-t-surprisal/merged`) and a CV-chosen mTRF layer per level in `outputs/results/eeg_mapping/{model}__{level}__D2.json`.
 - **New code:** `load_wav2vec2` in `audio_models.py` (raw-waveform backbone; `whisper-large`→`large-v3`); a raw-waveform causal path in `extract_features_delta_t.py` (whisper mel path byte-identical) + an over-provision guard; `configs/extraction/audio/wav2vec2_{medium,large}_layers.json`.
 - **New SLURM scripts (jed/CPU, `--partition=standard`, 5 GB/CPU):** `slurm_prefetch_audio_models.sh` (avoids concurrent-download HF-cache corruption — run first), `slurm_extract_delta_t_d2.sh`, `slurm_build_surprisal_10s.sh`, `slurm_eeg_mapping_sweep_d2.sh`.
-- **Caveats:** wav2vec2 was mapped on **10 s/10 s** windows (features extracted at 10 s/5 s and reused as the even-offset subset) with **`PCA_VAR=0.95`**, vs whisper's 30 s/10 s + `pca_var=None` — so wav2vec2 test r isn't strictly comparable to whisper's. The sweep is slow under sklearnex (patched `RidgeCV` lacks `gcv_mode='eigen'`); numpy's OpenBLAS is capped at 2 threads in this env.
+- **Caveats:** wav2vec2 was mapped on **10 s/10 s** windows (features extracted at 10 s/5 s and reused as the even-offset subset), vs whisper's 30 s/10 s — so wav2vec2 test r isn't strictly comparable to whisper's. Both used `pca_var=None`; **no PCA was applied to either.** The sweep is slow under sklearnex (patched `RidgeCV` lacks `gcv_mode='eigen'`); numpy's OpenBLAS is capped at 2 threads in this env.
 
 **Scope.** This document covers every executable / workflow-relevant script in the repository:
 - Python modules with a CLI / `__main__` (under `src/mbs/` and `scripts/`).
@@ -202,9 +202,10 @@ Whisper layer lists live in `configs/extraction/audio/whisper_<size>_layers.json
 whisper-large blocks are `blocks.0`–`blocks.31`; wav2vec2 layers are `encoder.layers.0`–`{11 or 23}`.
 **Until the 4 wav2vec2 sweeps finish, use `--layer encoder.layers.0` as a placeholder** in the
 in-silico step; swap in the real `chosen_layer` when the JSONs land. **Method B (encoder) was not run
-for these three.** Mapping-config caveat: whisper-large used 30 s/10 s + `pca_var=None` (like the other
-whisper models); wav2vec2-{medium,large} used **10 s/10 s + `PCA_VAR=0.95`** (features extracted at
-10 s/5 s and reused as the even-offset subset). See the 2026-07-13 changelog line above.
+for these three.** Mapping-config caveat: whisper-large used 30 s/10 s (like the other
+whisper models); wav2vec2-{medium,large} used **10 s/10 s** (features extracted at
+10 s/5 s and reused as the even-offset subset). **All of them used `pca_var=None`** — the window
+length is the only fit-protocol difference. See the 2026-07-13 changelog line above.
 
 ### 1.6 Shapes & conventions worth stating once
 
@@ -1097,7 +1098,11 @@ Shipped as 5 commits on `main`, pushed to `origin` (`https://github.com/hanme/mu
 
 **Scope.** A two-phase search for frequency-oddball tone pairs that do *not* appear in the literature, looking for stimuli that drive stronger and more model-consistent MMN responses than the 24-method literature set. **Not covered:** any re-fitting. The model→EEG mTRF mappings and the committed §1.5 per-model **electrode** layers are frozen and reused exactly; this phase only feeds new stimuli through them.
 
-**Spec:** `aux/prompt_novel_stimuli_search_phases12.md`. **Memo:** `aux/analysis_novel_search/novel_stimulus_search_results.md`.
+**Spec:** `aux/prompt_novel_stimuli_search_phases12.md`. **Memo:** `aux/analysis_novel_search/novel_stimulus_search_results.md` — all five sections filled from the completed Phase 1 (2026-07-27). The memo is a **results document and carries no costing**; run scale and disk requirements are in §17.4 below.
+
+**Phase-1 outcome, in one line.** The grid's top tier (17 direction-instances at 6/6) is **not distinguishable from chance** — 12.0 expected from the six models' own marginal S7 rates, p = 0.103 — and **no pair of 903 reaches 6/6 in both directions**, so the consensus set is empty. The mean-µV heatmap stripes by row and column rather than banding parallel to the diagonal, and the two directions of a pair produce near mirror-image difference waves: the models are responding to particular frequencies, not to the change between two tones. This reproduces the literature screen's near-chance result (§11 of `results_analysis_with_counter.md`) on a 37× larger space.
+
+**If a Phase-2 subset is selected**, the natural cut points are the tiers, since the ranking has no elbow: **17 pairs** with a 6/6 direction, **127** with a direction at ≥5 (the two do not overlap, so 17 + 110 = 127 exactly), then 387 at ≥4. See memo §5 for the structure and §17.4 here for what each costs.
 
 ### 17.1 What the search is and why the pipeline needed changing
 
@@ -1125,14 +1130,14 @@ The grid is a **uniform ladder**: 43 rungs from 200 Hz in exact **1.500-semitone
 Rungs are anchored to 200 Hz (`200 × 2**(1.5i/12)`) rather than interpolated between endpoints; interpolating would accumulate rounding error.
 
 - **Phase 1** — all 903 pairs, 4 clips each (standard + N7/var1 deviant, × 2 directions). Cheap screen.
-- **Phase 2** — the top **145** pairs, topped up to the full 32 clips (all 15 deviants), re-scored and re-ranked.
+- **Phase 2** — the pairs **5 or 6 of the 6 models agreed on** (`n_agree >= 5` in at least one direction) — **127** of the 903 — topped up to the full 32 clips (all 15 deviants), re-scored and re-ranked.
 
 Fixed decisions (do not revisit): mTRF only; **S7 = S2 ∧ (trough_uv ≤ −0.75 µV)**; **FCz** electrode only; 6 models (whisper-large excluded — it alone was 51% of the literature screen's cost).
 
 Five pipeline properties blocked this, each of which would have failed *silently* rather than loudly:
 
-1. **`slurm_generate_stimuli.sh` did not forward `"$@"`.** `--trial_levels 7 --num_variations 1` would have been dropped and the full 16-clip grid synthesized — an 8× Phase-1 overshoot (~860 CHF instead of ~110).
-2. **`extract_features_delta_t.py` named HDF5s `feats_delta_t-start_<idx>-batch_<n>-seed_42.h5`** — start/batch counters, no stimulus identity. Phase 1's 2 clips land at `start_00000-batch_{0,1}`; in Phase 2 the 14 new clips occupy sorted indices 0–9 and 11–14 of the now-16-wav directory, so any contiguous `--stim_start_idx`/`--n_stimuli` subset **overwrites Phase 1's standard**. `analyze_method` returns `None` without a standard, so the whole 220 CHF Phase 2 would have scored nothing.
+1. **`slurm_generate_stimuli.sh` did not forward `"$@"`.** `--trial_levels 7 --num_variations 1` would have been dropped and the full 16-clip grid synthesized — an 8× Phase-1 overshoot.
+2. **`extract_features_delta_t.py` named HDF5s `feats_delta_t-start_<idx>-batch_<n>-seed_42.h5`** — start/batch counters, no stimulus identity. Phase 1's 2 clips land at `start_00000-batch_{0,1}`; in Phase 2 the 14 new clips occupy sorted indices 0–9 and 11–14 of the now-16-wav directory, so any contiguous `--stim_start_idx`/`--n_stimuli` subset **overwrites Phase 1's standard**. `analyze_method` returns `None` without a standard, so the whole of Phase 2 would have scored nothing.
 3. **`--overwrite` was declared and never referenced** (one hit in the whole file); `_write_batch` opens mode `"w"`. There was no resume: any timed-out task re-extracted from scratch.
 4. **`slurm_insilico_mmn_electrodes.sh` read none of the paths a separate screen needs** — only `MODEL_ID`. Pointed at the novel grid it would have read the *literature* features and **overwritten `outputs/insilico_mmn_predictions/{model}/electrode_predictions__*.h5`**, destroying the comparison baseline.
 5. **`insilico_mmn.py:82` built `METHODS` at import time** from the hardcoded literature CSV, so `--metadata_csv` could not drive the condition registry.
@@ -1159,14 +1164,16 @@ All are back-compatible: defaults reproduce the literature runs exactly.
 |---|---|
 | `scripts/build_novel_grid_csv.py` | The grid → `data/metadata/novel_grid_frequency_metadata.csv` (903 rows, ids 1001–1903, header byte-identical to the literature sheet) + `outputs/results_novel_search/grid_index.csv` (`method_id, f_low, f_high, ratio, semitones, pct_deviance`). Asserts no duplicate pairs, no diagonal, no off-grid frequency, no id collision with the literature 1–76. |
 | `scripts/novel_search_common.py` | The ranking criteria and cost model, **imported by both phases** so they provably rank identically — if they diverged, the Phase-1→Phase-2 rank stability would be measuring the code rather than the stimuli. |
-| `scripts/rank_novel_phase1.py` | Ranks the 1,056 direction-instances, runs the selection walk, emits `phase1_ranked_directions.csv`, `phase2_selected_pairs.csv`, `outputs/novel_methods_phase2.txt`. |
+| `scripts/rank_novel_phase1.py` | Ranks the 1,806 direction-instances, selects the pairs at `n_agree >= --min_agree` (default 5), emits `phase1_ranked_directions.csv`, `phase2_selected_pairs.csv`, `outputs/novel_methods_phase2.txt`. |
 | `scripts/build_novel_phase2_csv.py` | Verbatim row-subset of the grid CSV for the selected pairs → `data/metadata/novel_grid_phase2_subset.csv`. |
 | `scripts/rank_novel_phase2.py` | Final ranking, `consensus_set.csv`, and the Phase-1↔Phase-2 Spearman ρ. |
 | `aux/analysis_novel_search/plots/novel_search_plots.py` | The three figures (`--results_dir`/`--out_dir` overridable). Runs as soon as Phase 1 lands; skips figure 3 until Phase 2 exists. |
+| `aux/analysis_novel_search/plots/phase1_results.py` | Every table and figure the Phase-1 memo cites: agreement tiers at X = 0.75 and 0.50, the strong-pair waveform panels (per-model, and direction-collapsed in z units — read from the prediction HDF5s, not the CSV), the per-model µV boxplot, the top-30 table, the mean-µV heatmap, the chance baseline, the novel-vs-literature comparison, and the four ranking-structure panels. Every table also lands as a CSV beside its figure. Asserts the slice invariants (10,836 rows, all 6 models, S7 ⊆ S2, both directions per pair) rather than assuming them. `--results_dir`/`--out_dir`/`--predictions_root`/`--literature_csv` overridable; `--wave_units uv` and `--wave_ylim` tune the direction panels; **`--cost_overlay`** adds a cost axis to the yield panel (off by default). |
 | `scripts/slurm_stage_novel_stimuli.sh` | Bridges the generator's flat output tree to the per-condition dirs the extractor and `insilico_mmn` read, and emits the `METHOD_LIST`. Idempotent, so the Phase-2 top-up re-stages in place. Self-verifying: fails naming any method with no source wavs. |
 | `scripts/submit_novel_extraction.sh` | Submits the extraction arrays for all 6 models, encoding the per-model window/stimulus-root/feature-root differences once. Queries `MaxArraySize` and splits via `TASK_OFFSET`. `DRY_RUN=1` prints the sbatch lines. |
 | `scripts/submit_novel_insilico.sh` | Submits in-silico MMN for all 6 models with every path redirected, and **refuses** to write into the literature predictions root. Serves both phases and the figures-for-winners re-run. |
-| `scripts/report_extraction_cost.sh` | Measured core-h/method per model from `sacct`, against the predicted table, with the implied full-model cost. Recovers the model from each job's log. `CLIPS_PER_DIR=14 N_DIRS_FULL=290` for Phase 2. |
+| `scripts/report_extraction_cost.sh` | Post-hoc: measured core-h/method per model from `sacct` against the predicted table. Recovers the model from each job's log. Parameterized via `CLIPS_PER_DIR` / `N_DIRS_FULL`. |
+| `scripts/report_extraction_cost_phase2.sh` | Phase-2 wrapper over the above: pins the Phase-2 shape (14 clips/dir, 254 dirs) and rolls the per-job rows up **per model**. Also serves as a completeness check — a model short of its 254 tasks is flagged rather than extrapolated over. `COST_TABLE=<file>` summarises a pasted table off-cluster. |
 | `scripts/check_novel_features.py` | Completeness + integrity check on extracted features: clip counts, naming scheme, every layer present, shape/dtype consistency, ids match filenames, exactly one standard, values finite and non-zero. Run after every extraction submission; exits non-zero on any problem. |
 
 **Ranking criteria** (identical in both phases). The unit is the **direction-instance**, not the pair — 903 pairs → 1,806 instances, matching the existing convention that regular and counter each count as one MMN observation.
@@ -1174,32 +1181,27 @@ All are back-compatible: defaults reproduce the literature runs exactly.
 - `mean_uv` = mean `trough_uv` across **only the agreeing models**; undefined when `n_agree == 0` (averaging in traces that failed S2 would mix in latencies that are not MMN latencies).
 - Sort `n_agree` **desc**, then `mean_uv` **asc** (most negative wins). `n_agree == 0` sorts last. Remaining exact ties break on `(pair_id, direction)` and are logged.
 
-**Selection walk** accumulates **unique pairs**, not list positions: if ranks 1–5 are `1001-reg, 1002-reg, 1001-ctr, 1002-ctr, 1003-reg`, that is 3 unique pairs. Both directions of every selected pair go to Phase 2 — including a direction that did not itself rank — because a strong asymmetry between directions is precisely the frequency-preference artifact the counterbalanced design exists to detect, and it is only measurable if both are carried.
+**Selection** *(revised 2026-07-30; replaced a walk down the ranking to a fixed 145 pairs)*. A pair goes to Phase 2 iff **at least one of its directions reaches `n_agree >= 5`** — `MIN_AGREE_PHASE2` in `novel_search_common.py`, i.e. 5 or 6 of the 6 models saw an MMN. Both directions of every selected pair are then tested, including one that scored far below the bar, because a strong asymmetry between directions is precisely the frequency-preference artifact the counterbalanced design exists to detect, and it is only measurable if the reversal is carried. Requiring *both* directions to clear 5/6 would presuppose that answer and leave 4 pairs.
 
-### 17.4 Cost model and budget
+The pair count is an **output of the criterion, not an input to it**: 131 direction-instances qualify over **127 distinct pairs** (17 topping out at 6/6, 110 at 5/6), carrying 123 sub-threshold reversals along with them, for 254 method dirs. It moves if the Phase-1 scores move. The former top-145 rule filled its last 18 slots with pairs whose best direction only reached 4/6 — selected to meet a quota rather than because the models agreed — so ranking position no longer buys entry.
 
-Per-clip extraction costs are measured from the completed literature `mmn_extract` jobs; `CHF_PER_CORE_H = 0.0055`.
+### 17.4 Scale of the run
 
-| model | core-h/clip | | model | core-h/clip |
+Nothing in the search branches on cost. `scripts/report_extraction_cost.sh` and
+`scripts/report_extraction_cost_phase2.sh` report measured spend from `sacct` after the fact; the
+constants they use live in `novel_search_common.py` and are reporting-only.
+
+| | method dirs | clips/dir | clips | array tasks (× 6 models) |
 |---|---|---|---|---|
-| whisper-medium | 5.87 | | whisper-base | 0.62 |
-| whisper-small | 1.81 | | wav2vec2-medium | 0.39 |
-| wav2vec2-large | 0.74 | | whisper-tiny | 0.38 |
-| | | | **sum, 6 models** | **9.81** |
+| Phase 1 | 1806 | 2 | 3,612 | 10,836 |
+| Phase 2 (127 pairs) | 254 | 14 (new only) | 3,556 | 1,524 |
 
-⚠️ **Those per-clip figures are LITERATURE-derived and are running pessimistic.** Measured on jed 2026-07-26 with `scripts/report_extraction_cost.sh`, every model beat its prediction — whisper-tiny at **0.38×** over a full 1806-task run, the other five at 0.49–0.79 over 1-pair gates. whisper-tiny also gave both a 10-method gate (0.49 core-h/method) and a full run (0.391), so a full run comes in at **≈0.80× its gate**, most likely because model weights stay in page cache across concurrent tasks. Treat the table as an upper bound.
+**`--save_plots false` on the in-silico step is not optional.** At 1,806 conditions × 2 figures ×
+6 models, per-method plotting is ~21,700 matplotlib renders — one of them a ~50-subplot montage —
+and would dominate the walltime. The prediction HDF5 is written either way and is what all
+downstream scoring reads.
 
-| | dirs | clips/dir | predicted | at measured gate rates | debiased ×0.80 | budget |
-|---|---|---|---|---|---|---|
-| Phase 1 | 1806 | 2 | ≈211 | **≈151** | **≈121** | 110 |
-| Phase 2 (145 pairs) | 290 | 14 (new only) | ≈222 | ≈160 | ≈128 | 220 |
-| **total** | | | ≈433 | **≈311** | **≈249** | 330 |
-
-Phase 1 exceeds its own 110 sub-budget on every reading; Phase 2 has 60–90 CHF of slack, and the **330 total holds** even at the conservative measured rates. The 110/220 split is therefore treated as a soft allocation of the 330, not two hard caps.
-
-Excluded from the 110/220 budgets, reported separately: grid construction, audio synthesis (0.2 core-h for the whole literature set), ranking, plots. The one non-trivial excluded cluster step is in-silico MMN — ~630 core-h ≈ 3.5 CHF for Phase 1 and ~102 core-h ≈ 0.56 CHF for Phase 2, **and only with `--save_plots false`**: at 1,806 conditions × 2 figures × 6 models, per-method plotting is ~21,700 matplotlib renders (one a ~50-subplot montage) and would dominate both the walltime and that figure.
-
-**Disk.** Extraction hooks *every* layer (24 for whisper-medium and wav2vec2-large, 12 for whisper-small and wav2vec2-medium, 6 for whisper-base, 4 for whisper-tiny) — deliberately not narrowed, so the features stay usable for layer-wise MMN profiles, re-selection, and the attention encoder once retrained. float16, T = 1500 (whisper) / 499 (wav2vec2) ⇒ **148.9 MB per clip across the 6 models** (whisper-tiny measured 4.1 vs 4.6 predicted, so ~0.89× in practice): **≈538 GB predicted / ≈479 GB likely** for Phase 1, ≈605/538 GB for Phase 2, **≈1.14 TB / ≈1.02 TB total**. The 43-point grid is 1.7× the disk of the 33-point one. Confirm free quota before Step 3 — a mid-array `No space left on device` wastes budgeted compute.
+**Disk.** Extraction hooks *every* layer (24 for whisper-medium and wav2vec2-large, 12 for whisper-small and wav2vec2-medium, 6 for whisper-base, 4 for whisper-tiny) — deliberately not narrowed, so the features stay usable for layer-wise MMN profiles, re-selection, and the attention encoder once retrained. float16, T = 1500 (whisper) / 499 (wav2vec2) ⇒ **148.9 MB per clip across the 6 models** (measured ~0.89× that in practice): **≈500 GB** for Phase 1 and **≈470 GB** for Phase 2, **≈1 TB total**. Confirm free quota before Stage D and again before Stage I — a mid-array `No space left on device` throws away everything the array had done.
 
 ### 17.5 Step-by-step run guide
 
@@ -1214,7 +1216,7 @@ python scripts/build_novel_grid_csv.py     # → data/metadata/novel_grid_freque
 ```
 The cluster needs the **metadata CSV** (Stages C and E); the local machine needs the **grid index** (Stage G, for the frequency/deviance columns).
 
-**Stage B — pre-flight checks (cluster, before spending anything).** `df` reports the whole shared filesystem (5.5 P, 1.6 P free as of 2026-07-26), which says nothing about whether *you* may write ~1.1 TB — on a shared `/work` it is a per-user or per-group quota that binds, so check that too.
+**Stage B — pre-flight checks (cluster, before the first fan-out).** `df` reports the whole shared filesystem (5.5 P, 1.6 P free as of 2026-07-26), which says nothing about whether *you* may write ~1 TB — on a shared `/work` it is a per-user or per-group quota that binds, so check that too.
 ```bash
 scontrol show config | grep -i MaxArraySize      # measured 2026-07-26: 10001 -> 1806 fits in ONE array
 df -h /work/upschrimpf1/sigfstea                 # filesystem free space -- NOT your quota
@@ -1235,35 +1237,22 @@ scripts/slurm_stage_novel_stimuli.sh          # → outputs/mmn_stimuli_novel{,_
 ```
 It prints the per-root directory and wav counts and the set of clips-per-dir; expect `1806 dirs, 3612 wavs, clips-per-dir {2}` for each root. It exits non-zero naming any method whose source wavs are missing — a partial generation must not quietly shrink the grid, since the in-silico driver skips a missing feature dir without erroring.
 
-**Stage D — Phase-1 extraction (the ~151 CHF step at measured rates).** `submit_novel_extraction.sh` submits all 6 models, picking the 10 s window and wav2vec2 stimulus root for the wav2vec2 pair, a per-model feature root (which is what keeps whisper-base off the literature run's bare `outputs/features`), and stimulus-id naming. It queries `MaxArraySize` and splits the 1806-entry list into as many arrays as needed. On jed that is **10001**, so the whole list fits in one `--array=0-1805%200` per model and `TASK_OFFSET` stays 0 — six submissions, not twelve. The splitting path still exists for a cluster with a tighter cap.
+**Stage D — Phase-1 extraction (the expensive step).** `submit_novel_extraction.sh` submits all 6 models, picking the 10 s window and wav2vec2 stimulus root for the wav2vec2 pair, a per-model feature root (which is what keeps whisper-base off the literature run's bare `outputs/features`), and stimulus-id naming. It queries `MaxArraySize` and splits the 1806-entry list into as many arrays as needed. On jed that is **10001**, so the whole list fits in one `--array=0-1805%200` per model and `TASK_OFFSET` stays 0 — six submissions, not twelve. The splitting path still exists for a cluster with a tighter cap.
 ```bash
 DRY_RUN=1 scripts/submit_novel_extraction.sh    # read the 6 sbatch lines first
 scripts/submit_novel_extraction.sh
 ```
 
-⚠️ **Cost gate — one model × 10 methods first.** Compare against these **per-method (2-clip)** predictions, which *include* the per-task overhead; the raw per-clip figures do not and will read as a false overrun.
+⚠️ **Gate on one model × 10 methods before fanning out.** `scripts/report_extraction_cost.sh <jobid>` prints measured core-h per method against the predicted table and flags anything running long.
 
-| model | predicted core-h/method | | model | predicted core-h/method |
-|---|---|---|---|---|
-| whisper-medium | 12.01 | | whisper-base | 1.51 |
-| whisper-small | 3.89 | | wav2vec2-medium | 1.05 |
-| wav2vec2-large | 1.75 | | whisper-tiny | 1.03 |
-
-```bash
-sacct -j <jobid> --format=JobID,State,ElapsedRaw,CPUTimeRAW,MaxRSS --parsable2 --noheader \
-  | grep -vE '\.(batch|extern|[0-9]+)\|' \
-  | awk -F'|' '{s+=$4; n++} END {printf "%.2f core-h/method, %.4f CHF/method\n", s/3600/n, s/3600/n*0.0055}'
-```
-Stop and re-cost if any model exceeds its prediction by >25%. Measured on jed 2026-07-26, whisper-tiny came in at **0.49** core-h/method against the 1.03 prediction — the per-task overhead is smaller than assumed, so treat the table as an upper bound.
-
-Then verify the output before fanning out, because a short or malformed extraction does not announce itself:
+Then verify the output, because a short or malformed extraction does not announce itself:
 ```bash
 python scripts/check_novel_features.py --model_id whisper-tiny \
   --method_list outputs/novel_methods_gate.txt --expect_clips 2
 ```
 It reports clip counts, naming scheme, per-layer presence, shape/dtype, ids-vs-filenames, exactly-one-standard, and the projected full-grid disk from the measured MB/clip. After each full model: same command with `--method_list outputs/novel_methods_phase1.txt`; after Phase 2, `--models all --expect_clips 16`.
 
-**Stage E — Phase-1 in-silico MMN (~3.5 CHF, outside the budget).** `submit_novel_insilico.sh` submits one job per model with every path redirected. That redirection is the point: `slurm_insilico_mmn_electrodes.sh` defaults each path to the **literature** run, so a screen that forgets `DATA_DIR` silently overwrites `outputs/insilico_mmn_predictions/<model>/` — the comparison baseline, with no backup. The script refuses any `PREDICTIONS_ROOT` under that path.
+**Stage E — Phase-1 in-silico MMN.** `submit_novel_insilico.sh` submits one job per model with every path redirected. That redirection is the point: `slurm_insilico_mmn_electrodes.sh` defaults each path to the **literature** run, so a screen that forgets `DATA_DIR` silently overwrites `outputs/insilico_mmn_predictions/<model>/` — the comparison baseline, with no backup. The script refuses any `PREDICTIONS_ROOT` under that path.
 ```bash
 DRY_RUN=1 scripts/submit_novel_insilico.sh      # read the 6 sbatch lines first
 scripts/submit_novel_insilico.sh                # --save_plots false by default
@@ -1283,9 +1272,9 @@ python scripts/analyze_mmn_s7_roi.py \
   --out outputs/results_novel_search/phase1_mmn_s7_roi.csv
 ```
 
-**Stage G — rank and select.** Phase 2 takes a flat top-145 pairs (`--n_pairs`); no budget arithmetic, nothing reads `sacct`.
+**Stage G — rank and select.** Phase 2 takes every pair with a direction at `n_agree >= 5` (`--min_agree`); the count follows from the data, and no budget arithmetic enters — nothing reads `sacct`.
 ```bash
-python scripts/rank_novel_phase1.py                            # → top 145 pairs, 290 method dirs
+python scripts/rank_novel_phase1.py                            # → 127 pairs, 254 method dirs
 python aux/analysis_novel_search/plots/novel_search_plots.py    # figures 1–2
 ```
 
@@ -1302,11 +1291,17 @@ SRC=outputs/stim_gen_novel_phase2 \
 METHOD_LIST_OUT=outputs/novel_methods_phase2.txt \
     scripts/slurm_stage_novel_stimuli.sh      # expect clips-per-dir {16 2}, NOT {16}
 ```
-The mixed `{16 2}` is correct and expected: only the 145 selected pairs are topped up, and the other 383 keep the 2 clips Phase 1 gave them. A bare `{16}` would mean you regenerated the whole grid.
+The mixed `{16 2}` is correct and expected: only the 127 selected pairs are topped up, and the other 776 keep the 2 clips Phase 1 gave them. A bare `{16}` would mean you regenerated the whole grid.
 
 Then **checksum the overlap**: the regenerated standard and `N7_var1` deviant must be byte-identical to Phase 1's, or the Phase-1 features are invalid for reuse and the 28-clip saving evaporates. (Verified locally in advance — `generate_deviant_sequence` seeds on `(method_id, N, v)` alone, independent of grid size, row count and worker count.)
 
-**Stage I — Phase-2 extraction (the ~222 CHF step).** No index arithmetic: with `MMN_NAME_BY_STIM_ID=true` and `MMN_OVERWRITE` unset, pointing the extractor at the now-16-wav directory extracts **exactly the 14 missing clips** and skips the 2 that exist. Re-run Stage D's submitter against the Phase-2 list — `METHOD_LIST=$PWD/outputs/novel_methods_phase2.txt scripts/submit_novel_extraction.sh` (290 dirs = 145 pairs × 2 directions, one array per model). Verify the plan implies **4,060** new clips (290 × 14), not 4,640 (290 × 16) — the 16-clip figure means you are re-extracting Phase 1 and wasting ~30 CHF. Run the same cost gate on one model × 5 methods.
+**Stage I — Phase-2 extraction.** No index arithmetic: with `MMN_NAME_BY_STIM_ID=true` and `MMN_OVERWRITE` unset, pointing the extractor at the now-16-wav directory extracts **exactly the 14 missing clips** and skips the 2 that exist. Re-run Stage D's submitter against the Phase-2 list — and override **both** env vars:
+```bash
+METHOD_LIST=$PWD/outputs/novel_methods_phase2.txt \
+METADATA_CSV=data/metadata/novel_grid_phase2_subset.csv \
+    scripts/submit_novel_extraction.sh        # 254 dirs = 127 pairs × 2, one array per model
+```
+`METADATA_CSV` is **not** optional here: the submitter refuses when the method list and the metadata CSV describe different condition sets, and the default full-grid CSV yields 1,806 against the list's 254. Verify the plan implies **3,556** new clips (254 × 14), not 4,064 (254 × 16) — the 16-clip figure means you are re-extracting Phase 1 for nothing. Gate on one model × 5 methods first, then run `scripts/report_extraction_cost_phase2.sh <jobids>` on the finished arrays.
 
 **Stage J — Phase-2 in-silico, final ranking, deliverables.** Same submitter, pointed at the subset and a separate predictions root (the features stay in the Phase-1 roots — Phase 2 topped those directories up in place, so `FEATURES_TAG` does not change):
 ```bash
@@ -1349,8 +1344,8 @@ PREDICTIONS_ROOT=outputs/insilico_mmn_predictions_novel_figs \
 | Stage D | 1806 × 6 = 10,836 feature dirs, 2 `feats_delta_t-*.h5` each |
 | Stage E | 1806 conditions per model in the predictions h5 |
 | Stage F | 10,836 rows after filtering to FCz / mTRF / X = 0.75; S7 ≤ S2 (script-asserted); all 6 models present |
-| Stage G | 1,056 ranked direction-instances; 145 unique pairs; 290 method dirs in the METHOD_LIST |
-| Stage I | exactly 4,060 **new** clips (290 × 14), never 4,640 |
+| Stage G | 1,806 ranked direction-instances; 131 qualifying at `n_agree >= 5` over 127 unique pairs; 254 method dirs in the METHOD_LIST |
+| Stage I | exactly 3,556 **new** clips (254 × 14), never 4,064 |
 
 **Failure modes specific to this phase:**
 
@@ -1359,4 +1354,4 @@ PREDICTIONS_ROOT=outputs/insilico_mmn_predictions_novel_figs \
 - **`MMN_FEATURES_ROOT` must be set for whisper-base** in particular: it is the one model whose default MMN feature root is the bare `outputs/features`, which would collide with the literature features rather than sitting in a model-scoped subdirectory.
 - **A stale `METHOD_LIST` after a grid rebuild is the worst failure here, and it happened.** Rebuilding the grid renumbers every `method_id`, so if the stimuli are not re-staged, `method_1001` is one frequency pair in the audio and a different one in the CSV that scores it. The features come out internally consistent and simply describe the wrong pairs — no check downstream catches it. Both submitters now compare the method list against the metadata CSV condition-by-condition and refuse on any mismatch, and the extraction submitter also checks the named conditions were actually staged. The tell before the guard existed: the array range. `--array=0-1055` means 1056 conditions; the 43-point grid is `0-1805`.
 - **Forgetting `DATA_DIR` in Stage E overwrites the literature predictions** — the comparison baseline. There is no backup; the wrapper defaults to the literature path by design for the literature run. `submit_novel_insilico.sh` sets it for you and refuses any `PREDICTIONS_ROOT` under `outputs/insilico_mmn_predictions/`, so use it rather than hand-rolling the sbatch line.
-- **`--save_plots false` is not optional at 1,056 conditions.** With plots on, expect ~4 h/model of single-threaded matplotlib on top of the compute, likely exceeding the 12 h walltime for the slower models.
+- **`--save_plots false` is not optional at 1,806 conditions.** With plots on, expect ~4 h/model of single-threaded matplotlib on top of the compute, likely exceeding the 12 h walltime for the slower models.

@@ -5,9 +5,11 @@ Input is the FCz / mTRF / X=0.75 slice of analyze_mmn_s7_roi.py's output over th
 where each condition was scored from ONE deviant realization (N7/var1). Output is the ranking and
 the pair set that Phase 2 re-evaluates with the full 15-deviant grid.
 
-Phase 2 evaluates the top --n_pairs pairs (default 145). That is a flat constant: it does not
-depend on what Phase 1 cost, and nothing here reads sacct. The projected extraction cost is
-printed for a sanity check only.
+Phase 2 evaluates every pair with at least one direction at n_agree >= --min_agree (default 5),
+i.e. the pairs where 5 or 6 of the 6 models agreed there was an MMN; both directions of each go
+forward. The pair COUNT is whatever that criterion yields -- it is not a target, does not depend
+on what Phase 1 cost, and nothing here reads sacct. The projected extraction cost is printed for a
+sanity check only.
 
   python scripts/rank_novel_phase1.py
 
@@ -23,9 +25,9 @@ import numpy as np
 import pandas as pd
 
 from novel_search_common import (
-    SEARCH_MODELS, ROI, MAPPING, DIP_UV_THRESHOLD, N_PAIRS_PHASE2, load_scored,
-    rank_directions, find_exact_ties, selection_walk, method_dirs_for_pairs, tier_summary,
-    extraction_cost_chf,
+    SEARCH_MODELS, ROI, MAPPING, DIP_UV_THRESHOLD, MIN_AGREE_PHASE2, load_scored,
+    rank_directions, find_exact_ties, select_pairs_by_agreement, method_dirs_for_pairs,
+    tier_summary, extraction_cost_chf,
 )
 
 # Phase 2 adds the 14 deviants each method dir is missing (3 trial levels x 5 variations = 15
@@ -96,8 +98,9 @@ def main():
     p.add_argument("--out_dir", default="outputs/results_novel_search")
     p.add_argument("--method_list_out", default="outputs/novel_methods_phase2.txt",
                    help="METHOD_LIST for the Phase-2 extraction arrays (both directions)")
-    p.add_argument("--n_pairs", type=int, default=N_PAIRS_PHASE2,
-                   help=f"how many top pairs go to Phase 2 (default {N_PAIRS_PHASE2})")
+    p.add_argument("--min_agree", type=int, default=MIN_AGREE_PHASE2,
+                   help=f"a pair goes to Phase 2 if EITHER direction reaches this many agreeing "
+                        f"models (default {MIN_AGREE_PHASE2} of {len(SEARCH_MODELS)})")
     p.add_argument("--literature_s7_csv",
                    default="outputs/results_24freq_7models/mmn_s7_roi.csv",
                    help="literature screen scored the same way, for the comparison summary")
@@ -139,15 +142,20 @@ def main():
     if len(ties) > 10:
         print(f"  ... and {len(ties) - 10} more (all listed in the ranked CSV)")
 
-    n_pairs = min(args.n_pairs, ranked["pair_id"].nunique())
-    selected, walk_depth = selection_walk(ranked, n_pairs)
-    print(f"\nselection walk: {len(selected)} unique pairs consumed the top {walk_depth} of "
-          f"{n_inst} ranked direction-instances")
+    selected, n_qualifying = select_pairs_by_agreement(ranked, args.min_agree)
+    if not selected:
+        raise SystemExit(f"no direction-instance reaches n_agree >= {args.min_agree}, so Phase 2 "
+                         f"has nothing to run. Best observed is {ranked['n_agree'].max()} of "
+                         f"{len(models)}; lower --min_agree or revisit the screen.")
+    print(f"\nselection (n_agree >= {args.min_agree} of {len(models)}): {n_qualifying} "
+          f"direction-instances qualify, over {len(selected)} distinct pairs of "
+          f"{ranked['pair_id'].nunique()}")
     sel_rank = ranked[ranked["pair_id"].isin(selected)]
-    print(f"  their {len(sel_rank)} direction-instances span n_agree "
-          f"{sel_rank['n_agree'].min()}-{sel_rank['n_agree'].max()}; "
-          f"{(sel_rank['rank'] > walk_depth).sum()} were pulled in below the walk depth as the "
-          f"other direction of a selected pair")
+    carried = len(sel_rank) - n_qualifying
+    print(f"  both directions of each go to Phase 2: {len(sel_rank)} direction-instances spanning "
+          f"n_agree {sel_rank['n_agree'].min()}-{sel_rank['n_agree'].max()}")
+    print(f"  {carried} of those did not clear the bar themselves and are carried as the reversal "
+          f"of a selected pair (worst rank {sel_rank['rank'].max()} of {n_inst})")
     # Informational only -- nothing branches on this.
     projected = extraction_cost_chf(2 * len(selected), PHASE2_NEW_CLIPS_PER_DIR, models)
     print(f"  projected Phase-2 extraction: {2 * len(selected)} dirs x "

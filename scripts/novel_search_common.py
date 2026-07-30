@@ -16,6 +16,10 @@ n_agree           how many of the 6 models show S7 at FCz for this direction-ins
 mean_uv           mean trough_uv across ONLY the agreeing models; undefined when n_agree == 0.
                   Averaging over non-agreeing models would mix in traces that failed S2, whose
                   trough latency is not an MMN latency.
+mean_uv_all6      mean trough_uv across ALL six models regardless of S7. A DIFFERENT quantity
+                  from mean_uv, deliberately named apart so the two are never conflated: it is
+                  defined everywhere (including n_agree == 0) and is the right cell value for a
+                  heatmap over the whole grid, but it mixes in non-MMN trough latencies.
 """
 
 import numpy as np
@@ -42,11 +46,19 @@ CHF_PER_CORE_H = 0.0055
 # 16 ways; with one method (2 clips) per task it is amortised 2 ways and stops being negligible.
 TASK_OVERHEAD_CORE_H = 0.27
 
-# Phase 2 evaluates a FIXED top-145 pairs. Deliberately a constant, not derived from a budget or
-# from Phase 1's measured spend: the pair count is a design decision, and making it depend on how
-# an earlier job happened to run would make the search non-reproducible. The cost model below is
-# REPORTING ONLY -- nothing branches on it.
-N_PAIRS_PHASE2 = 145
+# Phase 2 evaluates every pair with AT LEAST ONE direction at n_agree >= this. A criterion on the
+# evidence, not a pair count: "5 of the 6 models saw an MMN" is a claim about the stimulus, whereas
+# a top-N cut carries whatever happens to sit at rank N. On the 2026-07-27 ranking the previous
+# top-145 rule admitted 18 pairs whose best direction only reached 4/6 -- selected to fill a quota,
+# not because the models agreed. How many pairs qualify is therefore an OUTPUT of the screen
+# (127 on that ranking), not an input, and it moves if the Phase-1 scores move.
+MIN_AGREE_PHASE2 = 5
+
+# Marginal CHF to carry ONE pair (both directions, 14 new clips each, all 6 models) into Phase 2.
+# Measured from the completed Phase-1 run, not projected from COST_CORE_H_PER_CLIP -- the
+# literature per-clip table ran pessimistic for every model. Used only to price a pair count in
+# the memo; nothing in the search branches on it.
+CHF_PER_PAIR_PHASE2 = 1.325
 
 
 def extraction_cost_chf(n_method_dirs, clips_per_dir, models=None,
@@ -140,23 +152,21 @@ def find_exact_ties(ranked):
     return ranked[dup]
 
 
-def selection_walk(ranked, n_pairs):
-    """Accumulate UNIQUE pairs down the ranked list until n_pairs is reached.
+def select_pairs_by_agreement(ranked, min_agree=MIN_AGREE_PHASE2):
+    """Pairs with AT LEAST ONE direction at n_agree >= min_agree, best-ranked pair first.
 
-    Deduping on pair rather than list position is what makes both directions of a selected pair go
-    to Phase 2 -- including a direction that did not itself rank highly. That is deliberate: a
-    strong asymmetry between the two directions of a pair is the frequency-preference artifact the
-    counterbalanced design exists to detect, and it can only be measured if both are carried
-    forward.
+    One qualifying direction selects the pair, and then BOTH of its directions go to Phase 2
+    (method_dirs_for_pairs emits both) -- including one that scored far below the cut. That is
+    deliberate: a strong asymmetry between the two directions of a pair is the frequency-preference
+    artifact the counterbalanced design exists to detect, and it can only be measured if the
+    reversal is tested too. Requiring both directions to clear the bar instead would presuppose
+    that answer, and on the Phase-1 ranking would leave 4 pairs out of 127.
+
+    Returns (pair_ids, n_qualifying_directions). The second is how many direction-instances cleared
+    the bar: between len(pair_ids) and 2 * len(pair_ids), and the gap is the asymmetry.
     """
-    selected, order = [], {}
-    for row in ranked.itertuples(index=False):
-        if row.pair_id not in order:
-            order[row.pair_id] = row.rank
-            selected.append(row.pair_id)
-            if len(selected) >= n_pairs:
-                return selected, row.rank
-    return selected, (ranked["rank"].max() if len(ranked) else 0)
+    qual = ranked[ranked["n_agree"] >= min_agree].sort_values("rank", kind="mergesort")
+    return [int(p) for p in dict.fromkeys(qual["pair_id"])], len(qual)
 
 
 def method_dirs_for_pairs(pair_ids):
@@ -169,3 +179,122 @@ def tier_summary(ranked, models=None):
     n_models = len(list(models or SEARCH_MODELS))
     counts = ranked["n_agree"].value_counts().reindex(range(n_models, -1, -1), fill_value=0)
     return counts
+
+
+def agreement_tiers(ranked, models=None):
+    """Direction-instance and pair counts at each n_agree tier, best first.
+
+    Three counts per tier, because a pair contributes two direction-instances and they need not
+    land together:
+      directions    direction-instances at the tier (of 2 x n_pairs)
+      pairs_both    pairs whose BOTH directions are at the tier
+      pairs_either  pairs with AT LEAST ONE direction at the tier
+
+    pairs_either - pairs_both is the direction-asymmetry signal: pairs the tier only half claims.
+    A tier where the two columns are nearly equal is measuring a deviance response; one where
+    pairs_both collapses to ~0 is measuring a frequency preference (see
+    select_pairs_by_agreement). pairs_either at tier >= MIN_AGREE_PHASE2 is the Phase-2 count.
+    """
+    n_models = len(list(models or SEARCH_MODELS))
+    tiers = list(range(n_models, -1, -1))
+    n_dir, n_pair = len(ranked), ranked["pair_id"].nunique()
+
+    rows = []
+    for t in tiers:
+        at = ranked[ranked["n_agree"] == t]
+        per_pair = at.groupby("pair_id").size()
+        both, either = int((per_pair == 2).sum()), int(len(per_pair))
+        rows.append({
+            "n_agree": t,
+            "directions": len(at),
+            "pct_directions": 100.0 * len(at) / n_dir if n_dir else float("nan"),
+            "pairs_both": both,
+            "pct_pairs_both": 100.0 * both / n_pair if n_pair else float("nan"),
+            "pairs_either": either,
+            "pct_pairs_either": 100.0 * either / n_pair if n_pair else float("nan"),
+        })
+    return pd.DataFrame(rows)
+
+
+def marginal_s7_rates(ranked, models=None):
+    """Each model's own S7 rate over the direction-instances -- the chance-baseline inputs."""
+    models = list(models or SEARCH_MODELS)
+    return pd.Series({m: float(ranked[f"s7__{m}"].mean()) for m in models})
+
+
+def expected_tier_counts(ranked, models=None):
+    """Direction-instances expected at each n_agree tier if the models were INDEPENDENT.
+
+    The exact Poisson-binomial over each model's own marginal S7 rate, convolved one model at a
+    time -- not a plain binomial, because the six rates differ (0.33 to 0.60) and pooling them
+    would understate the spread and so overstate how surprising a 6/6 is.
+
+    This is the baseline the observed tier counts have to beat. Models that share an architecture
+    family, a training corpus and a frozen mTRF mapping are not independent, so agreement above
+    this line is a weaker claim than it looks; agreement AT this line means the search found no
+    cross-model structure at all, which is the result that decides what Phase 2 is for.
+    """
+    models = list(models or SEARCH_MODELS)
+    p = marginal_s7_rates(ranked, models)
+
+    dist = np.zeros(len(models) + 1)
+    dist[0] = 1.0
+    for m in models:                                   # convolve in one Bernoulli(p_m) at a time
+        dist = np.r_[0.0, dist[:-1]] * p[m] + dist * (1.0 - p[m])
+
+    tiers = list(range(len(models), -1, -1))
+    return pd.DataFrame({
+        "n_agree": tiers,
+        "p_chance": [dist[t] for t in tiers],
+        "expected": [dist[t] * len(ranked) for t in tiers],
+        "observed": [int((ranked["n_agree"] == t).sum()) for t in tiers],
+    })
+
+
+def pair_cutoff_curve(ranked, thresholds=None, uv_cutoffs=None,
+                      chf_per_pair=CHF_PER_PAIR_PHASE2):
+    """Unique pairs (and their Phase-2 cost) qualifying at each (n_agree, mean_uv) cutoff.
+
+    Counted in PAIRS, not direction-instances, because Phase 2 is priced per pair:
+    select_pairs_by_agreement carries both directions of any pair it selects, so a pair whose two
+    directions both qualify costs exactly as much as one where only a single direction does. The
+    row at (n_agree_min=MIN_AGREE_PHASE2, mean_uv_max=0) is the Phase-2 selection itself.
+
+    A NaN mean_uv (n_agree == 0) never qualifies at any finite uv cutoff.
+    """
+    n_models = len(_models_in_ranked(ranked))
+    thresholds = list(range(1, n_models + 1)) if thresholds is None else list(thresholds)
+    uv_cutoffs = [0.0] if uv_cutoffs is None else list(uv_cutoffs)
+
+    rows = []
+    for t in thresholds:
+        for u in uv_cutoffs:
+            ok = ranked[(ranked["n_agree"] >= t) & (ranked["mean_uv"] <= u)]
+            n_pairs = int(ok["pair_id"].nunique())
+            rows.append({"n_agree_min": t, "mean_uv_max": u, "directions": len(ok),
+                         "pairs": n_pairs, "chf": n_pairs * chf_per_pair})
+    return pd.DataFrame(rows)
+
+
+def direction_gap(ranked):
+    """One row per pair: each direction's n_agree/mean_uv and the gap between them.
+
+    The gap is the frequency-preference measure. A pair that only works f_low -> f_high is
+    evidence the models respond to one of its two TONES, not to the change between them; a
+    deviance response should survive reversal.
+    """
+    wide = ranked.pivot_table(index="pair_id", columns="direction",
+                              values=["n_agree", "mean_uv"], aggfunc="first")
+    out = pd.DataFrame(index=wide.index)
+    for d in ("regular", "counter"):
+        out[f"n_agree_{d}"] = (wide["n_agree"][d].astype(int) if d in wide["n_agree"] else 0)
+        out[f"mean_uv_{d}"] = (wide["mean_uv"][d] if d in wide["mean_uv"] else np.nan)
+    out["n_agree_max"] = out[["n_agree_regular", "n_agree_counter"]].max(axis=1)
+    out["n_agree_min"] = out[["n_agree_regular", "n_agree_counter"]].min(axis=1)
+    out["n_agree_gap"] = out["n_agree_regular"].sub(out["n_agree_counter"]).abs()
+    return out.reset_index()
+
+
+def _models_in_ranked(ranked):
+    """The models a ranked frame actually carries, in SEARCH_MODELS order."""
+    return [m for m in SEARCH_MODELS if f"s7__{m}" in ranked.columns]

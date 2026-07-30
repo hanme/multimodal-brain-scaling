@@ -241,3 +241,7 @@ logs/*.out
 logs/*.err
 # our SLURM scripts use --error=*.error (not .err); ~13 MB of tqdm spam otherwise
 logs/*.error
+
+# Agent prompts / task briefs. Working notes, never tracked -- the code and the analysis memos
+# are the record. Keeps a stray `git add aux/` from committing one.
+aux/prompt_*.md

@@ -73,4 +73,5 @@ echo "CHF actually used by these jobs: $total_used"
 echo
 echo "ratio = measured / predicted. Below 1 means the literature per-clip figures are"
 echo "pessimistic; 'full model' extrapolates the measured rate to $N_DIRS_FULL method dirs."
-echo "For Phase 2 re-run with CLIPS_PER_DIR=14 N_DIRS_FULL=290."
+echo "For Phase 2 use scripts/report_extraction_cost_phase2.sh, which sets CLIPS_PER_DIR=14 and"
+echo "N_DIRS_FULL from the selected-pair count, and prices the result per pair."

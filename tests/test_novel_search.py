@@ -224,36 +224,47 @@ def test_load_scored_rejects_an_incomplete_model_set(scored_grid):
 
 
 # ──────────────────────────────────────────────────────────
-# Selection walk
+# Selection: pairs where 5 or 6 of the 6 models agreed
 # ──────────────────────────────────────────────────────────
 
-def test_selection_walk_counts_unique_pairs_not_list_positions():
-    """The brief's worked example: ranks 1,2 are two pairs' regular directions, 3,4 their
-    counters, 5 a third pair -- that is 3 unique pairs across 5 list positions."""
+def test_selection_takes_pairs_on_agreement_not_list_position():
+    """A pair is in because a direction of it cleared n_agree, not because it landed above some
+    rank. The 4/6 pair here sits at rank 2 -- above a qualifying 5/6 pair -- and is still out."""
     ranked = pd.DataFrame({
-        "rank": [1, 2, 3, 4, 5],
-        "pair_id": [1001, 1002, 1001, 1002, 1003],
-        "direction": ["regular", "regular", "counter", "counter", "regular"],
+        "rank": [1, 2, 3, 4, 5, 6],
+        "pair_id": [1001, 1002, 1001, 1003, 1002, 1003],
+        "direction": ["regular", "regular", "counter", "regular", "counter", "counter"],
+        "n_agree": [6, 4, 5, 5, 4, 1],
     })
-    assert nsc.selection_walk(ranked, 3)[0] == [1001, 1002, 1003]
-    assert nsc.selection_walk(ranked, 2) == ([1001, 1002], 2)
+    selected, n_qual = nsc.select_pairs_by_agreement(ranked, min_agree=5)
+    assert selected == [1001, 1003], "1002 tops out at 4/6 and is excluded despite ranking 2nd"
+    assert n_qual == 3, "1001 qualifies in both directions, 1003 in one"
 
 
-def test_selection_walk_carries_both_directions_including_a_low_ranked_one(scored_grid):
-    ranked = nsc.rank_directions(nsc.load_scored(scored_grid["s7_csv"]),
-                                 grid_index=str(scored_grid["index_csv"]))
-    selected, _ = nsc.selection_walk(ranked, 2)
+def test_selection_carries_both_directions_including_one_below_the_bar():
+    """The asymmetric case the counterbalanced design exists to measure: 1003 got in on its
+    regular direction alone, and its 1/6 counter is tested anyway."""
+    ranked = pd.DataFrame({
+        "rank": [1, 2, 3, 4],
+        "pair_id": [1001, 1001, 1003, 1003],
+        "direction": ["regular", "counter", "regular", "counter"],
+        "n_agree": [6, 5, 5, 1],
+    })
+    selected, _ = nsc.select_pairs_by_agreement(ranked, min_agree=5)
     dirs = nsc.method_dirs_for_pairs(selected)
-    assert dirs == ["method_1001", "method_1001_counter", "method_1002", "method_1002_counter"]
-    # every selected pair contributes exactly 2 direction-instances downstream
+    assert dirs == ["method_1001", "method_1001_counter", "method_1003", "method_1003_counter"]
     assert len(dirs) == 2 * len(selected)
 
 
-def test_selection_walk_stops_at_the_requested_pair_count(scored_grid):
+def test_selection_threshold_is_what_moves_the_pair_count(scored_grid):
+    """The fixture's pairs agree in 6, 4 and 2 models. Lowering the bar admits more pairs; the
+    count is an output of the criterion, never a target."""
     ranked = nsc.rank_directions(nsc.load_scored(scored_grid["s7_csv"]))
-    for n in (1, 3, 5):
-        selected, _ = nsc.selection_walk(ranked, n)
-        assert len(selected) == n == len(set(selected))
+    assert nsc.select_pairs_by_agreement(ranked, 5)[0] == [1001]
+    assert nsc.select_pairs_by_agreement(ranked, 4)[0] == [1001, 1002]
+    assert nsc.select_pairs_by_agreement(ranked, 2)[0] == [1001, 1002, 1003]
+    # nothing reaches 7/6, and an impossible bar selects nothing rather than falling back
+    assert nsc.select_pairs_by_agreement(ranked, 7) == ([], 0)
 
 
 # ──────────────────────────────────────────────────────────
@@ -270,14 +281,17 @@ def test_phase1_cost_from_the_literature_per_clip_figures():
     assert with_overhead == pytest.approx(211.0, abs=1.5)
 
 
-def test_phase2_takes_a_flat_145_pairs():
-    """The pair count is a design constant, not a derived quantity -- nothing in the search reads
-    a budget or an sacct total to decide it."""
-    assert nsc.N_PAIRS_PHASE2 == 145
+def test_phase2_selects_on_agreement_not_a_pair_count():
+    """Phase 2 takes the pairs 5 or 6 of the 6 models agreed on. The count that yields is an
+    output; nothing in the search reads a budget, an sacct total, or a target pair count."""
+    assert nsc.MIN_AGREE_PHASE2 == 5
     assert not hasattr(nsc, "max_pairs_within_budget"), \
-        "budget-derived pair selection was removed; the count is a flat constant"
-    projected = nsc.extraction_cost_chf(2 * nsc.N_PAIRS_PHASE2, 14)
-    assert projected == pytest.approx(221.6, abs=1.0)   # slightly over 220, accepted
+        "budget-derived pair selection was removed; selection is on model agreement"
+    assert not hasattr(nsc, "N_PAIRS_PHASE2"), \
+        "the top-N pair count was removed; it admitted 4/6 pairs to fill a quota"
+    # 127 pairs qualified on the 2026-07-27 ranking -- priced here, never used as a threshold.
+    projected = nsc.extraction_cost_chf(2 * 127, 14)
+    assert projected == pytest.approx(194.1, abs=1.0)
 
 
 def test_cost_scales_with_the_model_subset():
@@ -297,7 +311,7 @@ def test_rank_phase1_cli_emits_all_three_artifacts(scored_grid):
          "--s7_csv", str(scored_grid["s7_csv"]),
          "--grid_index", str(scored_grid["index_csv"]),
          "--out_dir", str(out_dir), "--method_list_out", str(method_list),
-         "--n_pairs", "3", "--literature_s7_csv", str(tmp / "nope.csv")],
+         "--min_agree", "2", "--literature_s7_csv", str(tmp / "nope.csv")],
         capture_output=True, text=True, cwd=REPO)
     assert r.returncode == 0, r.stderr
 
@@ -314,7 +328,7 @@ def test_rank_phase1_cli_emits_all_three_artifacts(scored_grid):
     dirs = method_list.read_text().split()
     assert dirs == ["method_1001", "method_1001_counter", "method_1002", "method_1002_counter",
                     "method_1003", "method_1003_counter"]
-    assert "n_agree tiers" in r.stdout and "selection walk" in r.stdout
+    assert "n_agree tiers" in r.stdout and "selection (n_agree >= 2" in r.stdout
 
 
 def test_phase2_subset_csv_is_a_verbatim_row_copy(scored_grid, tmp_path):
@@ -478,3 +492,263 @@ def test_plot_script_runs_on_phase1_alone(tmp_path):
     assert (figs / "novel_n_agree_heatmap.png").exists()
     assert not (figs / "novel_rank_stability.png").exists()
     assert "Phase 2 not scored yet" in r.stdout
+
+
+# ──────────────────────────────────────────────────────────
+# Phase-1 reporting: agreement tiers, chance baseline, sizing curve
+# ──────────────────────────────────────────────────────────
+
+def _tier_frame(per_pair_tiers):
+    """A ranking frame with each pair's two directions set to the requested n_agree.
+
+    s7__<model> is filled left-to-right so n_agree is exactly the number requested, which is
+    what agreement_tiers / expected_tier_counts read.
+    """
+    rows = []
+    for pair, (n_reg, n_ctr) in per_pair_tiers.items():
+        for direction, n in (("regular", n_reg), ("counter", n_ctr)):
+            row = dict(pair_id=pair, direction=direction, n_agree=n,
+                       mean_uv=(-1.0 - 0.1 * n) if n else np.nan)
+            for i, m in enumerate(MODELS):
+                row[f"s7__{m}"] = i < n
+                row[f"trough_uv__{m}"] = -1.5 if i < n else -0.1
+            rows.append(row)
+    return _ranked_frame(rows)
+
+
+def test_agreement_tiers_counts_direction_instances_and_pairs_separately(scored_grid):
+    """The fixture's pairs agree symmetrically, so at every tier both-directions == either."""
+    ranked = nsc.rank_directions(nsc.load_scored(scored_grid["s7_csv"]),
+                                 grid_index=str(scored_grid["index_csv"]))
+    tiers = nsc.agreement_tiers(ranked).set_index("n_agree")
+
+    assert list(tiers.index) == list(range(len(MODELS), -1, -1)), "tiers run best-first"
+    assert tiers["directions"].sum() == len(ranked)
+    assert tiers["pairs_either"].sum() >= ranked["pair_id"].nunique()
+    for tier, n_pairs in ((6, 1), (4, 1), (2, 1)):
+        assert tiers.loc[tier, "directions"] == 2 * n_pairs
+        assert tiers.loc[tier, "pairs_both"] == n_pairs == tiers.loc[tier, "pairs_either"]
+    assert tiers.loc[0, "pairs_both"] == scored_grid["n_pairs"] - 3
+    assert tiers["pct_directions"].sum() == pytest.approx(100.0)
+
+
+def test_agreement_tiers_separates_both_from_either_when_the_directions_split():
+    """pairs_either - pairs_both IS the direction-asymmetry signal; a tier that only ever
+    claims one direction of a pair is measuring a frequency preference."""
+    tiers = nsc.agreement_tiers(_tier_frame({
+        1001: (6, 6),      # symmetric at the top tier
+        1002: (6, 2),      # top tier claims one direction only
+        1003: (6, 3),      # ditto
+    })).set_index("n_agree")
+
+    assert tiers.loc[6, "directions"] == 4, "1001 both ways + 1002 and 1003 one way each"
+    assert tiers.loc[6, "pairs_both"] == 1, "only 1001 reaches the top tier in both directions"
+    assert tiers.loc[6, "pairs_either"] == 3
+    assert tiers.loc[2, "pairs_both"] == 0 and tiers.loc[2, "pairs_either"] == 1
+
+
+def test_expected_tier_counts_uses_the_exact_poisson_binomial():
+    """The six marginal S7 rates differ by ~2x, so pooling them into one binomial would
+    understate the spread and make a 6/6 look rarer -- i.e. more impressive -- than it is."""
+    rates = [1.0, 0.8, 0.6, 0.4, 0.2, 0.0]        # one model always fires, one never
+    n_inst = 10
+    rows = []
+    for j in range(n_inst):
+        row = dict(pair_id=1001 + j // 2, direction="regular" if j % 2 else "counter",
+                   n_agree=0, mean_uv=np.nan)
+        for m, r in zip(MODELS, rates):
+            row[f"s7__{m}"] = j < round(r * n_inst)
+            row[f"trough_uv__{m}"] = -1.0
+        row["n_agree"] = sum(row[f"s7__{m}"] for m in MODELS)
+        rows.append(row)
+    ranked = _ranked_frame(rows)
+
+    assert nsc.marginal_s7_rates(ranked).tolist() == pytest.approx(rates)
+    exp = nsc.expected_tier_counts(ranked).set_index("n_agree")
+    # Both extremes are exact products regardless of how the rates are distributed.
+    assert exp.loc[6, "p_chance"] == pytest.approx(np.prod(rates))          # a 0.0 rate -> 0
+    assert exp.loc[0, "p_chance"] == pytest.approx(np.prod([1 - r for r in rates]))
+    assert exp["p_chance"].sum() == pytest.approx(1.0)
+    assert exp["expected"].sum() == pytest.approx(len(ranked))
+    assert exp["observed"].sum() == len(ranked)
+
+    # A pooled binomial at the mean rate would put mass at 6/6; the true answer is zero.
+    pooled = math.comb(6, 6) * np.mean(rates) ** 6
+    assert pooled > 0.01 and exp.loc[6, "p_chance"] == pytest.approx(0.0)
+
+
+def test_expected_tier_counts_matches_a_plain_binomial_when_the_rates_are_equal():
+    """All 2**6 agreement patterns exactly once: every marginal rate is 0.5 and the models are
+    independent by construction, so expected must land on Binomial(6, 0.5) AND on the observed
+    counts. This is the calibration check -- if it drifts, every 'above chance' claim drifts."""
+    rows = []
+    for j in range(64):
+        row = dict(pair_id=1001 + j // 2, direction="regular" if j % 2 else "counter",
+                   mean_uv=np.nan)
+        for i, m in enumerate(MODELS):
+            row[f"s7__{m}"] = bool(j >> i & 1)
+            row[f"trough_uv__{m}"] = -1.0
+        row["n_agree"] = sum(row[f"s7__{m}"] for m in MODELS)
+        rows.append(row)
+    ranked = _ranked_frame(rows)
+
+    assert nsc.marginal_s7_rates(ranked).tolist() == pytest.approx([0.5] * 6)
+    exp = nsc.expected_tier_counts(ranked).set_index("n_agree")
+    for k in range(7):
+        assert exp.loc[k, "p_chance"] == pytest.approx(math.comb(6, k) / 64)
+        assert exp.loc[k, "expected"] == pytest.approx(math.comb(6, k))
+        assert exp.loc[k, "observed"] == math.comb(6, k), "observed must sit exactly on chance"
+
+
+def test_pair_cutoff_curve_counts_pairs_not_direction_instances():
+    """Phase 2 is priced per PAIR: selection_walk carries both directions of anything it picks,
+    so a pair qualifying twice costs the same as one qualifying once."""
+    ranked = _tier_frame({1001: (6, 6), 1002: (6, 0), 1003: (5, 5)})
+    curve = nsc.pair_cutoff_curve(ranked, thresholds=[6], uv_cutoffs=[0.0],
+                                  chf_per_pair=2.0).iloc[0]
+    assert curve.directions == 3, "1001 twice + 1002 once"
+    assert curve.pairs == 2, "but only two distinct pairs to extract"
+    assert curve.chf == pytest.approx(4.0)
+
+
+def test_pair_cutoff_curve_is_monotone_in_both_cutoffs():
+    ranked = _tier_frame({1001 + i: (i % 7, (i + 3) % 7) for i in range(40)})
+    curve = nsc.pair_cutoff_curve(ranked, uv_cutoffs=[-1.6, -1.3, -1.0, 0.0])
+    for _, g in curve.groupby("n_agree_min"):
+        assert g.sort_values("mean_uv_max")["pairs"].is_monotonic_increasing, \
+            "relaxing the uV cutoff can only add pairs"
+    for _, g in curve.groupby("mean_uv_max"):
+        assert g.sort_values("n_agree_min")["pairs"].is_monotonic_decreasing, \
+            "raising the agreement floor can only remove pairs"
+    assert (curve["chf"] == curve["pairs"] * nsc.CHF_PER_PAIR_PHASE2).all()
+
+
+def test_pair_cutoff_curve_never_admits_an_undefined_mean_uv():
+    """n_agree == 0 leaves mean_uv NaN; a NaN must not slip past a comparison as 'qualifying'."""
+    ranked = _tier_frame({1001: (0, 0), 1002: (4, 4)})
+    curve = nsc.pair_cutoff_curve(ranked, thresholds=[1], uv_cutoffs=[0.0]).iloc[0]
+    assert curve.pairs == 1 and curve.directions == 2
+
+
+def test_direction_gap_reports_each_pair_once_with_both_directions():
+    gaps = nsc.direction_gap(_tier_frame({
+        1001: (6, 6), 1002: (6, 1), 1003: (0, 0),
+    })).set_index("pair_id")
+    assert len(gaps) == 3
+    assert gaps.loc[1001, "n_agree_gap"] == 0
+    assert gaps.loc[1002, "n_agree_gap"] == 5
+    assert gaps.loc[1002, "n_agree_max"] == 6 and gaps.loc[1002, "n_agree_min"] == 1
+    assert np.isnan(gaps.loc[1003, "mean_uv_regular"])
+
+
+def test_phase2_pair_cost_is_the_measured_rate_not_the_literature_projection():
+    """The literature per-clip table ran pessimistic for every model, so the Phase-2 pair price
+    is taken from Phase 1's actual spend. The projection is kept for comparison only."""
+    projected_per_pair = nsc.extraction_cost_chf(2, 14) / 1
+    assert nsc.CHF_PER_PAIR_PHASE2 == pytest.approx(1.325)
+    assert nsc.CHF_PER_PAIR_PHASE2 < projected_per_pair, \
+        "measured must undercut the literature projection; if not, re-read report_extraction_cost"
+
+
+def test_phase1_results_script_emits_every_table_and_figure(scored_grid, tmp_path):
+    """End to end on the synthetic grid: the memo cites these filenames, so their absence is a
+    broken memo, not just a missing plot."""
+    results, figs = tmp_path / "results", tmp_path / "figs"
+    results.mkdir()
+    (results / "phase1_mmn_s7_roi.csv").write_text(
+        Path(scored_grid["s7_csv"]).read_text())
+    (results / "grid_index.csv").write_text(Path(scored_grid["index_csv"]).read_text())
+
+    script = REPO / "aux/analysis_novel_search/plots/phase1_results.py"
+    r = subprocess.run(
+        [sys.executable, str(script), "--results_dir", str(results), "--out_dir", str(figs),
+         "--predictions_root", str(scored_grid["tmp"] / "predictions"),
+         # the fixture's own scored CSV stands in for the literature screen: same schema, same
+         # 6 models, so the comparison path is exercised rather than skipped
+         "--literature_csv", str(scored_grid["s7_csv"])],
+        capture_output=True, text=True, cwd=REPO)
+    assert r.returncode == 0, r.stdout + r.stderr
+
+    for name in ("phase1_agreement_tiers.csv", "phase1_top30.csv", "phase1_cutoff_curve.csv",
+                 "phase1_chance_baseline.csv", "phase1_novel_vs_literature.csv",
+                 "phase1_direction_asymmetry.csv", "phase1_model_uv_box.csv",
+                 "phase1_mean_uv_grid.csv", "phase1_frequency_stripes.csv"):
+        assert (figs / name).stat().st_size > 0, name
+    # One per-model figure per model whose committed layer the fixture actually wrote.
+    for m in [m for m in MODELS if m in ("whisper-tiny", "whisper-base")]:
+        assert (figs / f"phase1_strong_waveforms_1__{m}.png").stat().st_size > 5000, m
+    for name in ("phase1_strong_waveforms_1.png", "phase1_direction_waveforms_1.png",
+                 "phase1_model_uv_box.png", "phase1_mean_uv_heatmap.png",
+                 "phase1_ranking_structure.png", "phase1_novel_vs_literature.png"):
+        assert (figs / name).stat().st_size > 5000, name
+
+    # The fixture engineers pair 1001 to 6/6 in both directions and nothing else above 4.
+    tiers = pd.read_csv(figs / "phase1_agreement_tiers.csv").set_index("n_agree")
+    assert tiers.loc[6, "directions__x0.75"] == 2
+    assert tiers.loc[6, "pairs_both__x0.75"] == 1
+    top = pd.read_csv(figs / "phase1_top30.csv")
+    assert top.iloc[0]["n_agree"] == len(MODELS) and top.iloc[0]["models_not_agreeing"] != \
+        top.iloc[0]["models_not_agreeing"], "6/6 must leave the not-agreeing column empty (NaN)"
+
+
+def test_phase1_results_script_refuses_a_short_slice(scored_grid, tmp_path):
+    """A silently truncated s7 CSV would move every count in the memo, so it must abort."""
+    results, figs = tmp_path / "results", tmp_path / "figs"
+    results.mkdir()
+    df = pd.read_csv(scored_grid["s7_csv"])
+    df[df["method"] != "method_1001_counter"].to_csv(results / "phase1_mmn_s7_roi.csv",
+                                                     index=False)
+    (results / "grid_index.csv").write_text(Path(scored_grid["index_csv"]).read_text())
+
+    script = REPO / "aux/analysis_novel_search/plots/phase1_results.py"
+    r = subprocess.run([sys.executable, str(script), "--results_dir", str(results),
+                        "--out_dir", str(figs), "--skip_waveforms"],
+                       capture_output=True, text=True, cwd=REPO)
+    assert r.returncode != 0
+    assert "do not have both directions" in r.stderr or "expected" in r.stderr
+
+
+def test_direction_waveform_uv_variant_does_not_overwrite_the_z_figures(scored_grid, tmp_path):
+    """The memo links the z figures. A --wave_units uv re-run must land beside them, not on
+    top of them -- otherwise the memo silently starts showing raw cross-model µV means, which
+    Caveat 2 says are not comparable."""
+    results, figs = tmp_path / "results", tmp_path / "figs"
+    results.mkdir()
+    (results / "phase1_mmn_s7_roi.csv").write_text(Path(scored_grid["s7_csv"]).read_text())
+    (results / "grid_index.csv").write_text(Path(scored_grid["index_csv"]).read_text())
+    script = REPO / "aux/analysis_novel_search/plots/phase1_results.py"
+    base = [sys.executable, str(script), "--results_dir", str(results), "--out_dir", str(figs),
+            "--predictions_root", str(scored_grid["tmp"] / "predictions"),
+            "--literature_csv", str(tmp_path / "nope.csv")]
+
+    assert subprocess.run(base, capture_output=True, text=True, cwd=REPO).returncode == 0
+    z_bytes = (figs / "phase1_direction_waveforms_1.png").read_bytes()
+
+    r = subprocess.run(base + ["--wave_units", "uv"], capture_output=True, text=True, cwd=REPO)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert (figs / "phase1_direction_waveforms_uv_1.png").stat().st_size > 5000
+    assert (figs / "phase1_direction_waveforms_1.png").read_bytes() == z_bytes
+
+
+def test_fcz_waves_carry_both_the_uv_and_the_z_trace(scored_grid):
+    """The per-model panels need µV; the direction-collapsed panels need z, because only z is
+    normalised per model and so safe to average across them."""
+    sys.path.insert(0, str(REPO / "aux/analysis_novel_search/plots"))
+    import phase1_results as pr
+
+    # The fixture writes every model's HDF5 at the default layer, so only the models whose
+    # COMMITTED layer is blocks.0 are findable here; the loader skips the rest by design.
+    present = [m for m in MODELS if pr.LAYER[m] == "blocks.0"]
+    assert present, "fixture layout no longer matches any committed layer"
+
+    waves = pr.load_fcz_waves([1001], present,
+                              predictions_root=scored_grid["tmp"] / "predictions")
+    assert set(waves) == {(1001, "regular"), (1001, "counter")}
+    for per_model in waves.values():
+        assert set(per_model) == set(present)
+        for t, uv, z in per_model.values():
+            assert t.shape == uv.shape == z.shape
+            # The fixture's dip is ~3 uV deep; z is baseline-normalised, so the two traces are
+            # on genuinely different scales rather than one being a copy of the other.
+            assert not np.allclose(uv, z)
+            assert np.isfinite(uv).all() and np.isfinite(z).all()
