@@ -17,15 +17,24 @@ What it checks, per method directory:
   * the ids inside the files are the clips the filenames claim, with exactly one standard;
   * values are finite and not all-zero.
 
+Work is per method DIRECTORY and shares nothing, so it fans out over --n_workers processes. At
+Phase-2 scale -- 254 dirs x 16 clips x 6 models = 24,384 files opened and a feature block read out
+of each -- that is the difference between an afternoon and a coffee. Submit it rather than running
+it on the login node: scripts/slurm_check_novel_features.sh.
+
   python scripts/check_novel_features.py --model_id whisper-tiny \
       --method_list outputs/novel_methods_gate.txt --expect_clips 2
   python scripts/check_novel_features.py --models all \
       --method_list outputs/novel_methods_phase1.txt --expect_clips 2
+  sbatch scripts/slurm_check_novel_features.sh            # Phase 2, all 6 models, 32 cores
 """
 
 import argparse
 import json
+import os
 from collections import Counter
+from concurrent.futures import ProcessPoolExecutor
+from functools import partial
 from pathlib import Path
 
 import h5py
@@ -112,15 +121,22 @@ def check_method(feat_dir, aliases, expect_clips):
     return problems, nbytes, shapes
 
 
-def check_model(model_id, features_root, methods, expect_clips, show):
+def check_model(model_id, features_root, methods, expect_clips, show, executor=None):
     aliases, err = layer_aliases(model_id)
     if err:
         print(f"  {err}")
         return False
     root = Path(features_root)
+    dirs = [root / f"mmn-{m}-delta-t" for m in methods]
+    work = partial(check_method, aliases=aliases, expect_clips=expect_clips)
+
+    # One task per method dir. They read disjoint directories and share no state, so this is a
+    # plain map -- and Executor.map preserves order, so the problem list reads in method-list
+    # order whether or not it ran in parallel.
+    results = map(work, dirs) if executor is None else executor.map(work, dirs)
+
     all_problems, total_bytes, shapes, ok_dirs = [], 0, set(), 0
-    for m in methods:
-        probs, nbytes, sh = check_method(root / f"mmn-{m}-delta-t", aliases, expect_clips)
+    for probs, nbytes, sh in results:
         total_bytes += nbytes
         shapes |= sh
         all_problems += probs
@@ -173,6 +189,11 @@ def main():
     p.add_argument("--expect_clips", type=int, default=2,
                    help="h5 files per method dir: 2 after Phase 1, 16 after Phase 2")
     p.add_argument("--show", type=int, default=15, help="problems to list per model")
+    p.add_argument("--n_workers", type=int,
+                   default=int(os.environ.get("SLURM_CPUS_PER_TASK", 0)) or (os.cpu_count() or 1),
+                   help="processes to spread the method dirs over. Defaults to "
+                        "SLURM_CPUS_PER_TASK when set, else every core. 1 runs serially, which "
+                        "is what you want when a traceback needs a readable stack.")
     args = p.parse_args()
 
     if not args.model_id and not args.models:
@@ -182,15 +203,23 @@ def main():
               [m.strip() for m in args.models.split(",") if m.strip()])
 
     methods = [l.strip() for l in Path(args.method_list).read_text().split() if l.strip()]
+    n_workers = max(1, min(args.n_workers, len(methods)))
     print(f"method list: {args.method_list} ({len(methods)} conditions), "
-          f"expecting {args.expect_clips} clips each\n")
+          f"expecting {args.expect_clips} clips each, {n_workers} worker(s)\n")
 
-    all_ok = True
-    for m in models:
-        print(f"=== {m} ===")
-        root = args.features_root or f"outputs/features/{m}-mmn-{args.features_tag}"
-        all_ok &= check_model(m, root, methods, args.expect_clips, args.show)
-        print()
+    # One pool for all models rather than one per model: forking is only safe while the parent
+    # holds no open HDF5 handle, and nothing outside a worker ever opens one.
+    executor = ProcessPoolExecutor(max_workers=n_workers) if n_workers > 1 else None
+    try:
+        all_ok = True
+        for m in models:
+            print(f"=== {m} ===")
+            root = args.features_root or f"outputs/features/{m}-mmn-{args.features_tag}"
+            all_ok &= check_model(m, root, methods, args.expect_clips, args.show, executor)
+            print()
+    finally:
+        if executor is not None:
+            executor.shutdown()
 
     print("ALL CHECKS PASSED" if all_ok else "PROBLEMS FOUND -- see above")
     raise SystemExit(0 if all_ok else 1)
