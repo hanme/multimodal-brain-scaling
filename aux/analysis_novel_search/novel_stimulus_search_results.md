@@ -639,12 +639,32 @@ pair count and read as roughly twice the yield it is.
 - **The tiers grow very fast below 5/6**: dropping from ≥5 to ≥4 triples the pair count, and by ≥2
   the criterion admits 84% of all direction-instances and has stopped selecting anything.
 
+![Heatmap with the number of models agreeing on the vertical axis, 1 at the bottom to 6 at the top, and the top-X rank threshold on the horizontal axis running 10, 20, 30, 40, 50, 75, 100, 125, 150, 200, 250, 300. Each cell is annotated with the number of direction-instances that sit in the top X of at least that many models, on a yellow-green-blue sequential ramp. The bottom row rises from 59 at top-10 to 1164 at top-300 and is the only strongly coloured band. The row for 2 models runs 1, 5, 11, 18, 27 across the first five columns and reaches 459 at top-300. The rows for 3 or more models stay near zero across most of the ladder: 3 models first reaches 2 at top-30, 4 models reaches 1 at top-40, 5 models reaches 1 at top-125, and the row for all 6 models is zero everywhere until a single stimulus appears at top-300.](plots/phase1_consensus_heatmap.png)
+
+**Figure 11. Consensus yield: direction-instances in the top X of at least Y models.** Each model
+ranks the instances by its own `trough_uv`, most negative first, among the instances where that
+model satisfies S2 — so this figure uses no µV threshold and no S7 verdict at all, only rank
+order. Cumulative in Y, so every column is non-increasing upward.
+
+- **Exactly one stimulus of the 1,806 is in the top 300 of all six models**, and none is at any
+  cut below that. The 6/6 row is zero for eleven of the twelve columns.
+- **Consensus has to be bought with a very loose cut.** Three models first share a stimulus at
+  top-30, four at top-40, five at top-125 — and top-125 is already more instances per model than
+  the entire n_agree ≥ 5 tier of Table 1 contains.
+- **Even pairwise overlap is scarce at the sharp end**: at top-10, 59 distinct instances fill the
+  60 available slots, so just one stimulus is picked by two models and none by three.
+- **This corroborates Sections 2 and 4 by an independent route.** Those rest on the S7 threshold
+  and the S2 shape criterion; this uses neither, and reaches the same place.
+
 ### Section 5 summary
 - **The tiers are the only natural cut points.** 17 pairs at 6/6, 127 with a direction at ≥5, then
   387 at ≥4 — after which the criterion stops selecting.
 - **The µV cutoff is not a lever**: every yield curve is flat from 0 to 1.25 µV.
 - **The survivors are spread across the grid** and the literature pairs sit in one corner of it, so
   there is no obvious sub-region for a finer follow-up.
+- **On rank order alone, the models barely overlap at all.** Exactly one instance of the 1,806 is
+  in the top 300 of all six models, and none at any tighter cut (Figure 11) — a result that uses
+  neither the µV floor nor the S7 verdict.
 
 ---
 
@@ -671,7 +691,7 @@ pair count and read as roughly twice the yield it is.
 > **Waveform provenance.** The Phase-2 in-silico run wrote to its own predictions root,
 > `outputs/insilico_mmn_predictions_novel_phase2` (602 MB, 254 method groups per model, all
 > carrying `n_deviants = 15`), kept separate from the Phase-1 root so neither overwrites the
-> other. Figures 13 and 14 are drawn from it. The loader checks each file's `n_deviants`
+> other. Figures 14 and 15 are drawn from it. The loader checks each file's `n_deviants`
 > attribute against the phase being rendered and refuses rather than pass a 1-deviant trace off
 > as Phase 2, so these figures cannot silently be the Phase-1 ones.
 > **What has no Phase-2 counterpart.** Table 2 (deviance octiles) is not reproduced: the selection
@@ -701,7 +721,7 @@ pair count and read as roughly twice the yield it is.
 
 ![Heatmap of cross-model agreement over the 43 by 43 frequency grid restricted to the 254 direction-instances Phase 2 evaluated, on a single-hue light-to-dark Blues ramp from 0 to 6 agreeing models. Only 254 of the 1806 off-diagonal cells carry colour; the rest are a pale unmeasured background and the excluded diagonal is a distinct mid grey. The filled cells do not form bands parallel to the diagonal. Instead the right-hand region where the deviant is 5869 Hz or above is filled with the darkest steps while the matching top rows, where those same frequencies are the standard, are near-white, and the reverse holds around 1600 to 1745 Hz.](plots/novel_n_agree_heatmap_phase2.png)
 
-**Figure 11. Cross-model agreement over the grid, Phase 2** (mirrors Figure 2). 254 of 1,806
+**Figure 12. Cross-model agreement over the grid, Phase 2** (mirrors Figure 2). 254 of 1,806
 off-diagonal cells, 14% coverage; unmeasured cells are a pale background distinct from the
 mid-grey excluded diagonal.
 
@@ -711,7 +731,7 @@ mid-grey excluded diagonal.
 
 ![Heatmap of the mean trough depth across all six models over the same restricted 43 by 43 grid, on a diverging blue-white-red ramp whose neutral midpoint is exactly zero microvolts, with blue for negative values, an MMN-like trough, and red for positive. Values run from -3.04 to +0.45 microvolts against a grand mean of -0.937. The right-hand column at deviant = 7611 Hz is filled top to bottom in dark blue while the top row at standard = 7611 Hz is near-white and in places red; the 1600 and 1745 Hz rows are dark blue across their deviants while the matching columns are pale.](plots/phase2_mean_uv_heatmap.png)
 
-**Figure 12. Mean trough depth over the grid, Phase 2** (mirrors Figure 3). **Blue = negative = an
+**Figure 13. Mean trough depth over the grid, Phase 2** (mirrors Figure 3). **Blue = negative = an
 MMN-like trough, red = positive = no trough**, neutral midpoint at exactly 0 µV.
 
 - **The two darkest marginals are the two Phase 1 found**: standard = 1745 Hz at −1.722 µV over 13
@@ -742,7 +762,7 @@ number of times in each role, so the two halves of a row are comparable.
 
 ![Small-multiple grid of 30 panels, one per pair in the Phase-2 top 30. Each panel plots the FCz microvolt difference wave against time from -120 to 460 ms for the regular direction only, with the six models overlaid in Okabe-Ito colours and wav2vec2-large re-hued violet. The 100-240 ms scoring window is shaded and each panel autoscales. Compared with the Phase-1 version the per-model traces are visibly smoother, the 15-deviant mean having removed much of the sample-to-sample jitter, though whisper medium in orange still swings to large positive excursions just after the window and wav2vec2 large in violet still carries the widest range.](plots/phase2_strong_waveforms_1.png)
 
-**Figure 13. FCz µV difference waves for the Phase-2 top 30 pairs**, regular direction only, six
+**Figure 14. FCz µV difference waves for the Phase-2 top 30 pairs**, regular direction only, six
 per-model traces (mirrors Figure 5).
 
 - **The traces are visibly smoother than Phase 1's.** Averaging 15 deviants instead of 1 removes
@@ -755,7 +775,7 @@ per-model traces (mirrors Figure 5).
 
 ![The same 30 Phase-2 panels with the six model traces collapsed to one line per direction: regular in blue solid, counter in orange dashed, on a shared vertical axis in z units fixed from -2 to 2, with no shaded band. The mirror-image pattern is stark and near-universal: in essentially every panel the blue regular line dips below zero inside the shaded 100 to 240 ms window while the orange counter line rises above zero across the same window by a comparable amount, and the two cross near the window's start. Very few panels show both lines dipping together.](plots/phase2_direction_waveforms_1.png)
 
-**Figure 14. The Phase-2 top 30 collapsed to one line per direction**, in z units (mirrors
+**Figure 15. The Phase-2 top 30 collapsed to one line per direction**, in z units (mirrors
 Figure 6). The raw-µV variant is `phase2_direction_waveforms_uv_1.png`.
 
 - **This is the sharpest single statement of the frequency-preference result in the memo.** Across
@@ -857,7 +877,7 @@ count is both the whole-grid and the same-instances figure.
 
 ![Horizontal boxplot with one row per model over the 91 Phase-2 direction-instances at n_agree at least 5. Each model contributes one continuous distribution of trough depth in microvolts at FCz across all 91 instances, whether or not it agreed, with points jittered over each box and the S7 count annotated in the row label. The X = -0.75 microvolt floor is a dashed vertical line. Medians run from -0.89 for whisper tiny to -2.45 for wav2vec2 large, whose distribution again spreads widest, past -8 microvolts.](plots/phase2_model_uv_box.png)
 
-**Figure 15. Trough depth per model over the Phase-2 n_agree ≥ 5 set** (mirrors Figure 7).
+**Figure 16. Trough depth per model over the Phase-2 n_agree ≥ 5 set** (mirrors Figure 7).
 
 - **The picture is Phase 1's.** whisper-tiny again straddles the floor with a median of −0.89 µV
   and 58 of 91 clearing S7; wav2vec2-medium clears 88 of 91.
@@ -885,14 +905,14 @@ column for the same 127 pairs is the fair comparison, not Table 11's grid-wide f
 
 ![Line chart of pairs qualifying against the mean_uv cutoff on a symlog vertical axis, one curve per n_agree threshold on a light-to-dark Blues ramp, horizontal axis from 0 to 3.5 microvolts, with dashed reference lines at the 91 pairs with a direction at n_agree at least 5 and the 9 at 6 of 6. Every curve is flat from 0 to about 1.25 microvolts before falling steeply toward zero.](plots/phase2_yield_curve.png)
 
-**Figure 16. Pairs qualifying at each agreement and µV cutoff, the 127 evaluated pairs.**
+**Figure 17. Pairs qualifying at each agreement and µV cutoff, the 127 evaluated pairs.**
 
 - **The µV cutoff is no more of a lever on 15 deviants than on 1** — flat from 0 to about 1.25 µV,
   exactly as in Figure 8.
 
 ![Scatter of f_low against f_high on logarithmic axes with dense frequency labels, all 903 grid pairs in light grey, and the 91 Phase-2 pairs having a direction at n_agree at least 5 in blue. The blue points spread across the upper-left half of the triangle rather than clustering in any one region.](plots/phase2_grid_position.png)
 
-**Figure 17. Where the Phase-2 strong pairs sit in the frequency grid.**
+**Figure 18. Where the Phase-2 strong pairs sit in the frequency grid.**
 
 - **Plotted against the full 903-pair grid, not the 127 they were drawn from**, so "spread, not
   clustered" remains a claim about the grid rather than about the subset.
@@ -901,7 +921,7 @@ column for the same 127 pairs is the fair comparison, not Table 11's grid-wide f
 
 ![Seven by seven matrix of pair counts, regular-direction n_agree on the vertical axis against counter-direction n_agree on the horizontal, cells shaded on a Blues ramp with counts printed. The mass sits far off the diagonal at regular = 5 against counter = 1, 2 and 3, holding 17, 18 and 13 pairs, and the region where both directions reach 5 or more is completely empty.](plots/phase2_direction_matrix.png)
 
-**Figure 18. Each pair's two directions, cross-tabulated, the 127 evaluated pairs.**
+**Figure 19. Each pair's two directions, cross-tabulated, the 127 evaluated pairs.**
 
 - **The both-directions-strong region is empty.** The mass sits at (regular 5, counter 1–3) —
   17 pairs at (5,1), 18 at (5,2), 13 at (5,3).
@@ -929,6 +949,19 @@ these percentages are much higher than Table 12's and are not a coverage statist
 - The bottom two rows match Phase 1's almost exactly (84.3% vs 84.3%, 98.0% vs 98.1%), because by
   ≥2/6 the criterion has stopped selecting in either phase.
 
+![Heatmap with the number of models agreeing on the vertical axis, 1 at the bottom to 6 at the top, and the top-X rank threshold on the horizontal axis running 10 to 250; the 300 column is dropped because only 254 instances were evaluated. Each cell is annotated with the number of Phase-2 direction-instances in the top X of at least that many models, on a yellow-green-blue sequential ramp. The bottom row rises from 55 at top-10 to 254 at top-200. The 6-model row stays at zero through top-50, reaches 1 at top-75, 2 at top-100, 22 at top-150 and 59 at top-200 — but 200 is already 79 percent of the 254 instances evaluated. The strict left-hand columns are empty above the second row, exactly as in the Phase-1 version.](plots/phase2_consensus_heatmap.png)
+
+**Figure 20. Consensus yield, Phase 2** (mirrors Figure 11). Same construction on the 254
+evaluated instances; the top-300 column is dropped because it exceeds the set.
+
+- **The strict end is empty here too.** Nothing reaches 6/6 agreement until the cut is relaxed to
+  top-75, and 3 models first share a stimulus at top-20.
+- **The strong right-hand corner is an artifact of the smaller set.** Top-200 is 79% of the 254
+  instances, so "in the top 200 of all six models" is close to "not last" — read the left half of
+  this figure, not the right.
+- Column for column at the left, the 15-deviant scores reproduce the same rank-based disagreement
+  the single draw showed.
+
 ### Section 6 summary
 - **Yes, every structural finding holds.** The consensus set is still empty (0 of 127 both ways),
   `pairs_both` is now zero at 5/6 as well, and 126 of 127 pairs are carried by a single direction.
@@ -941,6 +974,8 @@ these percentages are much higher than Table 12's and are not a coverage statist
   directions' in-window traces anti-correlate at mean r = −0.48.
 - **What does not hold is any individual pair's exact standing**: Phase 1's best pair,
   `method_1767`, falls to 4/6 and rank 94 of 254, and the ≥5/6 yield halves.
+- **The rank-order consensus picture is Phase 1's too** (Figure 20): nothing reaches 6/6 agreement
+  until the cut is relaxed to top-75 of 254.
 
 ---
 
@@ -956,7 +991,7 @@ these percentages are much higher than Table 12's and are not a coverage statist
 
 ![Scatter of Phase-2 rank against Phase-1 rank for the 254 shared direction-instances, with a dashed identity line. The cloud hugs the line over the whole range with a scatter of roughly plus or minus 30 ranks and a handful of outliers reaching about 95 ranks. Spearman rho = +0.923 at p = 2.3e-106.](plots/novel_rank_stability.png)
 
-**Figure 19. Phase-1 rank against Phase-2 rank**, Phase-1 ranks re-ranked within the shared subset
+**Figure 21. Phase-1 rank against Phase-2 rank**, Phase-1 ranks re-ranked within the shared subset
 so both axes count the same population.
 
 - **ρ = +0.923** (p = 2.3 × 10⁻¹⁰⁶, n = 254). The order is largely preserved.
@@ -984,7 +1019,7 @@ so both axes count the same population.
 
 ![Seven by seven heatmap with Phase-1 n_agree on the vertical axis and Phase-2 n_agree on the horizontal, counts printed in each cell. 69 percent of instances sit on the diagonal, the largest cell being 75 instances that stayed at 5 of 6. Essentially all off-diagonal mass sits to the left of the diagonal, a lower Phase-2 tier than Phase-1 tier.](plots/novel_tier_migration.png)
 
-**Figure 20. n_agree tier, Phase 1 against Phase 2.**
+**Figure 22. n_agree tier, Phase 1 against Phase 2.**
 
 - **The off-diagonal mass is almost entirely to the left of the diagonal** — instances fell rather
   than rose.
@@ -1011,7 +1046,7 @@ so both axes count the same population.
 
 ![Scatter of Phase-2 against Phase-1 mean_uv_all6 in microvolts with a dashed identity line, 254 points coloured by Phase-2 n_agree on a light-to-dark Blues ramp. The cloud sits tightly along the identity line from about -3.5 to +0.5 microvolts with only slight scatter, and the darkest points, the high-agreement instances, sit at the deep negative end. Spearman rho = +0.957.](plots/phase2_uv_scatter.png)
 
-**Figure 21. Predicted trough depth, Phase 1 against Phase 2**, on `mean_uv_all6` — the mean over
+**Figure 23. Predicted trough depth, Phase 1 against Phase 2**, on `mean_uv_all6` — the mean over
 all six models, defined for every instance and over the same six models in both phases.
 
 - **ρ = +0.957 on all 254.** The underlying µV response is reproduced almost exactly.
@@ -1019,7 +1054,7 @@ all six models, defined for every instance and over the same six models in both 
 
 ![Ten Spearman correlations between the phases drawn as points with bootstrap 95 percent confidence interval bars, sorted strongest first and coloured by group. Per-model trough_uv for whisper base and whisper small sit at +0.997 and +0.996, whisper tiny at +0.986, mean_uv_all6 at +0.957, whisper medium at +0.955, rank at +0.923, n_agree at +0.908, wav2vec2 medium and large at +0.858 and +0.849, and mean_uv over agreeing models only lowest at +0.768 with the widest interval.](plots/phase2_correlation_summary.png)
 
-**Figure 22. Phase-1 vs Phase-2 agreement, by quantity**, with 2,000-sample percentile bootstrap
+**Figure 24. Phase-1 vs Phase-2 agreement, by quantity**, with 2,000-sample percentile bootstrap
 95% CIs.
 
 - **The µV quantities sit above the ranking quantities.** ρ(mean_uv_all6) = +0.957 exceeds
@@ -1054,14 +1089,14 @@ all six models, defined for every instance and over the same six models in both 
 
 ![Bland-Altman plot of the Phase-2 minus Phase-1 microvolt difference against the mean of the two phases, with a solid red mean-bias line at +0.087 microvolts and dashed plus and minus 1.96 SD lines at about +0.51 and -0.34. The cloud is centred slightly above zero with no trend against the mean.](plots/phase2_uv_bland_altman.png)
 
-**Figure 23. Bland-Altman: how the two phases' µV differ in absolute terms.**
+**Figure 25. Bland-Altman: how the two phases' µV differ in absolute terms.**
 
 - **Phase-2 troughs are +0.087 µV shallower on average** (SD 0.215); 83 of 254 got deeper.
 - **No trend against magnitude** — a small uniform shift, not a scale change.
 
 ![Histogram of the rank shift between phases over the 254 direction-instances in bins of 10 ranks, sharply peaked just above zero with 73 instances in the 0 to 10 bin and 55 in the 10 to 20 bin against 18 in the -10 to 0 bin, and strongly left-skewed with a long thin tail running out to -100 and a short right tail ending near +65.](plots/phase2_rank_shift.png)
 
-**Figure 24. How far instances moved between the rankings.**
+**Figure 26. How far instances moved between the rankings.**
 
 - Rank shift sums to zero by construction, so the shape is the informative part: **168 instances
   rose a little and 80 fell a lot.**
@@ -1070,7 +1105,7 @@ all six models, defined for every instance and over the same six models in both 
 
 ![Mean Phase-2 n_agree plotted against Phase-1 n_agree tier with standard-error bars, a dashed identity line, and the n annotated at each point. The curve sits clearly below the identity line at Phase-1 tiers 3 through 6, essentially on it at tier 2, and at or above it at tiers 1 and 0.](plots/phase2_tier_regression.png)
 
-**Figure 25. Mean Phase-2 agreement by Phase-1 tier.**
+**Figure 27. Mean Phase-2 agreement by Phase-1 tier.**
 
 - **The high tiers fall and the low tiers rise** — 6/6 loses 0.53 models on average, 0/6 gains 0.40.
 - **This is regression to the mean, guaranteed by the selection rule.** The 254 were chosen for
@@ -1092,7 +1127,7 @@ all six models, defined for every instance and over the same six models in both 
   The gap between +0.957 and +0.923 is the cost of discretizing a continuous µV at a threshold.
 - **The disagreement that does exist is systematic and explained, not noise.** Mean n_agree fell
   3.661 → 3.370 with 70 instances falling against 8 rising — the signature of regression to the
-  mean on a set selected for a high score on a single draw, confirmed by Figure 25's tier-by-tier
+  mean on a set selected for a high score on a single draw, confirmed by Figure 27's tier-by-tier
   pattern. It is evidence about the selection, not about the stimuli.
 - **Two limits on that conclusion.** ρ = +0.923 is measured on a **selected** subset drawn from the
   top of the Phase-1 ranking, so it says the screen ranks reliably *among pairs it already ranked

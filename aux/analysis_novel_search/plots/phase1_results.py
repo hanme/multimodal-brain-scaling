@@ -97,6 +97,14 @@ MMN_WINDOW = (100.0, 240.0)   # the scoring window, shaded in the waveform panel
 N_TOP = 50
 PANELS_PER_FIG = (5, 6)       # rows x cols of the waveform small-multiples
 N_WAVE = 30                   # waveform figures cover the top N pairs of the ranking
+# Top-X cut points for the consensus heatmap. Starts at 10 and runs to 300: below ~10 the columns
+# only ever hold a handful of stimuli and say more about ties than about consensus, and the range
+# where models begin to overlap at all is the far end. Thresholds above the number of instances in
+# the ranking are dropped, so a selected subset gets a shorter ladder rather than saturated columns.
+CONSENSUS_TOP_X = (10, 20, 30, 40, 50, 75, 100, 125, 150, 200, 250, 300)
+# Multi-hue sequential, distinct from the Blues used for n_agree elsewhere: this figure counts
+# STIMULI, not agreeing models, and reusing the n_agree ramp would imply they are the same scale.
+CONSENSUS_CMAP = "YlGnBu"
 
 # Per-phase defaults. The scored CSV, the output prefix, and how many deviant realizations each
 # condition's mean is built from -- the last is asserted against the prediction HDF5s before any
@@ -954,6 +962,86 @@ def plot_mean_uv_heatmap(ranked, models, out_dir, prefix="phase1", all_freqs=Non
 
 
 # ──────────────────────────────────────────────────────────
+# Consensus yield: how many stimuli clear a top-X cut in at least Y models
+# ──────────────────────────────────────────────────────────
+
+def consensus_grid(ranked, models, thresholds=CONSENSUS_TOP_X):
+    """counts[Y, X] = direction-instances in the top `X` of AT LEAST `Y` models.
+
+    Each model gets its OWN ranking of the direction-instances, ordered by that model's
+    `trough_uv` ascending (most negative first) among the instances where that model satisfies
+    **S2**. The S2 gate matters: without it a model's "top" would be led by whatever produced the
+    deepest excursion anywhere in the epoch, including troughs at latencies that are not MMN
+    latencies -- the same reason `mean_uv` averages only over agreeing models.
+
+    Cumulative in Y by construction, so each column is non-increasing downward: an instance in the
+    top X of 4 models is also in the top X of at least 3.
+    """
+    per_model_rank = {}
+    for m in models:
+        d = ranked[ranked[f"s2__{m}"]].dropna(subset=[f"trough_uv__{m}"])
+        order = d.sort_values(f"trough_uv__{m}", ascending=True, kind="mergesort")
+        per_model_rank[m] = order["method"].tolist()
+
+    counts = np.zeros((len(models), len(thresholds)), dtype=int)
+    for xi, x in enumerate(thresholds):
+        tally = {}
+        for m in models:
+            for meth in per_model_rank[m][:x]:
+                tally[meth] = tally.get(meth, 0) + 1
+        for yi, y in enumerate(range(1, len(models) + 1)):
+            counts[yi, xi] = sum(1 for v in tally.values() if v >= y)
+    return counts, {m: len(v) for m, v in per_model_rank.items()}
+
+
+def plot_consensus_heatmap(ranked, models, out_dir, prefix="phase1",
+                           thresholds=CONSENSUS_TOP_X):
+    """The consensus-yield grid: how far a top-X cut has to be relaxed to get Y models to agree."""
+    thresholds = tuple(x for x in thresholds if x <= len(ranked)) or (len(ranked),)
+    counts, n_s2 = consensus_grid(ranked, models, thresholds)
+    n_models = len(models)
+
+    fig, ax = plt.subplots(figsize=(10.6, 5.2))
+    ax.grid(False)
+    im = ax.imshow(counts, cmap=CONSENSUS_CMAP, origin="lower", aspect="auto",
+                   interpolation="nearest")
+    hi = counts.max() if counts.max() else 1
+    for yi in range(counts.shape[0]):
+        for xi in range(counts.shape[1]):
+            v = counts[yi, xi]
+            ax.text(xi, yi, str(v), ha="center", va="center", fontsize=7.5,
+                    color="white" if v > 0.55 * hi else INK)
+
+    ax.set_xticks(range(len(thresholds)))
+    ax.set_xticklabels([str(x) for x in thresholds], fontsize=8.5, rotation=45)
+    ax.set_yticks(range(n_models))
+    ax.set_yticklabels([str(y) for y in range(1, n_models + 1)], fontsize=9)
+    ax.set_xlabel("top X rank for the model (a stimulus must be in a model's top X)")
+    ax.set_ylabel("number of models agreeing")
+    ax.set_title(f"Consensus yield: direction-instances in the top X of at least Y models\n"
+                 f"per-model ranking by that model's own trough_uv among its S2 responses; "
+                 f"{len(ranked)} instances, {n_models} models", pad=12)
+    cbar = fig.colorbar(im, ax=ax, fraction=0.030, pad=0.02)
+    cbar.set_label("number of stimuli"); cbar.outline.set_visible(False)
+
+    fig.tight_layout(rect=(0, 0.06, 1, 1))
+    fig.text(0.5, 0.035,
+             "Cumulative in Y: a stimulus in the top X of 4 models is also in the top X of at "
+             "least 3, so every column is non-increasing\nupward. The top-left corner is the "
+             "strict end — few stimuli, many models agreeing — and is where a stimulus set would "
+             "be drawn from.",
+             ha="center", va="top", fontsize=8, color=MUTED, linespacing=1.5)
+    fig.savefig(Path(out_dir) / f"{prefix}_consensus_heatmap.png", bbox_inches="tight")
+    plt.close(fig)
+
+    tbl = pd.DataFrame(counts, index=pd.Index(range(1, n_models + 1), name="n_models_min"),
+                       columns=pd.Index(thresholds, name="top_x"))
+    tbl.to_csv(Path(out_dir) / f"{prefix}_consensus_heatmap.csv")
+    print(f"  wrote {prefix}_consensus_heatmap.png/.csv  (S2 responses per model: {n_s2})")
+    return tbl
+
+
+# ──────────────────────────────────────────────────────────
 # Item 6b. Deviance scaling and frequency structure, on whatever set is passed
 # ──────────────────────────────────────────────────────────
 
@@ -1500,6 +1588,7 @@ def main():
 
     print("\n[7] the structure of the ranking")
     table_yield(ranked, models, out_dir, prefix=prefix)
+    plot_consensus_heatmap(ranked, models, out_dir, prefix=prefix)
     # Phase 1 only: the literature overlay answers "where does the published set sit in this
     # grid", which is a property of the grid and is settled once. Repeating it on the Phase-2
     # scatter would add the same 24 diamonds to a figure about a selected subset of that grid.
