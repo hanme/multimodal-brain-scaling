@@ -1,0 +1,23 @@
+set,rank,method,stimulus,n_agree,mean_uv
+novel,1.0,method_1767,1745 → 7611 Hz,6.0,-3.183
+novel,2.0,method_1783,1903 → 7611 Hz,6.0,-2.5137
+novel,3.0,method_1750,1600 → 7611 Hz,6.0,-2.2733
+novel,4.0,method_1882,4150 → 7611 Hz,6.0,-2.2225
+novel,5.0,method_1812,2263 → 7611 Hz,6.0,-2.137
+novel,6.0,method_1627,951 → 7611 Hz,6.0,-2.0535
+novel,7.0,method_1603,872 → 7611 Hz,6.0,-2.0275
+novel,8.0,method_1066_counter,1745 → 218 Hz,6.0,-1.9867
+novel,9.0,method_1807,2263 → 4935 Hz,6.0,-1.8695
+novel,10.0,method_1881,4150 → 6979 Hz,6.0,-1.8223
+novel,,mean of the top 10,,6.0,-2.2089
+literature,1.0,method_20,1000 → 1850 Hz,5.0,-1.3649
+literature,2.0,method_21,1000 → 1850 Hz,5.0,-1.3476
+literature,3.0,method_53_counter,1200 → 1000 Hz,4.0,-1.8341
+literature,4.0,method_10_counter,1122 → 1000 Hz,4.0,-1.6815
+literature,5.0,method_75,1000 → 1200 Hz,4.0,-1.1277
+literature,6.0,method_72,1000 → 1200 Hz,4.0,-1.1146
+literature,7.0,method_60_counter,1500 → 1000 Hz,3.0,-1.9462
+literature,8.0,method_19_counter,1850 → 1000 Hz,3.0,-1.7478
+literature,9.0,method_18_counter,1850 → 1000 Hz,3.0,-1.7453
+literature,10.0,method_9,600 → 1000 Hz,3.0,-1.7335
+literature,,mean of the top 10,,3.8,-1.5643

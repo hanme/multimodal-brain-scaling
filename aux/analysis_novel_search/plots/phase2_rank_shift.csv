@@ -1,0 +1,2 @@
+n,spearman_rho_rank,spearman_p_rank,spearman_rho_n_agree,spearman_p_n_agree,mean_abs_shift,median_abs_shift,p90_abs_shift,max_abs_shift,within_10,within_25,within_50,tier_held,tier_rose,tier_fell,mean_n_agree_phase1,mean_n_agree_phase2
+254,0.9228,0.0,0.9076,0.0,20.8346,14.0,50.7,97.0,100,176,228,176,8,70,3.6614,3.3701

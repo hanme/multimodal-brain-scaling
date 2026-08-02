@@ -1,0 +1,11 @@
+quantity,short,group,spearman_rho,ci_lo,ci_hi,p,n
+rank (within the shared subset),rank,ranking,0.922789,0.894315,0.943248,0.0,254
+n_agree,n_agree,ranking,0.907625,0.879411,0.930641,0.0,254
+mean_uv (agreeing models only),mean_uv (agreeing only),µV,0.767873,0.68843,0.835255,0.0,248
+mean_uv_all6 (all 6 models),mean_uv_all6 (all 6),µV,0.957097,0.941349,0.967644,0.0,254
+"trough_uv, whisper tiny",whisper tiny,per model,0.986444,0.97586,0.993337,0.0,254
+"trough_uv, whisper base",whisper base,per model,0.99682,0.994279,0.998006,0.0,254
+"trough_uv, whisper small",whisper small,per model,0.996493,0.993082,0.997897,0.0,254
+"trough_uv, whisper medium",whisper medium,per model,0.954721,0.934657,0.967199,0.0,254
+"trough_uv, wav2vec2 medium",wav2vec2 medium,per model,0.857792,0.808553,0.897155,0.0,254
+"trough_uv, wav2vec2 large",wav2vec2 large,per model,0.849496,0.792352,0.894247,0.0,254

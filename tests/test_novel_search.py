@@ -669,26 +669,50 @@ def test_phase1_results_script_emits_every_table_and_figure(scored_grid, tmp_pat
         capture_output=True, text=True, cwd=REPO)
     assert r.returncode == 0, r.stdout + r.stderr
 
-    for name in ("phase1_agreement_tiers.csv", "phase1_top30.csv", "phase1_cutoff_curve.csv",
-                 "phase1_chance_baseline.csv", "phase1_novel_vs_literature.csv",
+    for name in ("phase1_agreement_tiers.csv", "phase1_top50.csv", "phase1_cutoff_curve.csv",
+                 "phase1_novel_vs_literature.csv", "phase1_top10_vs_literature.csv",
                  "phase1_direction_asymmetry.csv", "phase1_model_uv_box.csv",
-                 "phase1_mean_uv_grid.csv", "phase1_frequency_stripes.csv"):
+                 "phase1_model_dissent.csv", "phase1_mean_uv_grid.csv",
+                 "phase1_frequency_stripes.csv", "phase1_frequency_involvement.csv",
+                 "phase1_deviance_octiles.csv", "phase1_yield.csv"):
         assert (figs / name).stat().st_size > 0, name
     # One per-model figure per model whose committed layer the fixture actually wrote.
     for m in [m for m in MODELS if m in ("whisper-tiny", "whisper-base")]:
         assert (figs / f"phase1_strong_waveforms_1__{m}.png").stat().st_size > 5000, m
+    # The ranking-structure panel is three standalone figures, not one 2x2 grid.
     for name in ("phase1_strong_waveforms_1.png", "phase1_direction_waveforms_1.png",
                  "phase1_model_uv_box.png", "phase1_mean_uv_heatmap.png",
-                 "phase1_ranking_structure.png", "phase1_novel_vs_literature.png"):
+                 "phase1_yield_curve.png", "phase1_grid_position.png",
+                 "phase1_direction_matrix.png"):
         assert (figs / name).stat().st_size > 5000, name
 
     # The fixture engineers pair 1001 to 6/6 in both directions and nothing else above 4.
+    # One µV floor only: a `__x0.75` suffix here would mean the dropped second floor is back.
     tiers = pd.read_csv(figs / "phase1_agreement_tiers.csv").set_index("n_agree")
-    assert tiers.loc[6, "directions__x0.75"] == 2
-    assert tiers.loc[6, "pairs_both__x0.75"] == 1
-    top = pd.read_csv(figs / "phase1_top30.csv")
+    assert not any(c.startswith("directions__x") for c in tiers.columns), \
+        "agreement tiers must carry a single floor, unsuffixed"
+    assert tiers.loc[6, "directions"] == 2
+    assert tiers.loc[6, "pairs_both"] == 1
+    top = pd.read_csv(figs / "phase1_top50.csv")
     assert top.iloc[0]["n_agree"] == len(MODELS) and top.iloc[0]["models_not_agreeing"] != \
         top.iloc[0]["models_not_agreeing"], "6/6 must leave the not-agreeing column empty (NaN)"
+    # The stimulus is described in Hz, standard first; semitones and % deviance are gone.
+    assert "stimulus" in top.columns and " → " in top.iloc[0]["stimulus"]
+    assert not {"semitones", "pct_deviance"} & set(top.columns)
+    # Yield shares are against the ranking's own DIRECTION-INSTANCES, never its pair count: a
+    # share of pairs would compare an instance count to a pair count and double the apparent yield.
+    yld = pd.read_csv(figs / "phase1_yield.csv").set_index("tier_min")
+    n_pairs = pd.read_csv(results / "grid_index.csv").shape[0]
+    assert yld.loc[1, "direction_instances"] <= 2 * n_pairs
+    assert yld.loc[6, "pct_of_ranked_directions"] == pytest.approx(
+        100.0 * yld.loc[6, "direction_instances"] / (2 * n_pairs))
+    # The per-model box summarises ALL responses, and keeps the dissent counts alongside.
+    box = pd.read_csv(figs / "phase1_model_uv_box.csv")
+    assert {"n_instances", "n_agreed_s7", "n_dissented_s2_only", "median_uv_all"} <= set(box.columns)
+    # The top-10 comparison carries a mean row per set, which is the row the memo quotes.
+    cmp10 = pd.read_csv(figs / "phase1_top10_vs_literature.csv")
+    assert set(cmp10["set"]) == {"novel", "literature"}
+    assert cmp10["rank"].isna().sum() == 2, "one mean row per set"
 
 
 def test_phase1_results_script_refuses_a_short_slice(scored_grid, tmp_path):

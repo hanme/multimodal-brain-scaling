@@ -1,9 +1,16 @@
 # Novel tone-pair stimulus search — results
 
-> **STATUS (2026-07-27): Phase 1 complete.** All 903 pairs × 2 directions were extracted for
-> 6 models and scored through the electrode-level in-silico MMN. Every number and figure below
-> comes from that run. This memo reports **results only** — extraction cost, budget and Phase-2
-> sizing live in `aux/sophies_repository_overview.md` §17.4.
+> **STATUS (2026-07-31): Phase 1 and Phase 2 both complete.** **Phase 1** extracted all 903
+> pairs × 2 directions for 6 models and scored them from **one** deviant realization (N7/var1).
+> **Phase 2** re-scored a selected **127 pairs × 2 directions = 254 direction-instances** from
+> the **full 15-deviant grid**, so each condition's `deviant_mean` is now an average over 15
+> draws rather than a single one. Same models, same frozen mTRF mapping, same S7 metric, same
+> FCz electrode, same ranking code — the *only* thing that changed is how many deviants each
+> mean is built from. The two runs keep separate prediction roots
+> (`outputs/insilico_mmn_predictions_novel` and `..._novel_phase2`), so every waveform figure is
+> traceable to the deviant count its caption claims. **Sections 1–5 are Phase 1; Sections 6–7 are Phase 2 and the comparison.**
+> This memo reports **results only** — run scale and disk requirements live in
+> `aux/sophies_repository_overview.md` §17.4 (*Scale of the run*).
 
 > **Extends** `aux/analysis_with_counter/results_analysis_with_counter.md`, which screened the
 > **24 literature frequency methods** × 7 models. This memo screens a **903-pair novel frequency
@@ -14,22 +21,43 @@
 > use. This asks whether pairs *absent* from that literature drive stronger and more
 > model-consistent responses.
 
-> **The short answer, up front.** The novel grid's top tier does beat the literature set's — 17
-> direction-instances at 6/6 where the literature never exceeds 5/6 — but **that count is not
-> distinguishable from chance** (12.0 expected from the models' own marginal rates, p = 0.103), and
-> **not one pair of 903 reaches the top tier in both directions.** Three independent views of the
-> data — the empty both-directions column, the row-and-column striping of the µV heatmap, and the
-> mirror-image direction waveforms — all say the same thing: the models are responding to
-> **which frequencies are present**, not to the change between them.
+> **The short answer, up front.** The novel grid's top tier does beat the literature set's — its
+> top 10 averages 6.0 agreeing models and −2.21 µV against the literature top 10's 3.8 and
+> −1.56 µV — but **not one pair of 903 reaches the top tier in both directions.** Three independent
+> views of the data — the empty both-directions column, the row-and-column striping of the µV
+> heatmap, and the mirror-image direction waveforms — all say the same thing: the models are
+> responding to **which frequencies are present**, not to the change between them. Table 3 puts a
+> number on it: 7611 Hz averages 4.55 of 6 agreeing models when it is the deviant and 2.41 when it
+> is the standard, over the same 42 partner frequencies each way.
+
+> **What Phase 2 changed: nothing that mattered, and that is the result.** Fifteen deviants
+> instead of one left the ranking nearly intact — ρ(Phase-1 rank, Phase-2 rank) = **+0.923**
+> (p = 2.3 × 10⁻¹⁰⁶, n = 254) — and left the consensus set **still empty**: 0 of 127 pairs reach
+> 6/6 in both directions, and **all four** pairs that managed ≥5 both ways on a single draw fail
+> to hold on fifteen. The frequency preference is sharper on the fuller draw, not weaker: over
+> the same 20 instances each way, **7611 Hz averages 5.10 of 6 agreeing models when it is the
+> deviant and 2.35 when it is the standard**, and 1745 Hz does the mirror image (4.92 as the
+> standard, 1.54 as the deviant). The high ρ is a good result *about the screen* — a 4-clip
+> screen predicts a 32-clip evaluation well — and not a result about the stimuli.
 
 ---
 
 ## Caveats — all load-bearing, all apply to every section below
 
-**1 — This is one deviant draw.** Every condition is scored from a single realization (N7/var1),
-not a mean over the 15 available deviants. The models are deterministic, so this is **not
-measurement noise** — it is one sample from the stochastic-prefix distribution rather than its
-mean. Rankings could legitimately shift on a fuller draw. **No µV figure here is final.**
+**1 — Which draw a number comes from, and which supersedes which.** The two halves of this memo
+are scored from different numbers of deviants, and every figure has to be read against its own.
+
+- **Sections 1–5 (Phase 1) are one deviant draw.** Every condition there is scored from a single
+  realization (N7/var1), not a mean over the 15 available deviants. The models are deterministic,
+  so this is **not measurement noise** — it is one sample from the stochastic-prefix distribution
+  rather than its mean. **No µV figure in Sections 1–5 is final.**
+- **Sections 6–7 (Phase 2) are the 15-deviant mean.** `deviant_mean` there averages all 15
+  realizations, which is the quantity the design was meant to score, so those µV and `n_agree`
+  values are not subject to the caveat above.
+- **Phase-2 values supersede Phase-1 values for the 127 pairs Phase 2 covers.** Where the two
+  disagree about a pair in that set — and they disagree about 78 of 254 direction-instances —
+  Section 6 is the number to quote. For the **other 776 pairs the grid holds, Phase 1 is all
+  there is**, and it is still one draw.
 
 **2 — Amplitude shrinkage: these are not human-scale microvolts.** mTRF predictions are ~4×
 amplitude-shrunk. X = 0.75 µV is calibrated to the *model's own* trough distribution
@@ -37,7 +65,8 @@ amplitude-shrunk. X = 0.75 µV is calibrated to the *model's own* trough distrib
 `mean_uv` as a literature-comparable amplitude**, and never compare `trough_uv` across models. The
 scales genuinely differ: on the strong set, wav2vec2-large's median trough is −2.53 µV against
 whisper-tiny's −1.12 µV, which says nothing about which model detects deviance better. This
-constrains how Figures 3, 4, 5 and 7 may be read, and each says so on its face.
+constrains how Figures 3, 4, 5 and 7 may be read, and each says so on its face. It is also why
+the cross-model mean in Figure 5 is drawn but not leaned on.
 
 **3 — Out-of-domain mapping.** Speech-trained models with a speech-fit mapping are being applied to
 pure tones. This caveat applies equally to the literature screen, so the *comparison* in Section 3
@@ -53,9 +82,26 @@ whatever region this one flags.
 `pca_var=None` — no PCA on the features. Its test r is a loose sanity gate only, not a
 like-for-like quality figure.
 
+**6 — The Phase-2 set is selected, so it cannot support a population claim.** *(Sections 6–7
+only.)* The 254 direction-instances there were chosen for having scored `n_agree ≥ 5` in Phase 1.
+Any statistic whose meaning depends on the population being unselected is therefore confounded
+there, and each is flagged where it appears: the **deviance correlation is not computed for
+Phase 2 at all** (the selection removed the small-deviance instances it lived in), and the
+tier-distribution comparison against the unselected literature set is not repeated either.
+ρ = +0.923 likewise says the screen ranks reliably **among pairs it already ranked highly**; it
+does not establish that the screen would have ordered the other 776 pairs correctly.
+
+**7 — Phase 2 has a blind spot, by construction.** *(Sections 6–7 only.)* Only pairs that cleared
+`n_agree ≥ 5` on their single Phase-1 draw were re-measured. A pair that would reach 6/6 in both
+directions under 15 deviants but happened to score 4 or below on its one Phase-1 draw is
+**invisible to this design** — it was never extracted. The rate is not zero: 8 of the 254
+instances that *were* re-measured rose a tier (Table 20), all from the 3/6-or-below tiers, which
+is the region the screen cut at. This is a limitation of the two-phase design, not a defect in
+either run; closing it would mean evaluating pairs the screen rejected.
+
 ---
 
-## Section 1 — What the grid covers
+## Section 1 — What does the grid cover?
 
 > **Code:** `scripts/build_novel_grid_csv.py`
 > **Data:** `data/metadata/novel_grid_frequency_metadata.csv`,
@@ -110,43 +156,36 @@ No mapping, layer selection or model was re-fit for this search; whisper-large w
 > **Code:** `aux/analysis_novel_search/plots/phase1_results.py`,
 > `aux/analysis_novel_search/plots/novel_search_plots.py`
 > **Data:** `outputs/results_novel_search/phase1_ranked_directions.csv`,
-> `plots/phase1_agreement_tiers.csv`, `plots/phase1_mean_uv_grid.csv`,
+> `plots/phase1_agreement_tiers.csv`, `plots/phase1_deviance_octiles.csv`,
+> `plots/phase1_frequency_involvement.csv`, `plots/phase1_mean_uv_grid.csv`,
 > `plots/phase1_frequency_stripes.csv`
 > **Definitions.** **S2** = negative trough in 100–240 ms that recovers ≥50% of its depth within
 > 120 ms. **S7@X** = `S2 AND (trough_uv ≤ −X µV)`; here X = 0.75, at FCz, mTRF.
 > **n_agree** = how many of the 6 models show S7 (0–6). **mean_uv** = mean `trough_uv` across
 > *only* the agreeing models — averaging in models that failed S2 would mix in latencies that are
 > not MMN latencies. Undefined when `n_agree = 0`. **mean_uv_all6** = mean `trough_uv` across all
-> six regardless of S7; a different quantity, used only in Figure 3.
+> six regardless of S7; a different quantity, used in Figures 3 and 4 and in Table 3.
 
-**Table 1. Agreement tiers at both µV floors.** Direction-instances are out of 1,806; pairs out of
-903. "both" = pairs whose two directions are *both* at that tier; "either" = pairs with at least
-one direction there.
+**Table 1. Agreement tiers.** Direction-instances out of 1,806, at the single reporting floor
+X = 0.75 µV (`plots/phase1_agreement_tiers.csv`). The pairs view of the same tiers — how often a
+pair reaches a tier in *both* directions — is Table 8, where it does its work.
 
-| n_agree | X = 0.75: dirs | % | both | either | X = 0.50: dirs | % | both | either |
-|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 6 | 17 | 0.9% | **0** | **17** | 51 | 2.8% | **0** | **51** |
-| 5 | 114 | 6.3% | 4 | 110 | 239 | 13.2% | 11 | 228 |
-| 4 | 289 | 16.0% | 21 | 268 | 427 | 23.6% | 52 | 375 |
-| 3 | 540 | 29.9% | 84 | 456 | 578 | 32.0% | 94 | 484 |
-| 2 | 562 | 31.1% | 77 | 485 | 400 | 22.1% | 40 | 360 |
-| 1 | 249 | 13.8% | 10 | 239 | 95 | 5.3% | 5 | 90 |
-| 0 | 35 | 1.9% | 0 | 35 | 16 | 0.9% | 0 | 16 |
+| n_agree | direction-instances | % of 1,806 |
+|---:|---:|---:|
+| 6 | 17 | 0.9% |
+| 5 | 114 | 6.3% |
+| 4 | 289 | 16.0% |
+| 3 | 540 | 29.9% |
+| 2 | 562 | 31.1% |
+| 1 | 249 | 13.8% |
+| 0 | 35 | 1.9% |
 
-**The gap between "both" and "either" is the headline of this table.** At the top tier it is total:
-17 direction-instances reach 6/6, they belong to 17 *different* pairs, and **not one pair reaches
-6/6 in both directions** — at either µV floor. At 5/6 only 4 of 110 pairs manage it. If the models
-were responding to the *change* between two tones, reversing the pair should preserve the response;
-instead, agreement almost never survives reversal.
+- **The top tier is thin: 17 of 1,806 direction-instances, 0.9%.**
+- Two thirds of the grid sits at 2/6 or 3/6 — the models mostly half-agree.
 
-**Lowering the floor to X = 0.50 moves the counts but not the conclusion.** Every tier inflates —
-6/6 triples from 17 to 51, ≥5 roughly doubles from 131 to 290 — because a lower floor admits
-shallower troughs at every level. The `pairs_both` column stays at **0** at the top tier and rises
-only to 11 at 5/6. The floor is a sensitivity knob on how many pairs make the cut, not on whether
-the effect is directional. X = 0.75 is retained.
-
-**Table 2. n_agree vs deviance, by octile of semitone distance.** Spearman ρ(semitones, n_agree)
-= **+0.114** (p = 1.2 × 10⁻⁶, n = 1806).
+**Table 2. n_agree vs deviance, by octile of semitone distance**
+(`plots/phase1_deviance_octiles.csv`). Spearman ρ(semitones, n_agree) = **+0.114**
+(p = 1.2 × 10⁻⁶, n = 1806).
 
 | deviance octile (st) | mean st | mean % deviance | n | mean n_agree | % at n_agree ≥ 5 |
 |---|---:|---:|---:|---:|---:|
@@ -159,119 +198,188 @@ the effect is directional. X = 0.75 is retained.
 | 33.0 – 42.0 | 37.01 | 759 | 226 | 2.84 | 8.9% |
 | 42.0 – 63.0 | 49.44 | 1727 | 226 | **2.52** | 5.3% |
 
-The expected monotone-rise-then-plateau signature is **present but weak and short**. Agreement
-climbs over the first two octiles — from 1.88 to 2.95 mean n_agree between 2.8 and 11.6 semitones —
-then goes completely flat (2.83–2.85 across four consecutive octiles spanning 13 to 37 semitones)
-and finally *declines* at the largest deviances. So the metric is not flat, and it is not measuring
-nothing: it separates a 3-semitone change from a 12-semitone one. But **it carries no information
-above roughly one octave**, which is where almost the entire grid lives. ρ = +0.114 is a real
-correlation on 1,806 points and a negligible effect size.
+- **The expected monotone-rise-then-plateau signature is present but weak and short.** Agreement
+  climbs from 1.88 to 2.95 mean n_agree between 2.8 and 11.6 semitones, then goes completely flat
+  (2.83–2.85 across four consecutive octiles spanning 13 to 37 semitones) and finally *declines*
+  at the largest deviances.
+- **The metric is not measuring nothing** — it separates a 3-semitone change from a 12-semitone
+  one — but **it carries no information above roughly one octave**, which is where almost the
+  entire grid lives.
+- ρ = +0.114 is a real correlation on 1,806 points and a negligible effect size.
+
+**Table 3. What a frequency's role is worth** (`plots/phase1_frequency_involvement.csv`). Every
+frequency appears as the standard 42 times and as the deviant 42 times, so the two halves of each
+row are directly comparable. A representative selection; the CSV carries all 43.
+
+| Hz | mean n_agree **as standard** | mean n_agree **as deviant** | mean_uv_all6 as standard | mean_uv_all6 as deviant |
+|---:|---:|---:|---:|---:|
+| 7611 | 2.41 | **4.55** | −0.438 | **−1.768** |
+| 6979 | 1.38 | **3.62** | −0.251 | −1.041 |
+| 6400 | 1.74 | **3.05** | −0.528 | −1.085 |
+| 4150 | 3.74 | 2.50 | −1.115 | −0.888 |
+| 2263 | 3.12 | 2.91 | −0.857 | −1.105 |
+| 1745 | 3.81 | 2.05 | **−1.505** | −0.287 |
+| 1600 | **4.07** | 2.12 | −1.414 | −0.423 |
+| 200 | 2.48 | 2.93 | −0.510 | −0.885 |
+
+- **A frequency's score depends on which side of the pair it sits on.** 7611 Hz averages 4.55 of 6
+  agreeing models as the deviant and 2.41 as the standard, over 42 instances each way; 1600 Hz
+  does the mirror image (4.07 as the standard, 2.12 as the deviant).
+- **Nothing about deviance can explain this** — the n is identical in both roles, and the partner
+  frequencies are the same 42 in both.
+- The two extremes here are exactly the row and column Figure 3 shows as stripes.
 
 ![Two panels. Left: per-model S7 rate against deviance in semitones, six Okabe-Ito series each with a distinct marker; all six rise steeply from the smallest deviance bin and then run nearly flat, with wav2vec2-medium highest at around 60 percent and whisper-base lowest at around 33 percent. Right: mean n_agree against deviance with standard-error bars, rising from 1.9 to about 2.95 over the first two bins, then flat near 2.85 for four bins, then falling to 2.52 in the largest-deviance bin. Spearman rho = +0.114.](plots/novel_deviance_scaling.png)
 
-**Figure 1. Deviance scaling: a short rise, then nothing.** Per-model S7 rate (left) and mean
-n_agree (right) against deviance. All six models rise over the first two bins and then run flat;
-Spearman ρ(semitones, n_agree) = +0.114 — significant at n = 1806, negligible in size.
+**Figure 1. Deviance scaling.** Per-model S7 rate (left) and mean n_agree (right) against deviance.
+
+- All six models rise over the first two bins and then run flat: the rise is real and short.
 
 ![Heatmap of cross-model agreement over the 43x43 frequency grid, standard frequency on the vertical axis and deviant frequency on the horizontal, on a single-hue light-to-dark Blues ramp from 0 to 6 agreeing models with the excluded diagonal in grey. The dark cells do not form bands parallel to the diagonal, which is what a deviance-driven response would produce; instead they concentrate in horizontal and vertical stripes at particular frequencies, and the pattern is visibly asymmetric about the diagonal.](plots/novel_n_agree_heatmap.png)
 
 **Figure 2. Cross-model agreement over the 43×43 grid.** Row = standard, column = deviant, so
-distance from the grey diagonal is deviance. The dark cells form **stripes at particular
-frequencies, not bands parallel to the diagonal** — the signature of a frequency preference
-rather than a deviance response. Asymmetry about the diagonal is the direction effect.
+distance from the grey diagonal is deviance.
 
-![Heatmap of the mean trough depth across all six models over the 43x43 frequency grid, on a red-white-blue diverging ramp whose neutral midpoint is exactly zero microvolts, with the excluded diagonal in grey. Values run from -3.44 to +1.11 microvolts. The dominant structure is horizontal and vertical striping rather than diagonal banding: the row at standard = 1745 Hz is uniformly dark red across all 42 of its deviants, the column at deviant = 7611 Hz is uniformly dark red down all 42 of its standards, and an isolated blue patch sits where standards of 2075 to 2691 Hz meet deviants of 336 to 400 Hz. Deviance, which is distance from the diagonal, is not the organising variable.](plots/phase1_mean_uv_heatmap.png)
+- **The dark cells form stripes at particular frequencies, not bands parallel to the diagonal** —
+  the signature of a frequency preference rather than a deviance response.
+- Asymmetry about the diagonal is the direction effect.
 
-**Figure 3. Mean trough depth over the same grid, and the clearest evidence in this memo.**
-Cell value is `mean_uv_all6`; diverging ramp with its neutral midpoint pinned at exactly 0 µV, so
-sign is readable directly. The row at standard = 1745 Hz and the column at deviant = 7611 Hz are
-uniformly dark across all 42 of their partners, against a grand mean of −0.726 µV.
+![Heatmap of the mean trough depth across all six models over the 43x43 frequency grid, on a diverging blue-white-red ramp whose neutral midpoint is exactly zero microvolts, with blue for negative values, an MMN-like trough, and red for positive values, no trough, and the excluded diagonal in grey. Values run from -3.44 to +1.11 microvolts. The dominant structure is horizontal and vertical striping rather than diagonal banding: the row at standard = 1745 Hz is uniformly dark blue across all 42 of its deviants, the column at deviant = 7611 Hz is uniformly dark blue down all 42 of its standards, and an isolated red patch sits where standards of 2075 to 2691 Hz meet deviants of 336 to 400 Hz. Deviance, which is distance from the diagonal, is not the organising variable.](plots/phase1_mean_uv_heatmap.png)
 
-**Why this is the diagnostic panel.** A deviance-driven response would appear as bands running
-*parallel to the diagonal*, since distance from the diagonal is deviance. That is not what the grid
-shows. The structure is **rows and columns**: standard =
-1745 Hz averages −1.505 µV across all 42 of its deviants, and deviant = 7611 Hz averages −1.768 µV
-across all 42 of its standards, against a grand mean of −0.726 µV. A row stripe means "this
-standard produces a trough regardless of what follows it"; a column stripe means "this deviant
-produces a trough regardless of what preceded it". Both are frequency preferences. The diverging
-ramp is pinned to 0 so the sign is readable directly — a fifth of the grid is positive (no trough
-at all), and those cells are also organised by frequency, not by deviance.
+**Figure 3. Mean trough depth over the same grid — the clearest evidence in this memo.** Cell
+value is `mean_uv_all6`; **blue = negative = an MMN-like trough, red = positive = no trough**, with
+the ramp's neutral midpoint pinned at exactly 0 µV so sign is readable directly.
 
-![Small-multiple grid of 35 panels, the first of four figures covering 127 pairs. Each panel plots the FCz microvolt difference wave against time from -120 to 460 ms for one pair, with all six models overlaid in Okabe-Ito colours except wav2vec2-large, which is drawn in a mid grey so it does not dominate a twelve-trace panel; the regular direction is solid and the counter direction dashed, the 100-240 ms scoring window is shaded and the zero line marked. Each panel autoscales because the models' microvolt scales differ by roughly fivefold. The dominant visual pattern is that the regular and counter traces of the same model are near mirror images of each other about zero rather than both dipping in the scoring window, and that wav2vec2-large and whisper-medium carry excursions several times larger than the four whisper models.](plots/phase1_strong_waveforms_1.png)
+- **A deviance-driven response would appear as bands parallel to the diagonal**, since distance
+  from the diagonal is deviance. That is not what the grid shows.
+- **The structure is rows and columns.** Standard = 1745 Hz averages −1.505 µV across all 42 of its
+  deviants; deviant = 7611 Hz averages −1.768 µV across all 42 of its standards; the grand mean is
+  −0.726 µV. A row stripe means "this standard produces a trough regardless of what follows it"; a
+  column stripe, "this deviant produces a trough regardless of what preceded it". Both are
+  frequency preferences.
+- **A fifth of the grid is positive** (no trough at all), and those cells are also organised by
+  frequency, not by deviance.
 
-**Figure 4. FCz µV difference waves, per model** (first of four; 127 pairs total). Regular solid,
-counter dashed, 100–240 ms scoring window shaded. Each panel autoscales because the models' µV
-scales differ ~5× — read shape, never one trace's depth against another's.
+![Two panels in standard-frequency by deviant-frequency space on logarithmic axes labelled from 200 to 8000 Hz, with a grey identity line. Circles are the 48 literature direction-instances; triangles are the top 24 novel direction-instances. Left panel colours both by n_agree on the same discrete light-to-dark Blues ramp as Figure 2: the literature circles are pale mid-ramp steps between 2 and 4 with one darker at 5, while the novel triangles are almost uniformly the darkest step at 6. Right panel colours both by mean trough depth on the same blue-white-red diverging ramp and the same zero-centred normalisation as Figure 3: the literature circles are pale blue or near-white, the novel triangles a clearly deeper blue. The two sets barely overlap in position — every circle sits in a tight cluster around a 1000 Hz standard with deviants from 600 to 2000 Hz, while the triangles sit mostly along the top edge at a 7611 Hz deviant and along the right at high standards.](plots/phase1_literature_heatmap.png)
 
-The full set is `phase1_strong_waveforms_1..4.png` — 35 + 35 + 35 + 22 panels. Traces are **per
-model, not a mean over models**: Caveat 2 makes a cross-model µV mean an average over six
-differently-shrunk axes, and each panel autoscales for the same reason.
+**Figure 4. The 24 literature stimuli (circles) and the top 24 novel instances (triangles) on one
+pair of colour scales**, identical to Figures 2 and 3, so a marker here and a cell there of the
+same colour mean the same number.
 
-![The same 35 panels with the six model traces collapsed to one line per direction: regular in blue solid, counter in orange dashed, each with a shaded plus-or-minus-one-standard-deviation band across the six models, on a shared vertical axis in z units fixed from -2 to 2. In panel after panel the two lines are near mirror images about zero — where the regular line dips inside the shaded 100 to 240 ms window the counter line rises by a similar amount, and vice versa — rather than both dipping, which is what a deviance response would look like. The two lines also overlap within each other's one-standard-deviation band for most of the trace, so the six models rarely separate the directions as cleanly as the mean lines suggest.](plots/phase1_direction_waveforms_1.png)
+- **The two sets barely overlap in position.** Every literature pair lives in 600–2000 Hz, which
+  the novel ladder covers in 14 of its 43 rungs; the novel winners sit outside it, most of them
+  against a 7611 Hz deviant.
+- **They also barely overlap in colour.** The novel triangles are almost uniformly the darkest
+  agreement step and a clearly deeper blue on the µV ramp; no literature circle reaches either.
+- Because the scales are shared and not renormalised, that is a statement about magnitude rather
+  than about contrast stretching — and it is the same claim Tables 5 and 6 make numerically.
 
-**Figure 5. The same panels collapsed to one line per direction** (first of four), in z units so
-the six models can be averaged at all. **The two directions are near mirror images about zero**
-rather than both dipping in the window — a deviance response would dip both ways. Band = ±1 SD
-across models; the two lines sit inside each other's band more often than the means suggest.
+![Small-multiple grid of 30 panels, one per pair in the top 30 of the ranking. Each panel plots the FCz microvolt difference wave against time from -120 to 460 ms for the regular direction only, with the six models overlaid in Okabe-Ito colours and wav2vec2-large re-hued violet. The 100-240 ms scoring window is shaded and the zero line marked, and each panel autoscales because the models' microvolt scales differ by roughly fivefold. Whisper medium in orange and wav2vec2 large in violet swing several times wider than the four other models, both above and below zero.](plots/phase1_strong_waveforms_1.png)
 
-The full set is `phase1_direction_waveforms_1..4.png`. It averages the **baseline-z-scored**
-difference wave, not µV: z is normalised per model by its own pre-onset baseline, so the mean is
-not simply whichever model has the least amplitude shrinkage, and it is the trace the S2 verdict is
-actually computed on. The y-window is fixed at −2 to 2 across all 127 panels so they can be read
-against each other; traces outside it are clipped, not rescaled. (A raw-µV variant is written to
-`phase1_direction_waveforms_uv_*.png` by `--wave_units uv`; it shows the same pattern but is
-dominated by wav2vec2-large and whisper-medium, and clips more at the same window, so it should
-not be cited.)
+**Figure 5. FCz µV difference waves for the top 30 pairs**, regular direction only, six per-model
+traces.
 
-**Why the mirror image matters.** A deviance response would dip both ways: reversing which tone is
-standard and which is deviant should not flip the sign of the response. An anti-symmetric pair of
-traces is instead what a response driven by *which tone arrives last* looks like — the same
-conclusion Table 1's empty `pairs_both` column and Figure 3's row-and-column striping reach by
-other routes.
+- **Each panel autoscales** because the models' µV scales differ ~5× — read shape, never one
+  trace's depth against another's. No cross-model mean is drawn: it would be an average over six
+  incomparable scales, dominated by whisper-medium and wav2vec2-large.
+- The de-overlaid per-model versions of this chunk are `phase1_strong_waveforms_1__<model>.png`,
+  which share a y-axis within a model and so make pairs comparable to each other.
+
+![The same 30 panels with the six model traces collapsed to one line per direction: regular in blue solid, counter in orange dashed, on a shared vertical axis in z units fixed from -2 to 2, with no shaded band. In panel after panel the two lines are near mirror images about zero — where the regular line dips inside the shaded 100 to 240 ms window the counter line rises by a similar amount, and vice versa — rather than both dipping, which is what a deviance response would look like.](plots/phase1_direction_waveforms_1.png)
+
+**Figure 6. The top 30 pairs collapsed to one line per direction**, in z units so the six models
+can be averaged at all.
+
+- **The two directions are near mirror images about zero** rather than both dipping in the window.
+  A deviance response would dip both ways: reversing which tone is standard and which is deviant
+  should not flip the sign of the response.
+- **An anti-symmetric pair of traces is what a response driven by which tone arrives last looks
+  like** — the same conclusion Table 8's empty `pairs_both` column and Figure 3's striping reach by
+  other routes.
+- z is normalised per model by its own pre-onset baseline, so the mean is not simply whichever
+  model has the least amplitude shrinkage, and it is the trace the S2 verdict is computed on. The
+  raw-µV variant is `phase1_direction_waveforms_uv_1.png`; it shows the same pattern but is
+  dominated by wav2vec2-large and whisper-medium.
 
 ### Section 2 summary
 - **Agreement rises with deviance only over the first octave and then stops.** Mean n_agree goes
   1.88 → 2.95 between 2.8 and 11.6 semitones, plateaus at ~2.85 from 13 to 37 semitones, and falls
   to 2.52 beyond that. ρ = +0.114 — significant, negligible.
-- **The grid is organised by frequency, not by deviance.** The mean-µV heatmap stripes by row and
-  column, not in bands parallel to the diagonal.
-- **Zero of 903 pairs reach 6/6 in both directions**, at either µV floor. The direction-collapsed
-  waveforms show why: the two directions are near mirror images, not two dips.
+- **The grid is organised by frequency, not by deviance.** 7611 Hz scores 4.55 of 6 as a deviant
+  and 2.41 as a standard over the same 42 partners; the mean-µV heatmap stripes by row and column,
+  not in bands parallel to the diagonal.
+- **Zero of 903 pairs reach 6/6 in both directions** (Table 8). The direction-collapsed waveforms
+  show why: the two directions are near mirror images, not two dips.
 
 ---
 
 ## Section 3 — Do novel pairs beat the literature pairs?
 
-> **Code:** `aux/analysis_novel_search/plots/phase1_results.py`
-> (`compare_to_literature`, `chance_baseline`)
+> **Code:** `aux/analysis_novel_search/plots/phase1_results.py` (`load_literature`,
+> `compare_to_literature`, `table_novel_vs_literature_top`, `plot_literature_heatmaps`)
 > **Data:** `outputs/results_novel_search/phase1_mmn_s7_roi.csv` vs
 > `outputs/results_24freq_7models/mmn_s7_roi.csv`, **scored identically** — same S7@0.75, same
 > FCz, same mTRF, same 6 models (whisper-large dropped from the literature side too, so the
-> comparison is like-for-like). Tables: `plots/phase1_novel_vs_literature.csv`,
-> `plots/phase1_chance_baseline.csv`.
+> comparison is like-for-like). Frequencies from
+> `data/metadata/literature_frequency_intensity_duration_metadata.csv`. Tables:
+> `plots/phase1_novel_vs_literature.csv`, `plots/phase1_top10_vs_literature.csv`.
 
-**Table 3. n_agree distribution, novel vs literature.** Percentages of each set's
-direction-instances. "Chance" is the exact Poisson-binomial over the six models' own marginal S7
-rates on the novel grid (0.325 to 0.599), i.e. what independent models would produce.
+**Table 4. n_agree distribution, novel vs literature.** Percentages of each set's
+direction-instances.
 
-| n_agree | novel (n = 1806) | literature (n = 48) | chance |
-|---:|---:|---:|---:|
-| 6 | **0.9%** (17) | **0.0%** (0) | 0.7% |
-| 5 | 6.3% (114) | 4.2% (2) | 5.5% |
-| 4 | 16.0% (289) | 8.3% (4) | 18.0% |
-| 3 | 29.9% (540) | 22.9% (11) | 30.8% |
-| 2 | 31.1% (562) | 45.8% (22) | 28.6% |
-| 1 | 13.8% (249) | 10.4% (5) | 13.7% |
-| 0 | 1.9% (35) | 8.3% (4) | 2.6% |
+| n_agree | novel (n = 1806) | literature (n = 48) |
+|---:|---:|---:|
+| 6 | **0.9%** (17) | **0.0%** (0) |
+| 5 | 6.3% (114) | 4.2% (2) |
+| 4 | 16.0% (289) | 8.3% (4) |
+| 3 | 29.9% (540) | 22.9% (11) |
+| 2 | 31.1% (562) | 45.8% (22) |
+| 1 | 13.8% (249) | 10.4% (5) |
+| 0 | 1.9% (35) | 8.3% (4) |
 
-**Table 4. Best pair on each side.** Ranked by n_agree, then mean_uv.
+**Table 5. The novel grid's top 10** (`plots/phase1_top10_vs_literature.csv`).
 
-| | method | standard → deviant | semitones | % deviance | n_agree | mean_uv |
-|---|---|---|---:|---:|---:|---:|
-| novel | `method_1767` | 1745 → 7611 Hz | 25.50 | 336% | **6/6** | −3.183 µV |
-| literature | `method_20` | 1000 → 1850 Hz | 10.66 | 85% | 5/6 | −1.365 µV |
+| rank | method | stimulus | n_agree | mean_uv |
+|---:|---|---|---:|---:|
+| 1 | `method_1767` | 1745 → 7611 Hz | 6 | −3.183 |
+| 2 | `method_1783` | 1903 → 7611 Hz | 6 | −2.514 |
+| 3 | `method_1750` | 1600 → 7611 Hz | 6 | −2.273 |
+| 4 | `method_1882` | 4150 → 7611 Hz | 6 | −2.223 |
+| 5 | `method_1812` | 2263 → 7611 Hz | 6 | −2.137 |
+| 6 | `method_1627` | 951 → 7611 Hz | 6 | −2.054 |
+| 7 | `method_1603` | 872 → 7611 Hz | 6 | −2.027 |
+| 8 | `method_1066_counter` | 1745 → 218 Hz | 6 | −1.987 |
+| 9 | `method_1807` | 2263 → 4935 Hz | 6 | −1.869 |
+| 10 | `method_1881` | 4150 → 6979 Hz | 6 | −1.822 |
+| | **mean of the top 10** | | **6.0** | **-2.209** |
 
-**Table 5. Where the best novel pairs sit relative to the literature set.**
+**Table 6. The literature set's top 10** (`plots/phase1_top10_vs_literature.csv`), ranked on the
+same two keys.
+
+| rank | method | stimulus | n_agree | mean_uv |
+|---:|---|---|---:|---:|
+| 1 | `method_20` | 1000 → 1850 Hz | 5 | −1.365 |
+| 2 | `method_21` | 1000 → 1850 Hz | 5 | −1.348 |
+| 3 | `method_53_counter` | 1200 → 1000 Hz | 4 | −1.834 |
+| 4 | `method_10_counter` | 1122 → 1000 Hz | 4 | −1.681 |
+| 5 | `method_75` | 1000 → 1200 Hz | 4 | −1.128 |
+| 6 | `method_72` | 1000 → 1200 Hz | 4 | −1.115 |
+| 7 | `method_60_counter` | 1500 → 1000 Hz | 3 | −1.946 |
+| 8 | `method_19_counter` | 1850 → 1000 Hz | 3 | −1.748 |
+| 9 | `method_18_counter` | 1850 → 1000 Hz | 3 | −1.745 |
+| 10 | `method_9` | 600 → 1000 Hz | 3 | −1.734 |
+| | **mean of the top 10** | | **3.8** | **-1.564** |
+
+- **The novel top 10 is unanimous and the literature top 10 is not close.** All ten novel
+  instances reach 6/6; the literature's best two reach 5/6 and its tenth reaches 3/6. Mean n_agree
+  **6.0 against 3.8**.
+- **The novel top 10 is also deeper**: mean `mean_uv` **−2.209 µV against −1.564 µV**, a 41%
+  larger predicted trough on the models' own scale.
+- **The margin is largest on agreement, not on depth.** The literature's deepest instance
+  (`method_60_counter`, −1.946 µV) is deeper than five of the novel top 10; what it cannot do is
+  get the models to agree.
+
+**Table 7. Where the best novel pairs sit relative to the literature set.**
 
 | | literature (24 methods) | novel 6/6 tier (17 instances) | novel grid overall |
 |---|---:|---:|---:|
@@ -281,70 +389,65 @@ rates on the novel grid (0.325 to 0.599), i.e. what independent models would pro
 | higher tone, max | 2000 Hz | 7611 Hz | 7611 Hz |
 | share with higher tone ≥ 5869 Hz | **0 of 24** | **12 of 17** | 14% of grid |
 
-**The novel grid's top tier does beat the literature's, and it does so entirely outside the
-literature's range.** No published pair in the 24-method set exceeds 12 semitones or puts either
-tone above 2000 Hz; the novel 6/6 tier has a median deviance of 25.5 semitones and 12 of its 17
-members have a tone at or above 5869 Hz, with 9 of 17 involving the grid's top rung, 7611 Hz.
-This is consistent with Section 2's finding that 7611 Hz is a dark column in the heatmap regardless
-of what it is paired with — the "winning" pairs are largely the pairs that happen to contain the
-frequencies these models respond to.
-
-**Table 6. The chance baseline.** Observed vs expected direction-instances under independent
-models, exact Poisson-binomial over the marginal S7 rates (whisper-tiny 0.423, whisper-base 0.325,
-whisper-small 0.331, whisper-medium 0.531, wav2vec2-medium 0.599, wav2vec2-large 0.461).
-
-| tier | observed | expected under independence | ratio | p (binomial, ≥ observed) |
-|---|---:|---:|---:|---:|
-| exactly 6/6 | 17 | 12.0 | 1.41× | **0.103** |
-| ≥ 5/6 | 131 | 110.6 | 1.18× | 0.028 |
-
-![Grouped bar chart of the n_agree distribution for the novel grid and the literature set, as percentages of each set's direction-instances, with the independent-models chance curve overlaid as a black dashed line with circular markers. The novel bars track the chance curve closely at every tier, sitting slightly above it at 4, 5 and 6 and slightly below at 3; the literature bars are shifted toward lower agreement, peaking at 46 percent at n_agree = 2 and reaching zero at 6.](plots/phase1_novel_vs_literature.png)
-
-**Figure 6. Novel grid vs literature set vs chance**, scored identically. **The novel bars track
-the chance curve at every tier.** The literature bars sit lower, peaking at n_agree = 2 and never
-reaching 6 — but the novel grid's advantage over them is not an advantage over chance.
-
-**The novel grid's agreement is not clearly above chance, and this is the most important result in
-the memo.** 17 direction-instances at 6/6 against 12.0 expected is a 1.41× enrichment with
-p = 0.103 — the same near-miss the literature screen reported (10 of 48 pairs at 7/7 against 6.9
-expected, p = 0.087; see Section 11 of `results_analysis_with_counter.md`). The ≥5 tier does clear
-p = 0.05 at 1.18×, but a 18% enrichment over chance on a one-sided test at n = 1806 is a thin
-result to build a stimulus set on. And the baseline itself is *generous* to the observed counts:
-six models sharing an architecture family, a training corpus and a frozen mTRF mapping are not
-independent, so the true null is above the dashed line, not on it.
-
-**A wider search space did not create agreement.** Going from 24 literature pairs to 903 novel ones
-— a 37× larger space, covering deviances from 8.8% to 3705% — moved the top tier from 5/6 to 6/6
-and moved the enrichment from 1.45× to 1.41×. The grid found more *instances* of near-chance
-agreement, which is what a larger sample does.
+- **The novel grid's top tier beats the literature's, and does so entirely outside the literature's
+  range.** No published pair in the 24-method set exceeds 12 semitones or puts either tone above
+  2000 Hz; the novel 6/6 tier has a median deviance of 25.5 semitones and 12 of its 17 members have
+  a tone at or above 5869 Hz, 9 of 17 involving the grid's top rung, 7611 Hz.
+- **This is consistent with Section 2's finding, not independent of it.** 7611 Hz is a dark column
+  in the heatmap regardless of what it is paired with, so the "winning" pairs are largely the pairs
+  that happen to contain the frequencies these models respond to.
+- **A wider search space produced better-scoring pairs, not a different kind of pair.** Going from
+  24 literature pairs to 903 novel ones — a 37× larger space covering 8.8% to 3705% deviance —
+  moved the top tier from 5/6 to 6/6, and the winners are concentrated on individual preferred
+  frequencies.
 
 ### Section 3 summary
-- **Yes, a novel pair beats the best literature pair**: `method_1767` (1745 → 7611 Hz) at 6/6 and
-  −3.18 µV, against `method_20` (1000 → 1850 Hz) at 5/6 and −1.37 µV.
-- **No, that does not mean the search worked.** 17 at 6/6 against 12.0 expected by chance,
-  p = 0.103. The literature screen's near-chance result reproduces on a 37× larger space.
-- The winners sit far outside the literature's frequency and deviance range, and cluster on the
-  frequencies the heatmap already flags as preferred — 9 of 17 contain 7611 Hz.
+- **Yes, and by a clear margin on the search's own keys**: the novel top 10 averages 6.0 agreeing
+  models and −2.209 µV against the literature top 10's 3.8 and −1.564 µV.
+- **The margin is in agreement more than in depth** — the literature's deepest single instance
+  beats five of the novel top 10.
+- **The winners sit far outside the literature's frequency and deviance range**, and cluster on the
+  frequencies Section 2 identifies as preferred: 9 of 17 6/6 instances contain 7611 Hz.
 
 ---
 
-## Section 4 — The consensus set, and which models drive it
+## Section 4 — Is there a consensus set, and which models decide it?
 
 > **Code:** `aux/analysis_novel_search/plots/phase1_results.py`
-> **Data:** `plots/phase1_top30.csv`, `plots/phase1_model_uv_box.csv`,
+> **Data:** `plots/phase1_agreement_tiers.csv`, `plots/phase1_top50.csv`,
+> `plots/phase1_model_uv_box.csv`, `plots/phase1_model_dissent.csv`,
 > `plots/phase1_direction_asymmetry.csv`
-> **Definition.** Pairs where **both directions** reach n_agree = 6/6, sorted by the mean of the
-> two directions' `mean_uv`. Requiring both directions is what distinguishes a deviance response
-> from a **frequency preference** — a pair that only works one way is telling you the models like
-> one of its two tones, not that they detect the change.
+> **Definition.** The **consensus set** is the pairs where **both directions** reach n_agree = 6/6.
+> Requiring both directions is what distinguishes a deviance response from a **frequency
+> preference** — a pair that only works one way is telling you the models like one of its two
+> tones, not that they detect the change.
 
-**Table 7. Consensus set (both directions at 6/6): EMPTY — 0 pairs of 903.**
+**Table 8. Agreement tiers, in pairs** (`plots/phase1_agreement_tiers.csv`). The same tiers as
+Table 1, counted in pairs. "both" = pairs whose two directions are *both* at that tier; "single" =
+pairs with exactly one direction there. Out of 903 pairs.
 
-No pair in the grid meets the definition, at X = 0.75 or at X = 0.50. This is a real outcome, not a
-pipeline fault (Decision 0 in
-`aux/analysis_with_counter/MMN_pipeline_analysis_decisions_notes_062226_with_counter.md`).
+| n_agree | pairs, **both** directions | pairs, **single** direction | pairs, either | % of 903, either |
+|---:|---:|---:|---:|---:|
+| 6 | **0** | 17 | 17 | 1.9% |
+| 5 | 4 | 106 | 110 | 12.2% |
+| 4 | 21 | 247 | 268 | 29.7% |
+| 3 | 84 | 372 | 456 | 50.5% |
+| 2 | 77 | 408 | 485 | 53.7% |
+| 1 | 10 | 229 | 239 | 26.5% |
+| 0 | 0 | 35 | 35 | 3.9% |
 
-**Table 8. The nearest misses** — the only 4 pairs reaching n_agree ≥ 5 in *both* directions.
+- **The consensus set is empty: 0 of 903 pairs reach 6/6 in both directions.** The 17 6/6
+  direction-instances belong to 17 *different* pairs. This is a real outcome, not a pipeline fault
+  (Decision 0 in
+  `aux/analysis_with_counter/MMN_pipeline_analysis_decisions_notes_062226_with_counter.md`).
+- **The both/single split is the result.** At 6/6 it is 0 against 17; at 5/6, 4 against 106. If the
+  models were responding to the *change* between two tones, reversing the pair should preserve the
+  response; instead agreement almost never survives reversal.
+- The `both` column peaks at 3/6 and 2/6, the tiers where agreement is weak enough that two
+  directions landing together carries no information.
+
+**Table 9. Stimuli showing agreement in both directions** — the only 4 pairs reaching n_agree ≥ 5
+in *both* directions anywhere in the grid.
 
 | pair | f_low → f_high | semitones | % deviance | mean_uv regular | mean_uv counter | mean of the two |
 |---|---|---:|---:|---:|---:|---:|
@@ -353,71 +456,99 @@ pipeline fault (Decision 0 in
 | `method_1679` | 1234 → 2263 Hz | 10.50 | 83.4 | −0.926 | −2.171 | −1.549 |
 | `method_1718` | 1467 → 2263 Hz | 7.50 | 54.3 | −1.452 | −1.248 | −1.350 |
 
-These four are the closest thing the search produced to a symmetric deviance response, and they are
-tightly clustered: every f_low is between 1234 and 1600 Hz, every f_high between 2263 and 4525 Hz,
-every deviance between 7.5 and 18 semitones. That is a *different* region from the 6/6 tier's
-high-frequency winners, and it sits on the 1600 Hz row the heatmap flags. Even here the two
-directions disagree substantially in depth — `method_1740` is 2.7× deeper one way than the other.
+- **These four are the closest thing the search produced to a symmetric deviance response**, and
+  they are tightly clustered: every f_low between 1234 and 1600 Hz, every f_high between 2263 and
+  4525 Hz, every deviance between 7.5 and 18 semitones.
+- That is a *different* region from the 6/6 tier's high-frequency winners, and it sits on the
+  1600 Hz row Table 3 flags.
+- **Even here the two directions disagree substantially in depth** — `method_1740` is 2.7× deeper
+  one way than the other.
 
-**Table 9. Top-30 direction-instances** (`plots/phase1_top30.csv`). Ranked by n_agree desc, then
-mean_uv asc. **mean/median/max/min are across all six models' `trough_uv`, agreeing or not** — a
-spread computed only over the agreeing models would narrow itself by construction as n_agree falls,
-making tier-5 rows look tighter than tier-6 rows for a purely mechanical reason. `mean_uv` (the
-ranking key) remains the agreeing-models-only mean, so at 6/6 the two columns coincide.
+**Table 10. Top-50 direction-instances** (`plots/phase1_top50.csv`). Ranked by n_agree desc, then
+mean_uv asc. **P2 rank** is the same instance's position in the 254-long Phase-2 ranking
+(Section 6). **mean/median/max/min are across all six models' `trough_uv`, agreeing or not** — a
+spread computed only over the agreeing models would narrow itself by construction as n_agree
+falls. `mean_uv` (the ranking key) remains the agreeing-models-only mean, so at 6/6 the two
+coincide.
 
-| rank | method | f_low | f_high | st | % dev | n_agree | mean_uv | mean all6 | median all6 | max all6 | min all6 | did not agree |
-|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
-| 1 | `method_1767` | 1745 | 7611 | 25.50 | 336 | 6 | −3.183 | −3.183 | −2.434 | −0.996 | −7.457 | — |
-| 2 | `method_1783` | 1903 | 7611 | 24.00 | 300 | 6 | −2.514 | −2.514 | −2.369 | −1.582 | −3.724 | — |
-| 3 | `method_1750` | 1600 | 7611 | 27.00 | 376 | 6 | −2.273 | −2.273 | −2.478 | −0.797 | −2.886 | — |
-| 4 | `method_1882` | 4150 | 7611 | 10.50 | 83 | 6 | −2.223 | −2.223 | −1.973 | −1.280 | −3.671 | — |
-| 5 | `method_1812` | 2263 | 7611 | 21.00 | 236 | 6 | −2.137 | −2.137 | −1.917 | −1.443 | −3.324 | — |
-| 6 | `method_1627` | 951 | 7611 | 36.01 | 700 | 6 | −2.053 | −2.053 | −1.950 | −1.062 | −3.034 | — |
-| 7 | `method_1603` | 872 | 7611 | 37.51 | 773 | 6 | −2.027 | −2.027 | −1.864 | −1.084 | −3.248 | — |
-| 8 | `method_1066_counter` | 218 | 1745 | 36.01 | 700 | 6 | −1.987 | −1.987 | −1.399 | −0.904 | −3.658 | — |
-| 9 | `method_1807` | 2263 | 4935 | 13.50 | 118 | 6 | −1.869 | −1.869 | −1.216 | −0.895 | −4.855 | — |
-| 10 | `method_1881` | 4150 | 6979 | 9.00 | 68 | 6 | −1.822 | −1.822 | −1.188 | −0.764 | −4.926 | — |
-| 11 | `method_1766` | 1745 | 6979 | 24.00 | 300 | 6 | −1.697 | −1.697 | −1.502 | −0.914 | −3.300 | — |
-| 12 | `method_1525` | 673 | 7611 | 41.99 | 1031 | 6 | −1.644 | −1.644 | −1.364 | −1.049 | −3.020 | — |
-| 13 | `method_1024_counter` | 200 | 1600 | 36.00 | 700 | 6 | −1.607 | −1.607 | −1.445 | −0.870 | −2.815 | — |
-| 14 | `method_1809` | 2263 | 5869 | 16.50 | 159 | 6 | −1.389 | −1.389 | −1.287 | −0.847 | −2.351 | — |
-| 15 | `method_1318_counter` | 400 | 951 | 14.99 | 138 | 6 | −1.358 | −1.358 | −1.269 | −1.014 | −1.717 | — |
-| 16 | `method_1042` | 200 | 7611 | 63.00 | 3706 | 6 | −1.322 | −1.322 | −1.213 | −0.765 | −2.250 | — |
-| 17 | `method_1106_counter` | 238 | 1745 | 34.49 | 633 | 6 | −1.201 | −1.201 | −1.123 | −1.017 | −1.635 | — |
-| 18 | `method_1740` | 1600 | 3200 | 12.00 | 100 | 5 | −3.995 | −3.438 | −1.973 | −0.655 | −10.813 | whisper-tiny |
-| 19 | `method_1515` | 673 | 3200 | 26.99 | 375 | 5 | −3.201 | −2.678 | −1.574 | −0.066 | −9.677 | whisper-base |
-| 20 | `method_1762` | 1745 | 4935 | 18.00 | 183 | 5 | −2.966 | −2.579 | −1.794 | −0.641 | −8.303 | whisper-small |
-| 21 | `method_1765` | 1745 | 6400 | 22.50 | 267 | 5 | −2.956 | −2.553 | −1.831 | −0.536 | −7.880 | whisper-small |
-| 22 | `method_1730` | 1467 | 6400 | 25.50 | 336 | 5 | −2.693 | −2.157 | −1.564 | +0.525 | −6.325 | whisper-tiny |
-| 23 | `method_1032` | 200 | 3200 | 48.00 | 1500 | 5 | −2.626 | −2.137 | −0.943 | +0.304 | −7.844 | whisper-small |
-| 24 | `method_1601` | 872 | 6400 | 34.51 | 634 | 5 | −2.601 | −2.240 | −1.206 | −0.434 | −8.233 | whisper-tiny |
-| 25 | `method_1737` | 1600 | 2468 | 7.50 | 54 | 5 | −2.496 | −2.147 | −1.634 | −0.407 | −6.023 | whisper-tiny |
-| 26 | `method_1701` | 1345 | 2691 | 12.01 | 100 | 5 | −2.487 | −2.067 | −1.920 | +0.035 | −4.336 | whisper-tiny |
-| 27 | `method_1710` | 1345 | 5869 | 25.51 | 336 | 5 | −2.458 | −2.055 | −1.809 | −0.041 | −5.454 | whisper-tiny |
-| 28 | `method_1722` | 1467 | 3200 | 13.50 | 118 | 5 | −2.415 | −2.053 | −1.721 | −0.241 | −4.399 | whisper-tiny |
-| 29 | `method_1835` | 2691 | 6400 | 15.00 | 138 | 5 | −2.321 | −1.943 | −0.905 | −0.054 | −5.283 | whisper-tiny |
-| 30 | `method_1825` | 2468 | 7611 | 19.50 | 208 | 5 | −2.304 | −1.987 | −1.536 | −0.401 | −4.625 | wav2vec2-medium |
+| rank | method | P2 rank | stimulus | n_agree | mean_uv | mean all6 | median all6 | max all6 | min all6 | did not agree |
+|---:|---|---:|---|---:|---:|---:|---:|---:|---:|---|
+| 1 | `method_1767` | 94 | 1745 → 7611 Hz | 6 | −3.183 | −3.183 | −2.434 | −0.996 | −7.457 | — |
+| 2 | `method_1783` | 29 | 1903 → 7611 Hz | 6 | −2.514 | −2.514 | −2.369 | −1.582 | −3.724 | — |
+| 3 | `method_1750` | 2 | 1600 → 7611 Hz | 6 | −2.273 | −2.273 | −2.478 | −0.797 | −2.886 | — |
+| 4 | `method_1882` | 5 | 4150 → 7611 Hz | 6 | −2.223 | −2.223 | −1.973 | −1.280 | −3.671 | — |
+| 5 | `method_1812` | 1 | 2263 → 7611 Hz | 6 | −2.137 | −2.137 | −1.917 | −1.443 | −3.324 | — |
+| 6 | `method_1627` | 3 | 951 → 7611 Hz | 6 | −2.053 | −2.053 | −1.950 | −1.062 | −3.034 | — |
+| 7 | `method_1603` | 4 | 872 → 7611 Hz | 6 | −2.027 | −2.027 | −1.864 | −1.084 | −3.248 | — |
+| 8 | `method_1066_counter` | 8 | 1745 → 218 Hz | 6 | −1.987 | −1.987 | −1.399 | −0.904 | −3.658 | — |
+| 9 | `method_1807` | 42 | 2263 → 4935 Hz | 6 | −1.869 | −1.869 | −1.216 | −0.895 | −4.855 | — |
+| 10 | `method_1881` | 31 | 4150 → 6979 Hz | 6 | −1.822 | −1.822 | −1.188 | −0.764 | −4.926 | — |
+| 11 | `method_1766` | 7 | 1745 → 6979 Hz | 6 | −1.697 | −1.697 | −1.502 | −0.914 | −3.300 | — |
+| 12 | `method_1525` | 6 | 673 → 7611 Hz | 6 | −1.644 | −1.644 | −1.364 | −1.049 | −3.020 | — |
+| 13 | `method_1024_counter` | 51 | 1600 → 200 Hz | 6 | −1.607 | −1.607 | −1.445 | −0.870 | −2.815 | — |
+| 14 | `method_1809` | 9 | 2263 → 5869 Hz | 6 | −1.389 | −1.389 | −1.287 | −0.847 | −2.351 | — |
+| 15 | `method_1318_counter` | 87 | 951 → 400 Hz | 6 | −1.358 | −1.358 | −1.269 | −1.014 | −1.717 | — |
+| 16 | `method_1042` | 74 | 200 → 7611 Hz | 6 | −1.322 | −1.322 | −1.213 | −0.765 | −2.250 | — |
+| 17 | `method_1106_counter` | 88 | 1745 → 238 Hz | 6 | −1.201 | −1.201 | −1.123 | −1.017 | −1.635 | — |
+| 18 | `method_1740` | 10 | 1600 → 3200 Hz | 5 | −3.995 | −3.438 | −1.973 | −0.655 | −10.813 | whisper-tiny |
+| 19 | `method_1515` | 15 | 673 → 3200 Hz | 5 | −3.201 | −2.678 | −1.574 | −0.066 | −9.677 | whisper-base |
+| 20 | `method_1762` | 12 | 1745 → 4935 Hz | 5 | −2.966 | −2.579 | −1.794 | −0.641 | −8.303 | whisper-small |
+| 21 | `method_1765` | 11 | 1745 → 6400 Hz | 5 | −2.956 | −2.553 | −1.831 | −0.536 | −7.880 | whisper-small |
+| 22 | `method_1730` | 25 | 1467 → 6400 Hz | 5 | −2.693 | −2.157 | −1.564 | +0.525 | −6.325 | whisper-tiny |
+| 23 | `method_1032` | 49 | 200 → 3200 Hz | 5 | −2.626 | −2.137 | −0.943 | +0.304 | −7.844 | whisper-small |
+| 24 | `method_1601` | 96 | 872 → 6400 Hz | 5 | −2.601 | −2.240 | −1.206 | −0.434 | −8.233 | whisper-tiny |
+| 25 | `method_1737` | 13 | 1600 → 2468 Hz | 5 | −2.496 | −2.147 | −1.634 | −0.407 | −6.023 | whisper-tiny |
+| 26 | `method_1701` | 20 | 1345 → 2691 Hz | 5 | −2.487 | −2.067 | −1.920 | +0.035 | −4.336 | whisper-tiny |
+| 27 | `method_1710` | 16 | 1345 → 5869 Hz | 5 | −2.458 | −2.055 | −1.809 | −0.041 | −5.454 | whisper-tiny |
+| 28 | `method_1722` | 14 | 1467 → 3200 Hz | 5 | −2.415 | −2.053 | −1.721 | −0.241 | −4.399 | whisper-tiny |
+| 29 | `method_1835` | 115 | 2691 → 6400 Hz | 5 | −2.321 | −1.943 | −0.905 | −0.054 | −5.283 | whisper-tiny |
+| 30 | `method_1825` | 21 | 2468 → 7611 Hz | 5 | −2.304 | −1.987 | −1.536 | −0.401 | −4.625 | wav2vec2-medium |
+| 31 | `method_1744_counter` | 100 | 4525 → 1600 Hz | 5 | −2.282 | −1.773 | −1.062 | +0.771 | −5.384 | whisper-base |
+| 32 | `method_1747` | 23 | 1600 → 5869 Hz | 5 | −2.248 | −1.984 | −1.710 | −0.667 | −4.287 | whisper-tiny |
+| 33 | `method_1748` | 97 | 1600 → 6400 Hz | 5 | −2.247 | −1.937 | −1.530 | −0.389 | −5.077 | whisper-tiny |
+| 34 | `method_1745` | 17 | 1600 → 4935 Hz | 5 | −2.238 | −1.961 | −1.821 | −0.577 | −4.401 | whisper-tiny |
+| 35 | `method_1749` | 101 | 1600 → 6979 Hz | 5 | −2.184 | −1.912 | −1.769 | −0.551 | −3.506 | whisper-tiny |
+| 36 | `method_1679_counter` | 27 | 2263 → 1234 Hz | 5 | −2.171 | −1.851 | −1.890 | −0.250 | −3.499 | whisper-base |
+| 37 | `method_1848` | 106 | 2934 → 7611 Hz | 5 | −2.157 | −1.900 | −2.011 | −0.620 | −2.686 | whisper-medium |
+| 38 | `method_1713` | 93 | 1345 → 7611 Hz | 5 | −2.154 | −1.875 | −2.294 | −0.480 | −2.960 | whisper-tiny |
+| 39 | `method_1727` | 32 | 1467 → 4935 Hz | 5 | −2.148 | −1.831 | −1.736 | −0.247 | −3.214 | whisper-tiny |
+| 40 | `method_1578` | 24 | 800 → 7611 Hz | 5 | −2.141 | −1.908 | −1.956 | −0.745 | −3.133 | whisper-tiny |
+| 41 | `method_1676_counter` | 18 | 1745 → 1234 Hz | 5 | −2.134 | −1.788 | −1.554 | −0.056 | −4.389 | whisper-small |
+| 42 | `method_1650` | 30 | 1037 → 7611 Hz | 5 | −2.127 | −1.839 | −1.999 | −0.395 | −3.218 | whisper-tiny |
+| 43 | `method_1739` | 28 | 1600 → 2934 Hz | 5 | −2.109 | −1.733 | −1.429 | +0.149 | −4.242 | whisper-tiny |
+| 44 | `method_1266_counter` | 39 | 4150 → 336 Hz | 5 | −2.066 | −1.596 | −1.469 | +0.755 | −3.455 | whisper-medium |
+| 45 | `method_1798` | 33 | 2075 → 7611 Hz | 5 | −2.053 | −2.322 | −2.240 | −1.022 | −3.668 | wav2vec2-large |
+| 46 | `method_1324_counter` | 102 | 1600 → 400 Hz | 5 | −2.028 | −1.550 | −1.767 | +0.841 | −2.688 | whisper-medium |
+| 47 | `method_1703` | 34 | 1345 → 3200 Hz | 5 | −2.027 | −1.724 | −1.573 | −0.212 | −3.362 | whisper-tiny |
+| 48 | `method_1887` | 36 | 4525 → 6979 Hz | 5 | −2.024 | −1.759 | −0.983 | −0.438 | −5.320 | whisper-base |
+| 49 | `method_1778` | 146 | 1903 → 4935 Hz | 5 | −2.000 | −1.755 | −1.494 | −0.528 | −3.672 | whisper-small |
+| 50 | `method_1720` | 40 | 1467 → 2691 Hz | 5 | −1.973 | −1.616 | −1.135 | +0.171 | −4.381 | whisper-tiny |
 
-**whisper-tiny is the model that most often breaks a 6/6.** It is the sole dissenter in 8 of the 13
-five-model rows above, and it has the smallest strong-set n of any model (85, against 127 for
-wav2vec2-medium). At 0.423 its marginal S7 rate is mid-pack, so this is not simply a stricter
-model — it is a model that disagrees on *these particular* pairs, which are exactly the ones the
-other five rank highest.
+- **whisper-tiny is the model that most often breaks a 6/6.** It is the sole dissenter in 21 of the
+  33 five-model rows above, and over the whole grid it accounts for **46 of the 114** rows at 5/6
+  (`plots/phase1_model_dissent.csv`). At 0.423 its marginal S7 rate is mid-pack, so this is not
+  simply a stricter model — it is a model that disagrees on *these particular* pairs, which are
+  exactly the ones the other five rank highest.
+- **The P2 rank column moves most at the very top.** Rank 1 `method_1767` returns at Phase-2 rank
+  94; rank 2 `method_1783` at 29. Below about rank 10 most instances stay within a few dozen
+  places. Section 7 quantifies this.
+- **The 6/6 tier is a high-frequency tier**: 9 of its 17 members contain 7611 Hz, and 13 of 17 are
+  ascending.
 
-![Horizontal boxplot with one row per model, showing the distribution of trough depth in microvolts at FCz over the direction-instances at n_agree >= 5, with individual points jittered over each box and the n annotated per row. The X = -0.75 microvolt floor is marked as a dashed vertical line at the right edge, and every distribution is bounded by it. The four whisper models sit in a narrow band between about -0.8 and -3 microvolts while wav2vec2-large spreads much wider, reaching below -10 microvolts, which reflects differing amplitude shrinkage across models and not differing MMN strength.](plots/phase1_model_uv_box.png)
+![Horizontal boxplot with one row per model over the 131 direction-instances at n_agree at least 5. Each model contributes one continuous distribution of trough depth in microvolts at FCz across all 131 instances, whether or not that model agreed, with individual points jittered over each box and the count that cleared S7 annotated in the row label. The X = -0.75 microvolt floor is a dashed vertical line. The four whisper models sit in a narrow band with medians between -0.91 and -1.78 microvolts, wav2vec2 medium at -1.71, and wav2vec2 large spreads much wider with a median of -2.26 and a tail past -10 microvolts, which reflects differing amplitude shrinkage across models rather than differing MMN strength. whisper tiny's distribution straddles the floor most, matching its 85 of 131 S7 count.](plots/phase1_model_uv_box.png)
 
-**Figure 7. Trough depth per model on the n_agree ≥ 5 set.** Agreeing direction-instances only, n
-annotated per row. **Read each row against its own −0.75 µV floor, never against another row** —
-wav2vec2-large's wider spread is its mapping's amplitude scale, not a stronger MMN (Caveat 2).
+**Figure 7. Trough depth per model over the n_agree ≥ 5 set.** Every direction-instance
+contributes its value for that model, agreeing or not; the row label gives how many cleared S7.
 
-Read Figure 7 **row by row, against each row's own X = −0.75 µV floor**. The rows are not on a
-common scale: mTRF amplitude shrinkage differs by model and by committed layer, so wav2vec2-large's
-wider spread is a property of its mapping, not evidence that it detects deviance more strongly
-(Caveat 2). What *is* comparable within a row is how far each distribution clears its own floor —
-and for every model the mass sits close to it, with medians between −1.12 µV (whisper-tiny) and
-−2.53 µV (wav2vec2-large) against a −0.75 µV threshold.
+- **whisper-tiny's distribution straddles the floor.** It clears S7 on 85 of 131 against
+  wav2vec2-medium's 127 of 131, and its median sits at −0.91 µV against a −0.75 µV floor — it is a
+  model applying the same criterion to a smaller predicted amplitude, not one seeing nothing.
+- **Read each row against its own −0.75 µV floor, never against another row** (Caveat 2).
+  wav2vec2-large's wider spread is its mapping's amplitude scale.
+- What *is* comparable within a row is how far each distribution clears its own floor, and for
+  every model the mass sits close to it.
 
-**Table 10. Direction asymmetry across the whole grid** (`plots/phase1_direction_asymmetry.csv`).
+**Table 11. Direction asymmetry across the whole grid** (`plots/phase1_direction_asymmetry.csv`).
 
 | | value |
 |---|---|
@@ -428,86 +559,550 @@ and for every model the mass sits close to it, with medians between −1.12 µV 
 | 6/6 instances that are `regular` (f_low → f_high, ascending) | 13 of 17 |
 | mean n_agree, regular vs counter | 2.856 vs 2.483 |
 
-**Asymmetry is the rule, not the exception.** Four fifths of pairs put their two directions in
-different tiers, and the average gap is 1.4 tiers out of 6. There is also a systematic *direction*
-to it: ascending pairs average 0.37 more agreeing models than descending ones, and 13 of the 17
-6/6 instances are ascending. A deviance detector should be indifferent to the sign of the change.
-A system that responds more to a high tone than a low one would produce exactly this.
+- **Asymmetry is the rule, not the exception.** Four fifths of pairs put their two directions in
+  different tiers, and the average gap is 1.4 tiers out of 6.
+- **There is a systematic direction to it**: ascending pairs average 0.37 more agreeing models than
+  descending ones, and 13 of the 17 6/6 instances are ascending.
+- A deviance detector should be indifferent to the sign of the change. A system that responds more
+  to a high tone than a low one would produce exactly this.
 
 ### Section 4 summary
-- **The consensus set is empty.** Zero pairs of 903 reach 6/6 in both directions; four reach ≥5
+- **No: the consensus set is empty.** Zero pairs of 903 reach 6/6 in both directions; four reach ≥5
   both ways, all in a narrow 1234–1600 → 2263–4525 Hz region.
 - **The direction asymmetry is systematic, not noisy**: 78% of pairs split their tiers, mean gap
   1.39, and ascending pairs beat descending ones by 0.37 models on average.
-- **whisper-tiny is the usual dissenter** — sole holdout in 8 of the 13 five-model rows in the
-  top 30.
+- **whisper-tiny decides most of the near-misses** — 46 of the 114 grid-wide 5/6 rows — and its
+  distribution straddles the µV floor rather than sitting far from it.
 - **No pair from this grid should be carried forward as a validated deviance stimulus on this
   evidence.**
 
 ---
 
-## Section 5 — The structure of the ranking
+## Section 5 — Where does the ranking stop selecting, and where do the survivors sit?
 
-> **Code:** `aux/analysis_novel_search/plots/phase1_results.py` (`plot_ranking_structure`)
-> **Data:** `plots/phase1_cutoff_curve.csv`, `plots/phase1_direction_asymmetry.csv`
+> **Code:** `aux/analysis_novel_search/plots/phase1_results.py` (`plot_ranking_structure`,
+> `table_yield`)
+> **Data:** `plots/phase1_cutoff_curve.csv`, `plots/phase1_yield.csv`,
+> `plots/phase1_direction_asymmetry.csv`
 > **Why this section exists.** Sections 2–4 ask whether the grid found anything. This one asks
-> what the ranked list *looks like* — how many pairs survive any given cutoff, whether the ranking
-> has a natural break, and whether the survivors occupy a particular region of the grid. It is the
-> section to read before selecting any subset for further work.
+> what the ranked list *looks like* — how many pairs survive any given cutoff, and whether the
+> survivors occupy a particular region of the grid. It is the section to read before selecting any
+> subset for further work.
 
-![Four panels. Top left: pairs qualifying against the mean_uv cutoff, one curve per n_agree threshold on a symlog axis, with dashed reference lines marking the 127 pairs at n_agree >= 5 and the 17 at 6/6. Every curve is flat out to a cutoff of about 1.25 microvolts and then falls steeply, so the pair count is insensitive to the cutoff over the range where it would plausibly be set. Top right: absolute mean_uv against rank for the top 300 direction-instances, coloured by n_agree tier, showing a smooth continuous decay from 3.2 to 1.5 microvolts with no elbow; the only discontinuities are the tier boundaries at rank 17 and rank 131, which are artifacts of the sort key. Bottom left: f_low against f_high on log axes with all 903 pairs in grey and the 127 pairs having a direction at n_agree >= 5 in blue, showing the strong pairs spread broadly across the grid rather than clustered. Bottom right: a 7x7 matrix of pair counts by regular-direction n_agree against counter-direction n_agree, with the mass concentrated off the diagonal around (2,3) and (3,2), and only four pairs in the region where both directions reach 5 or more.](plots/phase1_ranking_structure.png)
+![Line chart of pairs qualifying against the mean_uv cutoff on a symlog vertical axis, one curve per n_agree threshold from 1 to 6 on a light-to-dark Blues ramp, with dashed reference lines marking the 127 pairs at n_agree at least 5 and the 17 at 6 of 6. The horizontal axis runs from 0 to 3.5 microvolts. Every curve is flat from 0 out to a cutoff of about 1.25 microvolts and then falls steeply, the 6 of 6 curve reaching zero by about 3.25 microvolts and the others by 3.5.](plots/phase1_yield_curve.png)
 
-**Figure 8. The shape of the ranked list.** Clockwise from top left: yield at every cutoff (flat
-until ~1.25 µV, so the cutoff barely matters); |mean_uv| vs rank over the top 300 (**a smooth
-decay with no elbow** — the only breaks are the tier boundaries at ranks 17 and 131, artifacts of
-the sort key); where the 127 strong pairs sit in (f_low, f_high) space (**spread, not clustered**);
-and each pair's two directions cross-tabulated (**mass off the diagonal; the 6/6 cell is empty**).
+**Figure 8. Pairs qualifying at each agreement and µV cutoff, all 903 pairs.**
 
-**Table 11. Yield at each agreement threshold.** Pairs with at least one direction at the given
-tier. (Pairs, not direction-instances, because both directions of a pair travel together.)
+- **The µV cutoff barely matters.** Every curve is flat from 0 out to about 1.25 µV, so any cutoff
+  in the plausible range returns essentially the tier's full membership.
+- **Nothing in the ranking itself tells you where to stop** — a cutoff has to come from the tier
+  definition or from outside the data.
 
-| tier | direction-instances | distinct pairs | % of the 903 |
+![Scatter of f_low against f_high on logarithmic axes labelled at 200, 300, 400, 600, 800, 1000, 1500, 2000, 3000, 4000, 6000 and 8000 Hz. All 903 grid pairs are drawn in light grey forming a dense triangular lattice above the diagonal, the 127 pairs with a direction at n_agree at least 5 are overlaid in blue, and the 24 literature pairs are drawn as larger orange diamonds. The blue points cover most of the triangle, shifted toward the upper left. The orange diamonds crowd into a single small cluster around f_low 600 to 1000 Hz and f_high 700 to 2000 Hz, occupying a corner the novel grid extends far beyond in both directions.](plots/phase1_grid_position.png)
+
+**Figure 9. Where the strong pairs sit in the frequency grid**, with the literature pairs overlaid.
+
+- **The survivors are spread, not clustered.** The 127 pairs with a direction at ≥5 cover most of
+  the grid, shifted toward the top-left — median deviance 21.0 st against 19.5 grid-wide, median
+  f_high 4150 Hz against 2691 Hz.
+- **The literature pairs occupy one corner.** All 24 sit inside 600–2000 Hz on both axes, a region
+  the novel grid extends well past in both directions — which is why Table 7's ranges do not
+  overlap.
+- **There is no sub-region a narrower, finer follow-up grid could target.** The concentration that
+  does exist is on individual frequencies (the 1600–1745 Hz rows, the 7611 Hz column), which
+  Section 2 identifies as the artifact rather than the signal.
+
+![Seven by seven matrix of pair counts, regular-direction n_agree on the vertical axis against counter-direction n_agree on the horizontal, cells shaded on a Blues ramp with the count printed in each. The mass concentrates off the diagonal around the (3,2) and (2,3) cells, which hold 104 and 77 pairs, the (3,3) cell holds 84, and the corner where both directions reach 6 is empty. Only four pairs sit in the region where both directions reach 5 or more.](plots/phase1_direction_matrix.png)
+
+**Figure 10. Each pair's two directions, cross-tabulated, all 903 pairs.**
+
+- **The mass sits off the diagonal**, clustered around (2,3) and (3,2).
+- **The (6,6) cell is empty and only 4 pairs reach ≥5 both ways.** This is Table 11 in picture
+  form, and the clearest single statement of why the consensus set is empty.
+
+**Table 12. Yield at each agreement threshold** (`plots/phase1_yield.csv`). Direction-instances at
+or above the tier, and the distinct pairs they belong to. **Shares are of the 1,806
+direction-instances in the grid** — a share of the 903 pairs would compare an instance count to a
+pair count and read as roughly twice the yield it is.
+
+| tier | direction-instances | % of 1,806 | distinct pairs |
 |---|---:|---:|---:|
-| ≥ 6/6 | 17 | **17** | 1.9% |
-| ≥ 5/6 | 131 | **127** | 14.1% |
-| ≥ 4/6 | 420 | 387 | 42.9% |
-| ≥ 3/6 | 960 | 720 | 79.7% |
-| ≥ 2/6 | 1522 | 886 | 98.1% |
-| ≥ 1/6 | 1771 | 903 | 100.0% |
+| ≥ 6/6 | 17 | **0.9%** | 17 |
+| ≥ 5/6 | 131 | **7.3%** | 127 |
+| ≥ 4/6 | 420 | 23.3% | 387 |
+| ≥ 3/6 | 960 | 53.2% | 720 |
+| ≥ 2/6 | 1522 | 84.3% | 886 |
+| ≥ 1/6 | 1771 | 98.1% | 903 |
 
-Two features of this table are worth noticing. **The 6/6 and 5/6 tiers do not overlap in pairs** —
-no pair has one direction at 6 and the other at 5 — so 17 + 110 = 127 exactly, with no
-double-counting. And **the tiers grow very fast below 5/6**: dropping from ≥5 to ≥4 triples the
-pair count, and by ≥2 the criterion admits 98% of the grid and has stopped selecting anything.
-
-**There is no elbow in the ranking.** Figure 8's top-right panel plots |mean_uv| against rank for the top
-300 direction-instances. It decays smoothly from 3.2 µV at rank 1 to 1.5 µV at rank 300 with no
-break. The two visible discontinuities are at ranks 17 and 131, which are exactly the n_agree tier
-boundaries, i.e. artifacts of the sort key rather than structure in the data. Within a tier the
-decay is continuous. The same is true of the µV cutoff: in Figure 8's top-left panel every curve is flat
-out to about |mean_uv| = 1.25 µV before falling, so any cutoff in the plausible range returns
-essentially the tier's full membership. **Nothing in the ranking itself tells you where to stop** —
-a cutoff has to come from the tier definition or from outside the data.
-
-**The strong pairs are spread, not clustered.** Figure 8's bottom-left panel puts the 127 pairs with a
-direction at ≥5 against all 903 in (f_low, f_high) space. They cover most of the grid, shifted
-toward the top-left — median deviance 21.0 st against 19.5 grid-wide, median f_high 4150 Hz against
-2691 Hz — but they do not concentrate in a region a narrower, finer follow-up grid could target.
-The concentration that *does* exist is on individual frequencies (the 1745 Hz row, the 7611 Hz
-column), which Section 2 identifies as the artifact rather than the signal.
-
-**Direction asymmetry, seen as a matrix.** Figure 8's bottom-right panel cross-tabulates each pair's two
-directions. The mass sits off the diagonal, clustered around (2,3) and (3,2); only 4 pairs land in
-the region where both directions reach 5 or more, and the (6,6) cell is empty. This is Table 10 in
-picture form, and it is the clearest single statement of why the consensus set is empty.
+- **The 6/6 and 5/6 tiers do not overlap in pairs** — no pair has one direction at 6 and the other
+  at 5 — so 17 + 110 = 127 exactly, with no double-counting.
+- **The tiers grow very fast below 5/6**: dropping from ≥5 to ≥4 triples the pair count, and by ≥2
+  the criterion admits 84% of all direction-instances and has stopped selecting anything.
 
 ### Section 5 summary
 - **The tiers are the only natural cut points.** 17 pairs at 6/6, 127 with a direction at ≥5, then
   387 at ≥4 — after which the criterion stops selecting.
-- **There is no elbow**: |mean_uv| decays smoothly over the top 300, and the only breaks are tier
-  boundaries, which are artifacts of the sort key.
-- **The survivors are spread across the grid**, so there is no obvious sub-region for a finer
-  follow-up — the only concentration is on individual preferred frequencies.
+- **The µV cutoff is not a lever**: every yield curve is flat from 0 to 1.25 µV.
+- **The survivors are spread across the grid** and the literature pairs sit in one corner of it, so
+  there is no obvious sub-region for a finer follow-up.
+
+---
+
+## Section 6 — Do the Phase-1 findings hold on 15 deviants?
+
+> **Code:** `aux/analysis_novel_search/plots/phase1_results.py --phase 2 --skip_deviance`,
+> `aux/analysis_novel_search/plots/novel_search_plots.py`, `scripts/rank_novel_phase2.py`,
+> `scripts/novel_search_common.py`. The script keeps its Phase-1 name because Sections 2–5 cite it
+> by that path; `--phase 2` reads the Phase-2 slice and writes every output under a `phase2_`
+> prefix, so neither phase clobbers the other.
+> **Data:** `outputs/results_novel_search/phase2_mmn_s7_roi.csv` (74,676 rows),
+> `phase2_final_ranking.csv` (254), `consensus_set.csv` (**empty**), `phase2_selected_pairs.csv`
+> (127). Tables: `plots/phase2_agreement_tiers.csv`, `phase2_frequency_involvement.csv`,
+> `phase2_top50.csv`, `phase2_model_uv_box.csv`, `phase2_model_dissent.csv`,
+> `phase2_direction_asymmetry.csv`, `phase2_yield.csv`, `phase2_top10_vs_literature.csv`.
+> **What changed.** Only the deviant count: `deviant_mean` averages **15** realizations
+> (`--trial_levels 3,5,7 --num_variations 5`) where Phase 1 used **1**. Same models, same frozen
+> mTRF mapping, same S7@0.75 at FCz, same ranking code.
+> **What was selected.** Every pair with at least one direction at `n_agree ≥ 5` on the Phase-1
+> ranking — 127 of 903, via `select_pairs_by_agreement` with `MIN_AGREE_PHASE2 = 5`. **Both**
+> directions of each went forward, including **123 reversals that did not clear the bar**, because
+> a direction asymmetry is the artifact the counterbalanced design exists to measure.
+> 127 × 2 = **254 direction-instances**.
+> **Waveform provenance.** The Phase-2 in-silico run wrote to its own predictions root,
+> `outputs/insilico_mmn_predictions_novel_phase2` (602 MB, 254 method groups per model, all
+> carrying `n_deviants = 15`), kept separate from the Phase-1 root so neither overwrites the
+> other. Figures 13 and 14 are drawn from it. The loader checks each file's `n_deviants`
+> attribute against the phase being rendered and refuses rather than pass a 1-deviant trace off
+> as Phase 2, so these figures cannot silently be the Phase-1 ones.
+> **What has no Phase-2 counterpart.** Table 2 (deviance octiles) is not reproduced: the selection
+> removed the small-deviance octiles the correlation lived in, so a Phase-2 version would measure
+> the selection rather than the stimuli (Caveat 6).
+
+**Table 13. Phase-2 agreement tiers, in direction-instances and in pairs**
+(`plots/phase2_agreement_tiers.csv`; combines Tables 1 and 8 for the 254 instances / 127 pairs).
+
+| n_agree | direction-instances | % of 254 | pairs, **both** directions | pairs, **single** direction |
+|---:|---:|---:|---:|---:|
+| 6 | 9 | 3.5% | **0** | 9 |
+| 5 | 82 | 32.3% | **0** | 82 |
+| 4 | 39 | 15.4% | 1 | 37 |
+| 3 | 33 | 13.0% | 0 | 33 |
+| 2 | 51 | 20.1% | 0 | 51 |
+| 1 | 35 | 13.8% | 0 | 35 |
+| 0 | 5 | 2.0% | 0 | 5 |
+
+- **The consensus set is still empty: 0 of 127 pairs reach 6/6 in both directions on 15 deviants.**
+  `outputs/results_novel_search/consensus_set.csv` is a header and nothing else.
+- **`pairs_both` is now zero at 5/6 as well**, where Phase 1 had 4 (Table 9). The single non-zero
+  entry anywhere in the column is one pair at 4/6 both ways — **126 of 127 pairs are carried by a
+  single direction**.
+- **The percentages are not comparable to Table 1's.** Table 1 is over 1,806 unselected instances;
+  this is over 254 chosen for scoring highly. The comparable quantity is Section 7.
+
+![Heatmap of cross-model agreement over the 43 by 43 frequency grid restricted to the 254 direction-instances Phase 2 evaluated, on a single-hue light-to-dark Blues ramp from 0 to 6 agreeing models. Only 254 of the 1806 off-diagonal cells carry colour; the rest are a pale unmeasured background and the excluded diagonal is a distinct mid grey. The filled cells do not form bands parallel to the diagonal. Instead the right-hand region where the deviant is 5869 Hz or above is filled with the darkest steps while the matching top rows, where those same frequencies are the standard, are near-white, and the reverse holds around 1600 to 1745 Hz.](plots/novel_n_agree_heatmap_phase2.png)
+
+**Figure 11. Cross-model agreement over the grid, Phase 2** (mirrors Figure 2). 254 of 1,806
+off-diagonal cells, 14% coverage; unmeasured cells are a pale background distinct from the
+mid-grey excluded diagonal.
+
+- **Asymmetry about the diagonal survives partial coverage.** (i,j) and (j,i) are either both
+  present or both absent, since both directions of every selected pair were carried.
+- **The dark cells are a high-deviant-frequency region, not a band parallel to the diagonal.**
+
+![Heatmap of the mean trough depth across all six models over the same restricted 43 by 43 grid, on a diverging blue-white-red ramp whose neutral midpoint is exactly zero microvolts, with blue for negative values, an MMN-like trough, and red for positive. Values run from -3.04 to +0.45 microvolts against a grand mean of -0.937. The right-hand column at deviant = 7611 Hz is filled top to bottom in dark blue while the top row at standard = 7611 Hz is near-white and in places red; the 1600 and 1745 Hz rows are dark blue across their deviants while the matching columns are pale.](plots/phase2_mean_uv_heatmap.png)
+
+**Figure 12. Mean trough depth over the grid, Phase 2** (mirrors Figure 3). **Blue = negative = an
+MMN-like trough, red = positive = no trough**, neutral midpoint at exactly 0 µV.
+
+- **The two darkest marginals are the two Phase 1 found**: standard = 1745 Hz at −1.722 µV over 13
+  deviants, deviant = 7611 Hz at −1.846 µV over 20 standards.
+- **The row/column marginals are NOT comparable to Figure 3's.** A Phase-1 stripe averaged 42
+  cells; here a row holds between 1 and 20. `plots/phase2_frequency_stripes.csv` carries the
+  denominator behind every value; Table 14 is the presentation to quote.
+
+**Table 14. What a frequency's role is worth, Phase 2**
+(`plots/phase2_frequency_involvement.csv`; mirrors Table 3). Each frequency appears the same
+number of times in each role, so the two halves of a row are comparable.
+
+| Hz | n each role | mean n_agree **as standard** | mean n_agree **as deviant** | mean_uv_all6 as standard | mean_uv_all6 as deviant |
+|---:|---:|---:|---:|---:|---:|
+| 7611 | 20 | 2.35 | **5.10** | −0.341 | **−1.846** |
+| 6979 | 12 | 1.17 | **4.67** | −0.006 | −1.456 |
+| 6400 | 8 | 1.25 | **4.38** | −0.147 | −1.654 |
+| 4150 | 14 | 4.36 | 2.14 | −1.283 | −0.606 |
+| 2263 | 10 | 4.90 | 3.20 | −1.432 | −0.928 |
+| 1745 | 13 | **4.92** | 1.54 | **−1.722** | −0.223 |
+| 1600 | 17 | 4.71 | 1.82 | −1.713 | −0.339 |
+
+- **The frequency preference reproduces and sharpens.** 7611 Hz: 5.10 of 6 as the deviant against
+  2.35 as the standard, where Phase 1 gave 4.55 against 2.41. 1745 Hz: 4.92 as the standard against
+  1.54 as the deviant, where Phase 1 gave 3.81 against 2.05.
+- **Fifteen deviants push the two roles further apart, not closer** — the effect is not an artifact
+  of a single noisy draw.
+
+![Small-multiple grid of 30 panels, one per pair in the Phase-2 top 30. Each panel plots the FCz microvolt difference wave against time from -120 to 460 ms for the regular direction only, with the six models overlaid in Okabe-Ito colours and wav2vec2-large re-hued violet. The 100-240 ms scoring window is shaded and each panel autoscales. Compared with the Phase-1 version the per-model traces are visibly smoother, the 15-deviant mean having removed much of the sample-to-sample jitter, though whisper medium in orange still swings to large positive excursions just after the window and wav2vec2 large in violet still carries the widest range.](plots/phase2_strong_waveforms_1.png)
+
+**Figure 13. FCz µV difference waves for the Phase-2 top 30 pairs**, regular direction only, six
+per-model traces (mirrors Figure 5).
+
+- **The traces are visibly smoother than Phase 1's.** Averaging 15 deviants instead of 1 removes
+  most of the sample-to-sample jitter, which is why the µV correlation between phases is +0.957
+  (Table 21) while the tier assignments move more.
+- **Each panel still autoscales** — the models' µV scales differ ~5×, so read shape, never one
+  trace's depth against another's.
+- The de-overlaid per-model versions are `phase2_strong_waveforms_1__<model>.png`, which share a
+  y-axis within a model and annotate each panel with that model's own n_agree for both directions.
+
+![The same 30 Phase-2 panels with the six model traces collapsed to one line per direction: regular in blue solid, counter in orange dashed, on a shared vertical axis in z units fixed from -2 to 2, with no shaded band. The mirror-image pattern is stark and near-universal: in essentially every panel the blue regular line dips below zero inside the shaded 100 to 240 ms window while the orange counter line rises above zero across the same window by a comparable amount, and the two cross near the window's start. Very few panels show both lines dipping together.](plots/phase2_direction_waveforms_1.png)
+
+**Figure 14. The Phase-2 top 30 collapsed to one line per direction**, in z units (mirrors
+Figure 6). The raw-µV variant is `phase2_direction_waveforms_uv_1.png`.
+
+- **This is the sharpest single statement of the frequency-preference result in the memo.** Across
+  the top 30 pairs the two directions' in-window z traces correlate at **r = −0.48 on average**
+  (median −0.61, negative for 26 of 30), and **not one of the 30 pairs has both directions
+  mean-negative inside the scoring window** — all 30 have opposite signs.
+- **Fifteen deviants made this cleaner, not weaker.** The same measurement on Phase 1's top 30
+  gives mean r = −0.42 with 1 of 30 pairs dipping both ways and 28 of 30 with opposite signs. The
+  anti-symmetry was not an artifact of the single draw; averaging removed the noise that partly
+  masked it.
+- **A deviance response would dip both ways**: reversing which tone is standard and which is
+  deviant should not flip the sign of the response. An anti-symmetric pair of traces is what a
+  response driven by *which tone arrives last* looks like.
+
+**Table 15. Phase-2 top-50 direction-instances** (`plots/phase2_top50.csv`; mirrors Table 10).
+**P1 rank** is the same instance's position in the 1,806-long Phase-1 ranking.
+
+| rank | method | P1 rank | stimulus | n_agree | mean_uv | mean all6 | median all6 | max all6 | min all6 | did not agree |
+|---:|---|---:|---|---:|---:|---:|---:|---:|---:|---|
+| 1 | `method_1812` | 5 | 2263 → 7611 Hz | 6 | −2.245 | −2.245 | −2.042 | −1.318 | −3.327 | — |
+| 2 | `method_1750` | 3 | 1600 → 7611 Hz | 6 | −2.173 | −2.173 | −2.477 | −0.763 | −2.646 | — |
+| 3 | `method_1627` | 6 | 951 → 7611 Hz | 6 | −2.137 | −2.137 | −2.118 | −1.020 | −2.918 | — |
+| 4 | `method_1603` | 7 | 872 → 7611 Hz | 6 | −2.074 | −2.074 | −2.213 | −1.056 | −2.892 | — |
+| 5 | `method_1882` | 4 | 4150 → 7611 Hz | 6 | −1.995 | −1.995 | −1.741 | −1.127 | −2.965 | — |
+| 6 | `method_1525` | 12 | 673 → 7611 Hz | 6 | −1.601 | −1.601 | −1.268 | −1.056 | −3.054 | — |
+| 7 | `method_1766` | 11 | 1745 → 6979 Hz | 6 | −1.563 | −1.563 | −1.265 | −0.908 | −3.308 | — |
+| 8 | `method_1066_counter` | 8 | 1745 → 218 Hz | 6 | −1.422 | −1.422 | −1.129 | −0.784 | −2.920 | — |
+| 9 | `method_1809` | 14 | 2263 → 5869 Hz | 6 | −1.329 | −1.329 | −1.213 | −0.779 | −2.293 | — |
+| 10 | `method_1740` | 18 | 1600 → 3200 Hz | 5 | −3.143 | −2.729 | −1.808 | −0.661 | −8.053 | whisper-tiny |
+| 11 | `method_1765` | 21 | 1745 → 6400 Hz | 5 | −2.911 | −2.516 | −1.807 | −0.545 | −7.834 | whisper-small |
+| 12 | `method_1762` | 20 | 1745 → 4935 Hz | 5 | −2.815 | −2.455 | −1.768 | −0.654 | −7.006 | whisper-small |
+| 13 | `method_1737` | 25 | 1600 → 2468 Hz | 5 | −2.566 | −2.206 | −1.684 | −0.407 | −6.187 | whisper-tiny |
+| 14 | `method_1722` | 28 | 1467 → 3200 Hz | 5 | −2.469 | −2.128 | −1.751 | −0.423 | −4.672 | whisper-tiny |
+| 15 | `method_1515` | 19 | 673 → 3200 Hz | 5 | −2.422 | −2.032 | −1.439 | −0.086 | −6.347 | whisper-base |
+| 16 | `method_1710` | 27 | 1345 → 5869 Hz | 5 | −2.416 | −2.009 | −1.939 | +0.029 | −4.874 | whisper-tiny |
+| 17 | `method_1745` | 34 | 1600 → 4935 Hz | 5 | −2.245 | −1.967 | −1.782 | −0.577 | −4.606 | whisper-tiny |
+| 18 | `method_1676_counter` | 41 | 1745 → 1234 Hz | 5 | −2.230 | −1.872 | −1.509 | −0.080 | −4.939 | whisper-small |
+| 19 | `method_1568` | 84 | 800 → 3200 Hz | 5 | −2.228 | −1.884 | −1.465 | −0.167 | −3.999 | whisper-tiny |
+| 20 | `method_1701` | 26 | 1345 → 2691 Hz | 5 | −2.200 | −1.824 | −1.861 | +0.055 | −3.584 | whisper-tiny |
+| 21 | `method_1825` | 30 | 2468 → 7611 Hz | 5 | −2.173 | −1.782 | −1.465 | +0.171 | −4.078 | wav2vec2-medium |
+| 22 | `method_1738` | 51 | 1600 → 2691 Hz | 5 | −2.172 | −1.856 | −1.775 | −0.274 | −3.708 | whisper-tiny |
+| 23 | `method_1747` | 32 | 1600 → 5869 Hz | 5 | −2.158 | −1.866 | −1.753 | −0.405 | −4.159 | whisper-tiny |
+| 24 | `method_1578` | 40 | 800 → 7611 Hz | 5 | −2.151 | −1.916 | −1.927 | −0.740 | −3.132 | whisper-tiny |
+| 25 | `method_1730` | 22 | 1467 → 6400 Hz | 5 | −2.144 | −1.709 | −1.464 | +0.470 | −3.547 | whisper-tiny |
+| 26 | `method_1729` | 78 | 1467 → 5869 Hz | 5 | −2.127 | −1.671 | −1.831 | +0.609 | −3.828 | whisper-tiny |
+| 27 | `method_1679_counter` | 36 | 2263 → 1234 Hz | 5 | −2.113 | −1.804 | −1.797 | −0.260 | −3.962 | whisper-base |
+| 28 | `method_1739` | 43 | 1600 → 2934 Hz | 5 | −2.107 | −1.714 | −1.500 | +0.255 | −4.378 | whisper-tiny |
+| 29 | `method_1783` | 2 | 1903 → 7611 Hz | 5 | −2.106 | −2.016 | −1.939 | −1.522 | −2.892 | wav2vec2-large |
+| 30 | `method_1650` | 42 | 1037 → 7611 Hz | 5 | −2.096 | −1.819 | −1.938 | −0.432 | −2.764 | whisper-tiny |
+| 31 | `method_1881` | 10 | 4150 → 6979 Hz | 5 | −2.020 | −1.805 | −1.203 | −0.733 | −5.161 | whisper-tiny |
+| 32 | `method_1727` | 39 | 1467 → 4935 Hz | 5 | −2.018 | −1.729 | −1.598 | −0.287 | −3.621 | whisper-tiny |
+| 33 | `method_1798` | 45 | 2075 → 7611 Hz | 5 | −1.972 | −1.872 | −1.828 | −1.189 | −2.919 | wav2vec2-large |
+| 34 | `method_1703` | 47 | 1345 → 3200 Hz | 5 | −1.969 | −1.675 | −1.325 | −0.206 | −3.246 | whisper-tiny |
+| 35 | `method_1487` | 89 | 617 → 3200 Hz | 5 | −1.933 | −1.484 | −1.387 | +0.762 | −4.020 | whisper-base |
+| 36 | `method_1887` | 48 | 4525 → 6979 Hz | 5 | −1.930 | −1.685 | −0.948 | −0.459 | −4.873 | whisper-base |
+| 37 | `method_1144_counter` | 61 | 1600 → 259 Hz | 5 | −1.913 | −1.674 | −1.579 | −0.479 | −3.841 | whisper-tiny |
+| 38 | `method_1764` | 55 | 1745 → 5869 Hz | 5 | −1.882 | −1.665 | −1.304 | −0.584 | −3.160 | whisper-small |
+| 39 | `method_1266_counter` | 44 | 4150 → 336 Hz | 5 | −1.873 | −1.429 | −1.480 | +0.788 | −2.776 | whisper-medium |
+| 40 | `method_1720` | 50 | 1467 → 2691 Hz | 5 | −1.849 | −1.514 | −1.127 | +0.161 | −3.602 | whisper-tiny |
+| 41 | `method_1712` | 56 | 1345 → 6979 Hz | 5 | −1.841 | −1.547 | −1.432 | −0.080 | −2.621 | whisper-tiny |
+| 42 | `method_1807` | 9 | 2263 → 4935 Hz | 5 | −1.837 | −1.644 | −1.126 | −0.676 | −4.384 | wav2vec2-medium |
+| 43 | `method_1746` | 63 | 1600 → 5382 Hz | 5 | −1.829 | −1.483 | −1.526 | +0.248 | −2.993 | whisper-tiny |
+| 44 | `method_1755` | 73 | 1745 → 2691 Hz | 5 | −1.826 | −1.611 | −1.339 | −0.536 | −3.188 | whisper-base |
+| 45 | `method_1744` | 97 | 1600 → 4525 Hz | 5 | −1.765 | −1.511 | −1.863 | −0.241 | −2.268 | whisper-small |
+| 46 | `method_1875` | 71 | 3805 → 7611 Hz | 5 | −1.763 | −1.580 | −1.572 | −0.662 | −2.521 | wav2vec2-large |
+| 47 | `method_1708` | 64 | 1345 → 4935 Hz | 5 | −1.762 | −1.410 | −1.702 | +0.353 | −2.389 | whisper-tiny |
+| 48 | `method_1699_counter` | 52 | 2263 → 1345 Hz | 5 | −1.760 | −1.454 | −1.546 | +0.072 | −2.453 | whisper-base |
+| 49 | `method_1032` | 23 | 200 → 3200 Hz | 5 | −1.748 | −1.409 | −0.941 | +0.286 | −3.510 | whisper-small |
+| 50 | `method_1273` | 67 | 336 → 7611 Hz | 5 | −1.731 | −1.532 | −1.356 | −0.540 | −2.763 | whisper-tiny |
+
+- **The top of the list is recognisably the same list.** Six of Phase 1's top nine instances are
+  among Phase 2's nine 6/6; nine of Phase 1's seventeen 6/6 instances hold the tier.
+- **All five of the Phase-2 top 5 contain 7611 Hz**, six of the nine 6/6 instances do, and eight of
+  the nine are ascending.
+- **Phase 1's rank 1 is the conspicuous casualty.** `method_1767` does not appear in this table at
+  all: it comes back at 4/6 and rank 94 of 254, losing both wav2vec2 models. **Section 4's best
+  pair in the grid does not survive its own re-measurement.**
+
+**Table 16. Which model breaks a would-be unanimous row** (`plots/phase2_model_dissent.csv`).
+"Sole dissenter" counts rows at exactly 5/6 where that model is the one holdout: 82 such rows in
+Phase 2, 114 in Phase 1. All 114 of Phase 1's sit inside the 254 by construction, so the Phase-1
+count is both the whole-grid and the same-instances figure.
+
+| model | P2 S7 rate | **P2 sole dissenter** | P1 S7 rate (same 254) | P1 S7 rate (all 1806) | P1 sole dissenter |
+|---|---:|---:|---:|---:|---:|
+| whisper-tiny | 0.492 | **33 (40.2%)** | 0.516 | 0.422 | **46 (40.4%)** |
+| whisper-medium | 0.610 | 17 (20.7%) | 0.673 | 0.531 | 21 (18.4%) |
+| whisper-base | 0.480 | 11 (13.4%) | 0.492 | 0.325 | 14 (12.3%) |
+| whisper-small | 0.496 | 9 (11.0%) | 0.504 | 0.331 | 16 (14.0%) |
+| wav2vec2-large | 0.555 | 9 (11.0%) | 0.669 | 0.461 | 13 (11.4%) |
+| wav2vec2-medium | 0.736 | 3 (3.7%) | 0.807 | 0.599 | 4 (3.5%) |
+
+- **whisper-tiny is still the usual dissenter: 40.2% against 40.4% in Phase 1** — unchanged to a
+  tenth of a point.
+- Its marginal rate (0.492) is mid-pack, so it remains a model that disagrees on *these particular*
+  pairs rather than a stricter model overall.
+- **Every model's rate falls from Phase 1 to Phase 2 on the same instances.** That is Section 7's
+  regression to the mean, not a property of the stimuli.
+
+![Horizontal boxplot with one row per model over the 91 Phase-2 direction-instances at n_agree at least 5. Each model contributes one continuous distribution of trough depth in microvolts at FCz across all 91 instances, whether or not it agreed, with points jittered over each box and the S7 count annotated in the row label. The X = -0.75 microvolt floor is a dashed vertical line. Medians run from -0.89 for whisper tiny to -2.45 for wav2vec2 large, whose distribution again spreads widest, past -8 microvolts.](plots/phase2_model_uv_box.png)
+
+**Figure 15. Trough depth per model over the Phase-2 n_agree ≥ 5 set** (mirrors Figure 7).
+
+- **The picture is Phase 1's.** whisper-tiny again straddles the floor with a median of −0.89 µV
+  and 58 of 91 clearing S7; wav2vec2-medium clears 88 of 91.
+- Medians move by less than 0.2 µV per model between the phases, which is Section 7's finding in a
+  different presentation.
+
+**Table 17. Direction asymmetry across the evaluated set**
+(`plots/phase2_direction_asymmetry.csv`; mirrors Table 11). **The 127 pairs were selected on one
+direction's score, so this set is enriched for asymmetric pairs by construction** — the Phase-1
+column for the same 127 pairs is the fair comparison, not Table 11's grid-wide figures.
+
+| | Phase 2 (127 pairs) | Phase 1, same 127 pairs | Phase 1, all 903 (Table 11) |
+|---|---:|---:|---:|
+| pairs whose two directions land in the same n_agree tier | **1 (0.8%)** | 4 (3.1%) | 196 (21.7%) |
+| mean \|n_agree(regular) − n_agree(counter)\| | **2.74 tiers** | 2.95 | 1.39 |
+| pairs with a direction at ≥5 | 91 | 127 | 127 |
+| …of which reach ≥5 both ways | **0** | 4 | 4 |
+| 6/6 instances that are ascending | **8 of 9** | 13 of 17 | 13 of 17 |
+| mean n_agree, regular vs counter | **3.98 vs 2.76** | 4.32 vs 3.01 | 2.86 vs 2.48 |
+
+- **The ascending preference reproduces at almost exactly the same size.** The regular-minus-counter
+  gap is 1.23 models in Phase 2 against 1.31 in Phase 1 on the same pairs.
+- **A deviance detector should be indifferent to the sign of the change.** A system responding more
+  to a high tone than a low one produces exactly this.
+
+![Line chart of pairs qualifying against the mean_uv cutoff on a symlog vertical axis, one curve per n_agree threshold on a light-to-dark Blues ramp, horizontal axis from 0 to 3.5 microvolts, with dashed reference lines at the 91 pairs with a direction at n_agree at least 5 and the 9 at 6 of 6. Every curve is flat from 0 to about 1.25 microvolts before falling steeply toward zero.](plots/phase2_yield_curve.png)
+
+**Figure 16. Pairs qualifying at each agreement and µV cutoff, the 127 evaluated pairs.**
+
+- **The µV cutoff is no more of a lever on 15 deviants than on 1** — flat from 0 to about 1.25 µV,
+  exactly as in Figure 8.
+
+![Scatter of f_low against f_high on logarithmic axes with dense frequency labels, all 903 grid pairs in light grey, and the 91 Phase-2 pairs having a direction at n_agree at least 5 in blue. The blue points spread across the upper-left half of the triangle rather than clustering in any one region.](plots/phase2_grid_position.png)
+
+**Figure 17. Where the Phase-2 strong pairs sit in the frequency grid.**
+
+- **Plotted against the full 903-pair grid, not the 127 they were drawn from**, so "spread, not
+  clustered" remains a claim about the grid rather than about the subset.
+- The 91 survivors keep Phase 1's shift toward larger deviance and higher f_high. Where the
+  literature set sits in this same space is settled once, in Figure 9.
+
+![Seven by seven matrix of pair counts, regular-direction n_agree on the vertical axis against counter-direction n_agree on the horizontal, cells shaded on a Blues ramp with counts printed. The mass sits far off the diagonal at regular = 5 against counter = 1, 2 and 3, holding 17, 18 and 13 pairs, and the region where both directions reach 5 or more is completely empty.](plots/phase2_direction_matrix.png)
+
+**Figure 18. Each pair's two directions, cross-tabulated, the 127 evaluated pairs.**
+
+- **The both-directions-strong region is empty.** The mass sits at (regular 5, counter 1–3) —
+  17 pairs at (5,1), 18 at (5,2), 13 at (5,3).
+- **Only 1 of 127 pairs lands its two directions in the same tier at all**, against 4 for the same
+  pairs in Phase 1.
+
+**Table 18. Yield at each agreement threshold, Phase 2** (`plots/phase2_yield.csv`; mirrors
+Table 12). **Shares are of the 254 direction-instances Phase 2 evaluated** — the within-phase
+yield, matching Table 12's within-grid one. Because the 254 were selected on their Phase-1 score,
+these percentages are much higher than Table 12's and are not a coverage statistic.
+
+| tier | direction-instances | % of 254 | distinct pairs |
+|---|---:|---:|---:|
+| ≥ 6/6 | 9 | **3.5%** | 9 |
+| ≥ 5/6 | 91 | **35.8%** | 91 |
+| ≥ 4/6 | 130 | 51.2% | 121 |
+| ≥ 3/6 | 163 | 64.2% | 127 |
+| ≥ 2/6 | 214 | 84.3% | 127 |
+| ≥ 1/6 | 249 | 98.0% | 127 |
+
+- **A third of the evaluated set still has a direction at ≥5/6** (35.8%), against 7.3% of the whole
+  grid in Phase 1 — which is the selection working, not a change in the stimuli.
+- **36 of the 127 pairs the screen selected no longer have a direction at 5** on 15 deviants: the
+  ≥5/6 tier holds 91 pairs where Phase 1 gave it 127.
+- The bottom two rows match Phase 1's almost exactly (84.3% vs 84.3%, 98.0% vs 98.1%), because by
+  ≥2/6 the criterion has stopped selecting in either phase.
+
+### Section 6 summary
+- **Yes, every structural finding holds.** The consensus set is still empty (0 of 127 both ways),
+  `pairs_both` is now zero at 5/6 as well, and 126 of 127 pairs are carried by a single direction.
+- **The frequency preference holds and sharpens**: 7611 Hz goes from 4.55-vs-2.41 on one deviant
+  to 5.10-vs-2.35 on fifteen; 1745 Hz from 3.81-vs-2.05 to 4.92-vs-1.54.
+- **whisper-tiny is still the usual dissenter** (40.2% against 40.4%) and the ascending preference
+  is unchanged in size (1.23 models against 1.31).
+- **The direction waveforms make the preference starker on 15 deviants than on 1**: none of the
+  top 30 pairs dips both ways inside the scoring window, against 1 of 30 in Phase 1, and the two
+  directions' in-window traces anti-correlate at mean r = −0.48.
+- **What does not hold is any individual pair's exact standing**: Phase 1's best pair,
+  `method_1767`, falls to 4/6 and rank 94 of 254, and the ≥5/6 yield halves.
+
+---
+
+## Section 7 — Do the two phases' responses correlate?
+
+> **Code:** `aux/analysis_novel_search/plots/novel_search_plots.py`
+> **Data:** `outputs/results_novel_search/phase2_final_ranking.csv`, which already carries
+> `phase1_rank`, `phase1_n_agree`, `phase1_mean_uv` and `rank_shift` merged in — no join needed.
+> Tables: `plots/phase2_rank_shift.csv`, `plots/phase2_tier_migration.csv`,
+> `plots/phase2_correlation_summary.csv`.
+> **Population.** All 254 shared direction-instances and only those. Every number is
+> within-instance: the same (pair, direction) scored twice, once from 1 deviant and once from 15.
+
+![Scatter of Phase-2 rank against Phase-1 rank for the 254 shared direction-instances, with a dashed identity line. The cloud hugs the line over the whole range with a scatter of roughly plus or minus 30 ranks and a handful of outliers reaching about 95 ranks. Spearman rho = +0.923 at p = 2.3e-106.](plots/novel_rank_stability.png)
+
+**Figure 19. Phase-1 rank against Phase-2 rank**, Phase-1 ranks re-ranked within the shared subset
+so both axes count the same population.
+
+- **ρ = +0.923** (p = 2.3 × 10⁻¹⁰⁶, n = 254). The order is largely preserved.
+- The scatter is tightest at both ends and loosest in the middle, which is where the 5/6 tier sits.
+
+**Table 19. Rank stability and the distribution of movement** (`plots/phase2_rank_shift.csv`).
+`rank_shift` = Phase-1 rank within the subset − Phase-2 rank; positive = moved up.
+
+| | value |
+|---|---|
+| shared direction-instances | **254** |
+| ρ(phase1_rank, phase2_rank) | **+0.923** (p = 2.3 × 10⁻¹⁰⁶) |
+| ρ(phase1_n_agree, phase2_n_agree) | **+0.908** (p = 5.6 × 10⁻⁹⁷) |
+| median \|rank shift\| | **14** places of 254 |
+| mean \|rank shift\| | **20.8** places of 254 |
+| 90th percentile \|rank shift\| | 51 |
+| max \|rank shift\| | 97 |
+| moved ≤ 10 places | 100 of 254 (39%) |
+| moved ≤ 25 places | 176 of 254 (69%) |
+| moved ≤ 50 places | 228 of 254 (90%) |
+| kept their n_agree tier | **176 (69%)** |
+
+- **90% of instances land within 50 places** of where the screen put them in a 254-long list.
+- **69% keep their exact agreement tier.**
+
+![Seven by seven heatmap with Phase-1 n_agree on the vertical axis and Phase-2 n_agree on the horizontal, counts printed in each cell. 69 percent of instances sit on the diagonal, the largest cell being 75 instances that stayed at 5 of 6. Essentially all off-diagonal mass sits to the left of the diagonal, a lower Phase-2 tier than Phase-1 tier.](plots/novel_tier_migration.png)
+
+**Figure 20. n_agree tier, Phase 1 against Phase 2.**
+
+- **The off-diagonal mass is almost entirely to the left of the diagonal** — instances fell rather
+  than rose.
+- **The Phase-2 6/6 column has a single non-zero cell, on the diagonal**: nothing rose into the top
+  tier from below.
+
+**Table 20. Phase-1 × Phase-2 n_agree, all 254 shared direction-instances**
+(`plots/phase2_tier_migration.csv`). Rows are Phase 1, columns Phase 2.
+
+| P1 \ P2 | 6 | 5 | 4 | 3 | 2 | 1 | 0 | **n** | **mean P2 n_agree** | held | fell | rose |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| **6** | **9** | 7 | 1 | 0 | 0 | 0 | 0 | 17 | 5.47 | 9 | 8 | **0** |
+| **5** | 0 | **75** | 30 | 7 | 2 | 0 | 0 | 114 | 4.56 | 75 | 39 | **0** |
+| **4** | 0 | 0 | **6** | 2 | 0 | 0 | 0 | 8 | 3.75 | 6 | 2 | **0** |
+| **3** | 0 | 0 | 1 | **21** | 11 | 2 | 0 | 35 | 2.60 | 21 | 13 | 1 |
+| **2** | 0 | 0 | 1 | 3 | **35** | 7 | 0 | 46 | 1.96 | 35 | 7 | 4 |
+| **1** | 0 | 0 | 0 | 0 | 2 | **26** | 1 | 29 | 1.03 | 26 | 1 | 2 |
+| **0** | 0 | 0 | 0 | 0 | 1 | 0 | **4** | 5 | 0.40 | 4 | 0 | 1 |
+| **total** | 9 | 82 | 39 | 33 | 51 | 35 | 5 | **254** | **3.37** | **176** | **70** | **8** |
+
+- **The high tiers leak downward only.** Rows 6, 5 and 4 have **zero** in `rose`; 49 instances fell
+  out of them. All 8 rises come from rows 3 and below — the carried reversals.
+- **The 5/6 tier is where the churn is**: 114 entered, 75 stayed, 30 fell to 4.
+
+![Scatter of Phase-2 against Phase-1 mean_uv_all6 in microvolts with a dashed identity line, 254 points coloured by Phase-2 n_agree on a light-to-dark Blues ramp. The cloud sits tightly along the identity line from about -3.5 to +0.5 microvolts with only slight scatter, and the darkest points, the high-agreement instances, sit at the deep negative end. Spearman rho = +0.957.](plots/phase2_uv_scatter.png)
+
+**Figure 21. Predicted trough depth, Phase 1 against Phase 2**, on `mean_uv_all6` — the mean over
+all six models, defined for every instance and over the same six models in both phases.
+
+- **ρ = +0.957 on all 254.** The underlying µV response is reproduced almost exactly.
+- The high-agreement instances sit at the deep negative end, as they must.
+
+![Ten Spearman correlations between the phases drawn as points with bootstrap 95 percent confidence interval bars, sorted strongest first and coloured by group. Per-model trough_uv for whisper base and whisper small sit at +0.997 and +0.996, whisper tiny at +0.986, mean_uv_all6 at +0.957, whisper medium at +0.955, rank at +0.923, n_agree at +0.908, wav2vec2 medium and large at +0.858 and +0.849, and mean_uv over agreeing models only lowest at +0.768 with the widest interval.](plots/phase2_correlation_summary.png)
+
+**Figure 22. Phase-1 vs Phase-2 agreement, by quantity**, with 2,000-sample percentile bootstrap
+95% CIs.
+
+- **The µV quantities sit above the ranking quantities.** ρ(mean_uv_all6) = +0.957 exceeds
+  ρ(rank) = +0.923 with non-overlapping CIs.
+- **What moves between the phases is mostly the discretization** — instances crossing the −0.75 µV
+  S7 threshold, which flips `n_agree` and so the rank — not the underlying predicted response.
+- **The two wav2vec2 models are the least reproducible** (+0.858, +0.849), with CIs that do not
+  overlap the whisper models'.
+
+**Table 21. Every Phase-1 vs Phase-2 correlation, ranked**
+(`plots/phase2_correlation_summary.csv`). n = 254 (248 for `mean_uv`, undefined at n_agree = 0).
+
+| quantity | ρ | 95% CI |
+|---|---:|---|
+| `trough_uv`, whisper-base | **+0.997** | +0.994 to +0.998 |
+| `trough_uv`, whisper-small | **+0.996** | +0.993 to +0.998 |
+| `trough_uv`, whisper-tiny | +0.986 | +0.976 to +0.993 |
+| **`mean_uv_all6` (all 6 models)** | **+0.957** | +0.941 to +0.968 |
+| `trough_uv`, whisper-medium | +0.955 | +0.935 to +0.967 |
+| **rank (within the shared subset)** | **+0.923** | +0.894 to +0.943 |
+| **n_agree** | **+0.908** | +0.879 to +0.931 |
+| `trough_uv`, wav2vec2-medium | +0.858 | +0.809 to +0.897 |
+| `trough_uv`, wav2vec2-large | +0.849 | +0.792 to +0.894 |
+| `mean_uv` (agreeing models only) | +0.768 | +0.688 to +0.835 |
+
+- **Four of six models reproduce their own µV almost exactly** across a 15-fold change in deviant
+  count (ρ ≥ 0.955).
+- **Do not read the +0.768 row as "µV is the noisiest quantity."** `mean_uv` averages only the
+  agreeing models, so once `n_agree` changes the two phases average different model sets and that
+  correlation is partly measuring the change of composition. The comparable µV quantity is
+  `mean_uv_all6` at +0.957.
+
+![Bland-Altman plot of the Phase-2 minus Phase-1 microvolt difference against the mean of the two phases, with a solid red mean-bias line at +0.087 microvolts and dashed plus and minus 1.96 SD lines at about +0.51 and -0.34. The cloud is centred slightly above zero with no trend against the mean.](plots/phase2_uv_bland_altman.png)
+
+**Figure 23. Bland-Altman: how the two phases' µV differ in absolute terms.**
+
+- **Phase-2 troughs are +0.087 µV shallower on average** (SD 0.215); 83 of 254 got deeper.
+- **No trend against magnitude** — a small uniform shift, not a scale change.
+
+![Histogram of the rank shift between phases over the 254 direction-instances in bins of 10 ranks, sharply peaked just above zero with 73 instances in the 0 to 10 bin and 55 in the 10 to 20 bin against 18 in the -10 to 0 bin, and strongly left-skewed with a long thin tail running out to -100 and a short right tail ending near +65.](plots/phase2_rank_shift.png)
+
+**Figure 24. How far instances moved between the rankings.**
+
+- Rank shift sums to zero by construction, so the shape is the informative part: **168 instances
+  rose a little and 80 fell a lot.**
+- **The long left tail is a handful of highly-ranked instances collapsing** (`method_1767` at −93 is
+  in it); the mass just above zero is everything else drifting up to fill the space.
+
+![Mean Phase-2 n_agree plotted against Phase-1 n_agree tier with standard-error bars, a dashed identity line, and the n annotated at each point. The curve sits clearly below the identity line at Phase-1 tiers 3 through 6, essentially on it at tier 2, and at or above it at tiers 1 and 0.](plots/phase2_tier_regression.png)
+
+**Figure 25. Mean Phase-2 agreement by Phase-1 tier.**
+
+- **The high tiers fall and the low tiers rise** — 6/6 loses 0.53 models on average, 0/6 gains 0.40.
+- **This is regression to the mean, guaranteed by the selection rule.** The 254 were chosen for
+  scoring high on a single draw containing a sampling component, so their second measurement moves
+  toward their true value. A real degradation would push every row down; regression pushes the ends
+  inward, which is what the figure shows.
+- The 123 carried reversals make the bottom rows visible: they entered on their partner's score,
+  not their own, so they have nothing to regress from.
+
+### Section 7 summary — do Phase 1 and Phase 2 correlate reasonably well?
+
+**Yes, and more strongly than the headline rank figure suggests.**
+
+- **The underlying signal is reproduced almost exactly.** ρ(mean_uv_all6) = **+0.957**, and four of
+  the six models reproduce their own `trough_uv` at ρ ≥ 0.955. Fifteen deviants and one deviant
+  give nearly the same predicted waveform depth.
+- **The ranking built on that signal is a little looser but still strong**: ρ(rank) = **+0.923**,
+  ρ(n_agree) = **+0.908**, 69% of instances keep their exact tier and 90% move ≤ 50 of 254 places.
+  The gap between +0.957 and +0.923 is the cost of discretizing a continuous µV at a threshold.
+- **The disagreement that does exist is systematic and explained, not noise.** Mean n_agree fell
+  3.661 → 3.370 with 70 instances falling against 8 rising — the signature of regression to the
+  mean on a set selected for a high score on a single draw, confirmed by Figure 25's tier-by-tier
+  pattern. It is evidence about the selection, not about the stimuli.
+- **Two limits on that conclusion.** ρ = +0.923 is measured on a **selected** subset drawn from the
+  top of the Phase-1 ranking, so it says the screen ranks reliably *among pairs it already ranked
+  highly*; it does not establish that the 1,552 rejected instances were ordered correctly. And 8 of
+  254 instances rose a tier on re-measurement, all from tiers 3 and below, so a pair that would
+  reach 6/6 both ways on 15 deviants but scored 4 or below on its one Phase-1 draw is invisible by
+  construction (Caveats 6 and 7).
+- **Practical read: a one-deviant, 4-clip screen is a sound way to choose which pairs to evaluate
+  properly, and an unsound way to decide a pair's final tier.** Every conclusion in this memo that
+  depends on a tier boundary — the empty consensus set above all — is quoted from Phase 2.
 
 ---
 
@@ -517,18 +1112,52 @@ Full run guide: `aux/sophies_repository_overview.md` §17.5 (Stages A–J). Afte
 and the rsync back:
 
 ```bash
+# Phase 1 — Sections 1–5
 python scripts/analyze_mmn_s7_roi.py --predictions_root outputs/insilico_mmn_predictions_novel \
     --dip_uv_threshold 0.75 --out outputs/results_novel_search/phase1_mmn_s7_roi.csv
 python scripts/rank_novel_phase1.py                            # the ranking CSVs
 python aux/analysis_novel_search/plots/novel_search_plots.py   # Section 2 heatmap + scaling
 python aux/analysis_novel_search/plots/phase1_results.py       # Sections 2–5
+python aux/analysis_novel_search/plots/phase1_results.py --only_waveforms --wave_units uv
+
+# Phase 2 — Sections 6–7. Same scorer, same ranker; only the deviant count differs.
+python scripts/analyze_mmn_s7_roi.py --predictions_root outputs/insilico_mmn_predictions_novel \
+    --dip_uv_threshold 0.75 --out outputs/results_novel_search/phase2_mmn_s7_roi.csv
+python scripts/rank_novel_phase2.py                            # ranking + consensus set + rho
+# Phase-2 waveform figures need the Phase-2 predictions, which live in their OWN root on the
+# cluster (Stage J sets PREDICTIONS_ROOT) and must not overwrite the Phase-1 root locally:
+for m in whisper-tiny whisper-base whisper-small whisper-medium wav2vec2-medium wav2vec2-large; do
+  mkdir -p outputs/insilico_mmn_predictions_novel_phase2/$m
+  rsync -av "<cluster>:<repo>/outputs/insilico_mmn_predictions_novel_phase2/$m/"'*.h5' \
+        "outputs/insilico_mmn_predictions_novel_phase2/$m/"
+done
+
+python aux/analysis_novel_search/plots/phase1_results.py --phase 2 --skip_deviance \
+    --predictions_root outputs/insilico_mmn_predictions_novel_phase2   # Section 6, incl. Figs 13-14
+python aux/analysis_novel_search/plots/phase1_results.py --phase 2 --only_waveforms \
+    --wave_units uv \
+    --predictions_root outputs/insilico_mmn_predictions_novel_phase2   # the raw-µV waveform variant
+python aux/analysis_novel_search/plots/novel_search_plots.py --skip_phase1_figures
+    # ^ Phase-2 counterpart of Figure 2, plus the Section-7 cross-phase outputs
+
+# PDF of this memo, figures inlined. Needs `markdown` and a Chromium-family browser, neither of
+# which is a dependency of mbs-env, so run it from any interpreter that has markdown installed.
+python scripts/md_to_pdf.py aux/analysis_novel_search/novel_stimulus_search_results.md \
+    --title "Novel tone-pair stimulus search — results (Phases 1 and 2)"
 ```
 
-`phase1_results.py` takes `--results_dir` / `--out_dir` / `--predictions_root` /
-`--literature_csv`, so a re-run can be rendered anywhere without clobbering the committed figures,
-and writes every table in this memo as a CSV beside its figure. `--wave_units uv` renders the
-direction waveforms in raw microvolts; `--wave_ylim LO HI` changes their shared y-window.
-
-*Every section is filled from the console output of the script named in its provenance header; the
-ranking CSVs are the source of record. Extraction cost, budget and any selection of pairs for
-further work are out of scope here and live in `aux/sophies_repository_overview.md` §17.4.*
+`phase1_results.py` keeps its Phase-1 name because Sections 2–5 cite it by that path; **`--phase 2`
+reads `phase2_mmn_s7_roi.csv` and writes every output under a `phase2_` prefix**, so the two phases
+cannot overwrite each other. It also takes `--results_dir` / `--out_dir` / `--predictions_root` /
+`--literature_csv`, so any re-run can be rendered anywhere, and it writes every table in this memo
+as a CSV beside its figure. **`--skip_deviance` is what Phase 2 runs with**: the deviance
+correlation is confounded by the selection (Caveat 6), so it is not computed rather than computed
+and disclaimed. `--skip_literature` suppresses the literature comparison; note it also drops the
+literature overlay from the grid-position figure, which is why the raw-µV pass must carry
+**`--only_waveforms`** — that flag stops the run after the waveform figures, so a pass configured
+for the waveforms cannot rewrite unrelated figures from a different configuration. `--wave_ylim
+LO HI` changes the shared y-window. The waveform panels read the prediction HDF5s and check each
+file's `n_deviants` attribute against the phase being rendered, so pointing a Phase-2 run at
+Phase-1 predictions skips the figure loudly instead of mislabelling it. `novel_search_plots.py --skip_phase1_figures` writes
+the Phase-2 counterpart of Figure 2 (`novel_n_agree_heatmap_phase2.png`) and the Section-7
+cross-phase outputs, leaving the committed Phase-1 figures untouched.

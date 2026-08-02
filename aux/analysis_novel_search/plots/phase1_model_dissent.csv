@@ -1,0 +1,7 @@
+model,s7_rate,n_s7,sole_dissenter,pct_of_one_short
+whisper-tiny,0.4225,763,46,40.3509
+whisper-medium,0.531,959,21,18.4211
+whisper-small,0.3311,598,16,14.0351
+whisper-base,0.325,587,14,12.2807
+wav2vec2-large,0.4612,833,13,11.4035
+wav2vec2-medium,0.5986,1081,4,3.5088
