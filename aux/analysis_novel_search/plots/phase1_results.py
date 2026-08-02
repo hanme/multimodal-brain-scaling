@@ -97,11 +97,15 @@ MMN_WINDOW = (100.0, 240.0)   # the scoring window, shaded in the waveform panel
 N_TOP = 50
 PANELS_PER_FIG = (5, 6)       # rows x cols of the waveform small-multiples
 N_WAVE = 30                   # waveform figures cover the top N pairs of the ranking
-# Top-X cut points for the consensus heatmap. Starts at 10 and runs to 300: below ~10 the columns
-# only ever hold a handful of stimuli and say more about ties than about consensus, and the range
-# where models begin to overlap at all is the far end. Thresholds above the number of instances in
-# the ranking are dropped, so a selected subset gets a shorter ladder rather than saturated columns.
+# Top-X cut points for the consensus heatmap, per phase -- the ladders differ because the two
+# rankings differ in size by 7x. Over the whole 1806-instance grid the models only begin to
+# overlap at the far end, so Phase 1 starts at 10 and runs to 300. Over the 254 selected
+# instances a top-10 cut is already 4% of the set, so Phase 2 resolves 5-50 in five-step
+# increments, 50-100 in tens, and then coarsens to 250. Thresholds above the number of instances in a ranking are dropped rather than
+# rendered as saturated columns.
 CONSENSUS_TOP_X = (10, 20, 30, 40, 50, 75, 100, 125, 150, 200, 250, 300)
+CONSENSUS_TOP_X_PHASE2 = (5, 10, 15, 20, 25, 30, 35, 40, 45, 50,
+                          60, 70, 80, 100, 125, 150, 175, 200, 250)
 # Multi-hue sequential, distinct from the Blues used for n_agree elsewhere: this figure counts
 # STIMULI, not agreeing models, and reusing the n_agree ramp would imply they are the same scale.
 CONSENSUS_CMAP = "YlGnBu"
@@ -110,8 +114,10 @@ CONSENSUS_CMAP = "YlGnBu"
 # condition's mean is built from -- the last is asserted against the prediction HDF5s before any
 # waveform is drawn, because a Phase-1 trace rendered under a phase2_ name would be a silent lie.
 PHASE = {
-    1: dict(s7="phase1_mmn_s7_roi.csv", prefix="phase1", n_deviants=1),
-    2: dict(s7="phase2_mmn_s7_roi.csv", prefix="phase2", n_deviants=15),
+    1: dict(s7="phase1_mmn_s7_roi.csv", prefix="phase1", n_deviants=1,
+            top_x=CONSENSUS_TOP_X),
+    2: dict(s7="phase2_mmn_s7_roi.csv", prefix="phase2", n_deviants=15,
+            top_x=CONSENSUS_TOP_X_PHASE2),
 }
 
 # Committed electrode layer per model (§1.5) -- the <layer> in the prediction HDF5 filename.
@@ -1001,7 +1007,7 @@ def plot_consensus_heatmap(ranked, models, out_dir, prefix="phase1",
     counts, n_s2 = consensus_grid(ranked, models, thresholds)
     n_models = len(models)
 
-    fig, ax = plt.subplots(figsize=(10.6, 5.2))
+    fig, ax = plt.subplots(figsize=(max(10.6, 0.72 * len(thresholds) + 2.0), 5.2))
     ax.grid(False)
     im = ax.imshow(counts, cmap=CONSENSUS_CMAP, origin="lower", aspect="auto",
                    interpolation="nearest")
@@ -1588,7 +1594,8 @@ def main():
 
     print("\n[7] the structure of the ranking")
     table_yield(ranked, models, out_dir, prefix=prefix)
-    plot_consensus_heatmap(ranked, models, out_dir, prefix=prefix)
+    plot_consensus_heatmap(ranked, models, out_dir, prefix=prefix,
+                           thresholds=cfg["top_x"])
     # Phase 1 only: the literature overlay answers "where does the published set sit in this
     # grid", which is a property of the grid and is settled once. Repeating it on the Phase-2
     # scatter would add the same 24 diamonds to a figure about a selected subset of that grid.
