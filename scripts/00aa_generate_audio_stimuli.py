@@ -28,6 +28,13 @@ Usage:
         --output_dir data/stimuli_search_audio \\
         --chunk_idx $SLURM_ARRAY_TASK_ID --n_chunks 16
 
+    # Short-SOA rows need more trailing audio than one SOA for the MMN criteria to
+    # fit in the epoch; --trailing_floor_ms reserves max(floor, SOA) after the final
+    # tone onset. Rows whose SOA already meets the floor are byte-identical.
+    python 00aa_generate_audio_stimuli.py \\
+        --metadata_csv metadata/frequency_metadata.csv \\
+        --output_dir outputs/stim_gen_soafix --trailing_floor_ms 400
+
 Output structure:
     {output_dir}/
     ├── audio_outputs_regular/{model}/method_{ID:02d}_*.wav
@@ -38,6 +45,7 @@ Output structure:
 
 import sys
 import argparse
+import math
 import numpy as np
 import pandas as pd
 import soundfile as sf
@@ -92,6 +100,11 @@ class StimulusGrid(NamedTuple):
     trial_levels: Tuple[int, ...] = tuple(TRIAL_LEVELS)
     num_variations: int = NUM_VARIATIONS
     models: Tuple[str, ...] = tuple(MODEL_DURATIONS)
+    # Minimum audio reserved after the final tone's ONSET -- see compute_tone_slots. 0.0 is the
+    # historical layout (one SOA of tail), byte-identical to every clip generated before the flag
+    # existed; the literature set is regenerated at 400.0 so the analysis window fits. Opt-in on
+    # purpose: an accidental re-run of the novel grid must not silently produce different audio.
+    trailing_floor_ms: float = 0.0
 
     @property
     def files_per_direction(self) -> int:
@@ -201,27 +214,48 @@ def generate_silence(duration_ms: float) -> np.ndarray:
 # =============================================================================
 
 def compute_tone_slots(total_duration_ms: float, tone_duration_ms: float,
-                       isi_ms: float) -> Tuple[int, float]:
+                       isi_ms: float,
+                       trailing_floor_ms: float = 0.0) -> Tuple[int, float]:
     """
-    Determine how many equal-spaced tone slots fit within a model's time window.
+    Determine how many equal-spaced tone slots fit within a model's time window,
+    reserving max(trailing_floor_ms, SOA) of audio after the final tone's ONSET.
 
     The audio layout is:
-        [leftover silence][ISI][tone 1][ISI][tone 2][ISI] ... [tone K][ISI]
+        [leftover silence][ISI][tone 1][ISI] ... [tone K][ISI][extra trailing pad]
 
-    K tones are placed, each preceded and followed by one ISI. Any remaining
-    time is prepended as additional leading silence.
+    K tones are placed, each preceded and followed by one ISI. Call T the audio
+    reserved after the final tone's onset; as many whole cycles as will fit before
+    T are placed (the leading ISI is mandatory, as it has always been) and the
+    remainder becomes `leftover` at the front. build_audio_from_sequence's
+    pad-to-target branch supplies the T - cycle shortfall at the END, which is
+    where the extra trailing silence must go.
+
+    The floor exists because the MMN criteria read out to 360 ms past the final
+    tone: S2's recovery search runs 120 ms past a trough that may sit as late as
+    240 ms (analyze_mmn_criteria.py). The historical layout ends the clip exactly
+    one SOA after the final onset, which for short-SOA stimuli truncates that
+    window. 400 rather than 360 because the floor is measured in audio while the
+    requirement is on the epoch, which is one feature frame shorter still --
+    19 ms on whisper, 39 ms on wav2vec2.
+
+    trailing_floor_ms <= SOA collapses to the historical formula exactly:
+        T = cycle  =>  K = floor((total - isi)/cycle),  leftover = total - isi - K*cycle
+    so every stimulus whose SOA already meets the floor is untouched, as is the
+    whole novel grid (one fixed SOA of 580 ms).
 
     Args:
         total_duration_ms: Model window length in ms (e.g. 10000 or 30000).
         tone_duration_ms:  Shared tone duration in ms.
         isi_ms:            Shared inter-stimulus interval in ms.
+        trailing_floor_ms: Minimum trailing audio in ms (default 0.0 = historical).
 
     Returns:
         (K, leftover_ms): number of tone slots and extra leading silence in ms.
     """
-    cycle = tone_duration_ms + isi_ms
-    K = int((total_duration_ms - isi_ms) / cycle)
-    leftover = total_duration_ms - isi_ms - K * cycle
+    cycle = tone_duration_ms + isi_ms                        # == SOA
+    T = max(trailing_floor_ms, cycle)
+    K = math.floor((total_duration_ms - T + cycle - isi_ms) / cycle)
+    leftover = total_duration_ms - T + cycle - isi_ms - K * cycle
     return K, leftover
 
 
@@ -410,7 +444,8 @@ def process_row_model_config(row: pd.Series, model_name: str,
 
     total_duration_ms = MODEL_DURATIONS[model_name]
     duration_s = total_duration_ms // 1000
-    K, leftover_ms = compute_tone_slots(total_duration_ms, tone_duration_ms, isi_ms)
+    K, leftover_ms = compute_tone_slots(total_duration_ms, tone_duration_ms, isi_ms,
+                                        grid.trailing_floor_ms)
     validate_tone_slots(K, method_id, model_name, grid.trial_levels)
 
     model_dir = config_output_dir / model_name
@@ -424,6 +459,7 @@ def process_row_model_config(row: pd.Series, model_name: str,
         'deviant_freq': deviant_freq,
         'tone_duration_ms': tone_duration_ms,
         'isi_ms': isi_ms,
+        'trailing_floor_ms': grid.trailing_floor_ms,
         'intensity_db': intensity_db,
     }
 
@@ -613,8 +649,8 @@ def write_metadata_csv(records: List[Dict[str, Any]], output_path: Path) -> None
 
     columns = [
         'filename', 'duration_s', 'method_id', 'standard_freq', 'deviant_freq',
-        'tone_duration_ms', 'isi_ms', 'intensity_db', 'trial_type', 'N',
-        'variation', 'sequence',
+        'tone_duration_ms', 'isi_ms', 'trailing_floor_ms', 'intensity_db',
+        'trial_type', 'N', 'variation', 'sequence',
     ]
     df = pd.DataFrame(records, columns=columns)
     df.to_csv(output_path, index=False)
@@ -651,6 +687,13 @@ def main():
     parser.add_argument('--models', type=str, default=','.join(MODEL_DURATIONS),
                         help=f'comma-separated model families to synthesize for '
                              f'(default: {",".join(MODEL_DURATIONS)})')
+    # Opt-in on purpose: the default reproduces the historical layout byte-for-byte, so a re-run of
+    # the novel grid or of any already-generated set cannot silently change its audio. The
+    # literature set is regenerated at 400 so the 360 ms the MMN criteria read fits in the epoch.
+    parser.add_argument('--trailing_floor_ms', type=float, default=0.0,
+                        help='minimum audio (ms) after the final tone onset; the reserved tail is '
+                             'max(this, SOA), so rows whose SOA already meets it are unchanged '
+                             '(default: 0.0 = one SOA, the historical layout)')
 
     args = parser.parse_args()
     if args.n_workers is None:
@@ -667,6 +710,9 @@ def main():
     if args.num_variations < 1:
         print(f"ERROR: --num_variations must be >= 1, got {args.num_variations}")
         return 1
+    if args.trailing_floor_ms < 0:
+        print(f"ERROR: --trailing_floor_ms must be >= 0, got {args.trailing_floor_ms}")
+        return 1
 
     models = tuple(m.strip() for m in args.models.split(',') if m.strip())
     unknown = [m for m in models if m not in MODEL_DURATIONS]
@@ -678,7 +724,7 @@ def main():
         return 1
 
     grid = StimulusGrid(trial_levels=trial_levels, num_variations=args.num_variations,
-                        models=models)
+                        models=models, trailing_floor_ms=args.trailing_floor_ms)
 
     print("=" * 60)
     print("Phase 0aa: Generate Audio Stimuli")
@@ -689,6 +735,8 @@ def main():
     print(f"Trial levels: {list(grid.trial_levels)}")
     print(f"Variations:   {grid.num_variations}")
     print(f"Models:       {list(grid.models)}")
+    print(f"Trail floor:  {grid.trailing_floor_ms:g} ms "
+          f"({'historical layout — tail is one SOA' if grid.trailing_floor_ms <= 0 else 'tail is max(floor, SOA)'})")
     print(f"Wavs/row:     {grid.files_per_direction * len(grid.models) * 2} "
           f"({grid.files_per_direction} per model per direction)")
     if args.n_chunks > 1:
