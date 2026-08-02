@@ -95,7 +95,7 @@ does not establish that the screen would have ordered the other 776 pairs correc
 `n_agree ≥ 5` on their single Phase-1 draw were re-measured. A pair that would reach 6/6 in both
 directions under 15 deviants but happened to score 4 or below on its one Phase-1 draw is
 **invisible to this design** — it was never extracted. The rate is not zero: 8 of the 254
-instances that *were* re-measured rose a tier (Table 20), all from the 3/6-or-below tiers, which
+instances that *were* re-measured rose a tier (Table 21), all from the 3/6-or-below tiers, which
 is the region the screen cut at. This is a limitation of the two-phase design, not a defect in
 either run; closing it would mean evaluating pairs the screen rejected.
 
@@ -767,7 +767,7 @@ per-model traces (mirrors Figure 5).
 
 - **The traces are visibly smoother than Phase 1's.** Averaging 15 deviants instead of 1 removes
   most of the sample-to-sample jitter, which is why the µV correlation between phases is +0.957
-  (Table 21) while the tier assignments move more.
+  (Table 22) while the tier assignments move more.
 - **Each panel still autoscales** — the models' µV scales differ ~5×, so read shape, never one
   trace's depth against another's.
 - The de-overlaid per-model versions are `phase2_strong_waveforms_1__<model>.png`, which share a
@@ -969,6 +969,51 @@ so the two figures need different resolutions to show the same region.
   the same rank-based disagreement the single draw showed, on a set already selected for scoring
   highly.
 
+**Table 19. The stimuli behind the 5-model row of Figure 20** — every Phase-2 direction-instance
+that reaches at least 5 of 6 models at a top-70, top-80, top-90 or top-100 cut
+(`plots/phase2_consensus_members_n5.csv`). **The four sets are nested**, so a tick can only turn
+on as the cut widens and never off. "P2 rank" is the instance's place in the Phase-2 ranking
+(Table 15); `mean_uv` is the agreeing-models-only mean.
+
+| P2 rank | method | stimulus | direction | n_agree | mean_uv | top-70 | top-80 | top-90 | top-100 |
+|---:|---|---|---|---:|---:|:---:|:---:|:---:|:---:|
+| 1 | `method_1812` | 2263 → 7611 Hz | regular | 6 | −2.245 | ✓ | ✓ | ✓ | ✓ |
+| 2 | `method_1750` | 1600 → 7611 Hz | regular | 6 | −2.173 | ✓ | ✓ | ✓ | ✓ |
+| 5 | `method_1882` | 4150 → 7611 Hz | regular | 6 | −1.995 | ✓ | ✓ | ✓ | ✓ |
+| 10 | `method_1740` | 1600 → 3200 Hz | regular | 5 | −3.143 | ✓ | ✓ | ✓ | ✓ |
+| 14 | `method_1722` | 1467 → 3200 Hz | regular | 5 | −2.469 | ✓ | ✓ | ✓ | ✓ |
+| 39 | `method_1266_counter` | 4150 → 336 Hz | counter | 5 | −1.873 | ✓ | ✓ | ✓ | ✓ |
+| 29 | `method_1783` | 1903 → 7611 Hz | regular | 5 | −2.106 | ✗ | ✓ | ✓ | ✓ |
+| 3 | `method_1627` | 951 → 7611 Hz | regular | 6 | −2.137 | ✗ | ✗ | ✓ | ✓ |
+| 4 | `method_1603` | 872 → 7611 Hz | regular | 6 | −2.074 | ✗ | ✗ | ✓ | ✓ |
+| 15 | `method_1515` | 673 → 3200 Hz | regular | 5 | −2.422 | ✗ | ✗ | ✓ | ✓ |
+| 17 | `method_1745` | 1600 → 4935 Hz | regular | 5 | −2.244 | ✗ | ✗ | ✓ | ✓ |
+| 22 | `method_1738` | 1600 → 2691 Hz | regular | 5 | −2.172 | ✗ | ✗ | ✓ | ✓ |
+| 27 | `method_1679_counter` | 2263 → 1234 Hz | counter | 5 | −2.113 | ✗ | ✗ | ✓ | ✓ |
+| 48 | `method_1699_counter` | 2263 → 1345 Hz | counter | 5 | −1.760 | ✗ | ✗ | ✓ | ✓ |
+| 12 | `method_1762` | 1745 → 4935 Hz | regular | 5 | −2.815 | ✗ | ✗ | ✗ | ✓ |
+| 26 | `method_1729` | 1467 → 5869 Hz | regular | 5 | −2.127 | ✗ | ✗ | ✗ | ✓ |
+| 28 | `method_1739` | 1600 → 2934 Hz | regular | 5 | −2.107 | ✗ | ✗ | ✗ | ✓ |
+| 35 | `method_1487` | 617 → 3200 Hz | regular | 5 | −1.933 | ✗ | ✗ | ✗ | ✓ |
+| 47 | `method_1708` | 1345 → 4935 Hz | regular | 5 | −1.762 | ✗ | ✗ | ✗ | ✓ |
+| 51 | `method_1024_counter` | 1600 → 200 Hz | counter | 5 | −1.706 | ✗ | ✗ | ✗ | ✓ |
+| 58 | `method_1613` | 951 → 2263 Hz | regular | 5 | −1.663 | ✗ | ✗ | ✗ | ✓ |
+| 61 | `method_1230_counter` | 4150 → 308 Hz | counter | 5 | −1.613 | ✗ | ✗ | ✗ | ✓ |
+| 69 | `method_1355_counter` | 1345 → 436 Hz | counter | 5 | −1.508 | ✗ | ✗ | ✗ | ✓ |
+| | **count** | | | | | **6** | **7** | **14** | **23** |
+
+- **The strictest cut that yields anything is top-70, and it yields 6 instances** — six pairs, all
+  distinct, none of them a pair's two directions.
+- **Only 3 of the 23 are 6/6 on the S7 criterion** (`method_1812`, `method_1750`, `method_1882`,
+  all against a 7611 Hz deviant); the rest are 5/6. The rank-based cut and the threshold-based one
+  select overlapping but not identical sets, which is the point of showing both.
+- **Widening from top-70 to top-100 nearly quadruples the yield**, 6 → 23, without adding a single
+  6/6 instance beyond the two that arrive at top-90 (`method_1627`, `method_1603`). Past top-70
+  the cut is buying quantity, not consensus.
+- **Descending pairs appear from top-70 onward** — `method_1266_counter` (4150 → 336 Hz) is in the
+  strictest set, and five more counter instances arrive by top-100. On a rank-based criterion the
+  ascending preference of Table 17 is present but not absolute.
+
 ### Section 6 summary
 - **Yes, every structural finding holds.** The consensus set is still empty (0 of 127 both ways),
   `pairs_both` is now zero at 5/6 as well, and 126 of 127 pairs are carried by a single direction.
@@ -1006,7 +1051,7 @@ so both axes count the same population.
 - **ρ = +0.923** (p = 2.3 × 10⁻¹⁰⁶, n = 254). The order is largely preserved.
 - The scatter is tightest at both ends and loosest in the middle, which is where the 5/6 tier sits.
 
-**Table 19. Rank stability and the distribution of movement** (`plots/phase2_rank_shift.csv`).
+**Table 20. Rank stability and the distribution of movement** (`plots/phase2_rank_shift.csv`).
 `rank_shift` = Phase-1 rank within the subset − Phase-2 rank; positive = moved up.
 
 | | value |
@@ -1035,7 +1080,7 @@ so both axes count the same population.
 - **The Phase-2 6/6 column has a single non-zero cell, on the diagonal**: nothing rose into the top
   tier from below.
 
-**Table 20. Phase-1 × Phase-2 n_agree, all 254 shared direction-instances**
+**Table 21. Phase-1 × Phase-2 n_agree, all 254 shared direction-instances**
 (`plots/phase2_tier_migration.csv`). Rows are Phase 1, columns Phase 2.
 
 | P1 \ P2 | 6 | 5 | 4 | 3 | 2 | 1 | 0 | **n** | **mean P2 n_agree** | held | fell | rose |
@@ -1073,7 +1118,7 @@ all six models, defined for every instance and over the same six models in both 
 - **The two wav2vec2 models are the least reproducible** (+0.858, +0.849), with CIs that do not
   overlap the whisper models'.
 
-**Table 21. Every Phase-1 vs Phase-2 correlation, ranked**
+**Table 22. Every Phase-1 vs Phase-2 correlation, ranked**
 (`plots/phase2_correlation_summary.csv`). n = 254 (248 for `mean_uv`, undefined at n_agree = 0).
 
 | quantity | ρ | 95% CI |

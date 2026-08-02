@@ -1000,6 +1000,53 @@ def consensus_grid(ranked, models, thresholds=CONSENSUS_TOP_X):
     return counts, {m: len(v) for m, v in per_model_rank.items()}
 
 
+def table_consensus_members(ranked, models, out_dir, prefix="phase1", n_min=5,
+                            thresholds=(70, 80, 90, 100)):
+    """The stimuli behind one row of the consensus heatmap, and which cuts each belongs to.
+
+    A single cell of Figure 20 is a count; this is the membership behind four adjacent cells of
+    the same row. The sets are NESTED by construction -- an instance in the top 70 of five models
+    is in their top 80 too -- so the check columns can only ever turn on as the cut widens, and a
+    row that is ticked at 70 is ticked everywhere to its right.
+    """
+    per_model_rank = {}
+    for m in models:
+        d = ranked[ranked[f"s2__{m}"]].dropna(subset=[f"trough_uv__{m}"])
+        per_model_rank[m] = d.sort_values(f"trough_uv__{m}", ascending=True,
+                                          kind="mergesort")["method"].tolist()
+
+    member = {}
+    for x in thresholds:
+        tally = {}
+        for m in models:
+            for meth in per_model_rank[m][:x]:
+                tally[meth] = tally.get(meth, 0) + 1
+        member[x] = {k for k, v in tally.items() if v >= n_min}
+
+    widest = member[max(thresholds)]
+    meta = ranked.set_index("method")
+    rows = []
+    for meth in widest:
+        r = meta.loc[meth]
+        reg = r["direction"] == "regular"
+        std, dev = (r["f_low"], r["f_high"]) if reg else (r["f_high"], r["f_low"])
+        row = {"phase_rank": int(r["rank"]), "method": meth,
+               "stimulus": f"{std:g} → {dev:g} Hz",
+               "direction": r["direction"], "n_agree": int(r["n_agree"]),
+               "mean_uv": r["mean_uv"]}
+        row.update({f"in_top_{x}": meth in member[x] for x in thresholds})
+        rows.append(row)
+    tbl = (pd.DataFrame(rows)
+           .sort_values([f"in_top_{x}" for x in thresholds] + ["phase_rank"],
+                        ascending=[False] * len(thresholds) + [True])
+           .reset_index(drop=True))
+    name = f"{prefix}_consensus_members_n{n_min}.csv"
+    tbl.round(4).to_csv(Path(out_dir) / name, index=False)
+    print(f"  wrote {name}  ({len(tbl)} stimuli at >= {n_min} models; "
+          f"{ {x: len(member[x]) for x in thresholds} })")
+    return tbl
+
+
 def plot_consensus_heatmap(ranked, models, out_dir, prefix="phase1",
                            thresholds=CONSENSUS_TOP_X):
     """The consensus-yield grid: how far a top-X cut has to be relaxed to get Y models to agree."""
@@ -1596,6 +1643,10 @@ def main():
     table_yield(ranked, models, out_dir, prefix=prefix)
     plot_consensus_heatmap(ranked, models, out_dir, prefix=prefix,
                            thresholds=cfg["top_x"])
+    if args.phase == 2:
+        # The membership behind the 5-model row of the Phase-2 heatmap, which the memo
+        # lists out; the Phase-1 equivalent would be a single row and is not emitted.
+        table_consensus_members(ranked, models, out_dir, prefix=prefix)
     # Phase 1 only: the literature overlay answers "where does the published set sit in this
     # grid", which is a property of the grid and is settled once. Repeating it on the Phase-2
     # scatter would add the same 24 diamonds to a figure about a selected subset of that grid.
