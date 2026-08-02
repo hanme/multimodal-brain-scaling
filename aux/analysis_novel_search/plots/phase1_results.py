@@ -100,12 +100,12 @@ N_WAVE = 30                   # waveform figures cover the top N pairs of the ra
 # Top-X cut points for the consensus heatmap, per phase -- the ladders differ because the two
 # rankings differ in size by 7x. Over the whole 1806-instance grid the models only begin to
 # overlap at the far end, so Phase 1 starts at 10 and runs to 300. Over the 254 selected
-# instances a top-10 cut is already 4% of the set, so Phase 2 resolves 5-50 in five-step
-# increments, 50-100 in tens, and then coarsens to 250. Thresholds above the number of instances in a ranking are dropped rather than
+# instances a top-10 cut is already 4% of the set, so Phase 2 resolves 10-100 in tens -- the
+# range where models actually begin to overlap -- and then coarsens to 250. Thresholds above the number of instances in a ranking are dropped rather than
 # rendered as saturated columns.
 CONSENSUS_TOP_X = (10, 20, 30, 40, 50, 75, 100, 125, 150, 200, 250, 300)
-CONSENSUS_TOP_X_PHASE2 = (5, 10, 15, 20, 25, 30, 35, 40, 45, 50,
-                          60, 70, 80, 100, 125, 150, 175, 200, 250)
+CONSENSUS_TOP_X_PHASE2 = (5, 10, 20, 30, 40, 50, 60, 70, 80, 90,
+                          100, 125, 150, 175, 200, 250)
 # Multi-hue sequential, distinct from the Blues used for n_agree elsewhere: this figure counts
 # STIMULI, not agreeing models, and reusing the n_agree ramp would imply they are the same scale.
 CONSENSUS_CMAP = "YlGnBu"

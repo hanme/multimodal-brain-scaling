@@ -949,20 +949,19 @@ these percentages are much higher than Table 12's and are not a coverage statist
 - The bottom two rows match Phase 1's almost exactly (84.3% vs 84.3%, 98.0% vs 98.1%), because by
   ≥2/6 the criterion has stopped selecting in either phase.
 
-![Heatmap with the number of models agreeing on the vertical axis, 1 at the bottom to 6 at the top, and the top-X rank threshold on the horizontal axis running 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 100, 125, 150, 175, 200, 250 — five-step resolution from 5 to 50, tens from 50 to 100, then coarsening; it stops at 250 because only 254 instances were evaluated. Each cell is annotated with the number of Phase-2 direction-instances in the top X of at least that many models, on a yellow-green-blue sequential ramp. The bottom row rises from 30 at top-5 to 254 at top-200. The 2-model row is zero at top-5 and first reaches 5 at top-10; 3 models first reach 2 at top-15; 4 models reach 1 at top-25. The 5-model and 6-model rows are zero across the whole 5-to-50 range and first appear at top-60 and top-70 respectively, each with a single-digit count. The right-hand columns are strongly coloured across every row, but 200 is already 79 percent of the evaluated set.](plots/phase2_consensus_heatmap.png)
+![Heatmap with the number of models agreeing on the vertical axis, 1 at the bottom to 6 at the top, and the top-X rank threshold on the horizontal axis running 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 125, 150, 175, 200, 250 — tens from 10 to 100, then coarsening; it stops at 250 because only 254 instances were evaluated. Each cell is annotated with the number of Phase-2 direction-instances in the top X of at least that many models, on a yellow-green-blue sequential ramp. The bottom row rises from 30 at top-5 to 254 at top-200. The 2-model row is zero at top-5 and first reaches 5 at top-10; 3 models first reach 3 at top-20; 4 models reach 2 at top-30. The 5-model and 6-model rows are zero across the whole 5-to-50 range and first appear at top-60 and top-70 respectively, each with a single-digit count. The right-hand columns are strongly coloured across every row, but 200 is already 79 percent of the evaluated set.](plots/phase2_consensus_heatmap.png)
 
-**Figure 20. Consensus yield, Phase 2** (same construction as Figure 11). The ladder resolves 5 to
-50 in five-step increments and 50 to 100 in tens before coarsening to 250: over 254 instances a
-top-10 cut is already 4% of the set, where over Phase 1's 1,806 it is 0.6%, so the two figures
-need different resolutions to show the same region.
+**Figure 20. Consensus yield, Phase 2** (same construction as Figure 11). The ladder steps by tens
+from 10 to 100 — the range where the models actually begin to overlap — and then coarsens to 250.
+Over 254 instances a top-10 cut is already 4% of the set, where over Phase 1's 1,806 it is 0.6%,
+so the two figures need different resolutions to show the same region.
 
 - **At top-5 the six models pick 30 different stimuli** — the bottom-left cell is 30, filling all
   30 available slots, so there is no overlap whatsoever between the models' five strongest
   responses.
 - **Agreement arrives late and one model at a time.** Two models first share a stimulus at
-  top-10, three at top-15, four at top-25, five at top-60 and all six at top-70 — and the
-  five- and six-model rows are **empty across the entire 5-to-50 range**. The fine resolution
-  buys no consensus; it shows there is none there to find.
+  top-10, three at top-20, four at top-30, five at top-60 and all six at top-70 — and the
+  five- and six-model rows are **empty across the entire 5-to-50 range**.
 - **The strong right-hand corner is an artifact of the smaller set.** Top-200 is 79% of the 254
   instances, so "in the top 200 of all six models" is close to "not last" — read the left half of
   this figure, not the right.
@@ -984,7 +983,8 @@ need different resolutions to show the same region.
   `method_1767`, falls to 4/6 and rank 94 of 254, and the ≥5/6 yield halves.
 - **The rank-order consensus picture is Phase 1's too** (Figure 20): at top-5 the six models pick
   30 different stimuli, no two overlap at all until top-10, and nothing reaches 6/6 agreement
-  until the cut is relaxed to top-70 of 254.
+  until the cut is relaxed to top-70 of 254 — with the five- and six-model rows empty across the
+  whole 5-to-50 range.
 
 ---
 
