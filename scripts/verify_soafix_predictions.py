@@ -100,11 +100,21 @@ def scan_file(h5_path):
 
 
 def collect(root, label):
-    """{model: [row, ...]} for every mtrf/electrode prediction file under root."""
-    found = {}
+    """{model: [row, ...]} for every mtrf/electrode prediction file under root.
+
+    iter_prediction_files strips a -parcels/-electrodes suffix off the directory name, so two
+    directories can map to the same model. In the committed baseline the <model>-electrodes ones
+    hold only encoder (__attn.h5) files and are filtered out here -- but a second mtrf file would
+    otherwise overwrite the first and be scored silently, so refuse instead.
+    """
+    found, seen = {}, {}
     for h5_path, model, level, mapping in iter_prediction_files(Path(root)):
         if mapping != MAPPING or level != LEVEL:
             continue
+        if model in found:
+            raise RuntimeError(f"two {MAPPING}/{LEVEL} files map to model '{model}' under {root}: "
+                               f"{seen[model]} and {h5_path}")
+        seen[model] = h5_path
         found[model] = scan_file(h5_path)
     if not found:
         print(f"WARNING: no {MAPPING}/{LEVEL} prediction files under {root} ({label})")

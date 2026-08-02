@@ -97,12 +97,15 @@ Pass no other flags — the defaults give the full 16-clip grid and all 4 model 
 what the literature run used. `"$@"` is last in the wrapper, so the trailing flag reaches the
 generator; the job's banner must print `Trail floor:  400 ms (tail is max(floor, SOA))`.
 
-Then verify, on a compute node (it reads ~1500 wavs):
+Then verify. It md5s ~3,000 wavs, so it belongs on a compute node:
 
 ```bash
-python scripts/check_soafix_stimuli.py                     # ~2 min at the default --onset_scope key
-python scripts/check_soafix_stimuli.py --onset_scope all   # every clip, ~25x slower
+sbatch scripts/slurm_check_soafix_stimuli.sh                      # default --onset_scope key
+sbatch scripts/slurm_check_soafix_stimuli.sh --onset_scope all    # time every clip
 ```
+
+Minutes either way. **The exit code is the contract** — check it rather than eyeballing the log:
+`sacct -j <jobid> --format=JobID,State,ExitCode`.
 
 It asserts the partition the CSV implies, md5s every clip against the staged baseline, and measures
 the trailing audio on the new wavs with `insilico_mmn.detect_final_tone_onset_s`. Expect:
@@ -245,6 +248,19 @@ bit-identical; if it moved, something other than the audio changed.
 Each job writes `outputs/insilico_mmn_predictions_soafix/<model>/electrode_predictions__<layer>.h5`
 with **48 groups**.
 
+## Step 5b — score and verify on the cluster, before pulling anything
+
+Catching a bad screen here saves syncing 7 h5s to find out. One job does both:
+
+```bash
+sbatch scripts/slurm_verify_soafix_predictions.sh
+```
+
+It runs `analyze_mmn_s7_roi.py` (X = 0.75) into `outputs/results_soafix/mmn_s7_roi.csv`, then
+`verify_soafix_predictions.py` over the h5s and that CSV. It refuses to write over
+`outputs/results_24freq_7models/` or `outputs/results_with_counter/`, and warns if it finds fewer
+than 7 prediction files — the whisper-large tell. Again, the exit code is the contract.
+
 ## Step 6 — pull the predictions back (run this locally)
 
 ```bash
@@ -256,11 +272,20 @@ for m in $SOAFIX_MODELS; do
 done
 ```
 
-Expect 7 files, one per model.
+Expect 7 files, one per model. Also pull `outputs/results_soafix/mmn_s7_roi.csv`.
 
 ---
 
 ## Step 7 — re-score and verify (local; I do this once the h5s land)
+
+The same wrapper, with the cluster's environment setup skipped:
+
+```bash
+conda activate mbs-env
+USE_ENV_SH=0 PROJECT_DIR=$PWD bash scripts/slurm_verify_soafix_predictions.sh
+```
+
+Or the two scripts directly, which is what that reduces to:
 
 ```bash
 PYTHONPATH="$PWD/src:$PWD/scripts" conda run -n mbs-env python scripts/analyze_mmn_s7_roi.py \
