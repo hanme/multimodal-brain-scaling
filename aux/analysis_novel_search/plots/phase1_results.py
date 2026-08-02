@@ -48,6 +48,9 @@ Emits, into --out_dir under `--prefix` (each figure beside the CSV of the table 
     + <p>_novel_vs_literature.csv              independent-models chance baseline
     + <p>_chance_baseline.csv
 
+Every figure is written twice: the PNG into --out_dir, and a vector SVG of the same figure, same
+stem, into --svg_dir (default: svgs/ beside --out_dir). --no_svg writes only the PNGs.
+
 Usage:
     python aux/analysis_novel_search/plots/phase1_results.py
     python aux/analysis_novel_search/plots/phase1_results.py --phase 2 --skip_literature
@@ -86,10 +89,12 @@ from novel_search_common import (                                      # noqa: E
 )
 from analyze_mmn_criteria_s5_s6 import uv_diff_wave                    # noqa: E402
 from analyze_mmn_criteria import compute_z_diff                        # noqa: E402
-# Palette, labels and rcParams come from the sibling figure script rather than a third copy --
-# the two sets of figures sit in the same memo and a drift between them would read as meaning.
+# Palette, labels, rcParams and the PNG+SVG writer come from the sibling figure script rather
+# than a third copy -- the two sets of figures sit in the same memo and a drift between them
+# would read as meaning.
 from novel_search_plots import (                                       # noqa: E402
     MODEL_STYLE, MLABEL, POOL_COLOR, INK, MUTED, REF_STYLE, EMPTY_CELL, SEQ_CMAP,
+    configure_svg_output, savefig_both,
 )
 
 STRONG_TIER = 5               # "strong" = a direction-instance with n_agree >= this
@@ -426,7 +431,7 @@ def plot_strong_waveforms(ranked, models, out_dir, n=N_WAVE,
                      fontsize=9.5, y=1.008)
         fig.tight_layout(rect=(0, 0.030, 1, 0.986))
         name = f"{prefix}_strong_waveforms_{k + 1}.png"
-        fig.savefig(Path(out_dir) / name, bbox_inches="tight")
+        savefig_both(fig, out_dir, name)
         plt.close(fig)
         written.append(name)
         print(f"  wrote {name}  ({len(chunk)} pairs)")
@@ -539,7 +544,7 @@ def plot_direction_waveforms(ranked, models, out_dir, n=N_WAVE,
         # overwrite the z figures the memo links to.
         name = (f"{prefix}_direction_waveforms_{k + 1}.png" if units == "z"
                 else f"{prefix}_direction_waveforms_uv_{k + 1}.png")
-        fig.savefig(Path(out_dir) / name, bbox_inches="tight")
+        savefig_both(fig, out_dir, name)
         plt.close(fig)
         written.append(name)
         print(f"  wrote {name}  ({len(chunk)} pairs)")
@@ -644,7 +649,7 @@ def plot_per_model_waveforms(ranked, models, out_dir, n=N_WAVE,
             fontsize=9.5, y=1.012)
         fig.tight_layout(rect=(0, 0.035, 1, 0.985))
         name = f"{prefix}_strong_waveforms_{chunk + 1}__{m}.png"
-        fig.savefig(Path(out_dir) / name, bbox_inches="tight")
+        savefig_both(fig, out_dir, name)
         plt.close(fig)
         written.append(name)
         print(f"  wrote {name}  (±{lim:.2f} µV, {clipped} sample(s) clipped)")
@@ -710,7 +715,7 @@ def plot_model_uv_box(ranked, models, out_dir, tier=STRONG_TIER, prefix="phase1"
              "shrinkage differs by model and\nlayer. Read each row against its own X = −0.75 µV "
              "floor — a deeper box is NOT a stronger MMN than a shallower one.",
              ha="center", va="top", fontsize=8, color=MUTED, linespacing=1.5)
-    fig.savefig(Path(out_dir) / f"{prefix}_model_uv_box.png", bbox_inches="tight")
+    savefig_both(fig, out_dir, f"{prefix}_model_uv_box.png")
     plt.close(fig)
 
     def _stat(v, fn, *a):
@@ -926,7 +931,7 @@ def plot_mean_uv_heatmap(ranked, models, out_dir, prefix="phase1", all_freqs=Non
              "frequency-preference effect.\n" + absence + "Averaged across models whose µV scales "
              "are not comparable — read the pattern, not the value.",
              ha="center", va="top", fontsize=8, color=MUTED, linespacing=1.5)
-    fig.savefig(Path(out_dir) / f"{prefix}_mean_uv_heatmap.png", bbox_inches="tight")
+    savefig_both(fig, out_dir, f"{prefix}_mean_uv_heatmap.png")
     plt.close(fig)
 
     pd.DataFrame(grid, index=pd.Index(freqs, name="standard_hz"),
@@ -1084,7 +1089,7 @@ def plot_consensus_heatmap(ranked, models, out_dir, prefix="phase1",
              "strict end — few stimuli, many models agreeing — and is where a stimulus set would "
              "be drawn from.",
              ha="center", va="top", fontsize=8, color=MUTED, linespacing=1.5)
-    fig.savefig(Path(out_dir) / f"{prefix}_consensus_heatmap.png", bbox_inches="tight")
+    savefig_both(fig, out_dir, f"{prefix}_consensus_heatmap.png")
     plt.close(fig)
 
     tbl = pd.DataFrame(counts, index=pd.Index(range(1, n_models + 1), name="n_models_min"),
@@ -1339,7 +1344,7 @@ def plot_literature_heatmaps(lit, models, out_dir, uv_norm=None, prefix="phase1"
              "novel-grid figures, so a marker and a cell of the same\ncolour mean the same "
              "number — circles and triangles on this figure are directly comparable.",
              ha="center", va="top", fontsize=8, color=MUTED, linespacing=1.5)
-    fig.savefig(Path(out_dir) / f"{prefix}_literature_heatmap.png", bbox_inches="tight")
+    savefig_both(fig, out_dir, f"{prefix}_literature_heatmap.png")
     plt.close(fig)
     print(f"  wrote {prefix}_literature_heatmap.png  ({len(lit)} literature instances"
           f"{f', {len(nov)} novel' if nov is not None else ''})")
@@ -1428,7 +1433,7 @@ def plot_ranking_structure(ranked, models, out_dir, chf_per_pair=CHF_PER_PAIR_PH
             ax.text(0.99, k, f"n_agree \u2265 {t}: {k} pairs ", fontsize=8, color=MUTED,
                     transform=ax.get_yaxis_transform(), va="bottom", ha="right")
     fig.tight_layout()
-    fig.savefig(Path(out_dir) / f"{prefix}_yield_curve.png", bbox_inches="tight")
+    savefig_both(fig, out_dir, f"{prefix}_yield_curve.png")
     plt.close(fig)
 
     # 2. Where the strong pairs sit --------------------------------------------------------------
@@ -1466,7 +1471,7 @@ def plot_ranking_structure(ranked, models, out_dir, chf_per_pair=CHF_PER_PAIR_PH
                  f"{backdrop['f_high'].median():.0f} Hz grid-wide", pad=10)
     ax.legend(fontsize=8.5, frameon=False, loc="lower right")
     fig.tight_layout()
-    fig.savefig(Path(out_dir) / f"{prefix}_grid_position.png", bbox_inches="tight")
+    savefig_both(fig, out_dir, f"{prefix}_grid_position.png")
     plt.close(fig)
 
     # 3. Direction asymmetry as a matrix ---------------------------------------------------------
@@ -1493,7 +1498,7 @@ def plot_ranking_structure(ranked, models, out_dir, chf_per_pair=CHF_PER_PAIR_PH
     cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.03)
     cbar.set_label("pairs"); cbar.outline.set_visible(False)
     fig.tight_layout()
-    fig.savefig(Path(out_dir) / f"{prefix}_direction_matrix.png", bbox_inches="tight")
+    savefig_both(fig, out_dir, f"{prefix}_direction_matrix.png")
     plt.close(fig)
 
     print(f"  wrote {prefix}_yield_curve.png, {prefix}_grid_position.png, "
@@ -1520,6 +1525,11 @@ def main():
                    help="directory holding the phase's mmn_s7_roi.csv and grid_index.csv")
     p.add_argument("--out_dir", default=str(OUT),
                    help="where to write the figures and their table CSVs")
+    p.add_argument("--svg_dir", default=None,
+                   help="where to write the SVG twin of every figure (default: svgs/ beside "
+                        "--out_dir). Same stem, .svg instead of .png")
+    p.add_argument("--no_svg", action="store_true",
+                   help="write only the PNGs")
     p.add_argument("--predictions_root", default=str(PREDICTIONS),
                    help="prediction HDF5 root, for the waveform panels")
     p.add_argument("--literature_csv", default=str(LITERATURE),
@@ -1563,6 +1573,7 @@ def main():
     prefix = cfg["prefix"]
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+    configure_svg_output(out_dir, args.svg_dir, args.no_svg)
     print(f"reading {args.results_dir}/{cfg['s7']}  (phase {args.phase}, "
           f"{cfg['n_deviants']} deviant(s) per condition, prefix {prefix}_)")
     _, ranked = load_phase(args.results_dir, cfg["s7"], x=DIP_UV_THRESHOLD)

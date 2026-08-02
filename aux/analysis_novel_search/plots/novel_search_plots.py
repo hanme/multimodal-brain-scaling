@@ -31,6 +31,9 @@ ranking emitted by rank_novel_phase1.py / rank_novel_phase2.py. mTRF only, FCz, 
 Figures 1-2 need only Phase 1; 3-5 need both. Whatever is missing is skipped with a note, so this
 is runnable as soon as Phase 1 lands.
 
+Every figure is written twice: the PNG into --out_dir, and a vector SVG of the same figure, same
+stem, into --svg_dir (default: svgs/ beside --out_dir). --no_svg writes only the PNGs.
+
   python aux/analysis_novel_search/plots/novel_search_plots.py
   python aux/analysis_novel_search/plots/novel_search_plots.py \
       --results_dir outputs/results_novel_search_rerun --out_dir /tmp/figs
@@ -91,7 +94,58 @@ mpl.rcParams.update({
     "axes.axisbelow": True, "font.family": "DejaVu Sans",
     "text.color": INK, "axes.labelcolor": INK, "axes.edgecolor": "#cccccc",
     "xtick.color": MUTED, "ytick.color": MUTED,
+    # Text goes into the SVG as glyph outlines, matplotlib's default. The alternative,
+    # svg.fonttype = "none", gives smaller files and selectable text but only NAMES the font, so
+    # every viewer has to have DejaVu Sans or the renderer substitutes. These figures carry µ, →,
+    # ≥, −, ✓ and ρ, and a substituted font drops or reflows exactly those glyphs -- a caption
+    # reading "0.75 V" or a title with a tofu box where ρ was. Outlines render identically
+    # everywhere at the cost of size, which is the right trade for a figure in a memo.
+    "svg.fonttype": "path",
 })
+
+
+# ──────────────────────────────────────────────────────────
+# PNG + SVG output
+# ──────────────────────────────────────────────────────────
+# Every figure is written twice: the PNG the memo embeds and the PDF build reads, and a vector
+# SVG twin under the same stem. The SVG destination is resolved once per run into this module
+# global, so the 19 call sites across both scripts stay one line each.
+_SVG_DIR = None
+
+
+def default_svg_dir(out_dir):
+    """`svgs/` beside the plots directory, derived rather than hardcoded.
+
+    The committed run writes aux/analysis_novel_search/plots -> aux/analysis_novel_search/svgs;
+    a test's --out_dir /tmp/figs writes /tmp/svgs. Never a subdirectory of the plots dir, which
+    would put SVGs inside the tree the memo globs for PNGs.
+    """
+    return Path(out_dir).parent / "svgs"
+
+
+def configure_svg_output(out_dir, svg_dir=None, no_svg=False):
+    """Resolve where savefig_both() puts its SVGs. Call once, from main(), before any figure."""
+    global _SVG_DIR
+    if no_svg:
+        _SVG_DIR = None
+        print("  SVG output disabled (--no_svg)")
+    else:
+        _SVG_DIR = Path(svg_dir) if svg_dir is not None else default_svg_dir(out_dir)
+        _SVG_DIR.mkdir(parents=True, exist_ok=True)
+        print(f"  SVG twins -> {_SVG_DIR}")
+    return _SVG_DIR
+
+
+def savefig_both(fig, out_dir, name, svg_dir=None):
+    """Write `name` (a .png) into out_dir, and the same figure as .svg into the SVG dir.
+
+    bbox_inches="tight" on both, or the two crop differently and stop being interchangeable.
+    """
+    fig.savefig(Path(out_dir) / name, bbox_inches="tight")
+    target = Path(svg_dir) if svg_dir is not None else _SVG_DIR
+    if target is not None:
+        target.mkdir(parents=True, exist_ok=True)
+        fig.savefig(target / f"{Path(name).stem}.svg", bbox_inches="tight")
 
 
 def _load(results_dir, name):
@@ -175,7 +229,7 @@ def plot_heatmap(ranked, models, out_dir=OUT, suffix="", all_freqs=None, n_devia
              "effect. " + absence,
              ha="center", va="top", fontsize=8, color=MUTED, linespacing=1.5)
     name = f"novel_n_agree_heatmap{suffix}.png"
-    fig.savefig(Path(out_dir) / name, bbox_inches="tight")
+    savefig_both(fig, out_dir, name)
     plt.close(fig)
     print(f"  wrote {name}  ({filled} cells filled of {off_diagonal} off-diagonal)")
 
@@ -228,7 +282,7 @@ def plot_deviance_scaling(ranked, models, out_dir=OUT, n_bins=8, suffix="", n_de
 
     fig.tight_layout()
     name = f"novel_deviance_scaling{suffix}.png"
-    fig.savefig(Path(out_dir) / name, bbox_inches="tight")
+    savefig_both(fig, out_dir, name)
     plt.close(fig)
     print(f"  wrote {name}  (ρ = {rho:+.3f})")
 
@@ -274,7 +328,7 @@ def plot_rank_stability(ph1, ph2, models, out_dir=OUT):
             ha="right", va="bottom", fontsize=8, color=MUTED,
             bbox=dict(facecolor="white", edgecolor="none", alpha=0.85, pad=2.5))
     fig.tight_layout()
-    fig.savefig(Path(out_dir) / "novel_rank_stability.png", bbox_inches="tight")
+    savefig_both(fig, out_dir, "novel_rank_stability.png")
     plt.close(fig)
     print(f"  wrote novel_rank_stability.png  (\u03c1 = {rho:+.3f})")
 
@@ -310,7 +364,7 @@ def plot_tier_migration(ph1, ph2, models, out_dir=OUT):
     cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.03)
     cbar.set_label("direction-instances"); cbar.outline.set_visible(False)
     fig.tight_layout()
-    fig.savefig(Path(out_dir) / "novel_tier_migration.png", bbox_inches="tight")
+    savefig_both(fig, out_dir, "novel_tier_migration.png")
     plt.close(fig)
     print(f"  wrote novel_tier_migration.png  ({unchanged:.0f}% tier-stable)")
 
@@ -402,7 +456,7 @@ def plot_rank_shift(ph1, ph2, models, out_dir=OUT):
     ax.set_title(f"How far instances moved between the rankings\nn = {len(merged)}; "
                  f"mean |shift| = {np.abs(shift).mean():.1f} places", pad=10)
     fig.tight_layout()
-    fig.savefig(Path(out_dir) / "phase2_rank_shift.png", bbox_inches="tight")
+    savefig_both(fig, out_dir, "phase2_rank_shift.png")
     plt.close(fig)
     print("  wrote phase2_rank_shift.png")
 
@@ -435,7 +489,7 @@ def plot_tier_regression(ph1, ph2, models, out_dir=OUT):
                  f"{merged['n_agree_p1'].mean():.2f} \u2192 "
                  f"{merged['n_agree_p2'].mean():.2f}", pad=10)
     fig.tight_layout()
-    fig.savefig(Path(out_dir) / "phase2_tier_regression.png", bbox_inches="tight")
+    savefig_both(fig, out_dir, "phase2_tier_regression.png")
     plt.close(fig)
     print("  wrote phase2_tier_regression.png")
 
@@ -525,7 +579,7 @@ def plot_uv_scatter(ph1, ph2, models, out_dir=OUT):
     cb = fig.colorbar(sc, ax=ax, fraction=0.046, pad=0.03, ticks=range(n_models + 1))
     cb.set_label("Phase-2 n_agree"); cb.outline.set_visible(False)
     fig.tight_layout()
-    fig.savefig(Path(out_dir) / "phase2_uv_scatter.png", bbox_inches="tight")
+    savefig_both(fig, out_dir, "phase2_uv_scatter.png")
     plt.close(fig)
     print(f"  wrote phase2_uv_scatter.png  (\u03c1 = {rho:+.3f})")
 
@@ -555,7 +609,7 @@ def plot_correlation_summary(ph1, ph2, models, out_dir=OUT):
     handles = [Line2D([], [], color=c, lw=2.6, label=g) for g, c in colors.items()]
     ax.legend(handles=handles, fontsize=8.5, frameon=False, loc="upper left")
     fig.tight_layout()
-    fig.savefig(Path(out_dir) / "phase2_correlation_summary.png", bbox_inches="tight")
+    savefig_both(fig, out_dir, "phase2_correlation_summary.png")
     plt.close(fig)
     print("  wrote phase2_correlation_summary.png")
     return tbl
@@ -586,7 +640,7 @@ def plot_uv_bland_altman(ph1, ph2, models, out_dir=OUT):
     ax.set_title(f"Bland-Altman: how the two phases' \u00b5V differ\n"
                  f"n = {len(d)}; positive = shallower on 15 deviants", pad=10)
     fig.tight_layout()
-    fig.savefig(Path(out_dir) / "phase2_uv_bland_altman.png", bbox_inches="tight")
+    savefig_both(fig, out_dir, "phase2_uv_bland_altman.png")
     plt.close(fig)
     print(f"  wrote phase2_uv_bland_altman.png  (bias {bias:+.3f} \u00b5V, SD {sd:.3f})")
 
@@ -642,6 +696,11 @@ def main():
     p.add_argument("--results_dir", default=str(RESULTS),
                    help="directory holding the phase1/phase2 ranking CSVs")
     p.add_argument("--out_dir", default=str(OUT), help="where to write the PNGs")
+    p.add_argument("--svg_dir", default=None,
+                   help="where to write the SVG twin of every figure (default: svgs/ beside "
+                        "--out_dir). Same stem, .svg instead of .png")
+    p.add_argument("--no_svg", action="store_true",
+                   help="write only the PNGs")
     p.add_argument("--skip_phase1_figures", action="store_true",
                    help="emit only the cross-phase outputs. Figures 1-2 are committed Phase-1 "
                         "artifacts that a Phase-2 run has no reason to rewrite")
@@ -649,6 +708,7 @@ def main():
 
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+    configure_svg_output(out_dir, args.svg_dir, args.no_svg)
     print(f"reading {args.results_dir}")
     ph1 = _load(args.results_dir, "phase1_ranked_directions.csv")
     ph2 = _load(args.results_dir, "phase2_final_ranking.csv")

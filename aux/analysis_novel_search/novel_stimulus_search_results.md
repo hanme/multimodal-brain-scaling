@@ -1250,3 +1250,21 @@ file's `n_deviants` attribute against the phase being rendered, so pointing a Ph
 Phase-1 predictions skips the figure loudly instead of mislabelling it. `novel_search_plots.py --skip_phase1_figures` writes
 the Phase-2 counterpart of Figure 2 (`novel_n_agree_heatmap_phase2.png`) and the Section-7
 cross-phase outputs, leaving the committed Phase-1 figures untouched.
+
+### Figure outputs: PNG and SVG
+
+Both scripts write **every** figure twice — the PNG into `--out_dir`
+(`aux/analysis_novel_search/plots/`, which is what this memo embeds and what the PDF build reads),
+and a vector SVG of the same figure, same stem, into `--svg_dir`. That defaults to `svgs/` beside
+the plots directory — `aux/analysis_novel_search/svgs/` for the commands above, and `/tmp/svgs`
+for a `--out_dir /tmp/figs` test run — so the SVGs never land inside the tree the PNGs live in.
+Both formats are written with `bbox_inches="tight"`, so the two crop identically and are
+interchangeable. `--no_svg` writes only the PNGs. Nothing needs re-running to get the SVGs: they
+come out of the same commands, on every pass, including the `--only_waveforms --wave_units uv`
+ones.
+
+SVG text is embedded as glyph outlines rather than font references. These figures carry `µ`, `→`,
+`≥`, `−`, `✓` and `ρ`, and a font-referencing SVG renders those through whatever the viewer has
+installed — outlines cost file size but render identically everywhere. Heatmap colour grids are
+drawn with `imshow`, so the cell grid itself arrives as an embedded raster inside the SVG; axes,
+labels, annotations and colourbars are vector.

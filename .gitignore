@@ -208,6 +208,10 @@ cython_debug/
 *.svg
 # exception: small set of figures embedded in aux/results_analysis.md's Appendix
 !aux/images_for_analysis/*.png
+# exception: the vector twin of every novel-search figure. Unlike the PNGs next door — which are
+# force-added one by one so the non-embedded ones stay out — ALL of these are tracked, so a
+# negation is right and every future figure's SVG is picked up without a -f.
+!aux/analysis_novel_search/svgs/*.svg
 
 # outputs/ — exclude large generated data, keep figures and JSON summaries
 outputs/features/

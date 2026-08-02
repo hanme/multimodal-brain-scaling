@@ -686,6 +686,17 @@ def test_phase1_results_script_emits_every_table_and_figure(scored_grid, tmp_pat
                  "phase1_direction_matrix.png"):
         assert (figs / name).stat().st_size > 5000, name
 
+    # Every figure also lands as a vector SVG under the same stem, in svgs/ BESIDE the plots dir
+    # (never inside it). Spot-check one heatmap, one line figure and one per-model waveform set:
+    # a helper that missed a call site would drop exactly one of these.
+    svgs = figs.parent / "svgs"
+    for name in ("phase1_mean_uv_heatmap.svg", "phase1_yield_curve.svg",
+                 "phase1_strong_waveforms_1__whisper-tiny.svg"):
+        assert (svgs / name).stat().st_size > 5000, name
+        assert (svgs / name).read_text(errors="ignore").lstrip().startswith("<?xml"), name
+    # One SVG per PNG, no renaming and no leftovers.
+    assert {p.stem for p in figs.glob("*.png")} == {s.stem for s in svgs.glob("*.svg")}
+
     # The fixture engineers pair 1001 to 6/6 in both directions and nothing else above 4.
     # One µV floor only: a `__x0.75` suffix here would mean the dropped second floor is back.
     tiers = pd.read_csv(figs / "phase1_agreement_tiers.csv").set_index("n_agree")
