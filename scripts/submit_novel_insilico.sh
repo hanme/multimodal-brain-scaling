@@ -54,13 +54,19 @@ esac
 # CSV, and the scoring is silently wrong rather than absent.
 first_id=$(awk -F, 'NR>1 && $4=="Frequency" {print $2; exit}' "$METADATA_CSV")
 last_id=$(awk -F, 'NR>1 && $4=="Frequency" {id=$2} END {print id}' "$METADATA_CSV")
+# Zero-pad to the %02d the rest of the pipeline uses -- insilico_mmn.build_methods_from_csv emits
+# method_{id:02d} and the generator writes method_{ID:02d}, so the literature sheet's single-digit
+# id 9 is method_09 on disk. Probing the raw CSV value looked for method_9 and refused a run whose
+# features were entirely present. Padding to a MINIMUM width of 2 leaves the novel grid's 4-digit
+# ids untouched.
 for model in $MODELS; do
     root="outputs/features/${model}-mmn-${FEATURES_TAG}"
     [ -d "$root" ] || continue          # not extracted yet; the driver reports it per method
     for id in "$first_id" "$last_id"; do
-        [ -d "$root/mmn-method_${id}-delta-t" ] || {
-            echo "REFUSING: $root/mmn-method_${id}-delta-t is missing."
-            echo "  $METADATA_CSV names method_${id}, but the extracted features do not have it."
+        padded=$(printf 'method_%02d' "$id")
+        [ -d "$root/mmn-${padded}-delta-t" ] || {
+            echo "REFUSING: $root/mmn-${padded}-delta-t is missing."
+            echo "  $METADATA_CSV names ${padded}, but the extracted features do not have it."
             echo "  The grid was rebuilt after extraction, so ids no longer line up. Re-extract"
             echo "  against the current grid before scoring."
             exit 1; }
