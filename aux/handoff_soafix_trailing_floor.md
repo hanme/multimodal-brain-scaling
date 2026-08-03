@@ -156,12 +156,35 @@ DRY_RUN=1 METHOD_LIST=$PWD/outputs/soafix_methods.txt \
 METADATA_CSV=data/metadata/literature_soafix_subset.csv \
 FEATURES_TAG=soafix \
 MODELS="$SOAFIX_MODELS" \
+CLIPS_PER_TASK=4 \
 WHISPER_STIM=$PWD/outputs/mmn_stimuli_soafix \
 WAV2VEC2_STIM=$PWD/outputs/mmn_stimuli_soafix_wav2vec2 \
     scripts/submit_novel_extraction.sh
 ```
 
-Read the **7** sbatch lines, confirm whisper-large is among them, then drop `DRY_RUN=1`.
+Read the **7** sbatch lines, confirm whisper-large is among them and that each says
+`--array=0-95`, then drop `DRY_RUN=1`.
+
+### Why `CLIPS_PER_TASK=4`
+
+Wall clock is set by the **serial clip loop inside each array task**, not by the `%200` throttle.
+Without it the run is 7 models × 24 conditions = **168 tasks** against a 200-slot allowance — the
+throttle never binds and ~15× of the parallelism already requested sits idle, while each task
+grinds through its 16 clips one at a time:
+
+| `CLIPS_PER_TASK` | tasks/model | serial clips/task | wall clock |
+|---|---|---|---|
+| 0 (default) | 24 | 16 | ~3.5 h |
+| **4** | **96** | **4** | **~55 min** |
+| 2 | 192 | 2 | ~30 min |
+| 1 | 384 | 1 | ~13 min |
+
+The cost is one model load per task, so below ~4 the load overhead starts to dominate for
+whisper-large. 4 is the sweet spot. The default stays 0, so the novel-grid workflow is unchanged.
+
+It requires `MMN_NAME_BY_STIM_ID=true` (which the submitter already passes) and refuses otherwise:
+several tasks write into the same `mmn-<method>-delta-t` directory at once, and only stimulus-id
+naming guarantees one file per clip with no clobbering.
 
 **Gate before fanning out**, per the house pattern — run one model × 2 methods first, then:
 
@@ -171,9 +194,12 @@ python scripts/check_novel_features.py --model_id whisper-tiny \
 ```
 
 Writes `outputs/features/<model>-mmn-soafix/mmn-<method>-delta-t`. 7 models × 24 conditions ×
-16 clips = **2688 tasks**; budget **700–1200 core-hours** (whisper-large hooks 32 layers and
+16 clips = **2688 clips**; budget **700–1200 core-hours** (whisper-large hooks 32 layers and
 wav2vec2-large is materially slower than the 13 min/clip whisper-base rate the header quotes).
-Wall clock ≈ 3 h at the submitter's default `CONCURRENCY=200`, ≈ 4.5 h at 128.
+Core-hours are roughly unchanged by the split — it buys wall clock, not compute.
+
+> The extraction is inherently expensive because delta_T runs **one full encoder forward pass per
+> output time bin** — 1500 per 30 s whisper clip. That is the method, not an inefficiency.
 
 whisper-large is a 30 s model, so it reads the same `WHISPER_STIM` root and 30 s window as the other
 whisper models — no extra audio is needed for it.

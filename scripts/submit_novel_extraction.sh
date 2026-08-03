@@ -29,6 +29,13 @@ WAV2VEC2_STIM="${WAV2VEC2_STIM:-${PROJECT_DIR}/outputs/mmn_stimuli_novel_wav2vec
 MODELS="${MODELS:-whisper-tiny whisper-base whisper-small whisper-medium wav2vec2-medium wav2vec2-large}"
 CONCURRENCY="${CONCURRENCY:-200}"
 DRY_RUN="${DRY_RUN:-0}"
+# Clips per array task. 0 = one task per condition, extracting all its clips serially -- the
+# historical layout. Wall clock is set by that serial loop, NOT by CONCURRENCY: a 24-condition x
+# 7-model run is 168 tasks against %200, so the throttle never binds and ~15x of the parallelism
+# already asked for sits idle. At ~13 min/clip, 16 clips serially is ~3.5 h; CLIPS_PER_TASK=4 is
+# ~55 min for 4x the model loads, which is the sweet spot before load overhead dominates.
+CLIPS_PER_TASK="${CLIPS_PER_TASK:-0}"
+CLIPS_PER_METHOD="${CLIPS_PER_METHOD:-16}"
 
 [ -f "$METHOD_LIST" ] || { echo "METHOD_LIST not found: $METHOD_LIST (run slurm_stage_novel_stimuli.sh)"; exit 1; }
 N=$(grep -c . "$METHOD_LIST")
@@ -77,9 +84,24 @@ else
     echo "could not query MaxArraySize (not on a controller?) -- assuming $MAX_ARRAY"
 fi
 CHUNK=$((MAX_ARRAY - 1))                      # indices are 0..MaxArraySize-1
-N_CHUNKS=$(( (N + CHUNK - 1) / CHUNK ))
+
+# The array indexes (condition, clip-chunk) pairs, so size it for the expanded space.
+if [ "$CLIPS_PER_TASK" -gt 0 ]; then
+    PER_METHOD=$(( (CLIPS_PER_METHOD + CLIPS_PER_TASK - 1) / CLIPS_PER_TASK ))
+else
+    PER_METHOD=1
+fi
+N_TASKS=$(( N * PER_METHOD ))
+N_CHUNKS=$(( (N_TASKS + CHUNK - 1) / CHUNK ))
 
 echo "method list : $METHOD_LIST ($N conditions)"
+if [ "$CLIPS_PER_TASK" -gt 0 ]; then
+    echo "clip split  : $CLIPS_PER_TASK clips/task x $PER_METHOD chunks per condition "\
+"(declared $CLIPS_PER_METHOD clips/condition) -> $N_TASKS tasks per model"
+else
+    echo "clip split  : none -- one task per condition, all clips serial "\
+"(set CLIPS_PER_TASK=4 to parallelise; the %${CONCURRENCY} throttle is otherwise slack)"
+fi
 echo "submissions : $N_CHUNKS array(s) per model x $(echo "$MODELS" | wc -w | tr -d ' ') models"
 echo "features tag: -mmn-${FEATURES_TAG}"
 [ "$DRY_RUN" = "1" ] && echo "DRY RUN -- nothing will be submitted"
@@ -94,13 +116,14 @@ for model in $MODELS; do
 
     for ((c = 0; c < N_CHUNKS; c++)); do
         offset=$((c * CHUNK))
-        last=$((N - offset - 1))
+        last=$((N_TASKS - offset - 1))
         [ "$last" -ge "$CHUNK" ] && last=$((CHUNK - 1))
 
         exports="ALL,MODEL_ID=${model},METHOD_LIST=${METHOD_LIST}"
         exports="${exports},MMN_STIM_ROOT=${stim},WINDOW_DUR=${win},WINDOW_STRIDE=${win}"
         exports="${exports},MMN_FEATURES_ROOT=outputs/features/${model}-mmn-${FEATURES_TAG}"
         exports="${exports},MMN_NAME_BY_STIM_ID=true,TASK_OFFSET=${offset}"
+        exports="${exports},CLIPS_PER_TASK=${CLIPS_PER_TASK},CLIPS_PER_METHOD=${CLIPS_PER_METHOD}"
 
         cmd=(sbatch --export="$exports" --array="0-${last}%${CONCURRENCY}"
              scripts/slurm_mmn_extract_batch.sh)
