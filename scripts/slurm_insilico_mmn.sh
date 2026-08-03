@@ -1,9 +1,11 @@
 #!/bin/bash
 # =============================================================================
 # SLURM (CPU, jed standard): Method A in-silico MMN at PARCEL level — fit FIR mTRF on
-#   D2 (Cortical Surprisal) at MODEL_ID's committed §1.5 layer, apply to all 10 MMN
-#   methods in one run (insilico_mmn.py loops --methods all internally). ~1-2 min
-#   compute once scheduled; the Ridge fit needs >> the login-node memory cap.
+#   D2 (Cortical Surprisal) at MODEL_ID's committed §1.5 layer, apply to every MMN
+#   condition in one run (insilico_mmn.py loops --methods all internally). Minutes on the
+#   10-method set, but METADATA_CSV drives the count -- the literature sheet is 48 conditions
+#   -- so the wall clock matches the electrode wrapper's 12 h rather than assuming the old
+#   scope. The Ridge fit needs >> the login-node memory cap.
 #
 # Submit one model:
 #   sbatch --export=ALL,MODEL_ID=whisper-tiny scripts/slurm_insilico_mmn.sh
@@ -29,7 +31,7 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=12
 #SBATCH --mem-per-cpu=5500M
-#SBATCH --time=00:30:00
+#SBATCH --time=12:00:00
 #SBATCH --output=/work/upschrimpf1/sigfstea/multimodal-brain-scaling/logs/insilico_mmn_%A_%a.out
 #SBATCH --error=/work/upschrimpf1/sigfstea/multimodal-brain-scaling/logs/insilico_mmn_%A_%a.err
 
