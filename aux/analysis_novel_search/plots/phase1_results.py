@@ -685,20 +685,35 @@ def plot_per_model_waveforms(ranked, models, out_dir, n=N_WAVE,
 # scored. These draw one panel per RANKED INSTANCE, in the ranking's own order.
 # ──────────────────────────────────────────────────────────
 
-# How a panel renders its six models. "models" overlays them; the two "mean_" modes collapse them
-# to a single cross-model line, which is only meaningful in z -- see MEAN_MODE_NOTE.
-INSTANCE_MODES = ("models", "mean_uv", "mean_z")
+# How a panel renders its six models. "models" overlays every model, agreeing or not, because
+# showing the dissent is the point of that figure. The two "mean_" modes average over ONLY the
+# models that satisfy S7 on that instance -- the same rule `mean_uv` follows in the ranking, and
+# for the same reason: a model that failed S2 has no MMN latency, so its trough is not a trough of
+# the response being averaged. Mixing it in would drag the mean toward a shape no model produced.
+INSTANCE_MODES = ("models", "mean_uv")
 MEAN_MODE_NOTE = {
-    "mean_z": ("baseline-z-scored per model before averaging, so no model's amplitude shrinkage "
-               "dominates the mean — this is the trace the S2 verdict is computed on"),
-    "mean_uv": ("RAW µV averaged across models. Caveat 2: the six models' µV scales differ ~5x, "
-                "so this mean is dominated by wav2vec2-large and whisper-medium and is NOT a "
-                "cross-model amplitude"),
+    "mean_z": ("averaged over the AGREEING models only, baseline-z-scored per model first so no "
+               "model's amplitude shrinkage dominates — this is the trace the S2 verdict is "
+               "computed on"),
+    "mean_uv": ("RAW µV, averaged over the AGREEING models only. Caveat 2: the models' µV scales "
+                "differ ~5x, so this mean is dominated by whichever of wav2vec2-large and "
+                "whisper-medium agreed, and is NOT a cross-model amplitude"),
 }
 
 
-def _instance_panel(ax, per_model, models, mode, xlim=WAVE_XLIM, window=MMN_WINDOW):
-    """Draw one direction-instance into `ax`. Returns True if anything was plotted."""
+def _agreeing(r, models):
+    """The models satisfying S7 on this instance, in SEARCH_MODELS order."""
+    return [m for m in models if bool(r.get(f"s7__{m}", False))]
+
+
+def _instance_panel(ax, per_model, models, mode, xlim=WAVE_XLIM, window=MMN_WINDOW,
+                    agree=None):
+    """Draw one direction-instance into `ax`. Returns True if anything was plotted.
+
+    `agree` is the subset the mean modes average over; None means every model present. At
+    n_agree == 0 it is empty and the mean is undefined, so the panel is left with only its
+    scoring-window band -- the same convention as `mean_uv` being NaN there.
+    """
     lo_w, hi_w = window
     ax.grid(False)
     ax.axvspan(lo_w, hi_w, color="#eef2f7", zorder=0)
@@ -711,7 +726,11 @@ def _instance_panel(ax, per_model, models, mode, xlim=WAVE_XLIM, window=MMN_WIND
             ax.plot(tt[sel], uv[sel], color=WAVE_MODEL_STYLE[m]["color"], lw=WAVE_LW,
                     alpha=WAVE_ALPHA, zorder=2)
     else:
-        got = _cross_model_mean(per_model, 1 if mode == "mean_uv" else 2, lo=xlim[0], hi=xlim[1])
+        use = per_model if agree is None else {m: v for m, v in per_model.items() if m in agree}
+        if not use:
+            ax.set_xlim(*xlim)
+            return False
+        got = _cross_model_mean(use, 1 if mode == "mean_uv" else 2, lo=xlim[0], hi=xlim[1])
         if got is None:
             return False
         ax.plot(got[0], got[1], color=INK, lw=MEAN_LW, zorder=3)
@@ -773,13 +792,14 @@ def plot_instance_waveforms(ranked, models, out_dir, n=10, predictions_root=PRED
     drawn = 0
     for ax, (_, r) in zip(axes, top.iterrows()):
         drawn += _instance_panel(ax, waves.get((int(r["pair_id"]), r["direction"]), {}),
-                                 models, mode)
+                                 models, mode, agree=_agreeing(r, models))
         ax.set_title(_instance_title(r, len(models)), fontsize=7.5, pad=3)
         ax.tick_params(labelsize=6.5)
     for ax in axes[len(top):]:
         ax.set_visible(False)
 
-    ylab = {"models": "µV", "mean_uv": "µV (mean of 6)", "mean_z": "z (mean of 6)"}[mode]
+    ylab = {"models": "µV", "mean_uv": "µV (mean of agreeing)",
+            "mean_z": "z (mean of agreeing)"}[mode]
     for ax in axes[:len(top)]:
         if ax.get_subplotspec().rowspan.start == (len(top) - 1) // ncol:
             ax.set_xlabel("time from final tone onset (ms)", fontsize=8)
@@ -792,7 +812,8 @@ def plot_instance_waveforms(ranked, models, out_dir, n=10, predictions_root=PRED
         note = ("each panel autoscales, so read shape rather than one trace's depth against "
                 "another's")
     else:
-        handles = [Line2D([], [], color=INK, lw=MEAN_LW, label=f"mean of {len(models)} models")]
+        handles = [Line2D([], [], color=INK, lw=MEAN_LW,
+                          label="mean of the agreeing models (n_agree per panel)")]
         note = MEAN_MODE_NOTE[mode]
     fig.legend(handles=handles, loc="lower center", ncol=min(6, len(handles)), frameon=False,
                fontsize=8, bbox_to_anchor=(0.5, 0.093))
@@ -811,6 +832,88 @@ def plot_instance_waveforms(ranked, models, out_dir, n=10, predictions_root=PRED
     plt.close(fig)
     print(f"  wrote {name}  ({drawn} of {len(top)} panels carry traces)")
     return name
+
+
+def plot_instance_waveforms_per_model(ranked, models, out_dir, n=10,
+                                      predictions_root=PREDICTIONS, prefix="literature",
+                                      expect_n_deviants=None, panels=(2, 5), label=None):
+    """One 2x5 figure PER MODEL over the top `n` instances, in raw µV.
+
+    Split by model because the six models' µV scales differ ~5x (Caveat 2), so one trace per model
+    is the only way to see a model's own response shape without the largest of them setting the
+    axis. Each panel autoscales and prints that model's own scored `trough_uv` and its own
+    S7 verdict, so depth is read from the number rather than off a shared axis -- a shared axis
+    was tried and the widest-swinging stimulus flattened the rest of the row.
+    """
+    label = label or {"phase1": "Phase-1", "phase2": "Phase-2"}.get(prefix, prefix)
+    top = _with_std_dev(ranked).head(n)
+    if top.empty:
+        print("  skipped per-model instance waveforms: ranking is empty")
+        return []
+    waves = load_fcz_waves(top["pair_id"].unique().tolist(), models, predictions_root,
+                           expect_n_deviants=expect_n_deviants)
+    if not waves:
+        print("  skipped per-model instance waveforms: no prediction HDF5s readable")
+        return []
+
+    nrow, ncol = panels
+    lo_w, hi_w = MMN_WINDOW
+    written = []
+    for m in models:
+        traces = []
+        for _, r in top.iterrows():
+            got = waves.get((int(r["pair_id"]), r["direction"]), {}).get(m)
+            traces.append(got)
+        if not any(t is not None for t in traces):
+            print(f"  skipped per-model instance waveforms for {m}: no traces")
+            continue
+        # Each panel autoscales. A single shared axis per model is set by whichever stimulus
+        # swings widest -- on whisper-medium that was ±7.5 µV, which flattened the shallower
+        # methods into a line and hid exactly the shape the panel exists to show. Depth is not
+        # lost by autoscaling: every panel prints this model's own trough_uv in its title, which
+        # is the number the ranking uses and is exact rather than eyeballed off an axis.
+        fig, axes = plt.subplots(nrow, ncol, figsize=(2.55 * ncol, 2.25 * nrow + 0.75),
+                                 sharex=True, sharey=False)
+        axes = np.atleast_1d(axes).ravel()
+        for ax, (_, r), got in zip(axes, top.iterrows(), traces):
+            ax.grid(False)
+            ax.axvspan(lo_w, hi_w, color="#eef2f7", zorder=0)
+            ax.axhline(0, color="#bbbbbb", lw=0.8, zorder=1)
+            if got is not None:
+                tt, uv, _z = got
+                sel = (tt >= WAVE_XLIM[0]) & (tt <= WAVE_XLIM[1])
+                ax.plot(tt[sel], uv[sel], color=WAVE_MODEL_STYLE[m]["color"], lw=1.5, zorder=2)
+            # Spelled out with the floor, not a bare "S7": the verdict is floor-dependent, and a
+            # panel marked only "S7 ✗" reads as "no MMN" when what it means is "trough shallower
+            # than 0.75 µV". This model's own verdict, not the instance's.
+            agreed = "✓" if bool(r.get(f"s7__{m}", False)) else "✗"
+            tr = r.get(f"trough_uv__{m}", float("nan"))
+            tr_s = "n/a" if pd.isna(tr) else f"{tr:+.2f} µV"
+            ax.set_title(f"{r['rank']:.0f}. {r['method']}   S7@{DIP_UV_THRESHOLD:g} = {agreed}\n"
+                         f"{r['f_std']:g} → {r['f_dev']:g} Hz   n_agree "
+                         f"{int(r['n_agree'])}/{len(models)}   trough {tr_s}",
+                         fontsize=7.0, pad=3)
+            ax.tick_params(labelsize=6.5)
+            ax.set_xlim(*WAVE_XLIM)
+        for ax in axes[len(top):]:
+            ax.set_visible(False)
+        for ax in axes[:len(top)]:
+            if ax.get_subplotspec().rowspan.start == (len(top) - 1) // ncol:
+                ax.set_xlabel("time from final tone onset (ms)", fontsize=8)
+            if ax.get_subplotspec().is_first_col():
+                ax.set_ylabel("µV", fontsize=8)
+
+        fig.suptitle(f"{MLABEL[m]} — FCz µV difference wave, top {len(top)} {label} "
+                     f"direction-instances\nEach panel autoscales; `trough` in each title is this "
+                     f"model's own scored trough_uv, and S7@{DIP_UV_THRESHOLD:g} is its own "
+                     f"verdict — not the instance's", fontsize=9.5, y=0.985)
+        fig.tight_layout(rect=(0, 0.02, 1, 0.945))
+        name = f"{prefix}_waveforms__{m}.png"
+        savefig_both(fig, out_dir, name)
+        plt.close(fig)
+        written.append(name)
+        print(f"  wrote {name}  ({sum(x is not None for x in traces)} of {len(top)} panels)")
+    return written
 
 
 def plot_instance_panels_individual(ranked, models, out_dir, subdir, n=None,
@@ -841,11 +944,12 @@ def plot_instance_panels_individual(ranked, models, out_dir, subdir, n=None,
     written = []
     for _, r in sel.iterrows():
         fig, ax = plt.subplots(figsize=(5.4, 3.5))
-        ok = _instance_panel(ax, waves.get((int(r["pair_id"]), r["direction"]), {}), models, mode)
+        ok = _instance_panel(ax, waves.get((int(r["pair_id"]), r["direction"]), {}), models,
+                             mode, agree=_agreeing(r, models))
         ax.set_title(_instance_title(r, len(models)), fontsize=9.5, pad=6)
         ax.set_xlabel("time from final tone onset (ms)", fontsize=8.5)
-        ax.set_ylabel({"models": "µV", "mean_uv": "µV (mean of 6)",
-                       "mean_z": "z (mean of 6)"}[mode], fontsize=8.5)
+        ax.set_ylabel({"models": "µV", "mean_uv": "µV (mean of agreeing)",
+                       "mean_z": "z (mean of agreeing)"}[mode], fontsize=8.5)
         ax.tick_params(labelsize=7.5)
         if mode == "models":
             ax.legend(handles=[Line2D([], [], color=WAVE_MODEL_STYLE[m]["color"], lw=1.5,
@@ -1772,11 +1876,11 @@ def main():
                    help="shared y-window for the direction-only waveform panels "
                         f"(default {DIRECTION_YLIM[0]:g} {DIRECTION_YLIM[1]:g}); traces outside "
                         "it are clipped, not rescaled")
-    p.add_argument("--wave_units", choices=("z", "uv"), default="z",
-                   help="units for the direction-only waveform panels. 'z' (default) averages "
-                        "the baseline-z-scored trace the S2 verdict uses and is comparable "
-                        "across models; 'uv' averages raw microvolts, which Caveat 2 says are "
-                        "not cross-model comparable")
+    p.add_argument("--wave_units", choices=("z", "uv"), default="uv",
+                   help="units for the direction-only waveform panels. 'uv' (default) averages "
+                        "raw microvolts, which Caveat 2 says are not cross-model comparable; 'z' "
+                        "averages the baseline-z-scored trace the S2 verdict uses, which IS "
+                        "averageable across models but is no longer what the memo reports")
     args = p.parse_args()
 
     cfg = PHASE[args.phase]
@@ -1835,6 +1939,7 @@ def main():
         for mode in INSTANCE_MODES:
             plot_instance_waveforms(ranked, models, out_dir, n=args.n_instance,
                                     mode=mode, **wave_kw)
+        plot_instance_waveforms_per_model(ranked, models, out_dir, n=args.n_instance, **wave_kw)
         if not args.skip_panels:
             plot_instance_panels_individual(ranked, models, out_dir,
                                             f"{prefix}_panels", n=args.n_instance, **wave_kw)

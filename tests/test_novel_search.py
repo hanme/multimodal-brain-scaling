@@ -680,7 +680,7 @@ def test_phase1_results_script_emits_every_table_and_figure(scored_grid, tmp_pat
     for m in [m for m in MODELS if m in ("whisper-tiny", "whisper-base")]:
         assert (figs / f"phase1_strong_waveforms_1__{m}.png").stat().st_size > 5000, m
     # The ranking-structure panel is three standalone figures, not one 2x2 grid.
-    for name in ("phase1_strong_waveforms_1.png", "phase1_direction_waveforms_1.png",
+    for name in ("phase1_strong_waveforms_1.png", "phase1_direction_waveforms_uv_1.png",
                  "phase1_model_uv_box.png", "phase1_mean_uv_heatmap.png",
                  "phase1_yield_curve.png", "phase1_grid_position.png",
                  "phase1_direction_matrix.png"):
@@ -743,10 +743,10 @@ def test_phase1_results_script_refuses_a_short_slice(scored_grid, tmp_path):
     assert "do not have both directions" in r.stderr or "expected" in r.stderr
 
 
-def test_direction_waveform_uv_variant_does_not_overwrite_the_z_figures(scored_grid, tmp_path):
-    """The memo links the z figures. A --wave_units uv re-run must land beside them, not on
-    top of them -- otherwise the memo silently starts showing raw cross-model µV means, which
-    Caveat 2 says are not comparable."""
+def test_direction_waveform_z_variant_does_not_overwrite_the_uv_figures(scored_grid, tmp_path):
+    """The memo links the µV figures and no longer reports the z ones. A --wave_units z re-run
+    must land under its own stem, not on top of them -- the two are different quantities and a
+    reader has no way to tell which one a figure is from its filename alone."""
     results, figs = tmp_path / "results", tmp_path / "figs"
     results.mkdir()
     (results / "phase1_mmn_s7_roi.csv").write_text(Path(scored_grid["s7_csv"]).read_text())
@@ -757,12 +757,14 @@ def test_direction_waveform_uv_variant_does_not_overwrite_the_z_figures(scored_g
             "--literature_csv", str(tmp_path / "nope.csv")]
 
     assert subprocess.run(base, capture_output=True, text=True, cwd=REPO).returncode == 0
-    z_bytes = (figs / "phase1_direction_waveforms_1.png").read_bytes()
+    uv_bytes = (figs / "phase1_direction_waveforms_uv_1.png").read_bytes()
+    # The default run is µV, so the z stem must not exist at all until it is asked for.
+    assert not (figs / "phase1_direction_waveforms_1.png").exists()
 
-    r = subprocess.run(base + ["--wave_units", "uv"], capture_output=True, text=True, cwd=REPO)
+    r = subprocess.run(base + ["--wave_units", "z"], capture_output=True, text=True, cwd=REPO)
     assert r.returncode == 0, r.stdout + r.stderr
-    assert (figs / "phase1_direction_waveforms_uv_1.png").stat().st_size > 5000
-    assert (figs / "phase1_direction_waveforms_1.png").read_bytes() == z_bytes
+    assert (figs / "phase1_direction_waveforms_1.png").stat().st_size > 5000
+    assert (figs / "phase1_direction_waveforms_uv_1.png").read_bytes() == uv_bytes
 
 
 def test_fcz_waves_carry_both_the_uv_and_the_z_trace(scored_grid):

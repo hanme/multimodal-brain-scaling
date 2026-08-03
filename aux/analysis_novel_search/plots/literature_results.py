@@ -44,7 +44,8 @@ from novel_search_common import (                                      # noqa: E
 # reporting as well as of the scoring: if the novel tables change shape, these follow.
 from phase1_results import (                                           # noqa: E402
     load_literature, table_agreement_tiers, table_topn, plot_consensus_heatmap,
-    plot_instance_waveforms, plot_instance_panels_individual, INSTANCE_MODES,
+    plot_instance_waveforms, plot_instance_panels_individual,
+    plot_instance_waveforms_per_model, INSTANCE_MODES,
 )
 from novel_search_plots import configure_svg_output                    # noqa: E402
 
@@ -142,6 +143,9 @@ def main():
         # in each of the two units. The µV mean is the one to read with care (Caveat 2).
         for mode in INSTANCE_MODES:
             plot_instance_waveforms(ranked, models, out_dir, n=args.n_wave, mode=mode, **wave_kw)
+        # One figure per model, shared y-axis within the model so depth is comparable across
+        # these ten stimuli (never across models -- Caveat 2).
+        plot_instance_waveforms_per_model(ranked, models, out_dir, n=args.n_wave, **wave_kw)
 
     print(f"\n[5] one panel per stimulus -> {PANEL_SUBDIR}/")
     if args.skip_panels:

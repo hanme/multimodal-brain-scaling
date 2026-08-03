@@ -253,29 +253,17 @@ S2's recovery search follows a trough that may itself sit as late as 240 ms.
   predictions averaged over 15 deviant realizations, not trial-averaged EEG; read the presence and
   timing of a trough, not its fine shape.
 
-![The same ten panels in the same rank order, but each showing a single black line: the difference wave averaged across all six models in raw microvolts. Panels 3, 4 and 5, the three 1850 to 1000 Hz counter instances, descend steadily from about +1 microvolt before the tone to about -2.3 microvolts at the right-hand edge, with the descent continuing past the shaded 100 to 240 ms window rather than recovering inside it. Panels 1 and 2 dip to about -0.8 microvolts early in the window and return to zero. Panels 6 through 10 stay within roughly plus or minus 1 microvolt and several trend upward across the window rather than dipping.](plots/literature_waveforms_mean_uv.png)
+![The same ten panels in the same rank order, each showing a single black line: the difference wave averaged across only those models that satisfy S7 on that instance, in raw microvolts, with each panel autoscaled. Panels 1 and 2 dip to about -0.8 microvolts just before the shaded 100 to 240 ms window and then rise to a peak above +1 microvolt inside it. Panels 3, 4 and 5, the three 1850 to 1000 Hz counter instances, sit almost entirely below zero and descend to between -2.3 and -3.3 microvolts, with the lowest point at the right-hand edge rather than inside the window. Panel 6 dips to about -1 microvolt at the window's start and then climbs steadily to +2. Panels 7 and 8 trough near -0.85 microvolts inside the window and recover. Panel 9 stays between about -2 and +0.5 and panel 10 dips to -1.5 before the window then peaks at +2.2 inside it.](plots/literature_waveforms_mean_uv.png)
 
-**Figure 0.3. The same top 10, averaged across models in raw µV.** **Read this one with Caveat 2
-in hand**: the six models' µV scales differ by roughly fivefold, so this mean is dominated by
-wav2vec2-large and whisper-medium and is *not* a cross-model amplitude. It is included because it
-is the quantity `mean_uv` and `trough_uv` are computed in, so it shows what the ranking's numbers
-are made of — not because averaging µV across models is itself meaningful.
+**Figure 0.3. The same top 10, averaged over the agreeing models in raw µV.** The average covers
+**only the models that satisfy S7 on that instance** — between 3 and 5 of the 6 here, as the
+panel's own `n_agree` states — which is the rule `mean_uv` follows in the ranking, and for the
+same reason: a model that failed S2 has no MMN latency, so its trough is not a trough of the
+response being averaged. **Read this one with Caveat 2 in hand**: the models' µV scales differ by
+roughly fivefold, so the mean is dominated by whichever of wav2vec2-large and whisper-medium
+agreed, and is *not* a cross-model amplitude. It is here because it is the quantity `mean_uv` and
+`trough_uv` are computed in.
 
-![The same ten panels showing a single black line per panel: the difference wave baseline-z-scored within each model and then averaged across the six, on a shared vertical axis from about -1.7 to +1.4. Panels 3, 4 and 5 show a sharp trough reaching about -1.5 just inside the start of the shaded window, a partial recovery to about +0.4 mid-window, and then a second decline past the window's end. Panels 1 and 2 dip to about -0.5 near 130 ms and recover to +0.5 by 300 ms. Panel 6 rises steadily from about -0.2 to +1.3 with no trough, and panels 7 and 8 stay flat within about plus or minus 0.35. Panel 9 rises across the window and panel 10 oscillates between about -0.5 and +0.9.](plots/literature_waveforms_mean_z.png)
-
-**Figure 0.4. The same top 10, baseline-z-scored per model before averaging.** This is the trace
-the S2 verdict is actually computed on, and the only one of the two that can be averaged across
-models without mixing incomparable scales — so where Figure 0.3 shows what the ranking measured,
-this shows whether the six models agree on the *shape*. The axis is shared across panels.
-
-- **The two figures disagree about which instances look strongest, and the z version is the one to
-  trust.** In µV, panels 3–5 dominate purely because wav2vec2-large is in the average; in z they
-  are still the deepest, but by a margin of roughly 3× rather than 10×.
-- **Only three of the ten show a trough that recovers inside the window.** Panels 3–5 dip sharply
-  and partially recover; panels 1, 2 and 10 dip shallowly; panels 6 and 9 *rise* across the
-  window, and 7 and 8 are nearly flat. A rise is not a weak MMN, it is the opposite sign.
-- **The post-window decline in panels 3–5 is outside the readout.** It falls after 240 ms and the
-  criteria never see it, which is exactly why the axis stops at 360 ms.
 
 ### Section 0 summary
 - **The published set produces no unanimous stimulus.** 0 of 48 instances reach 6/6 and 2 reach
@@ -479,21 +467,24 @@ traces.
 - The de-overlaid per-model versions of this chunk are `phase1_strong_waveforms_1__<model>.png`,
   which share a y-axis within a model and so make pairs comparable to each other.
 
-![The same 30 panels with the six model traces collapsed to one line per direction: regular in blue solid, counter in orange dashed, on a shared vertical axis in z units fixed from -2 to 2, with no shaded band. In panel after panel the two lines are near mirror images about zero — where the regular line dips inside the shaded 100 to 240 ms window the counter line rises by a similar amount, and vice versa — rather than both dipping, which is what a deviance response would look like.](plots/phase1_direction_waveforms_1.png)
 
-**Figure 6. The top 30 pairs collapsed to one line per direction**, in z units so the six models
-can be averaged at all.
+![The same 30 panels with the six model traces collapsed to one line per direction: regular in blue solid, counter in orange dashed, in raw microvolts with each panel autoscaled. In panel after panel the two lines are near mirror images about zero — where the regular line dips inside the shaded 100 to 240 ms window the counter line rises by a similar amount, and vice versa — rather than both dipping, which is what a deviance response would look like.](plots/phase1_direction_waveforms_uv_1.png)
+
+**Figure 6. The top 30 pairs collapsed to one line per direction**, in raw µV. Each line is the
+mean across the six models, so **Caveat 2 applies**: the models' µV scales differ ~5×, and this
+average is weighted toward wav2vec2-large and whisper-medium. It is the direction *contrast* the
+figure is for, and that contrast is a within-panel comparison of two lines built the same way, so
+the scale mixing does not affect it.
 
 - **The two directions are near mirror images about zero** rather than both dipping in the window.
   A deviance response would dip both ways: reversing which tone is standard and which is deviant
   should not flip the sign of the response.
+- **Across the top 30 pairs, all 30 have opposite in-window signs**, and **not one has both
+  directions mean-negative**. The two directions' in-window traces correlate at **r = −0.23 on
+  average** (median −0.52, negative for 20 of 30).
 - **An anti-symmetric pair of traces is what a response driven by which tone arrives last looks
   like** — the same conclusion Table 8's empty `pairs_both` column and Figure 3's striping reach by
   other routes.
-- z is normalised per model by its own pre-onset baseline, so the mean is not simply whichever
-  model has the least amplitude shrinkage, and it is the trace the S2 verdict is computed on. The
-  raw-µV variant is `phase1_direction_waveforms_uv_1.png`; it shows the same pattern but is
-  dominated by wav2vec2-large and whisper-medium.
 
 ### Section 2 summary
 - **Agreement rises with deviance only over the first octave and then stops.** Mean n_agree goes
@@ -974,19 +965,20 @@ per-model traces (mirrors Figure 5).
 - The de-overlaid per-model versions are `phase2_strong_waveforms_1__<model>.png`, which share a
   y-axis within a model and annotate each panel with that model's own n_agree for both directions.
 
-![The same 30 Phase-2 panels with the six model traces collapsed to one line per direction: regular in blue solid, counter in orange dashed, on a shared vertical axis in z units fixed from -2 to 2, with no shaded band. The mirror-image pattern is stark and near-universal: in essentially every panel the blue regular line dips below zero inside the shaded 100 to 240 ms window while the orange counter line rises above zero across the same window by a comparable amount, and the two cross near the window's start. Very few panels show both lines dipping together.](plots/phase2_direction_waveforms_1.png)
 
-**Figure 15. The Phase-2 top 30 collapsed to one line per direction**, in z units (mirrors
-Figure 6). The raw-µV variant is `phase2_direction_waveforms_uv_1.png`.
+![The same 30 Phase-2 panels with the six model traces collapsed to one line per direction: regular in blue solid, counter in orange dashed, in raw microvolts with each panel autoscaled. The mirror-image pattern is stark and near-universal: in essentially every panel the blue regular line dips below zero inside the shaded 100 to 240 ms window while the orange counter line rises above zero across the same window by a comparable amount, and the two cross near the window's start. Very few panels show both lines dipping together.](plots/phase2_direction_waveforms_uv_1.png)
+
+**Figure 15. The Phase-2 top 30 collapsed to one line per direction**, in raw µV (mirrors
+Figure 6). Caveat 2 applies to the absolute heights, not to the direction contrast the figure is
+for.
 
 - **This is the sharpest single statement of the frequency-preference result in the memo.** Across
-  the top 30 pairs the two directions' in-window z traces correlate at **r = −0.48 on average**
-  (median −0.61, negative for 26 of 30), and **not one of the 30 pairs has both directions
-  mean-negative inside the scoring window** — all 30 have opposite signs.
+  the top 30 pairs, **not one has both directions mean-negative inside the scoring window** and
+  **all 30 have opposite signs**. The two directions' in-window traces correlate at **r = −0.35 on
+  average** (median −0.63, negative for 21 of 30).
 - **Fifteen deviants made this cleaner, not weaker.** The same measurement on Phase 1's top 30
-  gives mean r = −0.42 with 1 of 30 pairs dipping both ways and 28 of 30 with opposite signs. The
-  anti-symmetry was not an artifact of the single draw; averaging removed the noise that partly
-  masked it.
+  gives mean r = −0.23 with a median of −0.52 — the anti-symmetry was not an artifact of the
+  single draw, and averaging sharpened it.
 - **A deviance response would dip both ways**: reversing which tone is standard and which is
   deviant should not flip the sign of the response. An anti-symmetric pair of traces is what a
   response driven by *which tone arrives last* looks like.
@@ -998,27 +990,22 @@ and 15, which take the top 30 *pairs* and draw the regular direction of each, th
 10 *direction-instances* in the ranking's own order — so `method_1066_counter` at rank 8 is drawn
 as the counter instance that was actually scored.
 
-![The same ten Phase-2 panels showing a single black line each: the difference wave averaged across all six models in raw microvolts. Every panel dips below zero inside or just before the shaded 100 to 240 ms window, with troughs between about -0.7 and -2.0 microvolts, and then rises steeply to a positive peak of +1 to +2 microvolts shortly after the window closes. Panel 10, method_1740, is the deepest at about -2.0 microvolts.](plots/phase2_waveforms_mean_uv.png)
+![The same ten Phase-2 panels showing a single black line each: the difference wave averaged across only the models that satisfy S7 on that instance — all six in nine of the ten panels — in raw microvolts. Every panel dips below zero inside or just before the shaded 100 to 240 ms window, with troughs between about -0.7 and -2.0 microvolts, and then rises steeply to a positive peak of +1 to +2 microvolts shortly after the window closes. Panel 10, method_1740, is the deepest at about -2.0 microvolts.](plots/phase2_waveforms_mean_uv.png)
 
-**Figure 15b. The Phase-2 top 10, averaged across models in raw µV.** As with Figure 0.3, this is
-dominated by wav2vec2-large and whisper-medium and is **not** a cross-model amplitude (Caveat 2);
-it is shown because it is the quantity `mean_uv` is computed in.
+**Figure 15b. The Phase-2 top 10, averaged over the agreeing models in raw µV.** Same rule as
+Figure 0.3: the average covers **only the models satisfying S7 on that instance**, which for nine
+of these ten is all six, so 15b and its all-model equivalent differ in one panel only. As with
+Figure 0.3 it is dominated by whichever of wav2vec2-large and whisper-medium agreed and is **not**
+a cross-model amplitude (Caveat 2); it is shown because it is the quantity `mean_uv` is computed
+in.
 
-![The same ten Phase-2 panels showing a single black line each: the difference wave baseline-z-scored within each model and then averaged across the six, on a shared vertical axis from about -1.6 to +1.1. Every one of the ten panels dips to a trough between about -0.5 and -1.6 inside the shaded 100 to 240 ms window and then recovers upward toward or above zero by 300 ms. The traces are visibly smoother than the corresponding literature figure.](plots/phase2_waveforms_mean_z.png)
+- **Every one of the ten dips inside or just before the window and rebounds after it.** That
+  rebound falls outside 100–240 ms and is not part of the MMN — the axis stops at 360 ms so it
+  cannot be mistaken for one.
+- **Nine of the ten are unanimous**, so the mean is not averaging away a disagreement; the
+  individual traces in Figure 15a dip together rather than cancelling. Contrast Figure 0.3, where
+  no literature instance is unanimous and the average covers 3–5 models.
 
-**Figure 15c. The Phase-2 top 10, baseline-z-scored per model before averaging** — the trace the
-S2 verdict is computed on, and the version to read for whether the six models agree on shape.
-
-- **All ten show a trough inside the window and a recovery after it.** This is the shape the
-  criteria are looking for, and it is the clearest contrast with the literature set: Figure 0.4's
-  ten panels include two that *rise* across the window and two that are flat, whereas here the
-  z-mean dips in ten of ten.
-- **That is what n_agree 6/6 looks like when it is real.** Nine of these ten are unanimous, so the
-  cross-model mean is not averaging away a disagreement — the individual traces in Figure 15a dip
-  together rather than cancelling.
-- **The positive rebound just after the window is present in every panel** and is not part of the
-  MMN: it falls outside 100–240 ms, and the axis stops at 360 ms precisely so this rebound cannot
-  be mistaken for one.
 
 **Table 15. Phase-2 top-50 direction-instances** (`plots/phase2_top50.csv`; mirrors Table 10).
 **P1 rank** is the same instance's position in the 1,806-long Phase-1 ranking.
@@ -1491,12 +1478,25 @@ Phase-1 predictions skips the figure loudly instead of mislabelling it.
 **Every waveform panel is drawn over −120 to 360 ms** (`WAVE_XLIM`), the full span the MMN
 criteria read out over and no further: S2's recovery search follows a trough that may itself sit
 as late as 240 ms and looks six 20 ms samples past it. Drawing further showed post-epoch drift the
-verdict never saw. **`--n_instance N`** sets how many top *direction-instances* get the
-three-view figures (`<prefix>_waveforms{,_mean_uv,_mean_z}.png`) and an individual panel each;
-those panels are written one file per stimulus under `plots/<prefix>_panels/` and
-`svgs/<prefix>_panels/` and are deliberately **not** embedded in this memo — they exist so a
-single stimulus can be inspected full-size. `--skip_panels` suppresses them.
-`literature_results.py` writes all 48 of its stimuli that way, not just its top 10.
+verdict never saw.
+
+**Every waveform figure in this memo is in raw µV.** `--wave_units` defaults to `uv`; the
+baseline-z-scored variants are no longer reported, though `--wave_units z` still produces the
+direction figure in z if it is ever wanted. Where a figure averages across models it averages over
+**only the models that satisfy S7 on that instance** — the same rule `mean_uv` follows, since a
+model that failed S2 has no MMN latency to contribute. Caveat 2 therefore applies to every
+cross-model µV height in these figures, but not to the within-panel direction contrast of
+Figures 6 and 15, which compares two lines built the same way.
+
+**`--n_instance N`** sets how many top *direction-instances* get the per-instance figures. Each
+set produces `<prefix>_waveforms.png` (all six models overlaid), `<prefix>_waveforms_mean_uv.png`
+(the agreeing-models mean), and one `<prefix>_waveforms__<model>.png` per model — the last carry a
+shared y-axis within the model, so trough depth is comparable across those ten stimuli, and each
+panel is marked `S7@0.75 = ✓/✗` for that model specifically. One figure per stimulus is also
+written under `plots/<prefix>_panels/` and `svgs/<prefix>_panels/`; those are deliberately **not**
+embedded here — they exist so a single stimulus can be inspected full-size. `--skip_panels`
+suppresses them. `literature_results.py` writes all 48 of its stimuli that way, not just its
+top 10.
 
 `novel_search_plots.py --skip_phase1_figures` writes
 the Phase-2 counterpart of Figure 2 (`novel_n_agree_heatmap_phase2.png`) and the Section-7
