@@ -204,12 +204,39 @@ It requires `MMN_NAME_BY_STIM_ID=true` (which the submitter already passes) and 
 several tasks write into the same `mmn-<method>-delta-t` directory at once, and only stimulus-id
 naming guarantees one file per clip with no clobbering.
 
-**Gate before fanning out**, per the house pattern — run one model × 2 methods first, then:
+**Gate before fanning out**, per the house pattern — run one model × 2 methods first, then check it
+on the login node (one model is cheap enough):
 
 ```bash
 python scripts/check_novel_features.py --model_id whisper-tiny \
     --method_list $PWD/outputs/soafix_methods.txt --features_tag soafix --expect_clips 16
 ```
+
+**When the full fan-out finishes**, check all seven models as a batch job — it opens every HDF5 in
+every method dir (7 × 24 × 16 = 2688 files), which is too much IO for the login node:
+
+```bash
+MODELS="whisper-tiny,whisper-base,whisper-small,whisper-medium,whisper-large,wav2vec2-medium,wav2vec2-large" \
+METHOD_LIST=outputs/soafix_methods.txt \
+FEATURES_TAG=soafix \
+EXPECT_CLIPS=16 \
+    sbatch scripts/slurm_check_novel_features.sh
+```
+
+The exit code is the contract: 0 = every directory clean.
+`sacct -j <jobid> --format=JobID,State,ExitCode`.
+
+Three easy mistakes here:
+
+- **`MODELS` is COMMA-separated for this script**, unlike the space-separated `$SOAFIX_MODELS` the
+  submitters take — `check_novel_features.py` does `args.models.split(",")`.
+- **Set the variables in the shell, not via `--export`.** `sbatch --export` uses commas as its own
+  separator, so `--export=ALL,MODELS=a,b,c` would read `b` and `c` as separate variables. Plain
+  `VAR=... sbatch ...` works because sbatch propagates the submitting environment by default.
+- **The wrapper defaults to `MODELS=all`, which silently drops whisper-large** — `SEARCH_MODELS` in
+  `check_novel_features.py` is the six-model *search* set. Same trap as both submitters; pass the
+  seven explicitly. (Do not "fix" `SEARCH_MODELS`: the novel-search ranking arithmetic is defined
+  over exactly those six.)
 
 Writes `outputs/features/<model>-mmn-soafix/mmn-<method>-delta-t`. 7 models × 24 conditions ×
 16 clips = **2688 clips**; budget **700–1200 core-hours** (whisper-large hooks 32 layers and
