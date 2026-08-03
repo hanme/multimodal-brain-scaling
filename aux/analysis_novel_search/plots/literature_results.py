@@ -27,13 +27,9 @@ import argparse
 import sys
 from pathlib import Path
 
-import numpy as np
-import pandas as pd
 import matplotlib as mpl
 
 mpl.use("Agg")
-import matplotlib.pyplot as plt                                        # noqa: E402
-from matplotlib.lines import Line2D                                    # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[2]
@@ -47,11 +43,10 @@ from novel_search_common import (                                      # noqa: E
 # Importing them rather than restating them is what makes "scored identically" true of the
 # reporting as well as of the scoring: if the novel tables change shape, these follow.
 from phase1_results import (                                           # noqa: E402
-    MMN_WINDOW, WAVE_MODEL_STYLE, WAVE_LW, WAVE_ALPHA,
     load_literature, table_agreement_tiers, table_topn, plot_consensus_heatmap,
-    load_fcz_waves,
+    plot_instance_waveforms, plot_instance_panels_individual, INSTANCE_MODES,
 )
-from novel_search_plots import MLABEL, MUTED, configure_svg_output, savefig_both  # noqa: E402
+from novel_search_plots import configure_svg_output                    # noqa: E402
 
 OUT = HERE
 # Not phase1_results.LITERATURE: that module's default is the superseded screen, kept so an old
@@ -69,12 +64,10 @@ N_DEVIANTS = 15
 # construction, and is kept so the ramp has its ceiling visible.
 LIT_TOP_X = (2, 4, 6, 8, 10, 15, 20, 25, 30, 40, 48)
 
-# The MMN criteria read out to 360 ms past the final tone's onset (S2's recovery search can sit as
-# late as 240 ms and looks 6 samples beyond). Drawing to exactly that bound shows the whole span
-# the verdict was computed over and no more.
-WAVE_WINDOW = (-120.0, 360.0)
+# The x-window itself lives in phase1_results.WAVE_XLIM, shared with every other waveform figure.
 N_WAVE = 10
-PANELS = (2, 5)
+# Where the one-figure-per-stimulus panels go, under plots/ and svgs/ alike.
+PANEL_SUBDIR = "literature_panels"
 
 
 def load_literature_ranked(lit_csv=LITERATURE, models=None):
@@ -106,85 +99,6 @@ def load_literature_ranked(lit_csv=LITERATURE, models=None):
     return lit
 
 
-def plot_literature_waveforms(ranked, models, out_dir, n=N_WAVE,
-                              predictions_root=PREDICTIONS, prefix="literature",
-                              expect_n_deviants=N_DEVIANTS):
-    """FCz µV difference wave for the top `n` direction-INSTANCES of the literature ranking.
-
-    Instances, not pairs. The novel figure draws the regular direction of its top pairs because
-    the novel ranking is led by regular instances; the literature ranking is not -- five of its
-    top ten are `_counter`, and drawing method_19's regular trace under a panel titled by
-    method_19_counter's rank would show a trace the ranking never scored.
-
-    Each panel autoscales: the six models' predicted µV scales differ by ~5x (Caveat 2), so a
-    shared axis is set by wav2vec2-large and flattens the whisper traces into a line at zero.
-    Read shape, never one trace's depth against another's.
-    """
-    top = ranked.head(n)
-    if top.empty:
-        print("  skipped waveforms: ranking is empty")
-        return None
-    waves = load_fcz_waves(top["pair_id"].unique().tolist(), models, predictions_root,
-                           expect_n_deviants=expect_n_deviants)
-    if not waves:
-        print("  skipped waveforms: no prediction HDF5s readable")
-        return None
-
-    lo_w, hi_w = MMN_WINDOW
-    lo_x, hi_x = WAVE_WINDOW
-    nrow, ncol = PANELS
-    # +1.0in of height is reserved below the axes for the legend and the two caption lines;
-    # tight_layout's rect keeps the panels out of it so the three never overlap.
-    fig, axes = plt.subplots(nrow, ncol, figsize=(2.55 * ncol, 2.25 * nrow + 1.0),
-                             sharex=True, sharey=False)
-    axes = np.atleast_1d(axes).ravel()
-
-    drawn = 0
-    for ax, (_, r) in zip(axes, top.iterrows()):
-        ax.grid(False)
-        ax.axvspan(lo_w, hi_w, color="#eef2f7", zorder=0)
-        ax.axhline(0, color="#bbbbbb", lw=0.8, zorder=1)
-        per_model = waves.get((int(r["pair_id"]), r["direction"]), {})
-        for m, (tt, uv, _z) in per_model.items():
-            sel = (tt >= lo_x) & (tt <= hi_x)
-            ax.plot(tt[sel], uv[sel], color=WAVE_MODEL_STYLE[m]["color"], lw=WAVE_LW,
-                    alpha=WAVE_ALPHA, zorder=2)
-        drawn += bool(per_model)
-        ax.set_title(f"{r['rank']:.0f}. {r['method']}\n{r['f_std']:g} → {r['f_dev']:g} Hz   "
-                     f"n_agree {int(r['n_agree'])}/{len(models)}   {r['mean_uv']:+.2f} µV",
-                     fontsize=7.5, pad=3)
-        ax.tick_params(labelsize=6.5)
-        ax.set_xlim(lo_x, hi_x)
-    for ax in axes[len(top):]:
-        ax.set_visible(False)
-
-    for ax in axes[:len(top)]:
-        if ax.get_subplotspec().rowspan.start == (len(top) - 1) // ncol:
-            ax.set_xlabel("time from final tone onset (ms)", fontsize=8)
-        if ax.get_subplotspec().is_first_col():
-            ax.set_ylabel("µV", fontsize=8)
-
-    handles = [Line2D([], [], color=WAVE_MODEL_STYLE[m]["color"], lw=1.6, label=MLABEL[m])
-               for m in models]
-    fig.legend(handles=handles, loc="lower center", ncol=6, frameon=False, fontsize=8,
-               bbox_to_anchor=(0.5, 0.093))
-    fig.suptitle(f"FCz µV difference wave, top {len(top)} literature direction-instances\n"
-                 f"ranked by n_agree then mean_uv; each panel autoscales, so read shape rather "
-                 f"than one trace's depth against another's", fontsize=9.5, y=0.985)
-    fig.tight_layout(rect=(0, 0.155, 1, 0.945))
-    fig.text(0.5, 0.070,
-             f"Shaded band = the {lo_w:g}–{hi_w:g} ms MMN scoring window. The axis runs to "
-             f"{hi_x:g} ms, the full span the criteria read out over: S2's recovery search "
-             f"follows a trough that\nmay sit as late as 240 ms. `_counter` panels are the "
-             f"reversed direction, so their standard is the pair's higher tone.",
-             ha="center", va="top", fontsize=8, color=MUTED, linespacing=1.5)
-    name = f"{prefix}_waveforms.png"
-    savefig_both(fig, out_dir, name)
-    plt.close(fig)
-    print(f"  wrote {name}  ({drawn} of {len(top)} panels carry traces)")
-    return name
-
-
 def main():
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -197,6 +111,8 @@ def main():
     p.add_argument("--n_wave", type=int, default=N_WAVE,
                    help=f"how many top instances get a waveform panel (default {N_WAVE})")
     p.add_argument("--skip_waveforms", action="store_true")
+    p.add_argument("--skip_panels", action="store_true",
+                   help="skip the one-figure-per-stimulus panels (48 figures x PNG+SVG)")
     args = p.parse_args()
 
     out_dir = Path(args.out_dir)
@@ -215,12 +131,25 @@ def main():
     print("\n[3] consensus yield")
     plot_consensus_heatmap(ranked, models, out_dir, prefix="literature", thresholds=LIT_TOP_X)
 
+    wave_kw = dict(predictions_root=args.predictions_root, prefix="literature",
+                   expect_n_deviants=N_DEVIANTS)
+
     print(f"\n[4] waveforms for the top {args.n_wave}")
     if args.skip_waveforms:
         print("  skipped (--skip_waveforms)")
     else:
-        plot_literature_waveforms(ranked, models, out_dir, n=args.n_wave,
-                                  predictions_root=args.predictions_root)
+        # Three views of the same ten instances: every model overlaid, and the cross-model mean
+        # in each of the two units. The µV mean is the one to read with care (Caveat 2).
+        for mode in INSTANCE_MODES:
+            plot_instance_waveforms(ranked, models, out_dir, n=args.n_wave, mode=mode, **wave_kw)
+
+    print(f"\n[5] one panel per stimulus -> {PANEL_SUBDIR}/")
+    if args.skip_panels:
+        print("  skipped (--skip_panels)")
+    else:
+        # All 48, not just the top 10: the point of this directory is that any literature
+        # stimulus can be looked at on its own, including the ones the ranking puts last.
+        plot_instance_panels_individual(ranked, models, out_dir, PANEL_SUBDIR, **wave_kw)
 
 
 if __name__ == "__main__":

@@ -253,6 +253,30 @@ S2's recovery search follows a trough that may itself sit as late as 240 ms.
   predictions averaged over 15 deviant realizations, not trial-averaged EEG; read the presence and
   timing of a trough, not its fine shape.
 
+![The same ten panels in the same rank order, but each showing a single black line: the difference wave averaged across all six models in raw microvolts. Panels 3, 4 and 5, the three 1850 to 1000 Hz counter instances, descend steadily from about +1 microvolt before the tone to about -2.3 microvolts at the right-hand edge, with the descent continuing past the shaded 100 to 240 ms window rather than recovering inside it. Panels 1 and 2 dip to about -0.8 microvolts early in the window and return to zero. Panels 6 through 10 stay within roughly plus or minus 1 microvolt and several trend upward across the window rather than dipping.](plots/literature_waveforms_mean_uv.png)
+
+**Figure 0.3. The same top 10, averaged across models in raw µV.** **Read this one with Caveat 2
+in hand**: the six models' µV scales differ by roughly fivefold, so this mean is dominated by
+wav2vec2-large and whisper-medium and is *not* a cross-model amplitude. It is included because it
+is the quantity `mean_uv` and `trough_uv` are computed in, so it shows what the ranking's numbers
+are made of — not because averaging µV across models is itself meaningful.
+
+![The same ten panels showing a single black line per panel: the difference wave baseline-z-scored within each model and then averaged across the six, on a shared vertical axis from about -1.7 to +1.4. Panels 3, 4 and 5 show a sharp trough reaching about -1.5 just inside the start of the shaded window, a partial recovery to about +0.4 mid-window, and then a second decline past the window's end. Panels 1 and 2 dip to about -0.5 near 130 ms and recover to +0.5 by 300 ms. Panel 6 rises steadily from about -0.2 to +1.3 with no trough, and panels 7 and 8 stay flat within about plus or minus 0.35. Panel 9 rises across the window and panel 10 oscillates between about -0.5 and +0.9.](plots/literature_waveforms_mean_z.png)
+
+**Figure 0.4. The same top 10, baseline-z-scored per model before averaging.** This is the trace
+the S2 verdict is actually computed on, and the only one of the two that can be averaged across
+models without mixing incomparable scales — so where Figure 0.3 shows what the ranking measured,
+this shows whether the six models agree on the *shape*. The axis is shared across panels.
+
+- **The two figures disagree about which instances look strongest, and the z version is the one to
+  trust.** In µV, panels 3–5 dominate purely because wav2vec2-large is in the average; in z they
+  are still the deepest, but by a margin of roughly 3× rather than 10×.
+- **Only three of the ten show a trough that recovers inside the window.** Panels 3–5 dip sharply
+  and partially recover; panels 1, 2 and 10 dip shallowly; panels 6 and 9 *rise* across the
+  window, and 7 and 8 are nearly flat. A rise is not a weak MMN, it is the opposite sign.
+- **The post-window decline in panels 3–5 is outside the readout.** It falls after 240 ms and the
+  criteria never see it, which is exactly why the axis stops at 360 ms.
+
 ### Section 0 summary
 - **The published set produces no unanimous stimulus.** 0 of 48 instances reach 6/6 and 2 reach
   5/6; 73% sit at 2 or 3 of 6.
@@ -444,7 +468,7 @@ same colour mean the same number.
   grid's −3.44 to +1.11 µV range, so the shared normalisation shows the literature set at full
   contrast rather than saturating it at the ramp end.
 
-![Small-multiple grid of 30 panels, one per pair in the top 30 of the ranking. Each panel plots the FCz microvolt difference wave against time from -120 to 460 ms for the regular direction only, with the six models overlaid in Okabe-Ito colours and wav2vec2-large re-hued violet. The 100-240 ms scoring window is shaded and the zero line marked, and each panel autoscales because the models' microvolt scales differ by roughly fivefold. Whisper medium in orange and wav2vec2 large in violet swing several times wider than the four other models, both above and below zero.](plots/phase1_strong_waveforms_1.png)
+![Small-multiple grid of 30 panels, one per pair in the top 30 of the ranking. Each panel plots the FCz microvolt difference wave against time from -120 to 360 ms for the regular direction only, with the six models overlaid in Okabe-Ito colours and wav2vec2-large re-hued violet. The 100-240 ms scoring window is shaded and the zero line marked, and each panel autoscales because the models' microvolt scales differ by roughly fivefold. Whisper medium in orange and wav2vec2 large in violet swing several times wider than the four other models, both above and below zero.](plots/phase1_strong_waveforms_1.png)
 
 **Figure 5. FCz µV difference waves for the top 30 pairs**, regular direction only, six per-model
 traces.
@@ -937,7 +961,7 @@ number of times in each role, so the two halves of a row are comparable.
 - **Fifteen deviants push the two roles further apart, not closer** — the effect is not an artifact
   of a single noisy draw.
 
-![Small-multiple grid of 30 panels, one per pair in the Phase-2 top 30. Each panel plots the FCz microvolt difference wave against time from -120 to 460 ms for the regular direction only, with the six models overlaid in Okabe-Ito colours and wav2vec2-large re-hued violet. The 100-240 ms scoring window is shaded and each panel autoscales. Compared with the Phase-1 version the per-model traces are visibly smoother, the 15-deviant mean having removed much of the sample-to-sample jitter, though whisper medium in orange still swings to large positive excursions just after the window and wav2vec2 large in violet still carries the widest range.](plots/phase2_strong_waveforms_1.png)
+![Small-multiple grid of 30 panels, one per pair in the Phase-2 top 30. Each panel plots the FCz microvolt difference wave against time from -120 to 360 ms for the regular direction only, with the six models overlaid in Okabe-Ito colours and wav2vec2-large re-hued violet. The 100-240 ms scoring window is shaded and each panel autoscales. Compared with the Phase-1 version the per-model traces are visibly smoother, the 15-deviant mean having removed much of the sample-to-sample jitter, though whisper medium in orange still swings to large positive excursions just after the window and wav2vec2 large in violet still carries the widest range.](plots/phase2_strong_waveforms_1.png)
 
 **Figure 14. FCz µV difference waves for the Phase-2 top 30 pairs**, regular direction only, six
 per-model traces (mirrors Figure 5).
@@ -966,6 +990,35 @@ Figure 6). The raw-µV variant is `phase2_direction_waveforms_uv_1.png`.
 - **A deviance response would dip both ways**: reversing which tone is standard and which is
   deviant should not flip the sign of the response. An anti-symmetric pair of traces is what a
   response driven by *which tone arrives last* looks like.
+
+![Small-multiple grid of ten panels in two rows of five, one per instance in the Phase-2 top 10, each plotting the FCz microvolt difference wave from -120 to 360 ms after the final tone with the six models overlaid in Okabe-Ito colours and wav2vec2-large re-hued violet. The 100-240 ms scoring window is shaded and each panel autoscales. Nine of the ten panels are titled n_agree 6 of 6 and the tenth, method_1740, is 5 of 6. In most panels the whisper tiny, base, small and wav2vec2 medium traces cluster within about plus or minus 2 microvolts and drift downward together through the shaded window, while whisper medium in orange rises to a large positive peak of 6 to 9 microvolts just after the window ends and wav2vec2 large in violet carries the widest negative range.](plots/phase2_waveforms.png)
+
+**Figure 15a. The Phase-2 top 10 by ranked instance**, all six models overlaid. Unlike Figures 14
+and 15, which take the top 30 *pairs* and draw the regular direction of each, this takes the top
+10 *direction-instances* in the ranking's own order — so `method_1066_counter` at rank 8 is drawn
+as the counter instance that was actually scored.
+
+![The same ten Phase-2 panels showing a single black line each: the difference wave averaged across all six models in raw microvolts. Every panel dips below zero inside or just before the shaded 100 to 240 ms window, with troughs between about -0.7 and -2.0 microvolts, and then rises steeply to a positive peak of +1 to +2 microvolts shortly after the window closes. Panel 10, method_1740, is the deepest at about -2.0 microvolts.](plots/phase2_waveforms_mean_uv.png)
+
+**Figure 15b. The Phase-2 top 10, averaged across models in raw µV.** As with Figure 0.3, this is
+dominated by wav2vec2-large and whisper-medium and is **not** a cross-model amplitude (Caveat 2);
+it is shown because it is the quantity `mean_uv` is computed in.
+
+![The same ten Phase-2 panels showing a single black line each: the difference wave baseline-z-scored within each model and then averaged across the six, on a shared vertical axis from about -1.6 to +1.1. Every one of the ten panels dips to a trough between about -0.5 and -1.6 inside the shaded 100 to 240 ms window and then recovers upward toward or above zero by 300 ms. The traces are visibly smoother than the corresponding literature figure.](plots/phase2_waveforms_mean_z.png)
+
+**Figure 15c. The Phase-2 top 10, baseline-z-scored per model before averaging** — the trace the
+S2 verdict is computed on, and the version to read for whether the six models agree on shape.
+
+- **All ten show a trough inside the window and a recovery after it.** This is the shape the
+  criteria are looking for, and it is the clearest contrast with the literature set: Figure 0.4's
+  ten panels include two that *rise* across the window and two that are flat, whereas here the
+  z-mean dips in ten of ten.
+- **That is what n_agree 6/6 looks like when it is real.** Nine of these ten are unanimous, so the
+  cross-model mean is not averaging away a disagreement — the individual traces in Figure 15a dip
+  together rather than cancelling.
+- **The positive rebound just after the window is present in every panel** and is not part of the
+  MMN: it falls outside 100–240 ms, and the axis stops at 360 ms precisely so this rebound cannot
+  be mistaken for one.
 
 **Table 15. Phase-2 top-50 direction-instances** (`plots/phase2_top50.csv`; mirrors Table 10).
 **P1 rank** is the same instance's position in the 1,806-long Phase-1 ranking.
@@ -1405,7 +1458,7 @@ done
 
 python aux/analysis_novel_search/plots/phase1_results.py --phase 2 --skip_deviance \
     --literature_csv outputs/results_soafix/mmn_s7_roi.csv \
-    --predictions_root outputs/insilico_mmn_predictions_novel_phase2   # Section 6, incl. Figs 13-14
+    --predictions_root outputs/insilico_mmn_predictions_novel_phase2   # Section 6, incl. Figs 13-15c
 python aux/analysis_novel_search/plots/phase1_results.py --phase 2 --only_waveforms \
     --wave_units uv \
     --predictions_root outputs/insilico_mmn_predictions_novel_phase2   # the raw-µV waveform variant
@@ -1433,7 +1486,19 @@ literature overlay from the grid-position figure, which is why the raw-µV pass 
 for the waveforms cannot rewrite unrelated figures from a different configuration. `--wave_ylim
 LO HI` changes the shared y-window. The waveform panels read the prediction HDF5s and check each
 file's `n_deviants` attribute against the phase being rendered, so pointing a Phase-2 run at
-Phase-1 predictions skips the figure loudly instead of mislabelling it. `novel_search_plots.py --skip_phase1_figures` writes
+Phase-1 predictions skips the figure loudly instead of mislabelling it.
+
+**Every waveform panel is drawn over −120 to 360 ms** (`WAVE_XLIM`), the full span the MMN
+criteria read out over and no further: S2's recovery search follows a trough that may itself sit
+as late as 240 ms and looks six 20 ms samples past it. Drawing further showed post-epoch drift the
+verdict never saw. **`--n_instance N`** sets how many top *direction-instances* get the
+three-view figures (`<prefix>_waveforms{,_mean_uv,_mean_z}.png`) and an individual panel each;
+those panels are written one file per stimulus under `plots/<prefix>_panels/` and
+`svgs/<prefix>_panels/` and are deliberately **not** embedded in this memo — they exist so a
+single stimulus can be inspected full-size. `--skip_panels` suppresses them.
+`literature_results.py` writes all 48 of its stimuli that way, not just its top 10.
+
+`novel_search_plots.py --skip_phase1_figures` writes
 the Phase-2 counterpart of Figure 2 (`novel_n_agree_heatmap_phase2.png`) and the Section-7
 cross-phase outputs, leaving the committed Phase-1 figures untouched.
 

@@ -94,11 +94,17 @@ from analyze_mmn_criteria import compute_z_diff                        # noqa: E
 # would read as meaning.
 from novel_search_plots import (                                       # noqa: E402
     MODEL_STYLE, MLABEL, POOL_COLOR, INK, MUTED, REF_STYLE, EMPTY_CELL, SEQ_CMAP,
-    configure_svg_output, savefig_both,
+    configure_svg_output, savefig_both, default_svg_dir,
 )
 
 STRONG_TIER = 5               # "strong" = a direction-instance with n_agree >= this
 MMN_WINDOW = (100.0, 240.0)   # the scoring window, shaded in the waveform panels
+# The x-window every waveform panel is drawn over, shared so the figures stay comparable. The
+# upper bound is the full span the MMN criteria read out over and no further: S2's recovery search
+# follows a trough that may itself sit as late as 240 ms and looks six 20 ms samples past it.
+# Drawing beyond 360 ms showed post-epoch drift the verdict never saw -- on the literature panels
+# that drift was the deepest ink on the figure and read as part of the response.
+WAVE_XLIM = (-120.0, 360.0)
 N_TOP = 50
 PANELS_PER_FIG = (5, 6)       # rows x cols of the waveform small-multiples
 N_WAVE = 30                   # waveform figures cover the top N pairs of the ranking
@@ -252,6 +258,19 @@ def _n_deviants_in(h5):
     return None
 
 
+def _padded(key):
+    """`method_9` -> `method_09`, preserving any `_counter` suffix.
+
+    The literature stimulus directories are zero-padded to two digits, but `rank_directions`
+    rebuilds the label from an int pair_id and so writes `method_9`. Every literature id except 9
+    is already two digits, which is why the mismatch cost exactly two silently blank panels rather
+    than an error. Looked up as a FALLBACK, so the novel grid's four-digit ids are untouched.
+    """
+    head, sep, _ = key.partition("_counter")
+    num = head[len("method_"):]
+    return f"method_{int(num):02d}{sep}" if num.isdigit() else key
+
+
 def load_fcz_waves(pair_ids, models, predictions_root=PREDICTIONS, roi=ROI,
                    expect_n_deviants=None):
     """{(pair_id, direction): {model: (time_ms, uv, z)}} at the reporting electrode.
@@ -292,7 +311,7 @@ def load_fcz_waves(pair_ids, models, predictions_root=PREDICTIONS, roi=ROI,
             for pid in pair_ids:
                 for direction, key in (("regular", f"method_{pid}"),
                                        ("counter", f"method_{pid}_counter")):
-                    g = h5.get(key)
+                    g = h5.get(key) or h5.get(_padded(key))
                     if g is None:
                         continue
                     t = g["time_ms"][:].astype(float)
@@ -316,7 +335,7 @@ def top_pairs(ranked, n=N_WAVE):
     return ranked["pair_id"].drop_duplicates().head(n).tolist()
 
 
-def _cross_model_mean(per_model, idx, lo=-120, hi=460, window=MMN_WINDOW):
+def _cross_model_mean(per_model, idx, lo=WAVE_XLIM[0], hi=WAVE_XLIM[1], window=MMN_WINDOW):
     """(time, mean) across models on the samples they SHARE, or None.
 
     The models do not always carry identical in-window grids. On the literature stimuli with a
@@ -402,12 +421,12 @@ def plot_strong_waveforms(ranked, models, out_dir, n=N_WAVE,
             ax.axvspan(lo, hi, color="#eef2f7", zorder=0)
             ax.axhline(0, color="#bbbbbb", lw=0.8, zorder=1)
             for m, (tt, uv, _z) in src.get((pid, "regular"), {}).items():
-                sel = (tt >= -120) & (tt <= 460)
+                sel = (tt >= WAVE_XLIM[0]) & (tt <= WAVE_XLIM[1])
                 ax.plot(tt[sel], uv[sel], color=WAVE_MODEL_STYLE[m]["color"], lw=WAVE_LW,
                         alpha=WAVE_ALPHA, zorder=2)
             ax.set_title(title, fontsize=7.5, pad=3)
             ax.tick_params(labelsize=6.5)
-            ax.set_xlim(-120, 460)
+            ax.set_xlim(*WAVE_XLIM)
         for ax in axes[len(panels):]:
             ax.set_visible(False)
 
@@ -512,7 +531,7 @@ def plot_direction_waveforms(ranked, models, out_dir, n=N_WAVE,
                 ax.plot(got[0], got[1], color=st["color"], ls=st["ls"], lw=1.7, zorder=3)
             ax.set_title(title, fontsize=7.5, pad=3)
             ax.tick_params(labelsize=6.5)
-            ax.set_xlim(-120, 460)
+            ax.set_xlim(*WAVE_XLIM)
             if share and ylim is not None:
                 ax.set_ylim(*ylim)
         for ax in axes[len(panels):]:
@@ -600,7 +619,7 @@ def plot_per_model_waveforms(ranked, models, out_dir, n=N_WAVE,
             continue
 
         stacked = np.concatenate([waves[(pid, d)][m][1][
-            (waves[(pid, d)][m][0] >= -120) & (waves[(pid, d)][m][0] <= 460)]
+            (waves[(pid, d)][m][0] >= WAVE_XLIM[0]) & (waves[(pid, d)][m][0] <= WAVE_XLIM[1])]
             for pid, d in present])
         lim = float(np.nanpercentile(np.abs(stacked), ylim_pct))
         clipped = int((np.abs(stacked) > lim).sum())
@@ -617,7 +636,7 @@ def plot_per_model_waveforms(ranked, models, out_dir, n=N_WAVE,
                 if got is None:
                     continue
                 t, uv, _z = got
-                sel = (t >= -120) & (t <= 460)
+                sel = (t >= WAVE_XLIM[0]) & (t <= WAVE_XLIM[1])
                 ax.plot(t[sel], uv[sel], color=st["color"], ls=st["ls"], lw=1.5, zorder=3)
             f_lo, f_hi = geo.loc[pid, "f_low"], geo.loc[pid, "f_high"]
             # This model's own verdict per direction -- the combined figure cannot show it.
@@ -626,7 +645,7 @@ def plot_per_model_waveforms(ranked, models, out_dir, n=N_WAVE,
             ax.set_title(f"method_{pid}: {f_lo:g} → {f_hi:g} Hz\nn_agree {nr:.0f} / {nc:.0f}",
                          fontsize=7.0, pad=3)
             ax.tick_params(labelsize=6.5)
-            ax.set_xlim(-120, 460)
+            ax.set_xlim(*WAVE_XLIM)
             ax.set_ylim(-lim, lim)
         for ax in axes[len(chunk_pairs):]:
             ax.set_visible(False)
@@ -653,6 +672,192 @@ def plot_per_model_waveforms(ranked, models, out_dir, n=N_WAVE,
         plt.close(fig)
         written.append(name)
         print(f"  wrote {name}  (±{lim:.2f} µV, {clipped} sample(s) clipped)")
+    return written
+
+
+# ──────────────────────────────────────────────────────────
+# Item 3c. Waveforms for the top direction-INSTANCES
+#
+# The three figures above are organised by PAIR and draw the regular direction only, because the
+# novel ranking is led by regular instances. That convention misreports any ranking whose top is
+# mixed: the literature top 10 is half `_counter`, and Phase 2's is not all-regular either, so a
+# panel titled by a counter instance's rank would be showing the regular trace the ranking never
+# scored. These draw one panel per RANKED INSTANCE, in the ranking's own order.
+# ──────────────────────────────────────────────────────────
+
+# How a panel renders its six models. "models" overlays them; the two "mean_" modes collapse them
+# to a single cross-model line, which is only meaningful in z -- see MEAN_MODE_NOTE.
+INSTANCE_MODES = ("models", "mean_uv", "mean_z")
+MEAN_MODE_NOTE = {
+    "mean_z": ("baseline-z-scored per model before averaging, so no model's amplitude shrinkage "
+               "dominates the mean — this is the trace the S2 verdict is computed on"),
+    "mean_uv": ("RAW µV averaged across models. Caveat 2: the six models' µV scales differ ~5x, "
+                "so this mean is dominated by wav2vec2-large and whisper-medium and is NOT a "
+                "cross-model amplitude"),
+}
+
+
+def _instance_panel(ax, per_model, models, mode, xlim=WAVE_XLIM, window=MMN_WINDOW):
+    """Draw one direction-instance into `ax`. Returns True if anything was plotted."""
+    lo_w, hi_w = window
+    ax.grid(False)
+    ax.axvspan(lo_w, hi_w, color="#eef2f7", zorder=0)
+    ax.axhline(0, color="#bbbbbb", lw=0.8, zorder=1)
+    if not per_model:
+        return False
+    if mode == "models":
+        for m, (tt, uv, _z) in per_model.items():
+            sel = (tt >= xlim[0]) & (tt <= xlim[1])
+            ax.plot(tt[sel], uv[sel], color=WAVE_MODEL_STYLE[m]["color"], lw=WAVE_LW,
+                    alpha=WAVE_ALPHA, zorder=2)
+    else:
+        got = _cross_model_mean(per_model, 1 if mode == "mean_uv" else 2, lo=xlim[0], hi=xlim[1])
+        if got is None:
+            return False
+        ax.plot(got[0], got[1], color=INK, lw=MEAN_LW, zorder=3)
+    ax.set_xlim(*xlim)
+    return True
+
+
+def _with_std_dev(ranked):
+    """Guarantee f_std/f_dev (the stimulus as heard) on a ranking that only carries f_low/f_high.
+
+    `load_literature` sets these from the metadata; `load_phase` does not, because the novel grid
+    stores the unordered pair. Deriving them here rather than in each caller keeps the direction
+    convention -- regular is f_low -> f_high, counter is its reversal -- in exactly one place.
+    """
+    if "f_std" in ranked.columns and "f_dev" in ranked.columns:
+        return ranked
+    if "f_low" not in ranked.columns:
+        raise SystemExit("ranking carries neither f_std/f_dev nor f_low/f_high")
+    out = ranked.copy()
+    reg = out["direction"].eq("regular")
+    out["f_std"] = np.where(reg, out["f_low"], out["f_high"])
+    out["f_dev"] = np.where(reg, out["f_high"], out["f_low"])
+    return out
+
+
+def _instance_title(r, n_models, short=False):
+    head = f"{r['rank']:.0f}. {r['method']}"
+    body = (f"{r['f_std']:g} → {r['f_dev']:g} Hz   n_agree {int(r['n_agree'])}/{n_models}"
+            + ("" if pd.isna(r["mean_uv"]) else f"   {r['mean_uv']:+.2f} µV"))
+    return f"{head}\n{body}" if not short else f"{head}  |  {body}"
+
+
+def plot_instance_waveforms(ranked, models, out_dir, n=10, predictions_root=PREDICTIONS,
+                            prefix="literature", expect_n_deviants=None, mode="models",
+                            panels=(2, 5), label=None):
+    """Top `n` direction-instances on one figure, `mode` deciding what each panel shows.
+
+    `label` names the set in the title; it defaults to a prettified `prefix` so a caption reads
+    "top 10 Phase-2 direction-instances" rather than "top 10 phase2 ...".
+    """
+    label = label or {"phase1": "Phase-1", "phase2": "Phase-2"}.get(prefix, prefix)
+    if mode not in INSTANCE_MODES:
+        raise SystemExit(f"mode must be one of {INSTANCE_MODES}, got {mode!r}")
+    top = _with_std_dev(ranked).head(n)
+    if top.empty:
+        print("  skipped instance waveforms: ranking is empty")
+        return None
+    waves = load_fcz_waves(top["pair_id"].unique().tolist(), models, predictions_root,
+                           expect_n_deviants=expect_n_deviants)
+    if not waves:
+        print("  skipped instance waveforms: no prediction HDF5s readable")
+        return None
+
+    nrow, ncol = panels
+    fig, axes = plt.subplots(nrow, ncol, figsize=(2.55 * ncol, 2.25 * nrow + 1.0),
+                             sharex=True, sharey=(mode == "mean_z"))
+    axes = np.atleast_1d(axes).ravel()
+
+    drawn = 0
+    for ax, (_, r) in zip(axes, top.iterrows()):
+        drawn += _instance_panel(ax, waves.get((int(r["pair_id"]), r["direction"]), {}),
+                                 models, mode)
+        ax.set_title(_instance_title(r, len(models)), fontsize=7.5, pad=3)
+        ax.tick_params(labelsize=6.5)
+    for ax in axes[len(top):]:
+        ax.set_visible(False)
+
+    ylab = {"models": "µV", "mean_uv": "µV (mean of 6)", "mean_z": "z (mean of 6)"}[mode]
+    for ax in axes[:len(top)]:
+        if ax.get_subplotspec().rowspan.start == (len(top) - 1) // ncol:
+            ax.set_xlabel("time from final tone onset (ms)", fontsize=8)
+        if ax.get_subplotspec().is_first_col():
+            ax.set_ylabel(ylab, fontsize=8)
+
+    if mode == "models":
+        handles = [Line2D([], [], color=WAVE_MODEL_STYLE[m]["color"], lw=1.6, label=MLABEL[m])
+                   for m in models]
+        note = ("each panel autoscales, so read shape rather than one trace's depth against "
+                "another's")
+    else:
+        handles = [Line2D([], [], color=INK, lw=MEAN_LW, label=f"mean of {len(models)} models")]
+        note = MEAN_MODE_NOTE[mode]
+    fig.legend(handles=handles, loc="lower center", ncol=min(6, len(handles)), frameon=False,
+               fontsize=8, bbox_to_anchor=(0.5, 0.093))
+    fig.suptitle(f"FCz difference wave, top {len(top)} {label} direction-instances\n"
+                 f"ranked by n_agree then mean_uv; {note}", fontsize=9.5, y=0.985)
+    fig.tight_layout(rect=(0, 0.155, 1, 0.945))
+    fig.text(0.5, 0.070,
+             f"Shaded band = the {MMN_WINDOW[0]:g}–{MMN_WINDOW[1]:g} ms MMN scoring window. The "
+             f"axis runs to {WAVE_XLIM[1]:g} ms, the full span the criteria read out over: S2's "
+             f"recovery search follows a trough that\nmay sit as late as 240 ms. `_counter` "
+             f"panels are the reversed direction, so their standard is the pair's higher tone.",
+             ha="center", va="top", fontsize=8, color=MUTED, linespacing=1.5)
+    suffix = {"models": "", "mean_uv": "_mean_uv", "mean_z": "_mean_z"}[mode]
+    name = f"{prefix}_waveforms{suffix}.png"
+    savefig_both(fig, out_dir, name)
+    plt.close(fig)
+    print(f"  wrote {name}  ({drawn} of {len(top)} panels carry traces)")
+    return name
+
+
+def plot_instance_panels_individual(ranked, models, out_dir, subdir, n=None,
+                                    predictions_root=PREDICTIONS, prefix="literature",
+                                    expect_n_deviants=None, mode="models"):
+    """One standalone figure per direction-instance, into `out_dir/subdir` (+ `svgs/subdir`).
+
+    Not embedded in the memo -- these exist so a single stimulus can be inspected at full size
+    without cropping it out of a small-multiple. The SVG twin lands in the matching subdirectory
+    so the two trees stay parallel.
+    """
+    ranked = _with_std_dev(ranked)
+    sel = ranked if n is None else ranked.head(n)
+    if sel.empty:
+        print("  skipped individual panels: ranking is empty")
+        return []
+    waves = load_fcz_waves(sel["pair_id"].unique().tolist(), models, predictions_root,
+                           expect_n_deviants=expect_n_deviants)
+    if not waves:
+        print("  skipped individual panels: no prediction HDF5s readable")
+        return []
+
+    png_dir = Path(out_dir) / subdir
+    svg_dir = default_svg_dir(out_dir) / subdir
+    png_dir.mkdir(parents=True, exist_ok=True)
+    svg_dir.mkdir(parents=True, exist_ok=True)
+
+    written = []
+    for _, r in sel.iterrows():
+        fig, ax = plt.subplots(figsize=(5.4, 3.5))
+        ok = _instance_panel(ax, waves.get((int(r["pair_id"]), r["direction"]), {}), models, mode)
+        ax.set_title(_instance_title(r, len(models)), fontsize=9.5, pad=6)
+        ax.set_xlabel("time from final tone onset (ms)", fontsize=8.5)
+        ax.set_ylabel({"models": "µV", "mean_uv": "µV (mean of 6)",
+                       "mean_z": "z (mean of 6)"}[mode], fontsize=8.5)
+        ax.tick_params(labelsize=7.5)
+        if mode == "models":
+            ax.legend(handles=[Line2D([], [], color=WAVE_MODEL_STYLE[m]["color"], lw=1.5,
+                                      label=MLABEL[m]) for m in models],
+                      fontsize=6.5, ncol=2, frameon=True, framealpha=0.95, loc="lower left")
+        fig.tight_layout()
+        name = f"{prefix}_{r['method']}.png"
+        savefig_both(fig, png_dir, name, svg_dir=svg_dir)
+        plt.close(fig)
+        if ok:
+            written.append(name)
+    print(f"  wrote {len(written)} individual panel(s) -> {png_dir}/ and {svg_dir}/")
     return written
 
 
@@ -1541,6 +1746,11 @@ def main():
     p.add_argument("--chf_per_pair", type=float, default=CHF_PER_PAIR_PHASE2,
                    help="marginal cost per pair; used only to fill a column of the cutoff CSV. "
                         "Nothing in the memo or the figures carries a price")
+    p.add_argument("--n_instance", type=int, default=10,
+                   help="how many top direction-INSTANCES get the three-view waveform figures "
+                        "and an individual panel each (default 10)")
+    p.add_argument("--skip_panels", action="store_true",
+                   help="skip the one-figure-per-instance panels written under <prefix>_panels/")
     p.add_argument("--skip_waveforms", action="store_true",
                    help="skip the waveform panels (they read every prediction HDF5)")
     p.add_argument("--wave_chunk", type=int, default=0,
@@ -1617,6 +1827,17 @@ def main():
         plot_direction_waveforms(ranked, models, out_dir, units=args.wave_units,
                                  ylim=tuple(args.wave_ylim), **wave_kw)
         plot_per_model_waveforms(ranked, models, out_dir, chunk=args.wave_chunk, **wave_kw)
+
+        # Top-N by RANKED INSTANCE rather than by pair, in all three views. Unlike the three
+        # figures above, these follow the ranking's own direction for each entry, so a top whose
+        # entries are not all `regular` is reported as it was scored.
+        print(f"  top-{args.n_instance} instances, three views:")
+        for mode in INSTANCE_MODES:
+            plot_instance_waveforms(ranked, models, out_dir, n=args.n_instance,
+                                    mode=mode, **wave_kw)
+        if not args.skip_panels:
+            plot_instance_panels_individual(ranked, models, out_dir,
+                                            f"{prefix}_panels", n=args.n_instance, **wave_kw)
     if args.only_waveforms:
         print("\nstopped after the waveforms (--only_waveforms); no other output was rewritten")
         return
