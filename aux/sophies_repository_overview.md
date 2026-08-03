@@ -786,7 +786,7 @@ All cluster scripts `cd` to the handover repo root and `source env.sh`. **jed** 
 | `slurm_extract_delta_t.sh` | `mbs.extraction.extract_features_delta_t` | whisper-base on Broderick; internal `MODE` pilot/full; 12 h, 1 CPU |
 | `slurm_extract_delta_t_generic.sh` | same | parametrised (`MODEL_ID` default `whisper-small`, `WINDOW_DUR`/`WINDOW_STRIDE`/`CHUNK_SIZE`/`BATCH_T`) |
 | `slurm_mmn_extract.sh` | same | MMN WAVs (`MMN_METHOD` default still says `method_09` in the script — stale, always pass `MMN_METHOD` explicitly to one of the §16.1 10 methods); 16-task array; `--window_stride 30` |
-| `slurm_mmn_extract_batch.sh` | same | one method per array task (model loads once). Condition list from `METHOD_LIST` + `TASK_OFFSET`, else the hardcoded 24 literature ids; `MMN_FEATURES_ROOT` / `MMN_NAME_BY_STIM_ID` / `MMN_OVERWRITE` (§17.2); 24 h, 8 CPU |
+| `slurm_mmn_extract_batch.sh` | same | one method per array task by default (model loads once). Condition list from `METHOD_LIST` + `TASK_OFFSET`, else the hardcoded 24 literature ids; `MMN_FEATURES_ROOT` / `MMN_NAME_BY_STIM_ID` / `MMN_OVERWRITE` (§17.2); **`CLIPS_PER_TASK`** splits a method's clips over several tasks so they run in parallel — wall clock is set by that serial loop, not by the array `%throttle`, which is usually slack (default `0` = the historical whole-method layout; needs `MMN_NAME_BY_STIM_ID=true`, and `CLIPS_PER_METHOD` declares the per-method clip count the index map assumes); 24 h, 8 CPU |
 | `submit_whisper_small_sweep.sh` | format_eeg_hdf5 + `slurm_extract_delta_t_generic.sh` | window/stride ablation (w30s05/10/30); orchestrator |
 
 **mTRF / Workstream A (jed):**
@@ -819,7 +819,7 @@ All cluster scripts `cd` to the handover repo root and `source env.sh`. **jed** 
 | `slurm_insilico_mmn_electrodes.sh` | `insilico_mmn_electrodes.py` | optional layer array; topographic. `MMN_FEATURES_ROOT`/`STIM_ROOT`/`METADATA_CSV`/`DATA_DIR`/`OUT_DIR` overrides — **set `DATA_DIR` for any non-literature screen or it overwrites the committed literature predictions** (§17.6); 12 h |
 | `slurm_generate_stimuli.sh` | `00aa_generate_audio_stimuli.py` | `METADATA_CSV`/`OUTPUT_DIR`; forwards extra args via `"$@"` (`--trial_levels`/`--num_variations`/`--models`, §17.2); 1 h, 16 CPU |
 | `slurm_stage_novel_stimuli.sh` (**login node**, not sbatch) | `cp` + `mkdir` | flat generator tree → per-condition dirs + `METHOD_LIST` (§17.3) |
-| `submit_novel_extraction.sh` (**login node**, not sbatch) | `sbatch slurm_mmn_extract_batch.sh` | 6 models × the array splits `MaxArraySize` requires; `DRY_RUN=1` to preview (§17.3) |
+| `submit_novel_extraction.sh` (**login node**, not sbatch) | `sbatch slurm_mmn_extract_batch.sh` | 6 models × the array splits `MaxArraySize` requires; `MODELS` overrides the model set (pass it explicitly or whisper-large is silently skipped); `CLIPS_PER_TASK` sizes the array for the expanded (method, clip-chunk) index space; `DRY_RUN=1` to preview (§17.3) |
 | `submit_novel_insilico.sh` (**login node**, not sbatch) | `sbatch slurm_insilico_mmn_electrodes.sh` | 6 models, all paths redirected; refuses the literature predictions root (§17.6) |
 | `slurm_insilico_mmn_attn.sh` | `insilico_mmn_attn.py` | checkpoint-driven; all args via `"$@"` |
 
