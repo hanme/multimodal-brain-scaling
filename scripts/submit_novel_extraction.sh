@@ -32,8 +32,9 @@ DRY_RUN="${DRY_RUN:-0}"
 # Clips per array task. 0 = one task per condition, extracting all its clips serially -- the
 # historical layout. Wall clock is set by that serial loop, NOT by CONCURRENCY: a 24-condition x
 # 7-model run is 168 tasks against %200, so the throttle never binds and ~15x of the parallelism
-# already asked for sits idle. At ~13 min/clip, 16 clips serially is ~3.5 h; CLIPS_PER_TASK=4 is
-# ~55 min for 4x the model loads, which is the sweet spot before load overhead dominates.
+# already asked for sits idle. At ~13 min/clip, 16 clips serially is ~3.5 h; 4 clips/task is ~55 min
+# and 1 clip/task is ~26 min (two %200 waves). You pay for it in model loads -- one per task -- so
+# the low end is heaviest on the large models. Raise CONCURRENCY to collapse the waves.
 CLIPS_PER_TASK="${CLIPS_PER_TASK:-0}"
 CLIPS_PER_METHOD="${CLIPS_PER_METHOD:-16}"
 
@@ -100,7 +101,7 @@ if [ "$CLIPS_PER_TASK" -gt 0 ]; then
 "(declared $CLIPS_PER_METHOD clips/condition) -> $N_TASKS tasks per model"
 else
     echo "clip split  : none -- one task per condition, all clips serial "\
-"(set CLIPS_PER_TASK=4 to parallelise; the %${CONCURRENCY} throttle is otherwise slack)"
+"(set CLIPS_PER_TASK=1 for one clip per task; the %${CONCURRENCY} throttle is otherwise slack)"
 fi
 echo "submissions : $N_CHUNKS array(s) per model x $(echo "$MODELS" | wc -w | tr -d ' ') models"
 echo "features tag: -mmn-${FEATURES_TAG}"

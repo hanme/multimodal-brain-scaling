@@ -16,14 +16,15 @@ and the trough may sit as late as 240 ms. For short-SOA literature rows the epoc
 criterion is silently evaluated on whatever samples exist; where the trough lands on the final
 sample, `post` is empty and **S2 returns False without ever being tested**.
 
-Measured on the committed predictions (`scripts/verify_soafix_predictions.py --predictions_root
-outputs/insilico_mmn_predictions` reproduces this):
+Measured on the committed predictions (`scripts/verify_soafix_predictions.py --predictions_root outputs/insilico_mmn_predictions` reproduces this):
 
-| | per model | total |
-|---|---|---|
-| conditions ending before 360 ms | 24 of 48 | — |
-| truncated recovery searches | 9–14 | **62** over the six SEARCH_MODELS |
-| trough on the final sample (S2 forced False) | 3, in 4 of 7 models | **12 cells** |
+
+|                                              | per model           | total                             |
+| -------------------------------------------- | ------------------- | --------------------------------- |
+| conditions ending before 360 ms              | 24 of 48            | —                                 |
+| truncated recovery searches                  | 9–14                | **62** over the six SEARCH_MODELS |
+| trough on the final sample (S2 forced False) | 3, in 4 of 7 models | **12 cells**                      |
+
 
 **The fix:** one uniform layout rule — trailing silence = `max(400, SOA)`, with as many whole tone
 cycles as fit before it and the remainder becoming extra leading silence. 400 rather than 360
@@ -45,27 +46,31 @@ Verified locally on real generated audio (methods 12 and 17, both families, all 
 directions):
 
 - SOA 400 (method 12) comes out **byte-identical** with and without the floor; SOA 200 (method 17)
-  is rebuilt, its tail going 200.875 → 400.875 ms.
+is rebuilt, its tail going 200.875 → 400.875 ms.
 - The onset detector's bias is exactly **+0.875 ms** (14 samples @ 16 kHz), uniform across SOA and
-  clip length.
+clip length.
 - **0 suffix mismatches**: every deviant keeps its `[S, D×N, S]` critical suffix, and where a slot
-  is dropped the shorter prefix is the same RNG stream with its last element removed.
+is dropped the shorter prefix is the same RNG stream with its last element removed.
 
 The `(K, leftover)` arithmetic is pinned by unit tests over all 24 literature rows × both families
 plus the novel row — see `tests/test_stimulus_generation.py`, section "The trailing-silence floor".
 
 ### The 12/12 partition
 
-| | method_ids |
-|---|---|
-| **unchanged** (SOA ≥ 400) | 9, 12, 20, 21, 27, 33, 43, 44, 55, 72, 74, 75 |
-| **rebuilt** (SOA < 400) | 10, 17, 18, 19, 28, 29, 30, 31, 32, 37, 53, 60 |
+
+|                           | method_ids                                     |
+| ------------------------- | ---------------------------------------------- |
+| **unchanged** (SOA ≥ 400) | 9, 12, 20, 21, 27, 33, 43, 44, 55, 72, 74, 75  |
+| **rebuilt** (SOA < 400)   | 10, 17, 18, 19, 28, 29, 30, 31, 32, 37, 53, 60 |
+
 
 Only 3 of the 10 changed method/family pairs drop a tone — SOA 200 (both families) and SOA 350
 whisper. The other seven keep every tone and just shrink the leading silence by `400 − SOA`.
 Post-fix tails are uniform: **381 ms** whisper, **361 ms** wav2vec2.
 
 ---
+
+
 
 ## Prerequisite — pull Step 1 onto the cluster
 
@@ -77,11 +82,13 @@ source env.sh
 
 Confirm the flag arrived: `python scripts/00aa_generate_audio_stimuli.py --help | grep trailing_floor`.
 
-Everything below writes to `*_soafix` siblings. **Never write to
-`outputs/insilico_mmn_predictions/`, `outputs/mmn_stimuli{,_wav2vec2}/`, or
-`outputs/features/<model>-mmn/`** — they are the committed comparison baseline and have no backup.
+Everything below writes to `*_soafix` siblings. **Never write to**
+`outputs/insilico_mmn_predictions/`**,** `outputs/mmn_stimuli{,_wav2vec2}/`**, or**
+`outputs/features/<model>-mmn/` — they are the committed comparison baseline and have no backup.
 
 ---
+
+
 
 ## Step 2 — regenerate all 24 method_ids, then prove 12 are identical
 
@@ -119,6 +126,8 @@ PASS -- 12 ids byte-identical, 12 rebuilt, trailing audio is max(floor, SOA) eve
 > **If any of the 12 "unchanged" ids differ, STOP.** The layout moved where it must not have and the
 > whole comparison is invalid — do not stage, do not extract.
 
+
+
 ## Step 3 — stage only the changed conditions
 
 ```bash
@@ -142,9 +151,11 @@ Expect **24 dirs, 384 wavs, clips-per-dir {16}** per root and a 24-entry method 
 > single-digit id (only method 9, which is in the *unchanged* set and is never staged here) would
 > fail loudly with `MISSING`.
 
+
+
 ## Step 4 — extract features for the 24 changed conditions
 
-⚠️ **`MODELS` must be passed explicitly.** Both submitters default to the six `SEARCH_MODELS`;
+⚠️ `MODELS` **must be passed explicitly.** Both submitters default to the six `SEARCH_MODELS`;
 without the override **whisper-large is silently skipped** and you find out two days later.
 
 ```bash
@@ -156,31 +167,38 @@ DRY_RUN=1 METHOD_LIST=$PWD/outputs/soafix_methods.txt \
 METADATA_CSV=data/metadata/literature_soafix_subset.csv \
 FEATURES_TAG=soafix \
 MODELS="$SOAFIX_MODELS" \
-CLIPS_PER_TASK=4 \
+CLIPS_PER_TASK=1 \
 WHISPER_STIM=$PWD/outputs/mmn_stimuli_soafix \
 WAV2VEC2_STIM=$PWD/outputs/mmn_stimuli_soafix_wav2vec2 \
     scripts/submit_novel_extraction.sh
 ```
 
 Read the **7** sbatch lines, confirm whisper-large is among them and that each says
-`--array=0-95`, then drop `DRY_RUN=1`.
+`--array=0-383`, then drop `DRY_RUN=1`.
 
-### Why `CLIPS_PER_TASK=4`
+### Why `CLIPS_PER_TASK=1`
 
 Wall clock is set by the **serial clip loop inside each array task**, not by the `%200` throttle.
 Without it the run is 7 models × 24 conditions = **168 tasks** against a 200-slot allowance — the
 throttle never binds and ~15× of the parallelism already requested sits idle, while each task
-grinds through its 16 clips one at a time:
+grinds through its 16 clips one at a time. One clip per task removes the serial loop entirely:
 
-| `CLIPS_PER_TASK` | tasks/model | serial clips/task | wall clock |
-|---|---|---|---|
-| 0 (default) | 24 | 16 | ~3.5 h |
-| **4** | **96** | **4** | **~55 min** |
-| 2 | 192 | 2 | ~30 min |
-| 1 | 384 | 1 | ~13 min |
 
-The cost is one model load per task, so below ~4 the load overhead starts to dominate for
-whisper-large. 4 is the sweet spot. The default stays 0, so the novel-grid workflow is unchanged.
+| `CLIPS_PER_TASK` | tasks/model | serial clips/task | model loads | wall clock         |
+| ---------------- | ----------- | ----------------- | ----------- | ------------------ |
+| 0 (default)      | 24          | 16                | 168         | ~3.5 h             |
+| 4                | 96          | 4                 | 672         | ~55 min            |
+| 2                | 192         | 2                 | 1344        | ~30 min            |
+| **1**            | **384**     | **1**             | **2688**    | **~26 min + load** |
+
+
+At 1 the `%200` throttle finally binds: 384 tasks per model run as two waves of 200, so the wall
+clock is ~2 × 13 min rather than the ~13 min unlimited concurrency would give. The trade is one
+model load per clip — 2688 loads instead of 168 — which is the extra core-hours you are buying the
+wall clock with, and it is heaviest on whisper-large. Raising `CONCURRENCY` above 200 collapses it
+to a single wave if the queue allows.
+
+The default stays 0, so the novel-grid workflow is unchanged.
 
 It requires `MMN_NAME_BY_STIM_ID=true` (which the submitter already passes) and refuses otherwise:
 several tasks write into the same `mmn-<method>-delta-t` directory at once, and only stimulus-id
@@ -302,6 +320,8 @@ Expect 7 files, one per model. Also pull `outputs/results_soafix/mmn_s7_roi.csv`
 
 ---
 
+
+
 ## Step 7 — re-score and verify (local; I do this once the h5s land)
 
 The same wrapper, with the cluster's environment setup skipped:
@@ -328,30 +348,33 @@ PYTHONPATH="$PWD/src:$PWD/scripts" conda run -n mbs-env python scripts/verify_so
 Over all 336 cells (7 models × 48 conditions) at FCz / mtrf, this asserts:
 
 - `max(400, soa_ms) − max(time_ms)` is **19.0–19.25 ms** for the five whisper models (whisper-large
-  included) and **38.875–39.25 ms** for the two wav2vec2 models.
+included) and **38.875–39.25 ms** for the two wav2vec2 models.
 - every instance has `max(time_ms) ≥ 360`; minimum **381** whisper / **361** wav2vec2.
 - **zero** cells with the trough on the final sample; **zero** truncated recovery searches.
 - the 24 unchanged conditions score bit-identically against
-  `outputs/results_24freq_7models/mmn_s7_roi.csv`, in all seven models — and the 24 changed ones
-  actually moved, so a no-op run can't pass silently.
+`outputs/results_24freq_7models/mmn_s7_roi.csv`, in all seven models — and the 24 changed ones
+actually moved, so a no-op run can't pass silently.
 
 > **Correction to the original brief.** Step 7's first assertion was written as
 > `soa_ms − max(time_ms)` staying at 19.0–19.25 / 38.875–39.25. That holds only where SOA ≥ 400.
 > The epoch ends one edge before the **reserved tail**, which is `max(400, SOA)` — so post-fix a
 > SOA-200 condition has `max(time_ms) = 380.875` and `soa − max(time_ms) = −180.875` **by design**.
-> The brief's own companion expectations (381 whisper / 361 wav2vec2 = `400 − 19.125` / `400 −
-> 39.125`) are only consistent under the reserved-tail reading, which is what the script uses.
+> The brief's own companion expectations (381 whisper / 361 wav2vec2 = `400 − 19.125` / `400 − 39.125`) are only consistent under the reserved-tail reading, which is what the script uses.
 > Verified against the committed baselines, where `max_t = soa − 19.125` for all 48 whisper
 > conditions.
+
+
 
 ### Then report
 
 The published baseline to beat:
 
-| arm | n_agree | mean_uv |
-|---|---|---|
-| literature top 10, as committed | 3.80 | −1.5643 |
-| novel top 10 (unchanged by this work) | 6.00 | −2.2089 |
+
+| arm                                   | n_agree | mean_uv |
+| ------------------------------------- | ------- | ------- |
+| literature top 10, as committed       | 3.80    | −1.5643 |
+| novel top 10 (unchanged by this work) | 6.00    | −2.2089 |
+
 
 `mean_uv` is the mean `trough_uv` over the S7-agreeing models only, not all six. Five of the
 literature top 10 are in the changed set: ranks 3 `method_53_counter`, 4 `method_10_counter`,
@@ -369,6 +392,8 @@ ranking, so redoing it changes the 7-model screen's tables but not the memo's to
 
 ---
 
+
+
 ## Out of scope
 
 Updating Tables 6/7 and the figures in `aux/analysis_novel_search/novel_stimulus_search_results.md`.
@@ -377,18 +402,20 @@ a tracked SVG twin as of 2026-08-02), so it is a larger diff than it looks and b
 session. When it happens:
 
 - The literature-vs-novel comparison figures use a **−120 to 360 ms** window, not 460. At that right
-  edge every literature *and* every novel instance is complete, so there are no ragged edges and no
-  per-trace clipping — one shared axis for both arms. 360 is not a compromise: it is exactly the
-  span the criteria read. Use **360, not 361** — `soa − max(time_ms)` measures up to 39.25 ms on
-  wav2vec2, so a 361 ms limit would leave some traces fractionally short.
+edge every literature *and* every novel instance is complete, so there are no ragged edges and no
+per-trace clipping — one shared axis for both arms. 360 is not a compromise: it is exactly the
+span the criteria read. Use **360, not 361** — `soa − max(time_ms)` measures up to 39.25 ms on
+wav2vec2, so a 361 ms limit would leave some traces fractionally short.
 - Post-fix minimum tails (381 / 361) leave 21 ms and 0.75 ms of margin on that axis. **Nothing may
-  widen it without re-running the audio**, and the 400 ms floor must not be quietly raised to 500 or
-  620 to chase a 460 ms window — the 400 ms floor plus a 360 ms axis is the chosen combination.
+widen it without re-running the audio**, and the 400 ms floor must not be quietly raised to 500 or
+620 to chase a 460 ms window — the 400 ms floor plus a 360 ms axis is the chosen combination.
 - Existing novel-only figures keep whatever window they were published with; the novel arm has never
-  truncated and does not need re-plotting.
+truncated and does not need re-plotting.
 - Do not call `fig.savefig` directly. Import `savefig_both(fig, out_dir, name, svg_dir=None)` from
-  `aux/analysis_novel_search/plots/novel_search_plots.py` and call
-  `configure_svg_output(out_dir, svg_dir, no_svg)` once from `main()` first.
+`aux/analysis_novel_search/plots/novel_search_plots.py` and call
+`configure_svg_output(out_dir, svg_dir, no_svg)` once from `main()` first.
+
+
 
 ## The novel grid is untouched
 
