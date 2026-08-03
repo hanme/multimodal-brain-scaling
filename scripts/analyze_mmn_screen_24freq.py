@@ -319,7 +319,7 @@ def print_summary_counts(counts, denom):
 def main():
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--s7_csv", default="outputs/results_24freq_7models/mmn_s7_roi.csv")
+    p.add_argument("--s7_csv", default="outputs/results_soafix_full/mmn_s7_roi.csv")
     p.add_argument("--metadata_csv",
                    default="data/metadata/literature_frequency_intensity_duration_metadata.csv")
     p.add_argument("--out_dir", default="outputs/results_24freq_7models")

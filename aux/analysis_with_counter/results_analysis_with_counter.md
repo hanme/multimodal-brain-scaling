@@ -1,35 +1,32 @@
 # In-Silico MMN Results Analysis — With Counterbalanced Methods
 
-> 🛑 **SUPERSEDED (2026-08) — Sections 7, 8, 8b, 8c, 10 and 11 below are superseded by
-> [`results_analysis_soafix_mtrf.md`](results_analysis_soafix_mtrf.md)**, which restates them on the
-> **trailing-floor-corrected** re-screen (`outputs/results_soafix/mmn_s7_roi.csv`, FCz electrode, mTRF).
-> The stimuli behind the numbers below ended one SOA after the final tone, so **24 of 48 conditions per
-> model ended before the 360 ms criteria window closed** — 62 truncated S2 recovery searches and 12 cells
-> where S2 was forced `False` on an empty slice. Cite the superseding document, not these six sections.
->
 > ⚠️ **Data-vintage flag (2026-07).** **Sections 7, 8, 8b, 8c, 10 and 11** have been updated to the
 > **24-frequency screen** — 24 methods × {regular, counter} = **48 conditions per model per site**,
 > **mTRF only**, for **all 7 models**: whisper (tiny, base, small, medium, large) + **wav2vec2 (medium,
 > large)**; denominators **/48** per model and **/336** pooled; source
-> `outputs/results_24freq_7models/mmn_s7_roi.csv`. **All other sections (0b, 1–6, the Cross-Method
+> `outputs/results_soafix_full/mmn_s7_roi.csv`. **All other sections (0b, 1–6, the Cross-Method
 > Comparisons, and 9) still report the older 10-method / 4-model screen** (20 conditions per model,
 > mTRF + encoder; denominators /20, /40, /80, /160; source `outputs/results_with_counter/*.csv`, and for
 > Section 9 `plots/deviance_scaling_plots.py`). The two vintages are **not directly comparable** and
 > should be reconciled separately.
 >
-> ⚠️ **Sections 9 and 10 disagree, and Section 10 is the one on the current data.** Both ask whether the
-> MMN trough deepens with deviance size. **Section 9** (20 methods × 4 models) reports the effect at
-> *both* sites and "the same direction for every model". **Section 10** (24 methods × 7 models, mTRF)
-> finds it **only at FCz** (ρ = −0.23, p = 2×10⁻⁵); at the **frontal parcel it is gone** (ρ = −0.02,
-> p = 0.72) and **two models reverse significantly**. Section 9's prose has been left as-written pending
-> reconciliation — **do not cite Section 9's frontal-parcel deviance result without reading Section 10.**
+> ⚠️ **Sections 9 and 10 test the same law on two different vintages, and Section 10 is the one on the
+> current data.** Both ask whether the MMN trough deepens with deviance size. **Section 9** (20 methods ×
+> 4 models) reports the effect at *both* sites and "the same direction for every model". **Section 10**
+> (24 methods × 7 models, mTRF) also finds it at **both** sites — FCz **ρ = −0.268, p = 6.3 × 10⁻⁷** and
+> the frontal parcel **ρ = −0.123, p = 0.024** — so the two vintages agree on the headline, with the
+> effect roughly twice as strong at FCz. Where they part company is **uniformity**: on the wider screen
+> the law is **not** in the same direction for every model — **whisper-medium reverses significantly at
+> the frontal parcel** (ρ = +0.37), and whisper-base and wav2vec2-medium lean the same way without
+> reaching significance. **Read Section 9's per-model claim against Section 10's Table 42**; the pooled
+> frontal-parcel result itself replicates.
 >
 > Three caveats introduced in Section 7 govern every µV number in 7/8/8b/8c: (1) X is calibrated to each
 > model's **own ~4×-shrunk** trough distribution, **not** to literature µV; (2) the shrinkage is
-> **model-dependent** — whisper-large's predicted µV run ~40× the other models, so its absolute-µV S7
-> counts are **scale-inflated**; and (3) **wav2vec2 is not a controlled match to whisper** (different
-> pretraining objective, window, and PCA), so the pooled **/336** totals are a convenience summary rather
-> than a controlled contrast.
+> **model-dependent** — whisper-large's predicted µV run ~9× (frontal) to ~13× (FCz) the other models, so
+> its absolute-µV S7 counts are **scale-inflated**; and (3) **wav2vec2 is not a controlled match to
+> whisper** (different pretraining objective, window, and PCA), so the pooled **/336** totals are a
+> convenience summary rather than a controlled contrast.
 
 > **Extends `aux/results_analysis.md`** by adding 10 counterbalanced stimulus pairs
 > (standard/deviant frequencies swapped) to every analysis. Scope: 4 Whisper models
@@ -917,10 +914,10 @@ The Section 4 and Section 6 findings from `results_analysis.md` are preserved wi
 ## Section 7 — Amplitude-gated MMN (S2 vs S7) across ROI options
 
 > **Code:** `scripts/analyze_mmn_s7_roi.py`
-> **Data:** `outputs/results_24freq_7models/mmn_s7_roi.csv` — the **24-frequency screen**: 24 methods ×
+> **Data:** `outputs/results_soafix_full/mmn_s7_roi.csv` — the **24-frequency screen**: 24 methods ×
 > {regular, counter} = **48 conditions per model per site**, **mTRF only**, for **all 7 models** —
 > whisper (tiny, base, small, medium, large) + wav2vec2 (medium, large). Predictions under
-> `outputs/insilico_mmn_predictions/`.
+> `outputs/insilico_mmn_predictions_soafix/`.
 >
 > This section asks how the shape verdict **S2** and the amplitude-gated verdict **S7** behave at a
 > single fronto-central *reporting site* rather than the committed averaged ROI. The **µV-trough
@@ -951,13 +948,15 @@ The Section 4 and Section 6 findings from `results_analysis.md` are preserved wi
 > lenient-but-nontrivial floor. **Do not read X as a literature-comparable amplitude.**
 >
 > **Scale caveat 2 — the shrinkage is model-dependent (important).** The mTRF's predicted-amplitude
-> scale **grows with model size**: the raw predicted difference-wave RMS at the frontal parcel is ≈ 3.7 µV
-> for whisper-tiny, ≈ 8 for medium, and ≈ **90 for whisper-large** (a ~10× jump at large; the µV path
-> applies **no** cross-model amplitude standardization). So the *absolute* µV floor is **not comparable
-> across models** — it confounds MMN depth with the model's internal feature-norm scale.
-> **whisper-large clears any µV floor trivially** (median S2 trough ≈ −46 µV frontal / −34 µV FCz, ~40×
-> the others); read its S7 counts as **scale-inflated**. The scale-robust comparisons are the z-scored
-> **S2** shape rate and the **within-model S7/S2 retention** ratio, not the raw S7 count.
+> scale **grows with model size**, and the µV path applies **no** cross-model amplitude standardization.
+> The median S2-passing trough at the frontal parcel runs **−1.19 µV (whisper-base), −1.56 (small),
+> −1.60 (tiny), −2.23 (medium), −2.31 (wav2vec2-large), −2.72 (wav2vec2-medium)** — and then
+> **−16.71 µV for whisper-large**. So the *absolute* µV floor is **not comparable across models** — it
+> confounds MMN depth with the model's internal feature-norm scale. **whisper-large clears any µV floor
+> trivially** (median S2 trough **−16.71 µV frontal / −10.10 µV FCz**, ≈ **9×** the other six models'
+> median frontal and ≈ **13×** at FCz); read its S7 counts as **scale-inflated**. The scale-robust
+> comparisons are the z-scored **S2** shape rate and the **within-model S7/S2 retention** ratio, not the
+> raw S7 count.
 >
 > **Comparability caveat 3 — wav2vec2 is not a controlled match to whisper.** The two wav2vec2 models are
 > **pretrained self-supervised (NOT ASR)** — `facebook/wav2vec2-base` (our **medium**, 12 layers) and
@@ -984,18 +983,19 @@ X→0 point of the sweep); `min / med / max` are over the S2-passing troughs; ea
 
 | mTRF × kind | n (total) | min | med | max | no threshold (S2) | ≤ −0.25 | ≤ −0.5 | ≤ −0.75 | ≤ −1.0 | ≤ −1.5 | ≤ −2.0 | ≤ −2.5 |
 | ----------- | --------- | ------- | ----- | ------- | ----------------- | ------- | ------ | ------- | ------ | ------ | ------ | ------ |
-| mTRF × parcel | 672 | −382.78 | −0.99 | +148.04 | 532 | 430 | 377 | 321 | 265 | 195 | 171 | 139 |
-| mTRF × electrode | 2352 | −628.96 | −1.18 | +229.78 | 1776 | 1465 | 1287 | 1136 | 975 | 756 | 618 | 519 |
+| mTRF × parcel | 672 | −382.78 | −1.07 | +148.04 | 568 | 473 | 416 | 363 | 298 | 216 | 167 | 137 |
+| mTRF × electrode | 2352 | −628.96 | −1.26 | +229.78 | 1949 | 1632 | 1434 | 1262 | 1105 | 860 | 703 | 576 |
 
-The median S2-passing trough is ≈ **−1.0 µV** (parcel −0.99, electrode −1.18). So the **X = 0.5 µV
-headline sits *shallower* than the typical trough** and keeps ≈ **70%** of S2 (parcel 377/532 = 71%,
-electrode 1287/1776 = 72%) — it trims the shallow (0 → −0.5 µV) tail without amputating the bulk. Deeper
-floors cut in: **0.75 µV** keeps 60–64% (321/532 = 60%, 1136/1776 = 64%) and **1.0 µV**, past the median,
-keeps ≈ ½ (265/532 = 50%, 975/1776 = 55%); by **1.5 µV** only 37–43% of S2 survives. The extreme min/max
-(−383 … +148 µV parcel; −629 … +230 electrode) are two effects at once: genuinely noisy single-target
-outliers, **and** the whisper-large scale inflation — its predicted µV run ~40× the other models (median
-S2 trough ≈ −46 µV frontal; see scale caveat 2), so most of its troughs fall in the deep tail regardless
-of any real MMN. The ROI-mean criteria of Sections 4/6 average the single-target noise down.
+The median S2-passing trough is ≈ **−1.1 to −1.3 µV** (parcel −1.07, electrode −1.26). So the
+**X = 0.5 µV headline sits *shallower* than the typical trough** and keeps ≈ **73%** of S2 (parcel
+416/568 = 73%, electrode 1434/1949 = 74%) — it trims the shallow (0 → −0.5 µV) tail without amputating
+the bulk. Deeper floors cut in: **0.75 µV** keeps 64–65% (363/568 = 64%, 1262/1949 = 65%) and **1.0 µV**,
+at about the median, keeps just over half (298/568 = 52%, 1105/1949 = 57%); by **1.5 µV** only 38–44% of
+S2 survives. The extreme min/max (−383 … +148 µV parcel; −629 … +230 electrode) are two effects at once:
+genuinely noisy single-target outliers, **and** the whisper-large scale inflation — its predicted µV run
+≈ 9–13× the other models (median S2 trough −16.71 µV frontal; see scale caveat 2), so most of its troughs
+fall in the deep tail regardless of any real MMN. The ROI-mean criteria of Sections 4/6 average the
+single-target noise down.
 
 ### 7b · S2 → S7 at the two fronto-central reporting sites (Tables 32–33)
 
@@ -1005,66 +1005,69 @@ the shape verdict `S2` and the amplitude-gated `S7@X` for the reporting sweep X 
 0.25 is where the models nearly converge and 2.5 is where they are furthest apart, so a sweep stopping at
 1.5 hides both ends of the floor's effect. By construction **S7 ⊆ S2**, so every S7 row ≤ the S2 row. The
 **X = 0.5 µV headline** row is bolded. **whisper-large's counts are scale-inflated** (its predicted µV
-run ~40× the others), and the **Total** column pools whisper with the differently-trained wav2vec2 models
+run ~9–13× the others), and the **Total** column pools whisper with the differently-trained wav2vec2 models
 (caveat 3) — read both as summaries, not controlled contrasts.
 
 **Table 32. mTRF — frontal parcel**
 
 | Criterion | whisper-tiny | whisper-base | whisper-small | whisper-medium | whisper-large | wav2vec2-medium | wav2vec2-large | Total (n/336) |
 | --------- | ------------ | ------------ | ------------- | -------------- | ------------- | --------------- | -------------- | ------------- |
-| S2 | 39 | 44 | 41 | 38 | 37 | 41 | 21 | 261 |
-| S7@0.25 | 36 | 39 | 36 | 29 | 28 | 35 | 15 | 218 |
-| **S7@0.5** | **34** | **35** | **34** | **27** | **28** | **35** | **14** | **207** |
-| S7@0.75 | 25 | 34 | 32 | 25 | 28 | 35 | 13 | 192 |
-| S7@1.0 | 23 | 30 | 20 | 23 | 28 | 33 | 12 | 169 |
-| S7@1.5 | 20 | 15 | 13 | 21 | 28 | 31 | 10 | 138 |
-| S7@2.5 | 6 | 5 | 7 | 16 | 28 | 25 | 6 | 93 |
+| S2 | 43 | 44 | 37 | 42 | 33 | 42 | 29 | 270 |
+| S7@0.25 | 41 | 40 | 35 | 38 | 23 | 39 | 27 | 243 |
+| **S7@0.5** | **35** | **36** | **33** | **36** | **23** | **39** | **26** | **228** |
+| S7@0.75 | 29 | 34 | 31 | 36 | 23 | 39 | 25 | 217 |
+| S7@1.0 | 26 | 30 | 27 | 34 | 23 | 32 | 21 | 193 |
+| S7@1.5 | 23 | 17 | 19 | 30 | 23 | 30 | 17 | 159 |
+| S7@2.5 | 8 | 3 | 9 | 17 | 23 | 23 | 12 | 95 |
 
 **Table 33. mTRF — FCz electrode**
 
 | Criterion | whisper-tiny | whisper-base | whisper-small | whisper-medium | whisper-large | wav2vec2-medium | wav2vec2-large | Total (n/336) |
 | --------- | ------------ | ------------ | ------------- | -------------- | ------------- | --------------- | -------------- | ------------- |
-| S2 | 41 | 39 | 42 | 35 | 38 | 41 | 29 | 265 |
-| S7@0.25 | 30 | 30 | 27 | 32 | 30 | 35 | 27 | 211 |
-| **S7@0.5** | **26** | **21** | **18** | **26** | **30** | **33** | **22** | **176** |
-| S7@0.75 | 16 | 12 | 14 | 22 | 30 | 24 | 20 | 138 |
-| S7@1.0 | 12 | 5 | 12 | 20 | 30 | 16 | 17 | 112 |
-| S7@1.5 | 8 | 0 | 0 | 15 | 30 | 12 | 7 | 72 |
-| S7@2.5 | 4 | 0 | 0 | 4 | 30 | 1 | 4 | 43 |
+| S2 | 44 | 42 | 45 | 46 | 41 | 47 | 38 | 303 |
+| S7@0.25 | 30 | 31 | 30 | 40 | 28 | 43 | 36 | 238 |
+| **S7@0.5** | **20** | **23** | **22** | **35** | **28** | **37** | **29** | **194** |
+| S7@0.75 | 16 | 13 | 15 | 26 | 28 | 29 | 26 | 153 |
+| S7@1.0 | 12 | 8 | 8 | 22 | 28 | 21 | 23 | 122 |
+| S7@1.5 | 8 | 0 | 0 | 17 | 26 | 11 | 13 | 75 |
+| S7@2.5 | 4 | 0 | 0 | 2 | 26 | 0 | 10 | 42 |
 
 ### 7c · Section 7 summary
 
-- **Calibration (Table 31).** Median S2-passing trough ≈ **−1.0 µV** (parcel −0.99, electrode −1.18), so
-  the **X = 0.5 µV headline** sits shallower than the typical trough and keeps ≈ **70%** of S2 (71%
-  parcel, 72% electrode). Across the full reported sweep: **0.25 µV keeps 81–82%** (the lenient bookend),
-  0.75 µV keeps 60–64%, 1.0 µV ≈ ½ (50–55%), 1.5 µV 37–43%, and the **2.5 µV bookend only 26–29%**. So
-  0.5 µV is the lenient-but-nontrivial floor — it trims the shallow (0 → −0.5 µV) tail without amputating
-  the bulk, whereas 2.5 µV discards roughly three-quarters of the S2 troughs.
-- **mTRF S2 → S7@0.5 attrition, per model (Tables 32–33).** **Frontal parcel:** S2 261/336 → S7@0.5
-  207/336 (**79%** retained) — tiny 39→34 (87%), base 44→35 (80%), small 41→34 (83%), medium 38→27 (71%),
-  large 37→28 (76%), wav2vec2-medium 41→35 (85%), wav2vec2-large 21→14 (67%). **FCz electrode:** S2
-  265/336 → 176/336 (**66%**) — tiny 41→26 (63%), base 39→21 (54%), small 42→18 (43%), medium 35→26
-  (74%), large 38→30 (79%), wav2vec2-medium 41→33 (80%), wav2vec2-large 29→22 (76%). The floor costs far
+- **Calibration (Table 31).** Median S2-passing trough ≈ **−1.1 µV parcel / −1.3 µV electrode** (−1.07,
+  −1.26), so the **X = 0.5 µV headline** sits shallower than the typical trough and keeps ≈ **73%** of S2
+  (73% parcel, 74% electrode). Across the full reported sweep: **0.25 µV keeps 83–84%** (the lenient
+  bookend), 0.75 µV keeps 64–65%, 1.0 µV just over half (52–57%), 1.5 µV 38–44%, and the **2.5 µV bookend
+  only 24–30%**. So 0.5 µV is the lenient-but-nontrivial floor — it trims the shallow (0 → −0.5 µV) tail
+  without amputating the bulk, whereas 2.5 µV discards roughly three-quarters of the S2 troughs.
+- **mTRF S2 → S7@0.5 attrition, per model (Tables 32–33).** **Frontal parcel:** S2 270/336 → S7@0.5
+  228/336 (**84%** retained) — tiny 43→35 (81%), base 44→36 (82%), small 37→33 (89%), medium 42→36 (86%),
+  large 33→23 (70%), wav2vec2-medium 42→39 (93%), wav2vec2-large 29→26 (90%). **FCz electrode:** S2
+  303/336 → 194/336 (**64%**) — tiny 44→20 (45%), base 42→23 (55%), small 45→22 (49%), medium 46→35
+  (76%), large 41→28 (68%), wav2vec2-medium 47→37 (79%), wav2vec2-large 38→29 (76%). The floor costs far
   more at the single electrode than at the pooled parcel (Section 8).
 - **Yes — the 0.5 µV floor reorders the models vs S2, and most at FCz.** At **FCz** the S2 order
-  small(42) > tiny(41) = wav2vec2-medium(41) > base(39) > large(38) > medium(35) > wav2vec2-large(29)
-  becomes wav2vec2-medium(33) > large(30) > tiny(26) = medium(26) > wav2vec2-large(22) > base(21) >
-  small(18) under S7@0.5: **whisper-small leads on shape but collapses to last** (its FCz troughs are the
-  shallowest of any model, median −0.39 µV), and by 1.5 µV both **whisper-small and whisper-base reach 0**.
-  **whisper-large jumps to second — but only because its predicted µV are ~40× larger** (caveat 2), not
-  because its MMN is deeper. At the **frontal parcel** the reshuffle is milder (whisper-base stays on top,
-  44 S2 → 35 S7@0.5, tied with wav2vec2-medium). The floor ranks by predicted trough *depth*, which for
-  whisper-large is dominated by scale inflation.
-- **The two wav2vec2 models land at opposite ends, and only one clears the whisper bar.**
-  **wav2vec2-medium is inside — and at the top of — the whisper spread** at both sites: S2 41/48 (whisper
-  spread 37–44 frontal, 35–42 FCz) and S7@0.5 35/48 frontal (2nd of 7) / 33/48 FCz (**1st of 7**). It has
-  the deepest troughs of any normal-scale model at the frontal parcel (median **−3.45 µV**), so it is the
-  most floor-robust model there (still 31/48 at 1.5 µV). **wav2vec2-large falls below the whisper spread
-  on shape at both sites** — S2 **21/48** frontal and **29/48** FCz, last of 7 in both, against whisper's
-  37–44 and 35–42 — so on the S2 bar it is the one model that does **not** look brain-like enough; its
-  S7@0.5 follows (14/48 frontal, last; 22/48 FCz, 5th). Note this is **not** a controlled whisper-vs-
-  wav2vec2 contrast (caveat 3: different pretraining objective, window, and PCA), so read it as "this
-  wav2vec2 configuration underperforms", not "self-supervised models are worse".
+  wav2vec2-medium(47) > medium(46) > small(45) > tiny(44) > base(42) > large(41) > wav2vec2-large(38)
+  becomes wav2vec2-medium(37) > medium(35) > wav2vec2-large(29) > large(28) > base(23) > small(22) >
+  tiny(20) under S7@0.5: **whisper-tiny is 4th on shape but collapses to last** (its FCz troughs are the
+  shallowest of any model, median −0.45 µV, with whisper-small next at −0.47), and by 1.5 µV both
+  **whisper-small and whisper-base reach 0**. **whisper-large holds mid-table only because its predicted
+  µV are ~13× larger at FCz** (caveat 2), not because its MMN is deeper. At the **frontal parcel** the
+  reshuffle is milder but still real: **wav2vec2-medium takes the lead** (42 S2 → **39** S7@0.5, the top
+  count at that floor), with whisper-base and whisper-medium tied behind it on 36. The floor ranks by
+  predicted trough *depth*, which for whisper-large is dominated by scale inflation.
+- **The two wav2vec2 models both sit inside the whisper spread, and wav2vec2-medium leads it.**
+  **wav2vec2-medium is at the top of the whisper spread** at both sites: S2 47/48 FCz and 42/48 frontal
+  (whisper spread 33–44 frontal, 41–46 FCz), and S7@0.5 **39/48 frontal (1st of 7)** / **37/48 FCz (1st
+  of 7)**. It has the deepest troughs of any normal-scale model at the frontal parcel (median
+  **−2.72 µV**), so it is the most floor-robust model there (still 30/48 at 1.5 µV). **wav2vec2-large
+  falls just below the whisper spread on shape at both sites** — S2 **29/48** frontal and **38/48** FCz,
+  last of 7 in both, against whisper's 33–44 and 41–46 — but it is markedly more floor-robust than its
+  shape rank suggests: **26/48 frontal (6th) and 29/48 FCz (3rd)** at S7@0.5, because its troughs are
+  comparatively deep (median −2.31 µV frontal, −1.14 µV FCz, the deepest of the six normal-scale models
+  at FCz). Note this is **not** a controlled whisper-vs-wav2vec2 contrast (caveat 3: different
+  pretraining objective, window, and PCA), so read it as "these wav2vec2 configurations behave this way",
+  not "self-supervised models are better".
 - **Scale caveats.** X is calibrated to each model's own (~4× shrunk) trough distribution, **not** to
   literature µV (caveat 1); and the shrinkage is **model-dependent**, so the absolute-µV S7 floor
   confounds MMN depth with feature-norm scale (caveat 2). Compare models with the z-scored **S2** rate and
@@ -1084,7 +1087,7 @@ MMN *shape* (S2) about equally well; this section asks which one to report once 
 (S7@0.5) is applied, and shows the choice is driven by amplitude, not shape. **mTRF only** (encoder
 deferred); pooled counts are **/336** (48 conditions × 7 models).
 
-> **Code / Data:** `scripts/analyze_mmn_s7_roi.py` → `outputs/results_24freq_7models/mmn_s7_roi.csv`.
+> **Code / Data:** `scripts/analyze_mmn_s7_roi.py` → `outputs/results_soafix_full/mmn_s7_roi.csv`.
 > Every number is recomputed at the **X = 0.5 µV** headline from the X-independent `trough_uv` column;
 > per-model splits and the {0.25 … 2.5} µV sweep are in Section 7's site-tables (Tables 32–33), and the
 > floor sweeps (per model and pooled) are plotted in **Section 8b**.
@@ -1094,14 +1097,15 @@ deferred); pooled counts are **/336** (48 conditions × 7 models).
 > within-condition (the same 336 conditions are scored at both sites), so the parcel-vs-FCz conclusion
 > does not depend on the pool being controlled.
 
-**1 · Shape (S2) is comparable at the two sites.** S2 fires on **261/336 (78%)** conditions at the
-frontal parcel and **265/336 (79%)** at FCz — the two sites recover the MMN *morphology* at essentially
-the same rate (FCz is marginally ahead, by 4 conditions). So on shape alone there is nothing to choose
-between them.
+**1 · Shape (S2) is comparable at the two sites.** S2 fires on **270/336 (80%)** conditions at the
+frontal parcel and **303/336 (90%)** at FCz — both sites recover the MMN *morphology* on the large
+majority of conditions, with FCz ahead by 33 conditions. So on shape alone FCz is, if anything, the
+better site.
 
-**2 · The µV floor splits them.** Applying the 0.5 µV floor retains **79% (207/261)** of S2 at the
-frontal parcel but only **66% (176/265)** at FCz (Table 36). The *same* shape verdict survives an
-absolute-µV floor markedly more often at the pooled parcel than at the single electrode.
+**2 · The µV floor splits them, and reverses the ordering.** Applying the 0.5 µV floor retains **84%
+(228/270)** of S2 at the frontal parcel but only **64% (194/303)** at FCz (Table 36). The *same* shape
+verdict survives an absolute-µV floor markedly more often at the pooled parcel than at the single
+electrode — enough to overturn FCz's shape advantage: 228 vs 194 conditions in absolute terms.
 
 **Table 36. S2 → S7 retention at the two fronto-central sites, across the floor sweep** (mTRF, pooled
 /336). Cells are `S7@X count (% of that site's S2)`; the **0.5 headline** column is bolded, and the
@@ -1109,35 +1113,36 @@ absolute-µV floor markedly more often at the pooled parcel than at the single e
 
 | Site | S2 (/336) | S7@0.25 | **S7@0.5** | S7@0.75 | S7@1.0 | S7@1.5 | S7@2.5 |
 | ---- | --------- | ------- | ---------- | ------- | ------ | ------ | ------ |
-| frontal parcel | 261 | 218 (84%) | **207 (79%)** | 192 (74%) | 169 (65%) | 138 (53%) | 93 (36%) |
-| FCz electrode | 265 | 211 (80%) | **176 (66%)** | 138 (52%) | 112 (42%) | 72 (27%) | 43 (16%) |
+| frontal parcel | 270 | 243 (90%) | **228 (84%)** | 217 (80%) | 193 (71%) | 159 (59%) | 95 (35%) |
+| FCz electrode | 303 | 238 (79%) | **194 (64%)** | 153 (50%) | 122 (40%) | 75 (25%) | 42 (14%) |
 
-**The bookends show the split is floor-dependent.** At **X = 0.25** the two sites are nearly tied (84% vs
-80% — a 4-point gap); the gap opens at the 0.5 headline (79% vs 66%, 13 points) and is **widest at
-X = 2.5** (36% vs 16% — the parcel keeps *more than twice* the share FCz does). So "the frontal parcel is
-more amplitude-robust" is a statement about floors at or above ~0.5 µV; at a very lenient floor the choice
-of site barely matters.
+**The bookends show the split is present across the whole range and widens with the floor.** At
+**X = 0.25** the parcel is already ahead (90% vs 79% — an 11-point gap); the gap widens at the 0.5
+headline (84% vs 64%, 20 points), reaches **30 points at X = 0.75** (80% vs 50%), and at **X = 2.5** the
+parcel still keeps **two and a half times** the share FCz does (35% vs 14%). So "the frontal parcel is
+more amplitude-robust" holds at every floor in the sweep, and the penalty for choosing FCz grows as the
+criterion tightens.
 
-**3 · The cause is amplitude, not shape.** The frontal-parcel S2-passing troughs are ≈ **2× deeper** in
-µV than FCz's: median **−1.72 µV (parcel) vs −0.79 µV (FCz)** (Table 37). A parcel pools a spatial
+**3 · The cause is amplitude, not shape.** The frontal-parcel S2-passing troughs are ≈ **2.5× deeper** in
+µV than FCz's: median **−1.93 µV (parcel) vs −0.78 µV (FCz)** (Table 37). A parcel pools a spatial
 region, so its predicted difference wave is deeper and less noisy than a single electrode's; a fixed
 0.5 µV floor therefore removes more FCz troughs while keeping more parcel ones. Section 8b's
 trough-distribution figure makes this visible: the FCz distribution sits to the *right* (shallower) of
 the frontal parcel's for every model. The split is **robust to the whisper-large scale artifact**:
-excluding whisper-large, retention is still **80% (parcel) vs 64% (FCz)** and the median troughs are
-−1.47 vs −0.69 µV — so the parcel's advantage is not an artefact of large's inflated µV.
+excluding whisper-large, retention is still **86% (parcel) vs 63% (FCz)** and the median troughs are
+−1.86 vs −0.71 µV — so the parcel's advantage is not an artefact of large's inflated µV.
 
 **Table 37. Median S2-passing predicted µV trough at each site** (mTRF; the calibration behind the split)
 
 | Site | median S2 trough (µV) | n (S2) |
 | ---- | --------------------- | ------ |
-| frontal parcel | −1.72 | 261 |
-| FCz electrode | −0.79 | 265 |
+| frontal parcel | −1.93 | 270 |
+| FCz electrode | −0.78 | 303 |
 
 **4 · Recommendation.** When an absolute-µV criterion is in play, the **frontal parcel is the more
-amplitude-robust fronto-central reporting site**: it keeps ≈ ⅘ of its mTRF S2 troughs at 0.5 µV, whereas
+amplitude-robust fronto-central reporting site**: it keeps ≈ ⅚ of its mTRF S2 troughs at 0.5 µV, whereas
 **FCz discards ≈ ⅓** of them purely because a single electrode's predicted trough is shallower — not
-because the shape is worse (FCz's S2 rate is, if anything, a hair higher). Report the frontal parcel when
+because the shape is worse (FCz's S2 rate is in fact the higher of the two, 90% vs 80%). Report the frontal parcel when
 S7 matters; FCz at 0.5 µV is the stricter, more conservative choice and will understate the count. By
 construction S7 ⊆ S2, so S7 ≤ S2 in every cell above. **Encoder comparison deferred** to a future encoder
 screen.
@@ -1156,24 +1161,26 @@ under `plots/old_sec78_plots/`; the superseded 5-model 2×2-site figures under
 `plots/old_sec78_plots/5model_24freq/`.)
 
 **Read.**
-- **The floor cuts S2 monotonically, and the frontal parcel is uniquely robust — but only above ~0.5 µV.**
-  The bookends bracket the effect: at **X = 0.25** the sites are nearly tied (218/261 = 84% vs 211/265 =
-  80%), at the **0.5 headline** the parcel keeps **79%** vs **66%**, and by **X = 2.5** the parcel keeps
-  **36%** (93/336) against FCz's **16%** (43/336) — more than double. The frontal parcel's median trough is
-  −1.72 µV against FCz's −0.79 µV — **spatial pooling buys depth**, which is exactly what an absolute-µV
-  floor rewards.
-- **Per model,** whisper-small has the shallowest FCz troughs (median −0.39 µV) and collapses fastest
-  (42 S2 → 27 at 0.25 → 18 at 0.5 → **0** at both 1.5 and 2.5), with whisper-base identical at the strict
-  end (**0** at 1.5 and 2.5); **whisper-large is the flat line at the top** — its predicted µV are ~40× the
-  others (a scale artifact; Section 7 caveat 2), so it is **completely unchanged across the entire sweep**
-  (28/48 frontal and 30/48 FCz at *every* floor from 0.25 to 2.5). The 2.5 bookend is what makes that
-  artifact unmissable: at the strictest floor whisper-large retains 30/48 at FCz while every other model
-  is at 4 or below. **wav2vec2-medium is the most floor-robust normal-scale model** (deepest frontal
-  troughs, median −3.45 µV; 41 S2 → 25 even at 2.5 µV), while **wav2vec2-large starts lowest on shape**
-  (21/48 frontal S2) and therefore stays lowest at every floor.
+- **The floor cuts S2 monotonically, and the frontal parcel is more robust at every floor in the sweep.**
+  The bookends bracket the effect: at **X = 0.25** the parcel is already ahead (243/270 = 90% vs 238/303 =
+  79%), at the **0.5 headline** the parcel keeps **84%** vs **64%**, and by **X = 2.5** the parcel keeps
+  **35%** (95/336) against FCz's **14%** (42/336) — two and a half times the share. The frontal parcel's
+  median trough is −1.93 µV against FCz's −0.78 µV — **spatial pooling buys depth**, which is exactly what
+  an absolute-µV floor rewards.
+- **Per model,** whisper-tiny has the shallowest FCz troughs (median −0.45 µV) and falls furthest
+  (44 S2 → 30 at 0.25 → 20 at 0.5 → 4 at 2.5); **whisper-base and whisper-small collapse hardest at the
+  strict end**, both reaching **0** at 1.5 and 2.5 from S2 rates of 42 and 45. **whisper-large is the flat
+  line** — its predicted µV are ~9× (frontal) to ~13× (FCz) the others (a scale artifact; Section 7
+  caveat 2), so it is **essentially unchanged across the entire sweep** (23/48 frontal at *every* floor
+  from 0.25 to 2.5; 28/48 FCz from 0.25 through 1.0, then 26/48). The 2.5 bookend is what makes that
+  artifact unmissable: at the strictest floor whisper-large retains 26/48 at FCz while four of the other
+  six models are at 4 or below. **wav2vec2-medium is the most floor-robust normal-scale model at the
+  frontal parcel** (deepest frontal troughs, median −2.72 µV; 42 S2 → 23 even at 2.5 µV), while
+  **wav2vec2-large starts lowest on shape** (29/48 frontal S2) yet holds its count better than either
+  whisper-base or whisper-small at the strict end (12/48 frontal, 10/48 FCz at 2.5).
 - **Trough distribution (symlog x):** six models cluster around the 0.5–1.5 µV floors; whisper-large sits
-  ~40× deeper in both panels. Every model's FCz distribution sits shallower than its frontal-parcel one —
-  the per-model version of the site split.
+  roughly an order of magnitude deeper in both panels. Every model's FCz distribution sits shallower than
+  its frontal-parcel one — the per-model version of the site split.
 
 **Figure 1 — MMN count /48 per model vs the amplitude floor X ∈ {S2 (X→0), 0.25, 0.5, 0.75, 1.0, 1.5, 2.5} µV:**
 ![mTRF MMN present-count /48 per model vs floor X; 2 panels (frontal parcel | FCz electrode), 7 model lines.](plots/sec8b_x_vs_mmn_per_model.png)
@@ -1193,9 +1200,9 @@ single-electrode midline sites — **Fz** and **FCz** — and asks how the model
 amplitude (µV)** differs between them, matched condition-for-condition. **mTRF only** (encoder deferred);
 **all 7 models**.
 
-> **Data:** `outputs/results_24freq_7models/mmn_s7_roi.csv`, `roi ∈ {Fz, FCz}` (electrode kind).
+> **Data:** `outputs/results_soafix_full/mmn_s7_roi.csv`, `roi ∈ {Fz, FCz}` (electrode kind).
 > `trough_uv` = deviant−standard µV at the S2 trough latency (negative = deeper), X-independent. The
-> paired test uses the conditions with an **S2 dip at both** electrodes (mTRF **n = 245**), matched on
+> paired test uses the conditions with an **S2 dip at both** electrodes (mTRF **n = 275**), matched on
 > (model × method × direction).
 
 **Table 37c. Fz vs FCz — shape and predicted µV trough (mTRF, /336)**
@@ -1205,32 +1212,35 @@ Retention cells are `S7@X / S2` as a % of that electrode's S2; the **0.5 headlin
 
 | Electrode | S2 (/336) | median S2 trough (µV) | S7@0.25 | **S7@0.5** | S7@0.75 | S7@1.0 | S7@1.5 | S7@2.5 |
 | --------- | --------- | --------------------- | ------- | ---------- | ------- | ------ | ------ | ------ |
-| Fz | 275 | −0.78 | 77% | **62%** | 52% | 35% | 24% | 17% |
-| FCz | 265 | −0.79 | 80% | **66%** | 52% | 42% | 27% | 16% |
+| Fz | 291 | −0.69 | 76% | **58%** | 48% | 37% | 27% | 18% |
+| FCz | 303 | −0.78 | 79% | **64%** | 50% | 40% | 25% | 14% |
 
-The two electrodes track each other across the whole sweep (they cross at 0.75 and again near 2.5), which
-is the point: **Fz and FCz are near-interchangeable at every floor**, and both fall far below the frontal
-parcel (84% → 36% over the same sweep; Table 36).
+The two electrodes track each other across the whole sweep — FCz is a few points ahead from 0.25 through
+1.0, Fz edges ahead at 1.5 and 2.5, so the curves cross once between 1.0 and 1.5 — which is the point:
+**Fz and FCz are near-interchangeable at every floor**, and both fall far below the frontal parcel
+(90% → 35% over the same sweep; Table 36).
 
 **What the data show.**
-- **They capture the same response.** S2 fires at comparable rates (Fz 275/336 vs FCz 265/336), and the
+- **They capture the same response.** S2 fires at comparable rates (Fz 291/336 vs FCz 303/336), and the
   two electrodes' predicted trough depths are **strongly correlated** across matched conditions
-  (Pearson **r = +0.71** over the six normal-scale models; whisper-large's ~40× scale inflates the raw
-  pooled r to +0.91, and the scale-free rank correlation over all 7 is Spearman **ρ = +0.78**) — Fz and
+  (Pearson **r = +0.71** over the six normal-scale models; whisper-large's ~13× FCz scale inflates the raw
+  pooled r to +0.95, and the scale-free rank correlation over all 7 is Spearman **ρ = +0.78**) — Fz and
   FCz are reading one underlying frontal MMN.
-- **FCz is the modestly deeper of the two — on the *paired* comparison.** The marginal medians are
-  effectively tied (**Fz −0.78 vs FCz −0.79 µV**), but marginals mix different condition sets; the matched
-  test is the informative one. Across the 245 conditions with an S2 dip at both sites, **FCz has the
-  deeper predicted trough in 158/245 (64%)**, median paired difference Fz − FCz = **+0.13 µV** (Fz the
-  shallower), Wilcoxon **p = 0.002**. Excluding whisper-large the direction *strengthens* — FCz deeper in
-  **144/207 (70%)**, median **+0.15 µV**, **p = 2×10⁻⁷**. The FCz-deeper direction holds within five of
-  the six normal-scale models (FCz deeper in 62–92% of pairs: tiny 92%, small 83%, wav2vec2-medium 71%,
-  base 63%, medium 62%) and **reverses only for whisper-large** (37%, where the µV scale artifact
-  dominates) and **wav2vec2-large** (37%). Consequently the 0.5 µV floor retains slightly more of FCz's
-  S2 (**66% vs 62%**) — though across the full sweep the two are near-interchangeable (Table 37c: 80% vs
-  77% at the 0.25 bookend; 16% vs 17% at 2.5, where Fz is marginally *ahead*).
+- **FCz is the modestly deeper of the two, but the pooled paired test does not reach significance.** The
+  marginal medians already favour FCz (**Fz −0.69 vs FCz −0.78 µV**), though marginals mix different
+  condition sets; the matched test is the informative one. Across the 275 conditions with an S2 dip at
+  both sites, **FCz has the deeper predicted trough in 163/275 (59%)**, median paired difference
+  Fz − FCz = **+0.09 µV** (Fz the shallower), Wilcoxon **p = 0.073 — n.s.**. Excluding whisper-large the
+  direction *sharpens* into significance — FCz deeper in **144/234 (62%)**, median **+0.09 µV**,
+  **p = 0.021**. The FCz-deeper direction is **carried by three of the six normal-scale models** (tiny
+  85%, small 76%, wav2vec2-medium 71%), is a coin-flip for **whisper-base** (54%), and **reverses** for
+  **whisper-medium** (42%) and **wav2vec2-large** (36%) — as well as for **whisper-large** (46%, where the
+  µV scale artifact dominates). So "FCz is deeper" is a tendency across models, not a property of each.
+  Consequently the 0.5 µV floor retains somewhat more of FCz's S2 (**64% vs 58%**) — though across the
+  full sweep the two are near-interchangeable (Table 37c: 79% vs 76% at the 0.25 bookend; 14% vs 18% at
+  2.5, where Fz is *ahead*).
 - **Both remain shallow single midline electrodes**, far shallower than the pooled **frontal parcel**
-  (median −1.72 µV, 79% retained; Section 8) — so for an absolute-µV criterion an ROI/parcel still beats
+  (median −1.93 µV, 84% retained; Section 8) — so for an absolute-µV criterion an ROI/parcel still beats
   either lone electrode.
 
 ![Fz vs FCz predicted MMN trough (µV), matched mTRF conditions with an S2 dip at both sites; points above the y = x line are conditions where FCz is deeper.](plots/sec8c_fz_vs_fcz_trough.png)
@@ -1245,11 +1255,12 @@ MMN, and our predicted-µV comparison is consistent with the standard EEG accoun
   Use Fz when replicating classic, foundational oddball paradigms.
 - **FCz is often preferred in modern high-density studies.** The MMN generator sits in auditory cortex
   and projects a field whose absolute maximum frequently lands **slightly below Fz — at FCz**, or
-  between the two. Our data agree: FCz is the modestly deeper site on the matched comparison. Use FCz in
-  high-density (≥ 64-channel) montages aimed at the absolute scalp peak.
+  between the two. Our data lean the same way, weakly: FCz is the modestly deeper site on the matched
+  comparison, though only once whisper-large's scale artifact is excluded. Use FCz in high-density
+  (≥ 64-channel) montages aimed at the absolute scalp peak.
 - **Or use both.** Grouping fronto-central electrodes (Fz, FCz, F1, F2) into a **region-of-interest
   cluster** gives the most robust measurement — the spatial-pooling advantage Section 8 quantifies: the
-  pooled frontal parcel's predicted trough is ~2× deeper and survives the amplitude floor far better
+  pooled frontal parcel's predicted trough is ~2.5× deeper and survives the amplitude floor far better
   than either lone electrode.
 ---
 
@@ -1365,12 +1376,12 @@ subset where a genuine trough exists and is stronger for the mTRF.
 **The question, re-asked on the current vintage.** Section 9 tested the human deviance-scaling law —
 does the MMN trough deepen as the physical deviance grows? — on the **20-method / 4-model** screen
 (mTRF + encoder). This section re-runs that exact test on the **24-method / 7-model mTRF screen** used by
-Sections 7/8/8b/8c. **The Section-9 result does not replicate at the frontal parcel** (see the summary);
-the two sections disagree, and Section 10 is the one on the current data.
+Sections 7/8/8b/8c. **The law holds at both sites on this screen** (see the summary), roughly twice as
+strongly at FCz; Section 10 is the one on the current data.
 
 > **Code:** `aux/analysis_with_counter/plots/deviance_scaling_plots_24freq_7models.py` (the 7-model
 > companion; `deviance_scaling_plots.py` is unchanged and still generates Section 9's 4-model figures).
-> **Data:** `outputs/results_24freq_7models/mmn_s7_roi.csv`, mTRF only.
+> **Data:** `outputs/results_soafix_full/mmn_s7_roi.csv`, mTRF only.
 > **Stats/binned CSVs:** `plots/deviance_scaling_stats_24freq_7models.csv`,
 > `plots/deviance_scaling_binned_24freq_7models.csv`.
 
@@ -1390,10 +1401,10 @@ the two sections disagree, and Section 10 is the one on the current data.
   **not interpretable pooled** (below). A **S2-passing-only** ρ is given for reference.
 
 > **Scale caveat — pooling raw µV is meaningless here (worse than in Section 9).** whisper-large's
-> predicted µV run **~40× every other model** (Section 7, caveat 2). Section 9 pooled 4 models of
-> comparable scale; this set does not have that property. A pooled mean per deviance bin is dominated by
-> whisper-large — at the frontal parcel, 7.02 st: **−13.2 µV pooled vs −1.4 µV** with whisper-large
-> removed. So **the models are never pooled in raw µV**: Table 41's pooled row uses the **rank** statistic
+> predicted µV run **~9× (frontal) to ~13× (FCz) every other model** (Section 7, caveat 2). Section 9
+> pooled 4 models of comparable scale; this set does not have that property. A pooled mean per deviance
+> bin is dominated by whisper-large — at the frontal parcel, 10.65 st: **−15.3 µV pooled vs −1.6 µV** with
+> whisper-large removed. So **the models are never pooled in raw µV**: Table 41's pooled row uses the **rank** statistic
 > only, Table 43 excludes whisper-large, and the figures are per-model (symlog y / own-scale panels).
 > The **wav2vec2 comparability caveat** (Section 7, caveat 3) applies here too.
 
@@ -1403,12 +1414,17 @@ the two sections disagree, and Section 10 is the one on the current data.
 
 | Site | Spearman ρ | p (ρ) | S2-only ρ | p | n (S2) |
 | ---- | ---------- | ----- | --------- | - | ------ |
-| parcel — frontal | **−0.02** | 0.72 (n.s.) | −0.04 | 0.55 (n.s.) | 261 |
-| electrode — FCz | **−0.23** | **2.4 × 10⁻⁵** | **−0.20** | **0.001** | 265 |
+| parcel — frontal | **−0.123** | **0.024** | **−0.177** | **0.0035** | 270 |
+| electrode — FCz | **−0.268** | **6.3 × 10⁻⁷** | **−0.251** | **9.8 × 10⁻⁶** | 303 |
 
-The pooled OLS slope is **not reported as interpretable** (frontal −1.16, p = 0.055; FCz −0.56,
-p = 0.069): in µV it is dominated by whisper-large's scale, so it measures feature-norm spread rather
-than deviance. Spearman is the statistic to read.
+**Both sites show the human-like deepening direction**, and both are significant on the rank statistic;
+FCz's effect is about twice the size of the frontal parcel's, and holds up an order of magnitude more
+strongly in p. The S2-only restriction does not change either verdict.
+
+The pooled OLS slope is **not reported as interpretable** (frontal −1.56, p = 0.008; FCz −0.81,
+p = 0.003): in µV it is dominated by whisper-large's scale, so it measures feature-norm spread rather
+than deviance — its nominal significance here is exactly the artifact the scale caveat warns about.
+Spearman is the statistic to read.
 
 ### 10b · Per model (Table 42)
 
@@ -1419,45 +1435,49 @@ direction; positive = anti-scaling** (the trough gets *shallower* as the deviant
 
 | Model | frontal ρ | frontal S2-only ρ (n) | FCz ρ | FCz S2-only ρ (n) |
 | ----- | --------- | --------------------- | ----- | ----------------- |
-| whisper-tiny | **−0.35\*** | −0.61\*\*\* (39) | **−0.38\*\*** | −0.60\*\*\* (41) |
-| whisper-base | +0.03 | +0.13 (44) | **−0.50\*\*\*** | −0.49\*\*\* (39) |
-| whisper-small | −0.23 | −0.26 (41) | −0.22 | −0.43\*\* (42) |
-| whisper-medium | **+0.32\*** ↩ | +0.39\* (38) | −0.01 | **+0.35\*** ↩ (35) |
-| whisper-large | **−0.33\*** | −0.38\* (37) | **−0.29\*** | −0.34\* (38) |
-| wav2vec2-medium | **+0.30\*** ↩ | +0.31\* (41) | −0.08 | +0.08 (41) |
-| wav2vec2-large | +0.12 | −0.15 (21) | **−0.30\*** | −0.06 (29) |
+| whisper-tiny | **−0.40\*\*** | −0.71\*\*\* (43) | **−0.37\*** | −0.35\* (44) |
+| whisper-base | +0.25 | +0.38\* (44) | **−0.52\*\*\*** | −0.60\*\*\* (42) |
+| whisper-small | **−0.51\*\*\*** | −0.56\*\*\* (37) | **−0.34\*** | −0.39\*\* (45) |
+| whisper-medium | **+0.37\*** ↩ | +0.28 (42) | +0.03 | +0.09 (46) |
+| whisper-large | **−0.46\*\*\*** | −0.45\*\* (33) | **−0.40\*\*** | −0.45\*\* (41) |
+| wav2vec2-medium | +0.27 | +0.25 (42) | −0.03 | +0.02 (47) |
+| wav2vec2-large | −0.14 | −0.67\*\*\* (29) | **−0.43\*\*** | −0.48\*\* (38) |
 
-↩ = **significant reversal** (anti-scaling).
+↩ = **significant reversal** (anti-scaling). **Only one cell in the table reverses significantly**
+(whisper-medium at the frontal parcel); wav2vec2-medium and whisper-base lean positive at that site but
+neither reaches p < 0.05 (p = 0.068 and 0.090).
 
 ### 10c · Dose–response (Table 43)
 
 **Table 43. Median S2/S7 trough (µV; negative = deeper) by deviance size** — **6 normal-scale models**
-(whisper-large excluded; its ~40× µV would dominate every cell). `n/cell` = methods × 2 directions × 6
+(whisper-large excluded; its ~9–13× µV would dominate every cell). `n/cell` = methods × 2 directions × 6
 models.
 
 | Deviance (st) | Example stimulus | # methods | frontal (µV) | FCz (µV) | n/cell |
 | ------------- | ---------------- | --------- | ------------ | -------- | ------ |
-| 0.84 | 1000→1050 Hz | 1 | −0.61 | −0.26 | 12 |
+| 0.84 | 1000→1050 Hz | 1 | −1.01 | −0.36 | 12 |
 | 1.07 | 1000→1064 Hz | 1 | −0.93 | −0.45 | 12 |
 | 1.74 | 633→700 Hz | 1 | −0.54 | −0.32 | 12 |
-| 1.99 | 1000→1122 Hz | 1 | −2.38 | −0.73 | 12 |
-| 3.16 | 1000→1200 Hz | 10 | −1.40 | −0.59 | 120 |
-| 7.02 | 1000→1500 Hz | 2 | −1.92 | −0.73 | 24 |
+| 1.99 | 1000→1122 Hz | 1 | −1.59 | −0.45 | 12 |
+| 3.16 | 1000→1200 Hz | 10 | −1.77 | −0.66 | 120 |
+| 7.02 | 1000→1500 Hz | 2 | −2.12 | −0.81 | 24 |
 | 7.92 | 633→1000 Hz | 1 | −1.30 | −0.68 | 12 |
 | 8.84 | 600→1000 Hz | 1 | −1.33 | −0.47 | 12 |
-| 10.65 | 1000→1850 Hz | 5 | −0.80 | −1.10 | 60 |
+| 10.65 | 1000→1850 Hz | 5 | −1.08 | −1.26 | 60 |
 | 12.00 | 1000→2000 Hz | 1 | −1.75 | −1.00 | 12 |
 
-**FCz descends fairly cleanly** (−0.26 → −1.00 µV from the smallest to the largest deviant), which is the
-pooled ρ = −0.23. **The frontal column does not** — it wanders (−0.61 → −2.38 at 1.99 st → −0.80 at
-10.65 st), which is the pooled ρ ≈ 0.
+**FCz descends fairly cleanly** (−0.36 → −1.00 µV from the smallest to the largest deviant, with the
+deepest cell at 10.65 st), which is the pooled ρ = −0.268. **The frontal column climbs more raggedly** —
+it deepens from −1.01 at 0.84 st to −2.12 at 7.02 st, then gives most of it back at 10.65 st (−1.08)
+before recovering at 12.00 st (−1.75). That non-monotonic middle is why the frontal ρ = −0.123 is real
+but half the size of FCz's.
 
 > **Design caveat — the deviance axis is badly unbalanced.** The 24 methods do **not** spread evenly over
 > the 10 sizes: **3.16 st carries 10 methods (140 of 336 conditions) and 10.65 st carries 5 (70)** —
-> together **63%** of the sample — while six of the ten sizes rest on a **single method** (14 conditions).
-> So the trend is anchored by two clusters, and any single-method size (notably 1.99 st, the deepest
-> frontal cell) is one stimulus, not a replicated estimate. This is a property of the literature-derived
-> method set, not of the analysis.
+> together **62.5%** of the sample — while **seven** of the ten sizes rest on a **single method**
+> (14 conditions). So the trend is anchored by two clusters, and any single-method size (notably 12.00 st,
+> the deepest single-method frontal cell) is one stimulus, not a replicated estimate. This is a property
+> of the literature-derived method set, not of the analysis.
 
 **Figure 1 — median trough per deviance size, one line per model (symlog y; 2 panels, frontal | FCz):**
 ![Deviance-scaling of the S2/S7 trough per model, 24 methods × {regular, counter}, mTRF; 2 panels (frontal parcel | FCz electrode), symlog y, 7 model lines.](plots/deviance_scaling_dose_response_24freq_7models.png)
@@ -1467,30 +1487,31 @@ pooled ρ = −0.23. **The frontal column does not** — it wanders (−0.61 →
 
 ### Section 10 summary
 
-- **The Section-9 deviance-scaling result does not replicate at the frontal parcel.** Section 9 reported
-  ρ = −0.28 (p = 0.011) there on 20 methods × 4 models; on 24 methods × 7 models the effect is **gone**:
-  **ρ = −0.02, p = 0.72** (S2-only −0.04, p = 0.55). **Section 9's claim that the trough deepens "in the
-  same direction for every model" is false on this set.**
-- **FCz survives, and is now the only site with the law.** **ρ = −0.23, p = 2.4 × 10⁻⁵** (S2-only −0.20,
-  p = 0.001), consistent with Section 9's FCz ρ = −0.29. Section 9's own caveat — "FCz is the cleaner
-  single site" — holds up.
-- **Per model the picture is heterogeneous, not uniform.** At **FCz**, four of seven deepen significantly
-  (tiny −0.38\*\*, base −0.50\*\*\*, large −0.29\*, wav2vec2-large −0.30\*) and none reverses. At the
-  **frontal parcel** only **tiny (−0.35\*)** and **large (−0.33\*)** deepen, while **whisper-medium
-  (+0.32\*)** and **wav2vec2-medium (+0.30\*)** **reverse significantly** — their troughs get *shallower*
-  as the deviant grows, the anti-human direction. whisper-medium also reverses on the S2-only subset at
-  FCz (+0.35\*). A criterion that "the mTRF shows the human deviance law" is therefore **model- and
-  site-dependent**, not a property of the mTRF mapping as such.
-- **Why the disagreement with Section 9 — unresolved.** The two screens differ in **two** ways at once:
-  new models (whisper-large + both wav2vec2) **and** 14 extra methods with a wider, more unbalanced
-  deviance axis. This data cannot separate those. Note the two models that reverse at frontal are
-  **whisper-medium** — present in *both* screens, where Section 9 scored it ρ = −0.09 (frontal, n = 20,
-  n.s.) — and **wav2vec2-medium**, which is new. So the reversal is **not** purely an artefact of the new
-  models: whisper-medium's frontal ρ moved from −0.09 (n.s., 20 methods) to **+0.32\*** (48 conditions),
-  i.e. the *added methods* flipped a model that both screens share. Reconciling Section 9 against this
-  section should start there.
+- **The deviance-scaling law holds at both reporting sites.** At the **frontal parcel** ρ = **−0.123,
+  p = 0.024** (S2-only −0.177, p = 0.0035, n = 270); at **FCz** ρ = **−0.268, p = 6.3 × 10⁻⁷** (S2-only
+  −0.251, p = 9.8 × 10⁻⁶, n = 303). Both are in the human-like deepening direction, so Section 9's
+  headline replicates on the wider screen at both sites.
+- **FCz is the stronger site by a factor of about two.** Its ρ is roughly twice the frontal parcel's and
+  its p is four orders of magnitude smaller, on a sample only 12% larger. Section 9's own caveat — "FCz is
+  the cleaner single site" — holds up, and the frontal parcel's weaker showing is a matter of **effect
+  size, not sign**.
+- **Per model the picture is heterogeneous, not uniform.** At **FCz**, five of seven deepen significantly
+  (tiny −0.37\*, base −0.52\*\*\*, small −0.34\*, large −0.40\*\*, wav2vec2-large −0.43\*\*) and **none
+  reverses**; the two exceptions (whisper-medium +0.03, wav2vec2-medium −0.03) are flat rather than
+  reversed. At the **frontal parcel** three deepen significantly — **small (−0.51\*\*\*)**, **large
+  (−0.46\*\*\*)** and **tiny (−0.40\*\*)** — while **whisper-medium (+0.37\*)** is the **one significant
+  reversal** in the whole table: its troughs get *shallower* as the deviant grows, the anti-human
+  direction. whisper-base (+0.25) and wav2vec2-medium (+0.27) lean the same way but fall short of
+  significance. So a claim that "the mTRF shows the human deviance law" is well supported in aggregate but
+  still **model- and site-dependent**, and Section 9's "same direction for every model" is not true here.
+- **Where Section 9 and this screen part company.** Not on the pooled result — that replicates at both
+  sites — but on **whisper-medium**, the model present in *both* screens. Section 9 scored it ρ = −0.09
+  (frontal, n = 20, n.s.); on 48 conditions it is **+0.37\*,** a significant anti-scaling reversal. Since
+  the model is shared, the change is attributable to the **added methods and their wider, more unbalanced
+  deviance axis**, not to the new models. Reconciling Section 9 against this section should start there.
 - **Reading guide.** Compare models with the **rank** statistic (Spearman), never the pooled µV slope or a
-  pooled bin mean — whisper-large's ~40× scale makes those track feature-norm size rather than deviance.
+  pooled bin mean — whisper-large's ~9–13× scale makes those track feature-norm size rather than deviance
+  (the pooled OLS slope is nominally significant at both sites for exactly that reason).
   The encoder is **deferred** (not run on the 24-method set), so unlike Section 9 this section has no
   mTRF-vs-encoder contrast.
 
@@ -1503,13 +1524,14 @@ deviance*. This section asks something prior to both: **do the 7 models agree on
 easy and which are hard?** If the in-silico MMN is a property of the **stimulus**, all 7 models should
 rank the 48 stimulus pairs similarly — the same deviants deep, the same deviants shallow. If it is a
 property of the **model**, each model has its own idiosyncratic favourites and the rankings should be
-unrelated. Reported per site, because Section 10 showed the two sites can disagree.
+unrelated. Reported per site, because Section 10 showed the two sites can differ substantially in how
+strongly the same effect registers.
 
 > **Code:** `aux/analysis_with_counter/plots/sec11_concordance_plots.py`.
-> **Data:** `outputs/results_24freq_7models/mmn_s7_roi.csv`, mTRF only, `dip_uv_threshold == 0.25`
+> **Data:** `outputs/results_soafix_full/mmn_s7_roi.csv`, mTRF only, `dip_uv_threshold == 0.25`
 > (one row per stimulus pair — `s2` and `trough_uv` are X-independent). **Verified 48 stimulus pairs × 7
 > models at each site before any statistic was computed.**
-> **Stats/CSVs:** `plots/sec11_stats.csv` (183 statistics — including every κ and chance null quoted in
+> **Stats/CSVs:** `plots/sec11_stats.csv` (281 statistics — including every κ and chance null quoted in
 > prose below), `plots/sec11_stimulus_pairs.csv` (per-pair mean rank, both sites),
 > `plots/sec11_per_pair_agreement.csv` (the full per-pair floor sweep behind Tables 48a/48b).
 >
@@ -1533,60 +1555,69 @@ unrelated. Reported per site, because Section 10 showed the two sites can disagr
   rate**.
 
 > **Scale trap — why nothing here uses raw µV.** `trough_uv` is **not comparable across models**:
-> whisper-large's predicted µV run **~40×** the others (median S2 trough ≈ −27.3 µV frontal / −21.6 µV
-> FCz on this set, vs ≈ −0.9 µV for whisper-small; Section 7, caveat 2), and wav2vec2-medium (≈ −2.8 µV
-> frontal) sits ~3× above whisper-small. **Any cross-model comparison of raw µV would measure
+> whisper-large's predicted µV run **~9× (frontal) to ~13× (FCz)** the others (median S2 trough
+> **−16.71 µV frontal / −10.10 µV FCz** on this set, vs −1.56 / −0.47 µV for whisper-small; Section 7,
+> caveat 2), and wav2vec2-medium (−2.72 µV frontal) sits ~1.7× above whisper-small.
+> **Any cross-model comparison of raw µV would measure
 > feature-norm scale, not response.** So this section never pools raw µV, never correlates raw µV across
 > models, and never takes a cross-model mean trough — it ranks **within** each model first, then compares
 > rankings.
 
 ### 11a · Continuous concordance — do the models order the stimuli the same way? (Table 44)
 
-**Kendall's W — reliably above chance, but weak.** Ranking the 48 stimulus pairs within each model and
-asking whether the 7 rankings agree gives **W = 0.266 at the frontal parcel (p = 2 × 10⁻⁴)** and
-**W = 0.245 at FCz (p = 6 × 10⁻⁴)**, against a permutation **null mean of 0.142** (5000 shuffles of each
-model's ranking independently; null p95 = 0.189 / 0.190). So the models share *some* common ordering — W is
-roughly **double the null** and the permutation p is decisive — but **W ≈ 0.25 is a long way from
-agreement**: the bulk of each model's ranking is not shared with the others.
+**Kendall's W — weak at FCz, and indistinguishable from chance at the frontal parcel.** Ranking the 48
+stimulus pairs within each model and asking whether the 7 rankings agree gives **W = 0.124 at the frontal
+parcel (p = 0.74 — n.s.)** and **W = 0.222 at FCz (p = 0.005)**, against a permutation **null mean of
+0.142** (5000 shuffles of each model's ranking independently; null p95 = 0.190 at both sites). So the
+**frontal parcel's rankings sit *on* the null** — the models there share no detectable common ordering at
+all — while FCz clears it reliably but by a modest margin: **W = 0.22 is a long way from agreement**, and
+the bulk of each model's ranking is not shared with the others.
 
-**Dropping whisper-large barely moves W** (frontal 0.266 → **0.303**, p = 2 × 10⁻⁴; FCz 0.245 → **0.237**,
-p = 0.016), so the concordance is not an artefact of its inflated scale — as expected, since ranks are
-scale-free. Restricting to the **5 whisper models** raises it only to **0.369 / 0.320** (both p ≤ 0.001) —
-even one architecture, one training objective and one fit protocol does not buy agreement.
+**Dropping whisper-large barely moves W** (frontal 0.124 → **0.144**, p = 0.76; FCz 0.222 → **0.230**,
+p = 0.031), so what concordance there is at FCz is not an artefact of its inflated scale — as expected,
+since ranks are scale-free. Restricting to the **5 whisper models** raises it only to **0.213 (frontal,
+p = 0.35 — still n.s.) / 0.274 (FCz, p = 0.036)** — even one architecture, one training objective and one
+fit protocol does not buy agreement.
 *(The z-based view in 11h reaches the same conclusion by a different route, which is the point of running
-both: the median across-model spread of z is well below independence but nowhere near zero.)*
+both: the across-model spread of z is below independence at FCz and at independence at frontal.)*
 
 **Table 44. Pairwise Spearman ρ of within-model stimulus pair ranks** (21 pairs; the 7×7 matrices are in
 Figure 2 and `sec11_stats.csv`)
 
 | Site | all pairs (21) | within-whisper (10) | whisper ↔ wav2vec2 (10) | within-wav2vec2 (1) |
 | ---- | -------------- | ------------------- | ----------------------- | ------------------- |
-| parcel — frontal | **+0.144** [−0.199, +0.525] | **+0.212** [−0.026, +0.525] | **+0.110** [−0.174, +0.364] | **−0.199** |
-| electrode — FCz | **+0.119** [−0.261, +0.556] | **+0.150** [−0.261, +0.556] | **+0.122** [−0.234, +0.499] | **−0.216** |
+| parcel — frontal | **−0.022** [−0.448, +0.436] | **+0.016** [−0.448, +0.436] | **−0.017** [−0.316, +0.360] | **−0.448** |
+| electrode — FCz | **+0.092** [−0.369, +0.394] | **+0.092** [−0.369, +0.394] | **+0.119** [−0.145, +0.381] | **−0.177** |
 
 Values are means, with [min, max] across the pairs in that block.
 
-- **The typical pair of models barely agrees.** Mean ρ ≈ **+0.12 to +0.14** — a shared-variance of ~2%.
-  No pair anywhere exceeds **ρ = +0.56**.
-- **The family effect is small and site-dependent.** Within-whisper (+0.212) beats whisper↔wav2vec2
-  (+0.110) at the **frontal parcel**, but at **FCz the gap nearly closes** (+0.150 vs +0.122). So "same
-  architecture ⇒ same stimulus preferences" is **not** a clean story.
-- **The two wav2vec2 models *anti*-correlate** (−0.199 frontal, −0.216 FCz) — the only same-family pair,
-  and it disagrees at both sites. **whisper-medium is the whisper outlier**: it is the only whisper model
-  that correlates negatively with its siblings at FCz (−0.26 with base, −0.19 with small). The three
-  models that do hang together are **tiny / base / small** (ρ +0.30 to +0.56) — the small end of the
-  whisper family, i.e. the pairs of models most alike in capacity.
+- **The typical pair of models does not agree at all.** Mean ρ is **−0.02 at the frontal parcel** — the
+  average pair of models is, if anything, very slightly *anti*-correlated — and **+0.09 at FCz**, under 1%
+  shared variance. No pair anywhere exceeds **ρ = +0.44**.
+- **There is no consistent family effect.** At the **frontal parcel** within-whisper (+0.016) and
+  whisper↔wav2vec2 (−0.017) are both indistinguishable from zero; at **FCz** the cross-family block
+  (+0.119) is if anything *above* the within-whisper block (+0.092). So "same architecture ⇒ same
+  stimulus preferences" is **not** supported at either site.
+- **The two wav2vec2 models *anti*-correlate** (−0.448 frontal, −0.177 FCz) — the only same-family pair,
+  and it disagrees at both sites, strongly so at the parcel. **whisper-medium is the whisper outlier**: it
+  correlates negatively with its siblings at **both** sites (frontal −0.45 with small, −0.41 with large;
+  FCz −0.37 with tiny, −0.30 with base). The models that do hang together are **tiny / base / small at
+  FCz** (ρ +0.33 to +0.39) — the small end of the whisper family, i.e. the pairs most alike in capacity —
+  but that cluster **does not survive the move to the frontal parcel**, where base↔small is −0.12.
 
 ### 11b · Binary agreement — and why "6 of 7 models agree" means nothing here (Figure 3)
 
 **This is the section's most important negative result.** The tempting headline — *"all 7 models agree
-that S2 is present on 10 of 48 frontal stimulus pairs"* — **is what chance already predicts**. S2 base rates
-run **0.44 → 0.92 per model** (pooled 0.777 frontal / 0.789 FCz), so a null in which every model fires at
-its own rate but on *unrelated* stimulus pairs still delivers **6.9 unanimous stimulus pairs by chance**
-(observed 10, p = 0.087) at frontal and **8.7** at FCz (observed 9, p = 0.54). **No site, on either
-criterion, shows more unanimity than chance.** Chance-corrected, the **frontal parcel's S2 agreement is
-exactly zero (κ = −0.001, p = 0.25)** — the seven models' S2 calls are statistically independent given
-their base rates. FCz's κ = +0.137 is real (p = 2 × 10⁻⁴) but "slight" on any conventional κ scale.
+that S2 is present on 27 of 48 FCz stimulus pairs"* — **is very nearly what chance already predicts**. S2
+base rates run **0.60 → 0.92 per model at frontal (pooled 0.804) and 0.79 → 0.98 at FCz (pooled 0.902)**,
+so a null in which every model fires at its own rate but on *unrelated* stimulus pairs already delivers
+**22.9 unanimous stimulus pairs by chance** at FCz (observed 27, p = 0.026) and **9.7** at frontal
+(observed 9, p = 0.72). At the **frontal parcel unanimity is below what chance expects**; at **FCz** the
+observed excess is **4.1 pairs over a null of 22.9** — nominally p = 0.026 and uncorrected, which is a
+thin margin on which to claim the models agree about anything. Chance-corrected, the **frontal parcel's S2
+agreement is essentially zero and slightly negative (κ = −0.024, p = 0.62)** — the seven models' S2 calls
+are statistically independent given their base rates. FCz's κ = **+0.070** is nominally real (p = 0.016)
+but "slight" on any conventional κ scale.
 
 > **A raw agreement count is uninterpretable when base rates are this high.** Any future claim of the
 > form "N of 7 models agree" on this screen must be reported against this null, not on its own.
@@ -1595,83 +1626,87 @@ their base rates. FCz's κ = +0.137 is real (p = 2 × 10⁻⁴) but "slight" on 
 
 **Table 45. Consensus-high and consensus-low stimulus pairs per site.** `mean %ile` = mean **within-model
 percentile of response height** across the 7 models (**100 = deepest = highest response**); `SD` = spread
-of that percentile across models (**the median SD over all 48 stimulus pairs is ≈ 27 points**, so an SD near
-30 means the models substantially disagree about that very stimulus); `n S2` = models calling S2 present.
+of that percentile across models (**the median SD over all 48 stimulus pairs is ≈ 30 points at frontal and
+≈ 25 at FCz**, so an SD near 30 means the models substantially disagree about that very stimulus);
+`n S2` = models calling S2 present.
 
 | Site | Rank | Stimulus pair | Deviance (st) | std→dev (Hz) | SOA (ms) | mean %ile | SD | n S2 |
 | ---- | ---- | --------- | ------------- | ------------ | -------- | --------- | -- | ---- |
-| **frontal** | high | method_53 | 3.16 | 1000→1200 | 333 | 72.6 | 16.9 | 5/7 |
-| | high | method_18 **counter** | 10.65 | 1850→1000 | 200 | 72.6 | **35.9** | 5/7 |
-| | high | method_19 **counter** | 10.65 | 1850→1000 | 200 | 71.4 | **35.8** | 5/7 |
-| | high | method_17 **counter** | 10.65 | 1850→1000 | 200 | 69.9 | **36.3** | 5/7 |
-| | high | method_55 **counter** | 12.00 | 2000→1000 | 500 | 69.6 | 30.8 | 6/7 |
-| | high | method_10 **counter** | 1.99 | 1122→1000 | 300 | 69.0 | 29.2 | 7/7 |
-| | low | method_27 **counter** | 1.07 | 1064→1000 | 900 | 30.7 | 20.1 | 5/7 |
-| | low | method_74 | 7.02 | 1000→1500 | 1000 | 22.8 | 20.7 | 5/7 |
-| | low | method_37 **counter** | 0.84 | 1050→1000 | 310 | 17.3 | 15.6 | 4/7 |
-| | low | method_19 | 10.65 | 1000→1850 | 200 | 14.6 | 16.6 | 4/7 |
-| | low | method_18 | 10.65 | 1000→1850 | 200 | 13.7 | 15.9 | 4/7 |
-| | low | method_17 | 10.65 | 1000→1850 | 200 | 13.4 | 16.2 | 4/7 |
-| **FCz** | high | method_21 | 10.65 | 1000→1850 | 500 | 82.1 | 15.7 | 6/7 |
-| | high | method_20 | 10.65 | 1000→1850 | 500 | 81.2 | 16.5 | 6/7 |
-| | high | method_55 **counter** | 12.00 | 2000→1000 | 500 | 76.3 | 28.3 | 6/7 |
-| | high | method_10 **counter** | 1.99 | 1122→1000 | 300 | 72.9 | 13.0 | 7/7 |
-| | high | method_44 **counter** | 7.92 | 1000→633 | 510 | 68.1 | 32.5 | 6/7 |
-| | high | method_60 | 7.02 | 1000→1500 | 300 | 66.3 | 31.5 | 4/7 |
-| | low | method_74 | 7.02 | 1000→1500 | 1000 | 31.9 | 27.1 | 6/7 |
-| | low | method_43 **counter** | 1.74 | 700→633 | 510 | 31.3 | 18.8 | 6/7 |
-| | low | method_72 **counter** | 3.16 | 1200→1000 | 500 | 26.7 | 17.3 | 5/7 |
-| | low | method_75 **counter** | 3.16 | 1200→1000 | 500 | 25.8 | 14.3 | 6/7 |
-| | low | method_37 **counter** | 0.84 | 1050→1000 | 310 | 21.9 | 17.1 | 5/7 |
-| | low | method_27 **counter** | 1.07 | 1064→1000 | 900 | 16.1 | 17.2 | 4/7 |
+| **frontal** | high | method_19 **counter** | 10.65 | 1850→1000 | 200 | 67.8 | **31.9** | 7/7 |
+| | high | method_55 **counter** | 12.00 | 2000→1000 | 500 | 66.9 | **31.8** | 6/7 |
+| | high | method_60 **counter** | 7.02 | 1500→1000 | 300 | 66.6 | **34.8** | 5/7 |
+| | high | method_18 **counter** | 10.65 | 1850→1000 | 200 | 65.3 | **32.8** | 7/7 |
+| | high | method_17 **counter** | 10.65 | 1850→1000 | 200 | 64.7 | **33.7** | 7/7 |
+| | high | method_53 **counter** | 3.16 | 1200→1000 | 333 | 62.3 | 21.1 | 7/7 |
+| | low | method_55 | 12.00 | 1000→2000 | 500 | 38.3 | **32.9** | 5/7 |
+| | low | method_27 | 1.07 | 1000→1064 | 900 | 37.4 | 14.7 | 4/7 |
+| | low | method_37 **counter** | 0.84 | 1050→1000 | 310 | 35.6 | 27.9 | 6/7 |
+| | low | method_43 **counter** | 1.74 | 700→633 | 510 | 34.0 | 23.5 | 5/7 |
+| | low | method_27 **counter** | 1.07 | 1064→1000 | 900 | 27.1 | 18.9 | 5/7 |
+| | low | method_74 | 7.02 | 1000→1500 | 1000 | 22.2 | 19.8 | 5/7 |
+| **FCz** | high | method_21 | 10.65 | 1000→1850 | 500 | 82.4 | 17.7 | 6/7 |
+| | high | method_20 | 10.65 | 1000→1850 | 500 | 81.5 | 18.9 | 6/7 |
+| | high | method_55 **counter** | 12.00 | 2000→1000 | 500 | 75.7 | **31.1** | 6/7 |
+| | high | method_19 **counter** | 10.65 | 1850→1000 | 200 | 71.7 | **38.2** | 7/7 |
+| | high | method_18 **counter** | 10.65 | 1850→1000 | 200 | 70.5 | **36.4** | 7/7 |
+| | high | method_17 **counter** | 10.65 | 1850→1000 | 200 | 69.9 | **36.6** | 7/7 |
+| | low | method_10 | 1.99 | 1000→1122 | 300 | 32.2 | 25.2 | 6/7 |
+| | low | method_43 **counter** | 1.74 | 700→633 | 510 | 31.3 | 20.4 | 6/7 |
+| | low | method_74 | 7.02 | 1000→1500 | 1000 | 30.1 | 27.2 | 6/7 |
+| | low | method_72 **counter** | 3.16 | 1200→1000 | 500 | 22.5 | 16.4 | 5/7 |
+| | low | method_75 **counter** | 3.16 | 1200→1000 | 500 | 21.6 | 13.3 | 6/7 |
+| | low | method_27 **counter** | 1.07 | 1064→1000 | 900 | 17.9 | 18.8 | 4/7 |
 
-- **The consensus is weak even at the extremes.** The deepest consensus stimulus pair reaches only the **73rd
-  percentile** (frontal) / **82nd** (FCz) *on average* — if the models agreed, a consensus-high stimulus
-  would sit near 100. Several of the "consensus-high" rows carry **SD ≈ 30–36 percentile points**, i.e.
-  the models place the same stimulus anywhere from the top to the bottom of their own rankings.
-- **The two sites only partly share their consensus.** The mean rankings correlate **ρ = +0.60
-  (p = 8 × 10⁻⁶)** across the 48 stimulus pairs, but the **top-6 sets overlap on only 2 of 6** (method_55
-  counter, method_10 counter) and the bottom-6 on **3 of 6** (method_74, method_37 counter, method_27
-  counter). Widening to 12: **6/12 top, 8/12 bottom**. Note this ρ is *not* independent evidence — it
-  compares the same 7 models to themselves at two sites.
-- **The only stimuli both sites call low are the two smallest deviants** — method_37 counter (0.84 st)
-  and method_27 counter (1.07 st) — plus method_74 (7.02 st, **SOA 1000 ms**, the longest in the set).
+- **The consensus is weak even at the extremes — and at the frontal parcel it barely exists.** The
+  deepest consensus stimulus pair reaches only the **68th percentile** (frontal) / **82nd** (FCz) *on
+  average*, and the shallowest only falls to the **22nd** / **18th** — if the models agreed, the extremes
+  would approach 100 and 0. At frontal the entire 48-pair range is compressed into **22–68**, which is
+  the same fact Kendall's W reports as W = 0.124 (n.s.). Five of the six frontal "consensus-high" rows
+  carry **SD ≈ 32–35 percentile points**, i.e. the models place the same stimulus anywhere from the top
+  to the bottom of their own rankings.
+- **The two sites only partly share their consensus.** The mean rankings correlate **ρ = +0.59
+  (p = 1 × 10⁻⁵)** across the 48 stimulus pairs, and the **top-6 sets overlap on 4 of 6** (method_17/18/19
+  counter, method_55 counter) while the bottom-6 overlap on **3 of 6** (method_74, method_43 counter,
+  method_27 counter). Widening to 12: **6/12 top, 6/12 bottom**. Note this ρ is *not* independent
+  evidence — it compares the same 7 models to themselves at two sites.
+- **The stimuli both sites call low are the small deviants plus method_74** — method_27 counter (1.07 st)
+  and method_43 counter (1.74 st) — plus method_74 (7.02 st, **SOA 1000 ms**, the longest in the set).
   method_74 being consensus-low *despite* a large deviant, at both sites, is the one hint that **SOA**
   may matter more than deviance size; with a single method at SOA 1000 this is **one stimulus, not a
   replicated estimate**, and cannot be tested on this set.
 
 ### 11d · Is it just deviance size? (Table 46)
 
-Section 10 found FCz trough depth tracks deviance (ρ = −0.23, p = 2 × 10⁻⁵) while the frontal parcel does
-not (ρ = −0.02, n.s.). So at FCz, "which stimuli are high" could partly be "which deviants are big" —
-which would be **shared physics, not shared stimulus preference**. Two controls:
+Section 10 found trough depth tracks deviance at both sites, twice as strongly at FCz (ρ = −0.268,
+p = 6 × 10⁻⁷) as at the frontal parcel (ρ = −0.123, p = 0.024). So at FCz — the only site with
+concordance to explain — "which stimuli are high" could largely be "which deviants are big", which would
+be **shared physics, not shared stimulus preference**. Two controls:
 
 **Table 46. Concordance controlling for deviance size**
 
 | Site | W — all 48 stimulus pairs | W — within the 3.16 st block (n = 20) | p | W — deviance-residualised ranks (n = 48) | p |
 | ---- | --------------------- | ------------------------------------- | - | ---------------------------------------- | - |
-| parcel — frontal | **0.266** (p = 2 × 10⁻⁴) | **0.127** | 0.62 (n.s.) | **0.273** | **2 × 10⁻⁴** |
-| electrode — FCz | **0.245** (p = 6 × 10⁻⁴) | **0.155** | 0.36 (n.s.) | **0.199** | **0.031** |
+| parcel — frontal | **0.124** (p = 0.74, n.s.) | **0.072** | 0.97 (n.s.) | **0.137** | 0.55 (n.s.) |
+| electrode — FCz | **0.222** (p = 0.005) | **0.182** | 0.18 (n.s.) | **0.157** | 0.29 (n.s.) |
 
 *(3.16 st block: 10 methods × 2 directions = 20 stimulus pairs, the largest balanced block. Excluding
-whisper-large: frontal W = 0.108, p = 0.88; FCz W = 0.181, p = 0.36 — same conclusion.)*
+whisper-large: frontal W = 0.075, p = 0.99; FCz W = 0.252, p = 0.056 — same conclusion.)*
 
-**The two controls disagree, and the disagreement is informative.**
-- **Within the balanced 3.16 st block, concordance collapses to chance at both sites.** W falls to
-  **0.127 (frontal)** and **0.155 (FCz)** against a **null mean of 0.142** — the point estimates land
-  *on* the null. **Caveat: n = 20 is underpowered** (the null p95 is 0.217, so only W ≳ 0.22 would be
-  detectable), so this is *suggestive*, not proof of zero. But the point estimate does not merely shrink,
-  it reaches chance — when every stimulus pair has the **same** deviance size, the models stop agreeing.
-- **Deviance-residualised ranks over all 48 retain the effect** (frontal 0.273, FCz 0.199, both
-  significant). Residualising removes only the **linear-in-rank** deviance trend; whatever the models
-  share is evidently *not* that linear trend, and survives it.
-- **Reading the two together:** the shared component is **not** simple linear deviance-scaling (it
-  survives residualising), but it also does **not appear within a fixed deviance size** (it vanishes in
-  the 3.16 st block). The most economical reading is that the residual concordance rides on **coarse
-  between-size structure** — the models agree roughly about big-vs-small deviants — and has little to say
-  about individual stimuli. At **FCz** this is exactly Section 10's ρ = −0.23 reappearing as concordance.
-  At **frontal**, where Section 10 found *no* deviance effect, the surviving W = 0.273 is **not**
-  explained by deviance and remains unattributed.
+**Both controls point the same way: FCz's concordance is deviance size.**
+- **Within the balanced 3.16 st block, concordance is at or below chance at both sites.** W falls to
+  **0.072 (frontal)** and **0.182 (FCz)** against a **null mean of 0.143**, and neither is significant
+  (p = 0.97 / 0.18). **Caveat: n = 20 is underpowered** (the null p95 is ≈ 0.22, so only W ≳ 0.22 would
+  be detectable), so this is *suggestive*, not proof of zero. But when every stimulus pair carries the
+  **same** deviance size, the models stop agreeing at both sites.
+- **Deviance-residualised ranks over all 48 do not retain the effect either** (frontal 0.137, p = 0.55;
+  FCz 0.157, p = 0.29 — both n.s.). Residualising removes the **linear-in-rank** deviance trend, and
+  FCz's W drops from 0.222 to a non-significant 0.157 when it does.
+- **Reading the two together:** the two controls now agree. FCz's modest shared ordering **is** the
+  deviance trend — it fails to survive either removing that trend (residualised W n.s.) or holding
+  deviance fixed (3.16 st block n.s.). That is Section 10's ρ = −0.268 reappearing as concordance and
+  nothing beyond it: **shared physics, not shared stimulus preference**. At the **frontal parcel** there
+  is no concordance to explain in the first place (W = 0.124, n.s.), so the controls have nothing to
+  remove — consistent with its much weaker deviance effect (ρ = −0.123).
 
 ### 11e · Direction check — does any of it survive the counter swap? (Table 47)
 
@@ -1684,28 +1719,33 @@ it should survive the swap**: a method that is "hard" should be hard both ways.
 
 | Model | frontal ρ | p | FCz ρ | p |
 | ----- | --------- | - | ----- | - |
-| whisper-tiny | −0.386 | 0.062 | −0.287 | 0.174 |
-| whisper-base | −0.369 | 0.076 | +0.130 | 0.544 |
-| whisper-small | −0.386 | 0.062 | −0.330 | 0.116 |
-| whisper-medium | −0.190 | 0.373 | −0.147 | 0.493 |
-| whisper-large | +0.015 | 0.945 | +0.182 | 0.395 |
-| wav2vec2-medium | +0.357 | 0.087 | −0.313 | 0.136 |
-| wav2vec2-large | **−0.425** | **0.038** | −0.109 | 0.613 |
-| **mean** | **−0.198** | — | **−0.125** | — |
-| **n positive / n significant** | 2/7 · 1/7 | — | 2/7 · 0/7 | — |
+| whisper-tiny | −0.394 | 0.057 | −0.264 | 0.212 |
+| whisper-base | −0.143 | 0.504 | +0.261 | 0.218 |
+| whisper-small | +0.102 | 0.636 | +0.077 | 0.722 |
+| whisper-medium | +0.288 | 0.173 | −0.339 | 0.105 |
+| whisper-large | +0.145 | 0.498 | +0.136 | 0.527 |
+| wav2vec2-medium | +0.345 | 0.098 | +0.013 | 0.952 |
+| wav2vec2-large | +0.078 | 0.716 | +0.145 | 0.498 |
+| **mean** | **+0.060** | — | **+0.004** | — |
+| **n positive / n significant** | 5/7 · 0/7 | — | 5/7 · 0/7 | — |
 
-**The stimulus effect does not survive the swap — it inverts.** Not one model at either site shows the
-positive correlation a genuine stimulus property would produce. **Mean ρ = −0.198 (frontal) and −0.125
-(FCz)**; **12 of 14** model × site cells are negative or null, and the only nominally significant cell
-(wav2vec2-large frontal, ρ = −0.425, p = 0.038, uncorrected across 14 tests) is **negative** — the
-*opposite* of stimulus consistency.
+**The stimulus effect does not survive the swap — it simply disappears.** **Not one of the 14 model × site
+cells reaches significance**, and the means sit essentially on zero: **+0.060 (frontal) and +0.004
+(FCz)**. The individual coefficients scatter from −0.394 to +0.345 with no pattern by model or site — five
+of seven are positive at each site, which is what unrelated rankings look like. A genuine stimulus
+property would produce a **consistent, strong positive** correlation here; what the data show instead is
+**no relationship in either direction** — neither the consistency a stimulus effect requires, nor a
+systematic inversion.
 
-**The clearest single illustration is methods 17/18/19** (1000 ↔ 1850 Hz, 10.65 st, SOA 200 ms). At the
-**frontal parcel**, all three **counter** versions (1850→1000) are **consensus-high** (mean %ile 69.9,
-72.6, 71.4 — Table 45) while all three **regular** versions (1000→1850) are **consensus-low** (13.4,
-13.7, 14.6). **Same tone pair, same SOA, same deviance size, opposite ends of the ranking.** Whatever
-makes 1850→1000 "easy" is not a property of the stimulus pair — it is a property of *which tone is the
-standard*, i.e. of what the model's features do with that particular oddball, and it does not generalise.
+**Methods 17/18/19 illustrate the size of the swing** (1000 ↔ 1850 Hz, 10.65 st, SOA 200 ms). At the
+**frontal parcel** all three **counter** versions (1850→1000) are **consensus-high** (mean %ile 64.7,
+65.3, 67.8 — Table 45) while the three **regular** versions (1000→1850) sit near the middle of the
+ranking (40.4, 41.3, 38.9). At **FCz** the counter versions again lead (69.9, 70.5, 71.7) over the
+regular ones (55.0, 54.7, 55.0). Same tone pair, same SOA, same deviance size, a 15–27 percentile-point
+gap depending only on **which tone is the standard**. But the across-model SD on those very pairs is the
+largest in the set (**≈ 45 points** for the frontal regular versions, ≈ 32–38 for the counters), so the
+models do not even agree with each other about the gap — it is a property of what each model's features
+do with that particular oddball, and it does not generalise.
 
 ### 11f · Per-stimulus-pair agreement across the amplitude floor (Tables 48a/48b)
 
@@ -1717,10 +1757,11 @@ stimulus pairs** (regular and counter kept separate, since 11e shows they are no
 **c** = counter.
 
 **The floor costs agreement, steadily and at both sites.** The mean number of models calling a stimulus pair
-present falls from **5.44/7 (S2) to 1.94/7 (S7@2.5)** at the frontal parcel, and from **5.52/7 to
-0.90/7** at FCz. **FCz falls faster** — by S7@1.0 the average FCz stimulus pair carries only **2.33** of 7
-models, against **3.52** at frontal — which is the Section 8b/8c result (FCz troughs are shallower in µV)
-showing up as agreement loss.
+present falls from **5.62/7 (S2) to 1.98/7 (S7@2.5)** at the frontal parcel, and from **6.31/7 to
+0.88/7** at FCz. **FCz starts higher and falls faster** — it leads on shape (6.31 vs 5.62 at S2) but is
+already behind by S7@0.25 (4.96 vs 5.06), and by S7@1.0 the average FCz stimulus pair carries only
+**2.54** of 7 models against **4.02** at frontal — which is the Section 8b/8c result (FCz troughs are
+shallower in µV) showing up as agreement loss.
 
 **Table 48a. Per-stimulus-pair agreement — parcel — frontal** (models calling the criterion present, of 7)
 
@@ -1728,53 +1769,53 @@ showing up as agreement loss.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | method_09 | 600→1000 | 4 | 4 | 3 | 3 | 3 | 3 | 1 |
 | method_09 **c** | 1000→600 | 6 | 5 | 5 | 5 | 5 | 4 | 2 |
-| method_10 | 1000→1122 | 6 | 5 | 5 | 5 | 5 | 3 | 2 |
-| method_10 **c** | 1122→1000 | 7 | 6 | 6 | 6 | 6 | 6 | 3 |
+| method_10 | 1000→1122 | 6 | 5 | 5 | 5 | 5 | 3 | 0 |
+| method_10 **c** | 1122→1000 | 6 | 5 | 5 | 5 | 5 | 4 | 2 |
 | method_12 | 1000→1200 | 6 | 6 | 6 | 5 | 5 | 3 | 2 |
 | method_12 **c** | 1200→1000 | 7 | 6 | 4 | 4 | 3 | 2 | 1 |
-| method_17 | 1000→1850 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
-| method_17 **c** | 1850→1000 | 5 | 4 | 4 | 3 | 3 | 3 | 3 |
-| method_18 | 1000→1850 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
-| method_18 **c** | 1850→1000 | 5 | 4 | 4 | 4 | 3 | 3 | 3 |
-| method_19 | 1000→1850 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
-| method_19 **c** | 1850→1000 | 5 | 4 | 4 | 3 | 3 | 3 | 3 |
+| method_17 | 1000→1850 | 6 | 3 | 3 | 3 | 3 | 3 | 3 |
+| method_17 **c** | 1850→1000 | 7 | 7 | 7 | 7 | 6 | 4 | 4 |
+| method_18 | 1000→1850 | 5 | 3 | 3 | 3 | 3 | 3 | 3 |
+| method_18 **c** | 1850→1000 | 7 | 7 | 7 | 7 | 6 | 4 | 4 |
+| method_19 | 1000→1850 | 6 | 3 | 3 | 3 | 3 | 3 | 3 |
+| method_19 **c** | 1850→1000 | 7 | 7 | 7 | 7 | 5 | 4 | 4 |
 | method_20 | 1000→1850 | 4 | 4 | 4 | 4 | 3 | 2 | 1 |
 | method_20 **c** | 1850→1000 | 6 | 6 | 6 | 6 | 5 | 4 | 4 |
 | method_21 | 1000→1850 | 4 | 4 | 4 | 4 | 3 | 2 | 1 |
 | method_21 **c** | 1850→1000 | 6 | 6 | 6 | 6 | 4 | 4 | 4 |
 | method_27 | 1000→1064 | 4 | 4 | 3 | 3 | 3 | 2 | 0 |
 | method_27 **c** | 1064→1000 | 5 | 3 | 2 | 2 | 2 | 2 | 1 |
-| method_28 | 1000→1200 | 5 | 5 | 5 | 4 | 3 | 3 | 2 |
-| method_28 **c** | 1200→1000 | 7 | 5 | 5 | 5 | 4 | 3 | 2 |
-| method_29 | 1000→1200 | 6 | 6 | 6 | 5 | 4 | 4 | 3 |
-| method_29 **c** | 1200→1000 | 7 | 5 | 5 | 5 | 4 | 3 | 2 |
-| method_30 | 1000→1200 | 5 | 5 | 5 | 4 | 3 | 3 | 2 |
-| method_30 **c** | 1200→1000 | 7 | 5 | 5 | 5 | 4 | 3 | 2 |
-| method_31 | 1000→1200 | 6 | 6 | 6 | 5 | 5 | 4 | 3 |
-| method_31 **c** | 1200→1000 | 7 | 5 | 5 | 5 | 4 | 3 | 2 |
-| method_32 | 1000→1200 | 6 | 6 | 6 | 5 | 5 | 4 | 3 |
-| method_32 **c** | 1200→1000 | 7 | 5 | 5 | 5 | 4 | 4 | 2 |
+| method_28 | 1000→1200 | 6 | 6 | 6 | 5 | 5 | 5 | 2 |
+| method_28 **c** | 1200→1000 | 5 | 5 | 5 | 5 | 4 | 4 | 2 |
+| method_29 | 1000→1200 | 6 | 6 | 5 | 5 | 5 | 5 | 2 |
+| method_29 **c** | 1200→1000 | 5 | 5 | 5 | 5 | 5 | 4 | 2 |
+| method_30 | 1000→1200 | 6 | 6 | 6 | 5 | 5 | 5 | 2 |
+| method_30 **c** | 1200→1000 | 5 | 5 | 5 | 5 | 5 | 4 | 2 |
+| method_31 | 1000→1200 | 6 | 6 | 5 | 5 | 5 | 5 | 2 |
+| method_31 **c** | 1200→1000 | 5 | 5 | 5 | 5 | 4 | 4 | 2 |
+| method_32 | 1000→1200 | 6 | 6 | 5 | 5 | 5 | 5 | 2 |
+| method_32 **c** | 1200→1000 | 5 | 5 | 5 | 5 | 4 | 4 | 2 |
 | method_33 | 1000→1200 | 7 | 6 | 5 | 4 | 4 | 4 | 4 |
 | method_33 **c** | 1200→1000 | 5 | 5 | 5 | 4 | 4 | 1 | 1 |
-| method_37 | 1000→1050 | 4 | 4 | 4 | 2 | 2 | 1 | 0 |
-| method_37 **c** | 1050→1000 | 4 | 2 | 2 | 2 | 2 | 1 | 1 |
+| method_37 | 1000→1050 | 7 | 7 | 6 | 6 | 5 | 3 | 1 |
+| method_37 **c** | 1050→1000 | 6 | 4 | 4 | 3 | 2 | 1 | 1 |
 | method_43 | 633→700 | 4 | 4 | 3 | 2 | 2 | 2 | 1 |
 | method_43 **c** | 700→633 | 5 | 5 | 3 | 3 | 2 | 1 | 1 |
 | method_44 | 633→1000 | 6 | 6 | 5 | 5 | 3 | 2 | 1 |
 | method_44 **c** | 1000→633 | 5 | 5 | 5 | 5 | 5 | 4 | 3 |
-| method_53 | 1000→1200 | 5 | 5 | 5 | 5 | 5 | 4 | 3 |
-| method_53 **c** | 1200→1000 | 6 | 5 | 5 | 5 | 5 | 5 | 4 |
+| method_53 | 1000→1200 | 6 | 6 | 6 | 4 | 3 | 3 | 3 |
+| method_53 **c** | 1200→1000 | 7 | 6 | 6 | 6 | 6 | 4 | 3 |
 | method_55 | 1000→2000 | 5 | 4 | 4 | 3 | 3 | 2 | 0 |
 | method_55 **c** | 2000→1000 | 6 | 6 | 5 | 5 | 5 | 5 | 4 |
-| method_60 | 1000→1500 | 5 | 5 | 5 | 5 | 5 | 4 | 3 |
-| method_60 **c** | 1500→1000 | 5 | 5 | 5 | 5 | 5 | 5 | 5 |
+| method_60 | 1000→1500 | 5 | 4 | 4 | 4 | 4 | 4 | 1 |
+| method_60 **c** | 1500→1000 | 5 | 5 | 5 | 5 | 5 | 5 | 3 |
 | method_72 | 1000→1200 | 6 | 5 | 5 | 5 | 5 | 4 | 2 |
 | method_72 **c** | 1200→1000 | 7 | 6 | 6 | 5 | 3 | 2 | 0 |
 | method_74 | 1000→1500 | 5 | 2 | 2 | 2 | 2 | 2 | 1 |
 | method_74 **c** | 1500→1000 | 3 | 3 | 3 | 3 | 3 | 3 | 2 |
 | method_75 | 1000→1200 | 6 | 5 | 5 | 5 | 5 | 4 | 2 |
 | method_75 **c** | 1200→1000 | 7 | 6 | 6 | 6 | 3 | 2 | 1 |
-| **mean /7** | | **5.44** | **4.54** | **4.31** | **4.00** | **3.52** | **2.88** | **1.94** |
+| **mean /7** | | **5.62** | **5.06** | **4.75** | **4.52** | **4.02** | **3.31** | **1.98** |
 
 **Table 48b. Per-stimulus-pair agreement — electrode — FCz** (models calling the criterion present, of 7)
 
@@ -1782,53 +1823,53 @@ showing up as agreement loss.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | method_09 | 600→1000 | 6 | 5 | 5 | 4 | 4 | 2 | 2 |
 | method_09 **c** | 1000→600 | 5 | 5 | 3 | 3 | 2 | 1 | 1 |
-| method_10 | 1000→1122 | 5 | 4 | 3 | 3 | 2 | 2 | 2 |
-| method_10 **c** | 1122→1000 | 7 | 7 | 7 | 5 | 3 | 3 | 2 |
+| method_10 | 1000→1122 | 6 | 3 | 3 | 3 | 2 | 0 | 0 |
+| method_10 **c** | 1122→1000 | 6 | 6 | 3 | 1 | 1 | 1 | 0 |
 | method_12 | 1000→1200 | 6 | 6 | 3 | 3 | 2 | 1 | 1 |
 | method_12 **c** | 1200→1000 | 6 | 4 | 3 | 3 | 2 | 2 | 1 |
-| method_17 | 1000→1850 | 1 | 1 | 1 | 0 | 0 | 0 | 0 |
-| method_17 **c** | 1850→1000 | 6 | 5 | 5 | 4 | 4 | 2 | 2 |
-| method_18 | 1000→1850 | 1 | 1 | 0 | 0 | 0 | 0 | 0 |
-| method_18 **c** | 1850→1000 | 6 | 5 | 4 | 4 | 4 | 2 | 2 |
-| method_19 | 1000→1850 | 1 | 1 | 1 | 0 | 0 | 0 | 0 |
-| method_19 **c** | 1850→1000 | 6 | 5 | 5 | 4 | 4 | 2 | 2 |
+| method_17 | 1000→1850 | 7 | 5 | 4 | 4 | 4 | 3 | 2 |
+| method_17 **c** | 1850→1000 | 7 | 6 | 6 | 5 | 5 | 3 | 3 |
+| method_18 | 1000→1850 | 7 | 5 | 4 | 4 | 4 | 3 | 2 |
+| method_18 **c** | 1850→1000 | 7 | 6 | 6 | 5 | 5 | 3 | 3 |
+| method_19 | 1000→1850 | 7 | 5 | 4 | 4 | 4 | 3 | 1 |
+| method_19 **c** | 1850→1000 | 7 | 6 | 6 | 5 | 5 | 3 | 3 |
 | method_20 | 1000→1850 | 6 | 6 | 6 | 6 | 4 | 2 | 1 |
 | method_20 **c** | 1850→1000 | 7 | 6 | 5 | 4 | 4 | 3 | 1 |
 | method_21 | 1000→1850 | 6 | 6 | 6 | 6 | 4 | 2 | 1 |
 | method_21 **c** | 1850→1000 | 7 | 6 | 4 | 4 | 4 | 3 | 1 |
 | method_27 | 1000→1064 | 4 | 4 | 3 | 2 | 2 | 1 | 0 |
 | method_27 **c** | 1064→1000 | 4 | 2 | 1 | 1 | 0 | 0 | 0 |
-| method_28 | 1000→1200 | 6 | 3 | 3 | 3 | 3 | 3 | 1 |
-| method_28 **c** | 1200→1000 | 6 | 6 | 6 | 3 | 3 | 1 | 1 |
-| method_29 | 1000→1200 | 6 | 4 | 3 | 3 | 3 | 3 | 1 |
-| method_29 **c** | 1200→1000 | 6 | 6 | 6 | 3 | 3 | 1 | 1 |
-| method_30 | 1000→1200 | 7 | 4 | 3 | 3 | 3 | 3 | 1 |
-| method_30 **c** | 1200→1000 | 6 | 6 | 6 | 3 | 3 | 1 | 1 |
-| method_31 | 1000→1200 | 6 | 4 | 3 | 3 | 3 | 2 | 1 |
-| method_31 **c** | 1200→1000 | 6 | 6 | 6 | 3 | 3 | 1 | 1 |
-| method_32 | 1000→1200 | 6 | 3 | 3 | 3 | 3 | 3 | 1 |
-| method_32 **c** | 1200→1000 | 6 | 6 | 6 | 3 | 3 | 1 | 1 |
+| method_28 | 1000→1200 | 7 | 5 | 4 | 3 | 3 | 3 | 1 |
+| method_28 **c** | 1200→1000 | 7 | 6 | 5 | 3 | 2 | 0 | 0 |
+| method_29 | 1000→1200 | 7 | 5 | 4 | 3 | 3 | 3 | 1 |
+| method_29 **c** | 1200→1000 | 7 | 6 | 5 | 3 | 2 | 0 | 0 |
+| method_30 | 1000→1200 | 7 | 5 | 5 | 3 | 3 | 3 | 1 |
+| method_30 **c** | 1200→1000 | 7 | 6 | 5 | 3 | 2 | 0 | 0 |
+| method_31 | 1000→1200 | 7 | 5 | 4 | 3 | 3 | 3 | 1 |
+| method_31 **c** | 1200→1000 | 7 | 6 | 5 | 3 | 2 | 0 | 0 |
+| method_32 | 1000→1200 | 7 | 5 | 4 | 3 | 3 | 3 | 1 |
+| method_32 **c** | 1200→1000 | 7 | 6 | 5 | 3 | 2 | 0 | 0 |
 | method_33 | 1000→1200 | 6 | 6 | 4 | 2 | 1 | 1 | 0 |
 | method_33 **c** | 1200→1000 | 7 | 4 | 3 | 3 | 2 | 2 | 2 |
-| method_37 | 1000→1050 | 4 | 4 | 1 | 1 | 1 | 0 | 0 |
-| method_37 **c** | 1050→1000 | 5 | 2 | 1 | 1 | 0 | 0 | 0 |
+| method_37 | 1000→1050 | 7 | 4 | 3 | 3 | 2 | 1 | 1 |
+| method_37 **c** | 1050→1000 | 7 | 6 | 4 | 3 | 1 | 1 | 1 |
 | method_43 | 633→700 | 5 | 4 | 2 | 2 | 2 | 1 | 1 |
 | method_43 **c** | 700→633 | 6 | 4 | 2 | 0 | 0 | 0 | 0 |
 | method_44 | 633→1000 | 4 | 3 | 3 | 3 | 2 | 1 | 0 |
 | method_44 **c** | 1000→633 | 6 | 6 | 5 | 3 | 3 | 3 | 2 |
-| method_53 | 1000→1200 | 6 | 4 | 3 | 3 | 3 | 2 | 2 |
-| method_53 **c** | 1200→1000 | 6 | 6 | 6 | 5 | 3 | 3 | 2 |
+| method_53 | 1000→1200 | 7 | 5 | 4 | 3 | 3 | 2 | 1 |
+| method_53 **c** | 1200→1000 | 7 | 7 | 7 | 4 | 2 | 2 | 2 |
 | method_55 | 1000→2000 | 7 | 6 | 4 | 3 | 3 | 1 | 0 |
 | method_55 **c** | 2000→1000 | 6 | 5 | 5 | 4 | 3 | 3 | 1 |
-| method_60 | 1000→1500 | 4 | 4 | 4 | 3 | 3 | 3 | 2 |
-| method_60 **c** | 1500→1000 | 7 | 5 | 5 | 4 | 4 | 3 | 2 |
+| method_60 | 1000→1500 | 5 | 4 | 4 | 4 | 4 | 2 | 1 |
+| method_60 **c** | 1500→1000 | 7 | 6 | 5 | 4 | 4 | 2 | 2 |
 | method_72 | 1000→1200 | 7 | 5 | 5 | 4 | 1 | 1 | 0 |
 | method_72 **c** | 1200→1000 | 5 | 2 | 1 | 1 | 0 | 0 | 0 |
 | method_74 | 1000→1500 | 6 | 3 | 3 | 3 | 3 | 0 | 0 |
 | method_74 **c** | 1500→1000 | 4 | 3 | 2 | 2 | 2 | 0 | 0 |
 | method_75 | 1000→1200 | 7 | 5 | 5 | 4 | 1 | 1 | 0 |
 | method_75 **c** | 1200→1000 | 6 | 3 | 2 | 1 | 0 | 0 | 0 |
-| **mean /7** | | **5.52** | **4.40** | **3.67** | **2.88** | **2.33** | **1.50** | **0.90** |
+| **mean /7** | | **6.31** | **4.96** | **4.04** | **3.19** | **2.54** | **1.56** | **0.88** |
 
 ### 11g · How many stimulus pairs do k models agree on — and is that more than chance? (Tables 49a–49b)
 
@@ -1848,25 +1889,25 @@ model calls it) — without it the rows would not sum, and the "no model agrees"
 
 | Criterion | base rate | k=0 | k=1 | k=2 | k=3 | k=4 | k=5 | k=6 | k=7 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| S2 | 0.78 | 0 | 0 | 0 | 1 | 10 | 14 | 13 | 10 |
-| S7@0.25 | 0.65 | 3 | 0 | 2 | 2 | 10 | 18 | 13 | 0 |
-| S7@0.5 | 0.62 | 3 | 0 | 3 | 5 | 8 | 20 | 9 | 0 |
-| S7@0.75 | 0.57 | 3 | 0 | 5 | 7 | 8 | 21 | 4 | 0 |
-| S7@1.0 | 0.50 | 3 | 0 | 6 | 15 | 9 | 14 | 1 | 0 |
-| S7@1.5 | 0.41 | 3 | 4 | 11 | 13 | 13 | 3 | 1 | 0 |
-| S7@2.5 | 0.28 | 7 | 12 | 13 | 10 | 5 | 1 | 0 | 0 |
+| S2 | 0.80 | 0 | 0 | 0 | 1 | 5 | 14 | 19 | 9 |
+| S7@0.25 | 0.72 | 0 | 0 | 1 | 5 | 8 | 14 | 16 | 4 |
+| S7@0.5 | 0.68 | 0 | 0 | 2 | 8 | 6 | 19 | 10 | 3 |
+| S7@0.75 | 0.65 | 0 | 0 | 3 | 9 | 7 | 21 | 5 | 3 |
+| S7@1.0 | 0.57 | 0 | 0 | 5 | 14 | 7 | 19 | 3 | 0 |
+| S7@1.5 | 0.47 | 0 | 3 | 11 | 9 | 18 | 7 | 0 | 0 |
+| S7@2.5 | 0.28 | 4 | 14 | 16 | 7 | 7 | 0 | 0 | 0 |
 
 **Table 49b. Agreement-count distribution — electrode — FCz** — stimulus pairs (of 48) on which exactly k of the 7 models call the criterion present; rows sum to 48
 
 | Criterion | base rate | k=0 | k=1 | k=2 | k=3 | k=4 | k=5 | k=6 | k=7 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| S2 | 0.79 | 0 | 3 | 0 | 0 | 6 | 5 | 25 | 9 |
-| S7@0.25 | 0.63 | 0 | 3 | 3 | 6 | 12 | 9 | 14 | 1 |
-| S7@0.5 | 0.52 | 1 | 6 | 4 | 14 | 5 | 9 | 8 | 1 |
-| S7@0.75 | 0.41 | 4 | 5 | 4 | 21 | 10 | 2 | 2 | 0 |
-| S7@1.0 | 0.33 | 8 | 4 | 9 | 18 | 9 | 0 | 0 | 0 |
-| S7@1.5 | 0.21 | 11 | 14 | 11 | 12 | 0 | 0 | 0 | 0 |
-| S7@2.5 | 0.13 | 17 | 19 | 12 | 0 | 0 | 0 | 0 | 0 |
+| S2 | 0.90 | 0 | 0 | 0 | 0 | 4 | 4 | 13 | 27 |
+| S7@0.25 | 0.71 | 0 | 0 | 2 | 5 | 7 | 14 | 19 | 1 |
+| S7@0.5 | 0.58 | 0 | 2 | 4 | 10 | 13 | 13 | 5 | 1 |
+| S7@0.75 | 0.46 | 1 | 4 | 4 | 22 | 12 | 3 | 2 | 0 |
+| S7@1.0 | 0.36 | 4 | 5 | 16 | 10 | 10 | 3 | 0 | 0 |
+| S7@1.5 | 0.22 | 12 | 12 | 9 | 15 | 0 | 0 | 0 | 0 |
+| S7@2.5 | 0.12 | 19 | 19 | 7 | 3 | 0 | 0 | 0 | 0 |
 
 **The same numbers read cumulatively (Table 50) make the collapse easier to see.** Because the
 criteria nest, the natural question is not "how many pairs have *exactly* k models" but "how many have
@@ -1879,77 +1920,85 @@ Table 49a/49b row (both asserted in code).
 
 | Site | Criterion | ≥7 | ≥6 | ≥5 | ≥4 | ≥3 | ≥2 | ≥1 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| **parcel — frontal** | S2 | 10 | 23 | 37 | 47 | 48 | 48 | 48 |
-|  | S7@0.25 | 0 | 13 | 31 | 41 | 43 | 45 | 45 |
-|  | S7@0.5 | 0 | 9 | 29 | 37 | 42 | 45 | 45 |
-|  | S7@0.75 | 0 | 4 | 25 | 33 | 40 | 45 | 45 |
-|  | S7@1.0 | 0 | 1 | 15 | 24 | 39 | 45 | 45 |
-|  | S7@1.5 | 0 | 1 | 4 | 17 | 30 | 41 | 45 |
-|  | S7@2.5 | 0 | 0 | 1 | 6 | 16 | 29 | 41 |
-| **electrode — FCz** | S2 | 9 | 34 | 39 | 45 | 45 | 45 | 48 |
-|  | S7@0.25 | 1 | 15 | 24 | 36 | 42 | 45 | 48 |
-|  | S7@0.5 | 1 | 9 | 18 | 23 | 37 | 41 | 47 |
-|  | S7@0.75 | 0 | 2 | 4 | 14 | 35 | 39 | 44 |
-|  | S7@1.0 | 0 | 0 | 0 | 9 | 27 | 36 | 40 |
-|  | S7@1.5 | 0 | 0 | 0 | 0 | 12 | 23 | 37 |
-|  | S7@2.5 | 0 | 0 | 0 | 0 | 0 | 12 | 31 |
+| **parcel — frontal** | S2 | 9 | 28 | 42 | 47 | 48 | 48 | 48 |
+|   | S7@0.25 | 4 | 20 | 34 | 42 | 47 | 48 | 48 |
+|   | S7@0.5 | 3 | 13 | 32 | 38 | 46 | 48 | 48 |
+|   | S7@0.75 | 3 | 8 | 29 | 36 | 45 | 48 | 48 |
+|   | S7@1.0 | 0 | 3 | 22 | 29 | 43 | 48 | 48 |
+|   | S7@1.5 | 0 | 0 | 7 | 25 | 34 | 45 | 48 |
+|   | S7@2.5 | 0 | 0 | 0 | 7 | 14 | 30 | 44 |
+| **electrode — FCz** | S2 | 27 | 40 | 44 | 48 | 48 | 48 | 48 |
+|   | S7@0.25 | 1 | 20 | 34 | 41 | 46 | 48 | 48 |
+|   | S7@0.5 | 1 | 6 | 19 | 32 | 42 | 46 | 48 |
+|   | S7@0.75 | 0 | 2 | 5 | 17 | 39 | 43 | 47 |
+|   | S7@1.0 | 0 | 0 | 3 | 13 | 23 | 39 | 44 |
+|   | S7@1.5 | 0 | 0 | 0 | 0 | 15 | 24 | 36 |
+|   | S7@2.5 | 0 | 0 | 0 | 0 | 3 | 10 | 29 |
 
 **Figure 4 — the same table as survival curves (2 panels, frontal | FCz):**
-![Number of stimulus pairs (of 48) on which at least k of 7 models call the criterion present, plotted against the amplitude floor from S2 through S7@2.5; one line per k from 7 down to 1, single-hue ordinal ramp; 2 panels (frontal parcel | FCz electrode). The k>=7 line drops to zero as soon as any floor is applied.](plots/sec11_floor_agreement.png)
+![Number of stimulus pairs (of 48) on which at least k of 7 models call the criterion present, plotted against the amplitude floor from S2 through S7@2.5; one line per k from 7 down to 1, single-hue ordinal ramp; 2 panels (frontal parcel | FCz electrode). The k>=7 line falls away almost immediately at FCz and reaches zero at both sites by S7@1.0.](plots/sec11_floor_agreement.png)
 
 **Read the ≥5 and ≥4 columns — they are worse than the unanimity column suggests.** At **FCz**, from
-**S7@1.0 upward there is not one stimulus pair of 48 on which even 5 of 7 models agree** (≥5 = 0 at
-S7@1.0, S7@1.5 and S7@2.5), and by **S7@1.5 not one has even a bare majority of 4** (≥4 = 0). The frontal
-parcel degrades more slowly but ends in the same place: ≥5 falls **37 → 1** and ≥4 falls **47 → 6** across
-the sweep. Only the **≥1 and ≥2** columns stay populated — i.e. at a clinically ordinary floor of 1 µV,
-the honest description of this screen is *"some model somewhere shows an MMN"*, not *"the models show an
-MMN"*.
+**S7@1.5 upward there is not one stimulus pair of 48 on which even 5 of 7 models agree** (≥5 = 0 at both
+S7@1.5 and S7@2.5), and at those same floors **not one has even a bare majority of 4** (≥4 = 0). The
+frontal parcel degrades more slowly but ends in the same place: ≥5 falls **42 → 0** and ≥4 falls
+**47 → 7** across the sweep. Only the **≥1 and ≥2** columns stay populated at the strict end — i.e. at a
+clinically ordinary floor of 2.5 µV, the honest description of this screen is *"some model somewhere shows
+an MMN"*, not *"the models show an MMN"*.
 
-**Unanimity does not survive the floor at all.** This is the sharpest result in 11f–11g. At the **frontal
-parcel**, **k = 7 goes from 10 stimulus pairs (S2) to ZERO at every single amplitude floor** — including
-S7@0.25, the most permissive one. At **FCz** it goes **9 → 1 → 1 → 0 → 0 → 0 → 0**. So **there is not one
-stimulus pair in the entire 48 where all 7 models agree an MMN of ≥ 0.75 µV is present at the frontal parcel,
-and none at ≥ 0.75 µV at FCz either.** The chance null makes the same point from the other side: at S2 the
-null already expects 6.9 (frontal) / 8.7 (FCz) unanimous stimulus pairs, so the observed 10 / 9 are **not** a
-finding; at every floor above it, both observed *and* null unanimity collapse together.
+**Unanimity does not survive the floor.** This is the sharpest result in 11f–11g. At the **frontal
+parcel**, **k = 7 goes from 9 stimulus pairs (S2) to 4 → 3 → 3 and then to ZERO from S7@1.0 upward**. At
+**FCz** the collapse is far more abrupt: **27 → 1 → 1 → 0 → 0 → 0 → 0** — a single permissive floor of
+0.25 µV destroys 26 of the 27 unanimous calls. So **there is not one stimulus pair in the entire 48 where
+all 7 models agree an MMN of ≥ 1.0 µV is present at either site.** The chance null makes the same point
+from the other side: at S2 the null already expects 9.7 (frontal) / 22.9 (FCz) unanimous stimulus pairs,
+so the observed 9 / 27 are **not** a finding; at every floor above it, both observed *and* null unanimity
+collapse together.
 
-**Chance-corrected agreement never gets better than "slight", and mostly gets worse.** Fleiss' κ across the
-whole floor sweep **never exceeds +0.137** at either site. A reasonable prior is that raising X should
-*help* — it pushes the base rate away from the ceiling toward 0.5, where there is more room to disagree, so
-κ has more to detect. **It does not.** Sweeping the floor S2 → 0.25 → 0.5 → 0.75 → 1.0 → 1.5 → 2.5, κ runs
-**−0.001, +0.081, +0.077, +0.060, +0.020, +0.012, +0.029 at the frontal parcel** and **+0.137, +0.070,
-+0.121, +0.029, +0.022, +0.004, −0.040 at FCz** (full values with permutation p in
-`plots/sec11_stats.csv`). So at the frontal parcel κ peaks at **+0.081 (S7@0.25)** and decays to **n.s. by
-S7@1.0 (p = 0.15)**; at FCz it peaks at **+0.137 (S2)** and is **n.s. from S7@0.75 upward (p = 0.11)**,
-going **negative (−0.040) at S7@2.5**. The models'
-amplitude calls are, to a good approximation, independent coin flips at their own individual base rates.
-**The frontal S7@2.5 cell (κ = +0.029, p = 0.023) is the one nominal exception** and should not be
-over-read: at a base rate of 0.28 the criterion fires on so few stimulus pairs that κ is estimated on very
-thin data, and it sits inside a sweep whose neighbours (S7@1.0, S7@1.5) are both n.s.
+**Chance-corrected agreement is at zero almost everywhere, and never gets beyond "slight".** Fleiss' κ
+across the whole floor sweep **never exceeds +0.070** at either site — and that maximum is the S2 cell at
+FCz, before any floor is applied. A reasonable prior is that raising X should *help* — it pushes the base
+rate away from the ceiling toward 0.5, where there is more room to disagree, so κ has more to detect.
+**It does not.** Sweeping the floor S2 → 0.25 → 0.5 → 0.75 → 1.0 → 1.5 → 2.5, κ runs
+**−0.024, +0.004, +0.004, −0.002, −0.035, −0.039, −0.008 at the frontal parcel** and **+0.070, −0.004,
++0.008, −0.028, +0.013, +0.022, +0.002 at FCz** (full values with permutation p in
+`plots/sec11_stats.csv`). At the **frontal parcel not one cell in the sweep is significant** (p = 0.28 at
+best) and four of the seven are negative; at **FCz** only the floor-free S2 cell reaches a conventional
+threshold (+0.070, p = 0.016). The models' amplitude calls are, to a good approximation, independent coin
+flips at their own individual base rates. **The two nominally significant FCz cells at the strict end
+(S7@1.5, κ = +0.022, p = 0.032; S7@2.5, κ = +0.002, p = 0.009) should not be over-read**: at base rates of
+0.22 and 0.12 the criterion fires on so few stimulus pairs that κ is estimated on very thin data, and the
+effect sizes are indistinguishable from zero regardless of the p-value.
 
 ### 11h · Every model on its own scale — the z view (Figure 5)
 
 Ranks (11a–11e) discard magnitude. The complementary within-model normalisation keeps it:
 **z = (trough_uv − mean) / SD** of that model's **own 48-pair trough distribution** at that site.
-This is the second legitimate way past the scale trap — whisper-large's ~40× µV cancels because it is
+This is the second legitimate way past the scale trap — whisper-large's ~9–13× µV cancels because it is
 divided by whisper-large's own SD. **Sign is inherited: z < 0 = deeper than that model's average = higher
 response.** Standardising over all 48 stimulus pairs (not the S2-passing subset) keeps all 7 models in every
 box.
 
 **The boxes are wide — the models do not agree about individual stimuli.** The **median across-model SD of
-z is 0.62 (frontal) / 0.72 (FCz)**. The scale is the thing to read here: because z is standardised to
-SD = 1 within each model, **7 mutually independent models would give ≈ 0.78 / 0.87** (permutation null),
-and perfect agreement would give 0. The observed spread is **reliably below the independence null**
-(p = 2 × 10⁻⁴ / 4 × 10⁻⁴) — the same modest shared structure Kendall's W found — but it sits far closer to
-independence than to agreement. Consistently, **all 7 models fall on the same side of their own average**
-for only **4 of 48** stimulus pairs at each site (chance: 1.1 frontal, p = 0.015; 1.6 FCz, p = 0.062 — n.s.).
+z is 0.82 (frontal) / 0.77 (FCz)**. The scale is the thing to read here: because z is standardised to
+SD = 1 within each model, **7 mutually independent models would give ≈ 0.85 / 0.88** (permutation null),
+and perfect agreement would give 0. At **FCz** the observed spread is **reliably below the independence
+null** (p = 0.002) — the same modest shared structure Kendall's W found — but it sits far closer to
+independence than to agreement. At the **frontal parcel it is not below the null at all** (0.82 vs 0.85,
+p = 0.20), the z-domain restatement of that site's non-significant W. Consistently, **all 7 models fall on
+the same side of their own average** for only **3 of 48** stimulus pairs at frontal (chance 1.3, p = 0.13
+— n.s.) and **4 of 48** at FCz (chance 1.3, p = 0.034).
 
-**The direction flip is visible in z, at both sites.** Methods 17/18/19 (1000 ↔ 1850 Hz, 10.65 st, SOA
-200 ms) have **regular** median z of **+1.08 / +1.09 / +1.05** at frontal — i.e. more than a full SD
-*shallower* than each model's own average — while their **counter** versions sit at **−1.13 / −1.16 /
-−1.22**, more than a SD *deeper*. At FCz the same flip is present but weaker (regular ≈ +0.30, counter
-≈ −1.2). Note also that the counter versions are where the models *disagree* most (across-model SD ≈ 1.8
-vs ≈ 0.49 for the regular versions), so the flip is a large mean shift **and** a large spread increase.
+**The direction shift is visible in z, and it points opposite ways at the two sites.** Methods 17/18/19
+(1000 ↔ 1850 Hz, 10.65 st, SOA 200 ms) have **regular** median z of **+1.21 / +1.11 / +1.26** at frontal —
+i.e. more than a full SD *shallower* than each model's own average — while their **counter** versions sit
+essentially **at** each model's average (**+0.08 / +0.07 / +0.01**). At **FCz** both directions are deeper
+than average and the counter versions are the deeper pair (regular ≈ −0.42, counter ≈ −1.35). So the swap
+moves these stimuli by more than a full SD at frontal and by ≈ 0.9 SD at FCz, but **not in the same
+direction at the two sites** — at frontal it moves them from shallow to average, at FCz from deep to
+deeper. Note also that these are the pairs where the models *disagree* most, with across-model SD of z
+around **1.35–1.55** at both sites against a median of ≈ 0.8, so the shift is a large mean move **and** a
+large spread increase.
 
 **Figure 5 — within-model z per stimulus pair, box across the 7 models (2 panels, frontal | FCz; rows sorted
 by median z, deepest at top):**
@@ -1961,83 +2010,94 @@ Table 47 answered this in ranks, per model. Figure 6 answers it in **z**, pooled
 **method × model** (24 × 7 = 168 per site), regular z on x, counter z on y, on the identity line if the
 swap changes nothing.
 
-**It is not the same response — and at the frontal parcel it actively inverts.** The cloud is not on the
-diagonal at either site: **frontal Pearson r = −0.313, FCz r = −0.169**.
+**It is not the same response — the cloud simply has no structure.** It is nowhere near the diagonal at
+either site, and the correlations are weak and negative: **frontal Pearson r = −0.099, FCz r = −0.067**.
+Neither is significant even on the naive test (p = 0.20 / 0.39).
 
-> **The naive p-value here is wrong, and the correct null changes one of the two verdicts.** Because z is
-> standardised within each model, **all 48 of a model's z values sum to zero**, which mechanically induces
-> a *negative* regular↔counter correlation even under random pairing. The right null therefore is not
-> r = 0: it is a **re-pairing null** that randomly re-matches each model's regular stimulus pairs to its
-> counter stimulus pairs, preserving every marginal and the sum-to-zero constraint. That null is centred at
-> **r = −0.059 (frontal) / −0.070 (FCz)**, confirming the artefact is real but small.
-> - **frontal: r = −0.313 vs null mean −0.059, p = 2 × 10⁻⁴ — a genuine inversion.** Deeper regular
->   predicts *shallower* counter, well beyond the constraint.
-> - **FCz: r = −0.169 vs null mean −0.070, p = 0.077 — not significant.** Its naive p = 0.029 (against
->   r = 0) is an artefact of the constraint. The honest FCz statement is that the swap **destroys** the
->   relationship rather than inverting it: regular tells you nothing about counter, in either direction.
+> **The naive p-value here would be wrong anyway, and the correct null confirms both verdicts.** Because z
+> is standardised within each model, **all 48 of a model's z values sum to zero**, which mechanically
+> induces a *negative* regular↔counter correlation even under random pairing. The right null therefore is
+> not r = 0: it is a **re-pairing null** that randomly re-matches each model's regular stimulus pairs to
+> its counter stimulus pairs, preserving every marginal and the sum-to-zero constraint. That null is
+> centred at **r = −0.031 (frontal) / −0.053 (FCz)**, confirming the artefact is real but small.
+> - **frontal: r = −0.099 vs null mean −0.031, p = 0.18 — not significant.** Most of the small negative
+>   correlation is the sum-to-zero constraint; what remains does not clear the null.
+> - **FCz: r = −0.067 vs null mean −0.053, p = 0.42 — not significant.** Here the observed value is
+>   almost exactly the null.
+>
+> **Neither site inverts.** The honest statement at both is that the swap **destroys** the relationship
+> rather than reversing it: regular tells you nothing about counter, in either direction.
 
 Either way, **no site shows the positive correlation a genuine stimulus property requires.** A method that
 is "hard" for a model in one direction is not hard for it in the other.
 
 **Figure 6 — regular vs counter within-model z, one point per method × model, identity line (2 panels):**
-![Scatter of counter-direction z against regular-direction z, one point per method and model (n=168 per site), coloured by model, with an identity line; 2 panels (frontal parcel | FCz electrode). The cloud sits off the diagonal with a negative slope.](plots/sec11_regular_vs_counter.png)
+![Scatter of counter-direction z against regular-direction z, one point per method and model (n=168 per site), coloured by model, with an identity line; 2 panels (frontal parcel | FCz electrode). The cloud sits off the diagonal with a near-flat slope.](plots/sec11_regular_vs_counter.png)
 
 ### Section 11 summary
 
 - **Direct answer: no — the same stimuli do *not* drive high responses across models. On this screen the
-  in-silico MMN is predominantly a property of the MODEL, not of the stimulus.** The models share a
-  small, statistically reliable, but substantively weak common ordering, and every attempt to pin it to
-  the stimulus fails.
-- **The four converging lines:**
-  1. **Concordance is weak.** Kendall's W ≈ **0.27 (frontal) / 0.25 (FCz)** against a null mean of 0.142
-     — reliably above chance (p ≤ 6 × 10⁻⁴) but far from agreement. The mean pairwise Spearman between
-     two models is **+0.14 / +0.12** (~2% shared variance); the best pair anywhere reaches only +0.56.
-  2. **Binary agreement is at or near chance.** The frontal parcel's S2 agreement is **exactly zero once
-     chance-corrected (κ = −0.001, p = 0.25)**; FCz reaches only **κ = +0.137**. **Unanimity is never
-     above chance** at either site on either criterion — the apparent "10 of 48 stimulus pairs where all 7
-     agree" (frontal S2) is **6.9 by chance**, p = 0.087.
+  in-silico MMN is predominantly a property of the MODEL, not of the stimulus.** At FCz the models share
+  a small, statistically reliable, but substantively weak common ordering; at the frontal parcel they
+  share no detectable ordering at all. Every attempt to pin the FCz component to the stimulus fails.
+- **The five converging lines:**
+  1. **Concordance is weak at FCz and absent at the frontal parcel.** Kendall's W = **0.124 (frontal,
+     p = 0.74 — n.s.) / 0.222 (FCz, p = 0.005)** against a null mean of 0.142. The mean pairwise Spearman
+     between two models is **−0.02 / +0.09** (under 1% shared variance); the best pair anywhere reaches
+     only +0.44.
+  2. **Binary agreement is at or near chance.** The frontal parcel's S2 agreement is **essentially zero
+     once chance-corrected (κ = −0.024, p = 0.62)**; FCz reaches only **κ = +0.070** (p = 0.016).
+     Unanimity is **below chance at frontal** (observed 9 vs 9.7 expected, p = 0.72) and barely above it
+     at FCz — the apparent "27 of 48 stimulus pairs where all 7 agree" (FCz S2) is **22.9 by chance**,
+     p = 0.026 uncorrected.
   3. **What agreement exists does not survive a deviance control.** Inside the balanced 3.16 st block, W
-     drops to the null mean at both sites (0.127 / 0.155 vs null 0.142) — though n = 20 is underpowered.
-  4. **It does not survive the direction swap.** Regular ↔ counter rank correlation is **negative on
-     average at both sites** (mean −0.198 / −0.125), positive for only 2 of 7 models per site, with
-     methods 17/18/19 landing at *opposite ends* of the frontal ranking depending only on which tone is
-     the standard. On within-model **z** (11i), against a re-pairing null that accounts for z's
-     sum-to-zero constraint: **frontal genuinely inverts** (r = −0.313 vs null −0.059, p = 2 × 10⁻⁴)
-     while **FCz simply loses the relationship** (r = −0.169 vs null −0.070, p = 0.077, n.s.).
+     falls to **0.072 / 0.182** against a null of 0.143, n.s. at both sites — though n = 20 is
+     underpowered — and **deviance-residualised ranks are n.s. too** (0.137 / 0.157). FCz's concordance
+     is the deviance trend and nothing more.
+  4. **It does not survive the direction swap.** Regular ↔ counter rank correlation is **essentially zero
+     on average at both sites** (mean +0.060 / +0.004), with **not one of the 14 model × site cells
+     significant** and coefficients scattering from −0.39 to +0.35. On within-model **z** (11i), against a
+     re-pairing null that accounts for z's sum-to-zero constraint, **neither site shows any relationship**:
+     frontal r = −0.099 vs null −0.031 (p = 0.18) and FCz r = −0.067 vs null −0.053 (p = 0.42). The swap
+     destroys the relationship rather than reversing it.
   5. **Raising the amplitude floor destroys what little agreement there is** (11f–11g). Mean models
-     calling a stimulus pair present falls **5.44 → 1.94 /7** (frontal) and **5.52 → 0.90 /7** (FCz) from S2
-     to S7@2.5. **Unanimity collapses to zero**: at the frontal parcel **not one of the 48 stimulus pairs has
-     all 7 models agreeing at *any* amplitude floor**, and at FCz none above S7@0.5. Read cumulatively
-     (Table 50), it is worse than unanimity alone suggests: at **FCz, from S7@1.0 upward not one pair of
-     48 has even 5 of 7 models agreeing**, and by **S7@1.5 not even a bare majority of 4**. Fleiss' κ
-     **never exceeds +0.137** at any floor or site, and is **n.s. from S7@1.0 upward at frontal and S7@0.75
-     upward at FCz** — contrary to the expectation that a lower base rate would give κ more to detect.
-- **Per-site verdict — this time the two sites agree on the verdict but not on the reason.**
-  - **frontal parcel: model-driven, unambiguously.** Chance-level binary agreement (κ ≈ 0), concordance
-    collapsing in the balanced block, negative direction correlations. The one loose end is that its
-    residualised W = 0.273 survives while Section 10 found **no** frontal deviance effect — so frontal's
-    modest shared ordering is **not** deviance and is currently **unattributed**.
-  - **FCz: model-driven, with a small genuine shared component that is largely deviance size.** κ =
-    +0.137 (p = 2 × 10⁻⁴) is real but slight, and it is the same signal Section 10 measured as ρ = −0.23
-    — i.e. the models agree that **bigger deviants go deeper**, which is shared physics, not shared
-    stimulus preference. Consistent with this, its concordance is the one that weakens most when
-    whisper-large is dropped (0.245 → 0.237) and inside the fixed-deviance block (→ 0.155).
-- **What agreement there is, is carried by whisper tiny / base / small** (ρ +0.30 to +0.56) — the small
-  end of one family. **whisper-medium anti-correlates with its own siblings at FCz** (−0.26 with base),
-  and **the two wav2vec2 models anti-correlate with each other at both sites** (−0.199 / −0.216). Model
-  family is a weak and inconsistent predictor of stimulus preference.
+     calling a stimulus pair present falls **5.62 → 1.98 /7** (frontal) and **6.31 → 0.88 /7** (FCz) from S2
+     to S7@2.5. **Unanimity collapses**: at FCz a single 0.25 µV floor takes it from **27 of 48 pairs to
+     1**, and by **S7@1.0 not one of the 48 pairs has all 7 models agreeing at either site**. Read
+     cumulatively (Table 50), it is worse than unanimity alone suggests: at **FCz, from S7@1.5 upward not
+     one pair of 48 has even 5 of 7 models agreeing** — nor even a bare majority of 4. Fleiss' κ **never
+     exceeds +0.070** at any floor or site and is **never significant at any floor at the frontal
+     parcel**; at FCz only the floor-free S2 cell carries both significance and a non-trivial κ (the two
+     nominally significant strict-end cells sit at κ = +0.022 and +0.002, i.e. zero). Contrary to the
+     expectation that a lower base rate would give κ more to detect, it detects less.
+- **Per-site verdict — the two sites reach the same verdict by different routes.**
+  - **frontal parcel: model-driven, unambiguously — there is nothing left to explain.** Kendall's W is
+    **at the null** (0.124 vs 0.142, p = 0.74), chance-level binary agreement (κ = −0.024), a mean
+    pairwise Spearman of **−0.02**, and z-spread indistinguishable from independence (0.82 vs 0.85). This
+    site shows no shared stimulus ordering at all.
+  - **FCz: model-driven, with a small genuine shared component that is entirely deviance size.** κ =
+    +0.070 (p = 0.016) is nominally real but slight, and W = 0.222 is the same signal Section 10 measured
+    as ρ = −0.268 — i.e. the models agree that **bigger deviants go deeper**, which is shared physics, not
+    shared stimulus preference. Both controls confirm it: the concordance is n.s. inside the fixed-deviance
+    block (0.182) **and** n.s. once the deviance trend is residualised out (0.157).
+- **What little agreement there is, is carried by whisper tiny / base / small at FCz** (ρ +0.33 to +0.39)
+  — the small end of one family — and **does not transfer to the frontal parcel**, where base↔small is
+  −0.12. **whisper-medium anti-correlates with its own siblings at both sites** (frontal −0.45 with small;
+  FCz −0.37 with tiny), and **the two wav2vec2 models anti-correlate with each other at both sites**
+  (−0.448 / −0.177). Model family is a weak and inconsistent predictor of stimulus preference.
 - **Reading guide.** Never compare `trough_uv` across models in this section's spirit — **rank within
   model (11a–11e) or z-score within model (11h–11i)**; both cancel the scale, and they agree. And do not
-  read a bare agreement count off this screen: with S2 base rates of 0.44–0.92, "most models agree" is the
-  null hypothesis, not the finding. **Two nulls in this section changed a verdict that the naive
-  statistic got wrong** — the base-rate null (11b: 10/48 unanimous → chance) and the re-pairing null
-  (11i: FCz's r = −0.169, p = 0.029 → n.s. at p = 0.077). Both are cheap; run them.
+  read a bare agreement count off this screen: with S2 base rates of 0.60–0.98, "most models agree" is the
+  null hypothesis, not the finding. **The base-rate null is what keeps 11b honest** — 27 of 48 unanimous
+  FCz calls sounds decisive until the null puts 22.9 of them there by construction — and the **re-pairing
+  null** (11i) does the same for z's sum-to-zero artefact, absorbing most of the apparent negative
+  correlation at both sites. Both are cheap; run them.
 
 **Caveats (all load-bearing here).**
-- **whisper-large is scale-inflated** (~40× the other models' µV; Section 7, caveat 2). Its *ranks* and
-  its z-scored S2 shape are fine, but its **raw µV and its absolute-µV S7 counts are a scale artifact**.
-  Its concordance contribution is shown **both included and excluded** (11a and Table 46): dropping it moves
-  W by ≤ 0.04, so no conclusion here rests on it.
+- **whisper-large is scale-inflated** (~9× the other models' µV at frontal, ~13× at FCz; Section 7,
+  caveat 2). Its *ranks* and its z-scored S2 shape are fine, but its **raw µV and its absolute-µV S7
+  counts are a scale artifact**. Its concordance contribution is shown **both included and excluded**
+  (11a and Table 46): dropping it moves W by ≤ 0.02, so no conclusion here rests on it.
 - **wav2vec2 is not a controlled match to whisper** — self-supervised rather than ASR, 10 s/10 s
   vs whisper's 30 s/10 s windows (both with no PCA), layers medium = `encoder.layers.2` /
   large = `encoder.layers.12`. The **whisper ↔ wav2vec2** block of Table 44 therefore confounds
@@ -2046,8 +2106,9 @@ is "hard" for a model in one direction is not hard for it in the other.
   **3.16 st carries 10 methods (140 of 336 stimulus pairs) and 10.65 st carries 5 (70)** — together
   **62.5%** — while **seven of the ten sizes rest on a single method** (14 stimulus pairs each: 0.84, 1.07,
   1.74, 1.99, 7.92, 8.84 and 12.00 st). Every single-method claim in Table 45 —
-  method_74's SOA-1000 consensus-low, method_37/27's small-deviant consensus-low — is **one stimulus, not
-  a replicated estimate**.
+  method_74's SOA-1000 consensus-low, method_27/43's small-deviant consensus-low, method_55's appearance
+  as consensus-high counter *and* consensus-low regular at frontal — is **one stimulus, not a replicated
+  estimate**.
 - **Encoder deferred** — not run on the 24-method set, so this section has no mTRF-vs-encoder concordance
   contrast.
 
@@ -2061,8 +2122,8 @@ are not visually inflated:
 ![7x7 pairwise Spearman rank-correlation matrices of within-model stimulus pair ranks, 2 panels (frontal parcel | FCz electrode), models blocked into whisper and wav2vec2 families, diverging blue-red scale with neutral gray at zero. Most cells are near zero.](plots/sec11_pairwise_spearman.png)
 
 **Figure 3 — S2 agreement-count distribution, observed vs the base-rate-preserving chance null
-(2 panels).** The observed bars sit inside the null's 95% interval almost everywhere:
-![Distribution of how many of 7 models call S2 present (0-7) for 48 stimulus pairs, observed bars vs chance-null mean line and 95% interval, 2 panels (frontal parcel | FCz electrode). Observed closely tracks the null.](plots/sec11_agreement_histogram.png)
+(2 panels).** The frontal bars track the null closely; the FCz bars depart from it only modestly:
+![Distribution of how many of 7 models call S2 present (0-7) for 48 stimulus pairs, observed bars vs chance-null mean line and 95% interval, 2 panels (frontal parcel | FCz electrode). Both distributions are concentrated at high k because the base rates are near the ceiling.](plots/sec11_agreement_histogram.png)
 
 ---
 

@@ -43,7 +43,7 @@ REPO = "/Users/sophiesigfstead/Documents/multimodal-brain-scaling-2"
 META = f"{REPO}/data/metadata/literature_frequency_intensity_duration_metadata.csv"
 # Defaults reproduce the committed figures under plots/ (the parent memo links them by name).
 DEF_OUT = f"{REPO}/aux/analysis_with_counter/plots"
-DEF_CSV = f"{REPO}/outputs/results_24freq_7models/mmn_s7_roi.csv"
+DEF_CSV = f"{REPO}/outputs/results_soafix_full/mmn_s7_roi.csv"
 DEF_SITES = "parcel:frontal,electrode:FCz"
 
 

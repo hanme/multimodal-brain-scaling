@@ -1,7 +1,7 @@
 # Repository Operational Overview — `multimodal-brain-scaling` (auditory-EEG / MMN fork)
 
 **Generated:** 2026-06-18
-**Last updated:** 2026-07-27 (**§17 Phase-1 results landed** — 184.74 CHF spent, top tier not distinguishable from chance, empty consensus set, 110 pairs recommended for Phase 2; see §17.3–§17.4 and `aux/analysis_novel_search/novel_stimulus_search_results.md`. Prior 2026-07-25 entry: new **§17 Stimuli Search Phase** — the novel tone-pair grid search, its pipeline prerequisites, cost model and run guide. Prior 2026-07-13 entry: enabled whisper-large + wav2vec2-{medium,large} for the D2 mTRF mapping — see the **2026-07-13** changelog line below, §1.4, §1.5, and `aux/handoff_enable_large_wav2vec2_models.md`. Earlier 2026-06-21 doc pass: relabeled the in-use MMN stimulus design as **Definition 1** — literature classic-oddball, frequency-deviant — after confirming via direct literature read-through that all 10 sourced papers use this design, not the final-tone-controlled design originally assumed. **Definition 2** is now reserved for that final-tone-controlled design, which is the target the stimulus set is being revised toward — no true Definition 2 literature source has been found yet. See §1.6, §1.7, §5, §13.8, §16.1–§16.2)
+**Last updated:** 2026-08-03 (**results-artifact map** — §1.3 now lists the in-silico prediction roots and the three screen-result directories (`results_soafix_full`, `results_24freq_7models`, `results_novel_search`) and says which memo section reads which; §14 adds the two results memos to the reading order. Prior 2026-07-27 entry: **§17 Phase-1 results landed** — 184.74 CHF spent, top tier not distinguishable from chance, empty consensus set, 110 pairs recommended for Phase 2; see §17.3–§17.4 and `aux/analysis_novel_search/novel_stimulus_search_results.md`. Prior 2026-07-25 entry: new **§17 Stimuli Search Phase** — the novel tone-pair grid search, its pipeline prerequisites, cost model and run guide. Prior 2026-07-13 entry: enabled whisper-large + wav2vec2-{medium,large} for the D2 mTRF mapping — see the **2026-07-13** changelog line below, §1.4, §1.5, and `aux/handoff_enable_large_wav2vec2_models.md`. Earlier 2026-06-21 doc pass: relabeled the in-use MMN stimulus design as **Definition 1** — literature classic-oddball, frequency-deviant — after confirming via direct literature read-through that all 10 sourced papers use this design, not the final-tone-controlled design originally assumed. **Definition 2** is now reserved for that final-tone-controlled design, which is the target the stimulus set is being revised toward — no true Definition 2 literature source has been found yet. See §1.6, §1.7, §5, §13.8, §16.1–§16.2)
 
 **2026-07-25 — novel tone-pair stimulus search (§17):** a 903-pair semitone-spaced frequency grid screened in two budgeted phases against 6 models, mTRF-only, FCz, S7 @ 0.75 µV. Mappings and committed layers are frozen and reused. Required making the condition registry `--metadata_csv`-driven (it was built at import time from the literature sheet), giving the extractor stimulus-named HDF5s and a working `--overwrite` resume, and adding path overrides to the extraction/in-silico wrappers so a second screen cannot overwrite the literature features or predictions. New `scripts/{build_novel_grid_csv,novel_search_common,rank_novel_phase1,build_novel_phase2_csv,rank_novel_phase2}.py` + `tests/test_novel_search.py`.
 
@@ -158,8 +158,12 @@ The core **auditory mapping/scoring modules are NOT registered as console script
 | `outputs/neural_data/` | formatted EEG HDF5s (`broderick2018_30s.h5` = D1, `surprisal_30s.h5` = D2, `d3_combined_30s.h5` = D3) — consumed everywhere; gitignored, produced on cluster |
 | `outputs/features/` | extracted delta-T feature HDF5s, per model, per stimulus set (`merged/` after combining SLURM chunks) |
 | `outputs/results/` | mapping JSONs, mTRF/probe score HDF5s, MMN prediction HDF5s, checkpoints (`model__<layer>.pt`) |
+| `outputs/insilico_mmn_predictions*/` | in-silico MMN prediction HDF5s, one dir per model, `predictions__<layer>.h5` (parcel) + `electrode_predictions__<layer>.h5` (electrode). `…_soafix/` backs the current literature screen; `…_novel{,_phase2}/` the §17 grid search. The unsuffixed dir is the original literature run — **wrappers default to it, so a second screen must redirect (§17.6)** |
+| `outputs/results_soafix_full/` | `mmn_s7_roi.csv` — the current **literature screen**: 24 frequency methods × {regular, counter} = 48 conditions per model per site, mTRF only, 7 models. Source for §7/8/8b/8c/10/11 of the counter memo (§14). `outputs/results_24freq_7models/` holds an earlier screen vintage, retained for reference |
+| `outputs/results_novel_search/` | `grid_index.csv` + `phase{1,2}_mmn_s7_roi.csv` — the §17 novel grid search |
 | `outputs/figures/` | all rendered figures |
 | `aux/` | handover notes, project plan, setup, screening plan — **read these first** (§14) |
+| `aux/analysis_with_counter/` | `results_analysis_with_counter.md` (the literature-screen results memo) + `plots/` — the figures and stats CSVs it links, regenerated by the three scripts in that dir |
 | `docs/literature/` | extracted MMN-paper text for stimulus design |
 
 ### 1.4 Neural datasets (D1/D2/D3)
@@ -972,11 +976,14 @@ The 8 shipped `method_*` pairs described a now-superseded identity-MMN design (D
 2. `aux/01_setup.md` — environment, cluster, dataset download.
 3. `aux/mmn_screening_plan.md` — MMN stimulus selection + evaluation criteria.
 4. `aux/project_plan_20260611.md` — the full technical log (scaling, env/GPU, superseded methods, MMN design §17, repo layout); large — skim by section.
-5. `scripts/eeg_targets.py` (§4.8) — parcels/electrodes/CV definitions used everywhere.
-6. `src/mbs/evaluation/evaluate_features_mtrf.py` (§4.1) — the shared mTRF engine.
-7. `scripts/insilico_mmn.py` (§5.1) — the end-to-end Method A MMN driver.
-8. `src/mbs/evaluation/evaluate_features_attn_probe_temporal.py` (§4.4) — Method B training/scoring.
-9. `README.md` — only for the legacy vision pipeline (§10).
+5. **The two results memos**, for what the screens actually found:
+   - `aux/analysis_with_counter/results_analysis_with_counter.md` — the **literature screen**. Sections 7/8/8b/8c/10/11 are the current 24-method × 7-model mTRF vintage (`outputs/results_soafix_full/`, denominators /48 and /336); Sections 0b/1–6/9 are the older 10-method × 4-model screen (`outputs/results_with_counter/`). **The two vintages are not directly comparable** — the memo's data-vintage flag at the top says which is which, and it is the first thing to read.
+   - `aux/analysis_novel_search/novel_stimulus_search_results.md` — the §17 novel-grid search.
+6. `scripts/eeg_targets.py` (§4.8) — parcels/electrodes/CV definitions used everywhere.
+7. `src/mbs/evaluation/evaluate_features_mtrf.py` (§4.1) — the shared mTRF engine.
+8. `scripts/insilico_mmn.py` (§5.1) — the end-to-end Method A MMN driver.
+9. `src/mbs/evaluation/evaluate_features_attn_probe_temporal.py` (§4.4) — Method B training/scoring.
+10. `README.md` — only for the legacy vision pipeline (§10).
 
 ---
 

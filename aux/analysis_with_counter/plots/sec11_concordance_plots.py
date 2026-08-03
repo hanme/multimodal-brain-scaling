@@ -5,7 +5,7 @@ Question: do the SAME stimuli drive high responses across all 7 models, and the 
 low ones? I.e. is the in-silico MMN a property of the *stimulus* (models agree on which oddballs are
 easy/hard) or of the *model* (each has its own idiosyncratic favourites)?
 
-Reads outputs/results_24freq_7models/mmn_s7_roi.csv (mTRF only, dip_uv_threshold == 0.25 — `s2` and
+Reads outputs/results_soafix_full/mmn_s7_roi.csv (mTRF only, dip_uv_threshold == 0.25 — `s2` and
 `trough_uv` are X-independent, so that filter yields one row per stimulus pair). 24 frequency methods
 × {regular, counter} = 48 stimulus pairs per model per site; 7 models. Sites: parcel=frontal,
 electrode=FCz.
@@ -83,7 +83,7 @@ REPO = "/Users/sophiesigfstead/Documents/multimodal-brain-scaling-2"
 META = f"{REPO}/data/metadata/literature_frequency_intensity_duration_metadata.csv"
 # Defaults reproduce the committed figures under plots/ (the parent memo links them by name).
 DEF_OUT  = f"{REPO}/aux/analysis_with_counter/plots"
-DEF_CSV  = f"{REPO}/outputs/results_24freq_7models/mmn_s7_roi.csv"
+DEF_CSV  = f"{REPO}/outputs/results_soafix_full/mmn_s7_roi.csv"
 DEF_SITES = "parcel:frontal,electrode:FCz"
 
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Sections 8b/8c — mTRF amplitude-floor figures for the 24-method screen (all 7 models).
 
-Reads outputs/results_24freq_7models/mmn_s7_roi.csv (mTRF only). S7@X from the X-independent
+Reads outputs/results_soafix_full/mmn_s7_roi.csv (mTRF only). S7@X from the X-independent
 `trough_uv` column:  S7@X present  <=>  s2 AND (trough_uv <= -X).  24 frequency methods ×
 {regular, counter} = 48 conditions per model per site; /48 per model, /336 pooled over 7 models.
 
@@ -40,7 +40,7 @@ REPO = "/Users/sophiesigfstead/Documents/multimodal-brain-scaling-2"
 # Defaults reproduce the committed figures under plots/ (which the parent memo links by name).
 # A different screen passes --s7_csv/--out_dir/--sites explicitly and writes elsewhere.
 DEF_OUT = f"{REPO}/aux/analysis_with_counter/plots"
-DEF_CSV = f"{REPO}/outputs/results_24freq_7models/mmn_s7_roi.csv"
+DEF_CSV = f"{REPO}/outputs/results_soafix_full/mmn_s7_roi.csv"
 DEF_SITES = "parcel:frontal,electrode:FCz"
 
 
