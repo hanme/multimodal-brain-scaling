@@ -7,8 +7,11 @@ Reads outputs/results_24freq_7models/mmn_s7_roi.csv (mTRF only). S7@X from the X
 
 Models: whisper {tiny, base, small, medium, large} + wav2vec2 {medium, large}.
 
-Each Section-8b figure is a 2-panel row of the two canonical reporting sites:
+Each Section-8b figure is a row of one panel per reporting site (--sites). The committed defaults
+are the two canonical sites, `parcel:frontal,electrode:FCz`:
     frontal parcel  |  FCz electrode
+The trailing-floor re-screen (outputs/results_soafix/) is electrode-only, so it is run with
+`--sites electrode:FCz` and every figure becomes single-panel; the layout follows the panel count.
 
 Section 8b (3 figures):
   1. sec8b_x_vs_mmn_per_model.png      — count /48 vs floor X ∈ {S2(X→0), 0.25, 0.5, 0.75, 1.0,
@@ -25,6 +28,8 @@ The 0.25 and 2.5 µV bookends are ALWAYS plotted: X = 0.25 is where the site/mod
 closes and X = 2.5 is where it is widest, so a sweep stopping at 1.5 hides both ends of the floor's
 effect. X = 0.5 remains the reported headline.
 """
+import argparse
+
 import numpy as np, pandas as pd
 from scipy import stats
 import matplotlib as mpl
@@ -32,8 +37,37 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
 REPO = "/Users/sophiesigfstead/Documents/multimodal-brain-scaling-2"
-OUT = f"{REPO}/aux/analysis_with_counter/plots"
-CSV = f"{REPO}/outputs/results_24freq_7models/mmn_s7_roi.csv"
+# Defaults reproduce the committed figures under plots/ (which the parent memo links by name).
+# A different screen passes --s7_csv/--out_dir/--sites explicitly and writes elsewhere.
+DEF_OUT = f"{REPO}/aux/analysis_with_counter/plots"
+DEF_CSV = f"{REPO}/outputs/results_24freq_7models/mmn_s7_roi.csv"
+DEF_SITES = "parcel:frontal,electrode:FCz"
+
+
+def parse_sites(spec):
+    """'parcel:frontal,electrode:FCz' -> [(kind, roi, title), ...]; panel order = left to right."""
+    sites = []
+    for tok in spec.split(","):
+        tok = tok.strip()
+        if not tok:
+            continue
+        kind, sep, roi = tok.partition(":")
+        assert sep and kind.strip() and roi.strip(), f"bad --sites token {tok!r}, want 'kind:roi'"
+        kind, roi = kind.strip(), roi.strip()
+        sites.append((kind, roi, f"{roi} {kind}"))     # 'frontal parcel', 'FCz electrode'
+    assert sites, "--sites is empty"
+    return sites
+
+
+ap = argparse.ArgumentParser(description=__doc__,
+                             formatter_class=argparse.RawDescriptionHelpFormatter)
+ap.add_argument("--s7_csv", default=DEF_CSV, help="long-format mmn_s7_roi.csv to read")
+ap.add_argument("--out_dir", default=DEF_OUT, help="directory to write the 4 PNGs into")
+ap.add_argument("--sites", default=DEF_SITES,
+                help="comma-separated kind:roi panels, e.g. 'electrode:FCz' for an "
+                     "electrode-only screen (default: the two canonical sites)")
+args = ap.parse_args()
+CSV, OUT = args.s7_csv, args.out_dir
 
 # 7-model Okabe-Ito CVD-safe style (extends scripts/analyze_mmn_screen_24freq.py MODEL_STYLE with
 # the two wav2vec2 slots). Worst pair separation under protan/deutan simulation is ΔE = 17.9,
@@ -60,10 +94,8 @@ N_MODELS = len(MODEL_ORDER)
 N_COND = 48                       # per model per site
 N_POOL = N_COND * N_MODELS        # 336
 
-# the two canonical reporting sites; panel order = left, right
-SITES = [("parcel", "frontal", "frontal parcel"),
-         ("electrode", "FCz", "FCz electrode")]
-LEGEND_PANEL = 1                  # FCz (right) carries the per-model legend
+SITES = parse_sites(args.sites)   # one panel per site
+N_SITES = len(SITES)
 
 # amplitude floors on the x-axis; S2 is the X->0 reference (first, evenly-spaced slot).
 # The 0.25 and 2.5 bookends are ALWAYS shown: 0.25 is where the site/model spread nearly closes and
@@ -74,7 +106,16 @@ XPOS = list(range(len(X_FLOORS) + 1))
 I05 = X_FLOORS.index(0.5) + 1     # present_counts / x-slot index of the 0.5 headline
 POOL_COLOR = "#0072B2"
 
-FIGSIZE = (11.6, 5.4)             # 1×2 line grids
+# Width scales with the panel count so a 1-site run is a square-ish panel rather than a wide,
+# mostly-empty strip; the N_SITES = 2 value is the committed (11.6, 5.4) / (12.0, 6.0).
+FIGSIZE = (round(0.8 + 5.4 * N_SITES, 2), 5.4)          # line grids (Figs 1-2)
+FIGSIZE_DIST = (round(1.2 + 5.4 * N_SITES, 2), 6.0)     # trough distribution (Fig 3)
+# 7 model labels do not fit on one row under a single narrow panel
+LEGEND_NCOL = 7 if N_SITES > 1 else 4
+CAP_Y = -0.10 if N_SITES > 1 else -0.19       # caption clears the taller wrapped legend
+# 50%-of-methods reference (Figs 1 & 2). Deliberately thinner and finer-dashed than Fig 2's existing
+# S2 dashed line (lw 1.4, "--") so the two never read as the same annotation; both are labelled.
+HALF_STYLE = dict(color="#8c8c8c", lw=0.9, ls=(0, (4, 3)), zorder=1)
 mpl.rcParams.update({
     "figure.dpi": 150, "savefig.dpi": 150, "font.size": 10,
     "axes.spines.top": False, "axes.spines.right": False,
@@ -112,10 +153,15 @@ handles = [Line2D([0], [0], color=MODEL_STYLE[m]["color"], marker=MODEL_STYLE[m]
                   ls="-", lw=1.9, ms=7.5, mec="white", label=MLABEL[m]) for m in MODEL_ORDER]
 
 # ============ FIG 1: per-model, count /48 vs floor, frontal | FCz ============
-fig, axes = plt.subplots(1, 2, figsize=FIGSIZE, sharex=True, sharey=True)
+fig, axes = plt.subplots(1, N_SITES, figsize=FIGSIZE, sharex=True, sharey=True, squeeze=False)
 for i, (ax, (kind, roi, title)) in enumerate(zip(axes.flat, SITES)):
     sub = site_df(kind, roi)
     ax.axvline(0, color="#b5b5b5", lw=1.1, ls=":", zorder=1)     # S2 (X→0) reference
+    ax.axhline(N_COND / 2, **HALF_STYLE)                          # 50% of methods = 24/48
+    # label sits BELOW the line at the right edge: above it collides with wav2vec2-medium, which
+    # lands at 25/48 at X = 2.5 on the frontal panel
+    ax.annotate(f"50% ({N_COND // 2}/{N_COND})", xy=(XPOS[-1], N_COND / 2), xytext=(0, -3),
+                textcoords="offset points", ha="right", va="top", fontsize=8, color="#6f6f6f")
     for m in MODEL_ORDER:
         st = MODEL_STYLE[m]
         ax.plot(XPOS, present_counts(sub[sub.model == m]), color=st["color"], marker=st["marker"],
@@ -128,18 +174,19 @@ for i, (ax, (kind, roi, title)) in enumerate(zip(axes.flat, SITES)):
         ax.set_ylabel(f"MMN present  (count / {N_COND} per model)")
 # figure-level legend below the panels: the per-model lines descend across the whole plot area,
 # so an in-axes legend collides with them at every corner.
-fig.legend(handles=handles, loc="lower center", frameon=False, fontsize=8.6, ncol=7,
+fig.legend(handles=handles, loc="lower center", frameon=False, fontsize=8.6, ncol=LEGEND_NCOL,
            columnspacing=1.1, handletextpad=0.5, bbox_to_anchor=(0.5, -0.035))
 fig.suptitle("mTRF MMN count vs amplitude floor X, per model — by fronto-central site",
              fontweight="bold", x=0.01, ha="left")
-fig.text(0.5, -0.10, CAP + f"  Count/{N_COND} per model; y at the leftmost slot is the S2 count.",
+fig.text(0.5, CAP_Y, CAP + f"  Count/{N_COND} per model; y at the leftmost slot is the S2 count. "
+         f"Thin dashed line = 50% of the methods ({N_COND // 2}/{N_COND}).",
          ha="center", fontsize=7.6, color="#666", wrap=True)
 fig.tight_layout(rect=[0, 0.02, 1, 0.96])
 fig.savefig(f"{OUT}/sec8b_x_vs_mmn_per_model.png", bbox_inches="tight")
 plt.close(fig)
 
-# ============ FIG 2: pooled /336, single series, frontal | FCz ============
-fig, axes = plt.subplots(1, 2, figsize=FIGSIZE, sharex=True, sharey=True)
+# ============ FIG 2: pooled /336, single series, one panel per site ============
+fig, axes = plt.subplots(1, N_SITES, figsize=FIGSIZE, sharex=True, sharey=True, squeeze=False)
 for i, (ax, (kind, roi, title)) in enumerate(zip(axes.flat, SITES)):
     sub = site_df(kind, roi)
     y = present_counts(sub)              # pooled over 7 models -> /336
@@ -147,6 +194,9 @@ for i, (ax, (kind, roi, title)) in enumerate(zip(axes.flat, SITES)):
     ax.axhline(s2, color="#9a9a9a", lw=1.4, ls="--", zorder=1)
     ax.annotate(f"S2 = {s2} / {N_POOL}", xy=(XPOS[-1], s2), xytext=(0, 4),
                 textcoords="offset points", ha="right", va="bottom", fontsize=8.3, color="#666")
+    ax.axhline(N_POOL / 2, **HALF_STYLE)                          # 50% of methods = 168/336
+    ax.annotate(f"50% ({N_POOL // 2}/{N_POOL})", xy=(XPOS[0], N_POOL / 2), xytext=(2, 3),
+                textcoords="offset points", ha="left", va="bottom", fontsize=8, color="#6f6f6f")
     ax.plot(XPOS, y, color=POOL_COLOR, marker="o", ms=8, lw=2.3, mec="white", mew=1.0, zorder=3)
     for xp, val in zip(XPOS, y):
         ax.annotate(str(val), (xp, val), textcoords="offset points", xytext=(0, 8),
@@ -170,8 +220,8 @@ fig.tight_layout(rect=[0, 0.02, 1, 0.96])
 fig.savefig(f"{OUT}/sec8b_x_vs_mmn_pooled.png", bbox_inches="tight")
 plt.close(fig)
 
-# ============ FIG 3: trough_uv distribution per model, symlog x, frontal | FCz ============
-fig, axes = plt.subplots(1, 2, figsize=(12.0, 6.0), sharex=True, sharey=True)
+# ============ FIG 3: trough_uv distribution per model, symlog x, one panel per site ============
+fig, axes = plt.subplots(1, N_SITES, figsize=FIGSIZE_DIST, sharex=True, sharey=True, squeeze=False)
 FLOORS = [-0.25, -0.5, -0.75, -1.0, -1.5, -2.5]
 XLIM = (-700, 20)
 rng = np.random.default_rng(0)
@@ -212,10 +262,28 @@ axes.flat[0].annotate("dotted = X floors {0.25, 0.5, 0.75, 1.0, 1.5, 2.5} µV ·
                       fontsize=7.2, color="#888")
 fig.suptitle("mTRF S2-passing trough distribution per model, and how each X floor cuts it — by site",
              fontweight="bold", x=0.01, ha="left")
+# whisper-large's medians are read off the data rather than hardcoded: they differ per site, and
+# an electrode-only run must not carry a stale frontal-parcel number in its caption.
+def _med(kind, roi, model):
+    s = site_df(kind, roi)
+    return np.median(s[(s.model == model) & (s.s2)].trough_uv)
+
+
+def _wl_median(kind, roi):
+    return _med(kind, roi, "whisper-large")
+
+
+_wl = " / ".join(f"{_wl_median(k, r):.0f}".replace("-", "−") + f" µV {r}" for k, r, t in SITES)
+# whisper-large's scale-inflation factor, MEASURED rather than hardcoded: it is data-dependent (the
+# trailing-floor screen puts it near 13× at FCz where the older screen showed ~46×), and a caption
+# quoting a stale multiplier would contradict the section text it sits under.
+_WL_RATIO = np.median([
+    abs(_wl_median(k, r)) / abs(np.median([_med(k, r, m) for m in MODEL_ORDER if m != "whisper-large"]))
+    for k, r, t in SITES])
 fig.text(0.5, -0.04, "Distribution of trough_uv over each model's S2-passing conditions "
          "(box = IQR + median; points = individual conditions). Dotted verticals = the amplitude "
          "floors X: a condition passes S7@X iff its trough sits left of that line. whisper-large's "
-         "predicted µV are ~40× the other models (median ≈ −46 µV frontal / −34 µV FCz) — treat its "
+         f"predicted µV are ~{_WL_RATIO:.0f}× the other models (median ≈ {_wl}) — treat its "
          "S7 as scale-confounded.", ha="center", fontsize=7.6, color="#666", wrap=True)
 fig.tight_layout(rect=[0, 0.02, 1, 0.96])
 fig.savefig(f"{OUT}/sec8b_trough_uv_distribution.png", bbox_inches="tight")
@@ -262,8 +330,8 @@ ax.set_title("Fz vs FCz predicted MMN trough (µV) — matched mTRF conditions (
 fig.text(0.5, -0.05, "One point per (model × method × direction) condition with an S2 dip at both "
          "electrodes; trough_uv = deviant−standard µV at the S2 latency (negative = deeper). Axes "
          f"clipped to [−4, 1] µV, which puts {n_off} of {n_pair} pairs off-scale (mostly "
-         "whisper-large, ~40× deeper); clipping is display-only — all pairs are in the sign test "
-         "and the Wilcoxon.", ha="center", fontsize=7.5, color="#666", wrap=True)
+         f"whisper-large, ~{_WL_RATIO:.0f}× deeper); clipping is display-only — all pairs are in the "
+         "sign test and the Wilcoxon.", ha="center", fontsize=7.5, color="#666", wrap=True)
 fig.tight_layout()
 fig.savefig(f"{OUT}/sec8c_fz_vs_fcz_trough.png", bbox_inches="tight")
 plt.close(fig)

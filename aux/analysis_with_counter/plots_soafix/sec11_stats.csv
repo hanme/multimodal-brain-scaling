@@ -1,0 +1,139 @@
+site,stat,value,p,extra
+FCz,kendall_W_7,0.2218667753684192,0.005198960207958408,null_mean=0.142
+FCz,kendall_W_6_no_wlarge,0.22954359048583972,0.03079384123175365,
+FCz,kendall_W_5_whisper,0.2735562310030395,0.035992801439712056,
+FCz,kendall_W_null_p95,0.19038188875202708,,
+FCz,spearman_all_pairs_mean,0.09217790459648907,,min=-0.369;max=0.394;n=21
+FCz,spearman_within-whisper_mean,0.09194528875379938,,min=-0.369;max=0.394;n=10
+FCz,spearman_whisper↔wav2vec2_mean,0.11934433347807208,,min=-0.145;max=0.381;n=10
+FCz,spearman_within-wav2vec2_mean,-0.17716022579244464,,min=-0.177;max=-0.177;n=1
+FCz,fleiss_kappa_S2,0.07030703070307003,0.016196760647870425,base_rate=0.902
+FCz,unanimous_S2,27.0,0.025994801039792043,null_mean=22.91
+FCz,fleiss_kappa_S7@0.5,0.007986060694061279,0.26374725054989,base_rate=0.577
+FCz,unanimous_S7@0.5,1.0,0.6244751049790042,null_mean=0.93
+FCz,kendall_W_316st_block,0.1815866196102501,0.17976404719056188,n=20;null_mean=0.143;null_p95=0.219
+FCz,kendall_W_316st_block_no_wlarge,0.2523809523809524,0.05558888222355529,n=20
+FCz,kendall_W_deviance_residualised,0.15653495440729484,0.2855428914217157,n=48
+FCz,dir_rho_whisper-tiny,-0.2643478260869565,0.2119392787870507,n=24 methods
+FCz,dir_rho_whisper-base,0.26086956521739124,0.21823795857184652,n=24 methods
+FCz,dir_rho_whisper-small,0.07652173913043478,0.7222991032128188,n=24 methods
+FCz,dir_rho_whisper-medium,-0.3391304347826086,0.10498302480093244,n=24 methods
+FCz,dir_rho_whisper-large,0.13565217391304346,0.527378541905856,n=24 methods
+FCz,dir_rho_wav2vec2-medium,0.013043478260869565,0.9517646868003002,n=24 methods
+FCz,dir_rho_wav2vec2-large,0.1452173913043478,0.49837946924561144,n=24 methods
+FCz,dir_rho_mean,0.003975155279503105,,n_sig=0;n_pos=5
+FCz,fleiss_kappa_floor_S2,0.07030703070307003,0.016196760647870425,base_rate=0.902
+FCz,agree_k0_S2,0.0,,null=0.00
+FCz,agree_k1_S2,0.0,,null=0.00
+FCz,agree_k2_S2,0.0,,null=0.00
+FCz,agree_k3_S2,0.0,,null=0.08
+FCz,agree_k4_S2,4.0,,null=0.92
+FCz,agree_k5_S2,4.0,,null=5.81
+FCz,agree_k6_S2,13.0,,null=18.28
+FCz,agree_k7_S2,27.0,,null=22.91
+FCz,fleiss_kappa_floor_S7@0.25,-0.0036014405762304796,0.40731853629274145,base_rate=0.708
+FCz,agree_k0_S7@0.25,0.0,,null=0.00
+FCz,agree_k1_S7@0.25,0.0,,null=0.10
+FCz,agree_k2_S7@0.25,2.0,,null=0.89
+FCz,agree_k3_S7@0.25,5.0,,null=4.14
+FCz,agree_k4_S7@0.25,7.0,,null=10.76
+FCz,agree_k5_S7@0.25,14.0,,null=15.88
+FCz,agree_k6_S7@0.25,19.0,,null=12.31
+FCz,agree_k7_S7@0.25,1.0,,null=3.91
+FCz,fleiss_kappa_floor_S7@0.5,0.007986060694061279,0.26374725054989,base_rate=0.577
+FCz,agree_k0_S7@0.5,0.0,,null=0.08
+FCz,agree_k1_S7@0.5,2.0,,null=0.93
+FCz,agree_k2_S7@0.5,4.0,,null=4.28
+FCz,agree_k3_S7@0.5,10.0,,null=10.54
+FCz,agree_k4_S7@0.5,13.0,,null=14.65
+FCz,agree_k5_S7@0.5,13.0,,null=11.71
+FCz,agree_k6_S7@0.5,5.0,,null=4.96
+FCz,agree_k7_S7@0.5,1.0,,null=0.85
+FCz,fleiss_kappa_floor_S7@0.75,-0.02803671559698561,0.7146570685862828,base_rate=0.455
+FCz,agree_k0_S7@0.75,1.0,,null=0.54
+FCz,agree_k1_S7@0.75,4.0,,null=3.70
+FCz,agree_k2_S7@0.75,4.0,,null=10.02
+FCz,agree_k3_S7@0.75,22.0,,null=14.54
+FCz,agree_k4_S7@0.75,12.0,,null=12.05
+FCz,agree_k5_S7@0.75,3.0,,null=5.63
+FCz,agree_k6_S7@0.75,2.0,,null=1.39
+FCz,agree_k7_S7@0.75,0.0,,null=0.14
+FCz,fleiss_kappa_floor_S7@1.0,0.01332924774015636,0.15696860627874426,base_rate=0.363
+FCz,agree_k0_S7@1.0,4.0,,null=1.65
+FCz,agree_k1_S7@1.0,5.0,,null=7.71
+FCz,agree_k2_S7@1.0,16.0,,null=14.52
+FCz,agree_k3_S7@1.0,10.0,,null=14.09
+FCz,agree_k4_S7@1.0,10.0,,null=7.50
+FCz,agree_k5_S7@1.0,3.0,,null=2.19
+FCz,agree_k6_S7@1.0,0.0,,null=0.32
+FCz,agree_k7_S7@1.0,0.0,,null=0.02
+FCz,fleiss_kappa_floor_S7@1.5,0.02160919540229874,0.03159368126374725,base_rate=0.223
+FCz,agree_k0_S7@1.5,12.0,,null=6.64
+FCz,agree_k1_S7@1.5,12.0,,null=17.32
+FCz,agree_k2_S7@1.5,9.0,,null=15.91
+FCz,agree_k3_S7@1.5,15.0,,null=6.74
+FCz,agree_k4_S7@1.5,0.0,,null=1.29
+FCz,agree_k5_S7@1.5,0.0,,null=0.09
+FCz,agree_k6_S7@1.5,0.0,,null=0.00
+FCz,agree_k7_S7@1.5,0.0,,null=0.00
+FCz,fleiss_kappa_floor_S7@2.5,0.002267573696144609,0.009198160367926415,base_rate=0.125
+FCz,agree_k0_S7@2.5,19.0,,null=15.30
+FCz,agree_k1_S7@2.5,19.0,,null=24.15
+FCz,agree_k2_S7@2.5,7.0,,null=7.80
+FCz,agree_k3_S7@2.5,3.0,,null=0.72
+FCz,agree_k4_S7@2.5,0.0,,null=0.02
+FCz,agree_k5_S7@2.5,0.0,,null=0.00
+FCz,agree_k6_S7@2.5,0.0,,null=0.00
+FCz,agree_k7_S7@2.5,0.0,,null=0.00
+FCz,cum_S2_ge7,27.0,,of 48
+FCz,cum_S2_ge6,40.0,,of 48
+FCz,cum_S2_ge5,44.0,,of 48
+FCz,cum_S2_ge4,48.0,,of 48
+FCz,cum_S2_ge3,48.0,,of 48
+FCz,cum_S2_ge2,48.0,,of 48
+FCz,cum_S2_ge1,48.0,,of 48
+FCz,cum_S7@0.25_ge7,1.0,,of 48
+FCz,cum_S7@0.25_ge6,20.0,,of 48
+FCz,cum_S7@0.25_ge5,34.0,,of 48
+FCz,cum_S7@0.25_ge4,41.0,,of 48
+FCz,cum_S7@0.25_ge3,46.0,,of 48
+FCz,cum_S7@0.25_ge2,48.0,,of 48
+FCz,cum_S7@0.25_ge1,48.0,,of 48
+FCz,cum_S7@0.5_ge7,1.0,,of 48
+FCz,cum_S7@0.5_ge6,6.0,,of 48
+FCz,cum_S7@0.5_ge5,19.0,,of 48
+FCz,cum_S7@0.5_ge4,32.0,,of 48
+FCz,cum_S7@0.5_ge3,42.0,,of 48
+FCz,cum_S7@0.5_ge2,46.0,,of 48
+FCz,cum_S7@0.5_ge1,48.0,,of 48
+FCz,cum_S7@0.75_ge7,0.0,,of 48
+FCz,cum_S7@0.75_ge6,2.0,,of 48
+FCz,cum_S7@0.75_ge5,5.0,,of 48
+FCz,cum_S7@0.75_ge4,17.0,,of 48
+FCz,cum_S7@0.75_ge3,39.0,,of 48
+FCz,cum_S7@0.75_ge2,43.0,,of 48
+FCz,cum_S7@0.75_ge1,47.0,,of 48
+FCz,cum_S7@1.0_ge7,0.0,,of 48
+FCz,cum_S7@1.0_ge6,0.0,,of 48
+FCz,cum_S7@1.0_ge5,3.0,,of 48
+FCz,cum_S7@1.0_ge4,13.0,,of 48
+FCz,cum_S7@1.0_ge3,23.0,,of 48
+FCz,cum_S7@1.0_ge2,39.0,,of 48
+FCz,cum_S7@1.0_ge1,44.0,,of 48
+FCz,cum_S7@1.5_ge7,0.0,,of 48
+FCz,cum_S7@1.5_ge6,0.0,,of 48
+FCz,cum_S7@1.5_ge5,0.0,,of 48
+FCz,cum_S7@1.5_ge4,0.0,,of 48
+FCz,cum_S7@1.5_ge3,15.0,,of 48
+FCz,cum_S7@1.5_ge2,24.0,,of 48
+FCz,cum_S7@1.5_ge1,36.0,,of 48
+FCz,cum_S7@2.5_ge7,0.0,,of 48
+FCz,cum_S7@2.5_ge6,0.0,,of 48
+FCz,cum_S7@2.5_ge5,0.0,,of 48
+FCz,cum_S7@2.5_ge4,0.0,,of 48
+FCz,cum_S7@2.5_ge3,3.0,,of 48
+FCz,cum_S7@2.5_ge2,10.0,,of 48
+FCz,cum_S7@2.5_ge1,29.0,,of 48
+FCz,regular_vs_counter_repair_null_p,-0.06673396724154519,0.4323135372925415,null_mean=-0.0544;null_p2.5=-0.190
+FCz,regular_vs_counter_z_pearson,-0.06673396724154519,0.39008030450915854,n=168
+FCz,regular_vs_counter_z_spearman,-0.03535363761066203,0.6491404852823921,n=168

@@ -1,5 +1,12 @@
 # In-Silico MMN Results Analysis — With Counterbalanced Methods
 
+> 🛑 **SUPERSEDED (2026-08) — Sections 7, 8, 8b, 8c, 10 and 11 below are superseded by
+> [`results_analysis_soafix_mtrf.md`](results_analysis_soafix_mtrf.md)**, which restates them on the
+> **trailing-floor-corrected** re-screen (`outputs/results_soafix/mmn_s7_roi.csv`, FCz electrode, mTRF).
+> The stimuli behind the numbers below ended one SOA after the final tone, so **24 of 48 conditions per
+> model ended before the 360 ms criteria window closed** — 62 truncated S2 recovery searches and 12 cells
+> where S2 was forced `False` on an empty slice. Cite the superseding document, not these six sections.
+>
 > ⚠️ **Data-vintage flag (2026-07).** **Sections 7, 8, 8b, 8c, 10 and 11** have been updated to the
 > **24-frequency screen** — 24 methods × {regular, counter} = **48 conditions per model per site**,
 > **mTRF only**, for **all 7 models**: whisper (tiny, base, small, medium, large) + **wav2vec2 (medium,
@@ -955,8 +962,8 @@ The Section 4 and Section 6 findings from `results_analysis.md` are preserved wi
 > **Comparability caveat 3 — wav2vec2 is not a controlled match to whisper.** The two wav2vec2 models are
 > **pretrained self-supervised (NOT ASR)** — `facebook/wav2vec2-base` (our **medium**, 12 layers) and
 > `facebook/wav2vec2-large` (our **large**, 24 layers) — and their mTRF was fit under a **different
-> protocol**: **10 s/10 s** windows with **PCA_VAR = 0.95**, versus whisper's **30 s/10 s** with **no
-> PCA**; MMN features were extracted with a **10 s** window. Chosen layers are
+> protocol**: **10 s/10 s** windows versus whisper's **30 s/10 s** (both with **no PCA**,
+> `pca_var=None`); MMN features were extracted with a **10 s** window. Chosen layers are
 > **medium = `encoder.layers.2`** and **large = `encoder.layers.12`** (both sites), with D2 test
 > r ≈ **0.20/0.22** (medium) and **0.21/0.24** (large). So wav2vec2's test r and its #/48 counts are
 > **not a strictly controlled comparison** to whisper's, and **pooling all 7 models into the /336 totals
@@ -2031,8 +2038,8 @@ is "hard" for a model in one direction is not hard for it in the other.
   its z-scored S2 shape are fine, but its **raw µV and its absolute-µV S7 counts are a scale artifact**.
   Its concordance contribution is shown **both included and excluded** (11a and Table 46): dropping it moves
   W by ≤ 0.04, so no conclusion here rests on it.
-- **wav2vec2 is not a controlled match to whisper** — self-supervised rather than ASR, 10 s/10 s +
-  `PCA_VAR = 0.95` vs whisper's 30 s/10 s with no PCA, layers medium = `encoder.layers.2` /
+- **wav2vec2 is not a controlled match to whisper** — self-supervised rather than ASR, 10 s/10 s
+  vs whisper's 30 s/10 s windows (both with no PCA), layers medium = `encoder.layers.2` /
   large = `encoder.layers.12`. The **whisper ↔ wav2vec2** block of Table 44 therefore confounds
   architecture, training objective, and fit protocol; it is not a clean cross-architecture contrast.
 - **The deviance axis is badly unbalanced** (Section 10's design caveat, and it bites harder here):

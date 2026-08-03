@@ -1,0 +1,9 @@
+site,model,n,rho,p_rho,slope,p_slope,s2_only_rho,n_s2
+electrode (FCz),POOLED (7 models),336,-0.268,0.0,-0.8149,0.0031,-0.251,303
+electrode (FCz),whisper-tiny,48,-0.366,0.0106,-0.1139,0.0002,-0.354,44
+electrode (FCz),whisper-base,48,-0.517,0.0002,-0.066,0.0002,-0.602,42
+electrode (FCz),whisper-small,48,-0.341,0.0177,-0.048,0.0101,-0.386,45
+electrode (FCz),whisper-medium,48,0.03,0.8401,0.0361,0.5887,0.094,46
+electrode (FCz),whisper-large,48,-0.4,0.0048,-5.2682,0.0019,-0.453,41
+electrode (FCz),wav2vec2-medium,48,-0.034,0.8174,0.006,0.8026,0.023,47
+electrode (FCz),wav2vec2-large,48,-0.427,0.0024,-0.2501,0.0016,-0.479,38

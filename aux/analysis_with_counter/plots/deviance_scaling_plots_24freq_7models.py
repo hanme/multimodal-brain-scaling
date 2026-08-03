@@ -31,6 +31,7 @@ Figures + stats CSV under aux/analysis_with_counter/plots/:
      (models), raw points + per-model OLS fit + rho; each panel keeps its OWN y-scale (the only
      scale-correct way to show a ~40× spread of models side by side).
 """
+import argparse
 import csv
 import numpy as np, pandas as pd
 from scipy import stats
@@ -39,9 +40,37 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
 REPO = "/Users/sophiesigfstead/Documents/multimodal-brain-scaling-2"
-OUT = f"{REPO}/aux/analysis_with_counter/plots"
-CSV_IN = f"{REPO}/outputs/results_24freq_7models/mmn_s7_roi.csv"
 META = f"{REPO}/data/metadata/literature_frequency_intensity_duration_metadata.csv"
+# Defaults reproduce the committed figures under plots/ (the parent memo links them by name).
+DEF_OUT = f"{REPO}/aux/analysis_with_counter/plots"
+DEF_CSV = f"{REPO}/outputs/results_24freq_7models/mmn_s7_roi.csv"
+DEF_SITES = "parcel:frontal,electrode:FCz"
+
+
+def parse_sites(spec):
+    """'parcel:frontal,electrode:FCz' -> [(kind, roi, title), ...]; panel order = left to right."""
+    sites = []
+    for tok in spec.split(","):
+        tok = tok.strip()
+        if not tok:
+            continue
+        kind, sep, roi = tok.partition(":")
+        assert sep and kind.strip() and roi.strip(), f"bad --sites token {tok!r}, want 'kind:roi'"
+        kind, roi = kind.strip(), roi.strip()
+        sites.append((kind, roi, f"{kind} ({roi})"))
+    assert sites, "--sites is empty"
+    return sites
+
+
+ap = argparse.ArgumentParser(description=__doc__,
+                             formatter_class=argparse.RawDescriptionHelpFormatter)
+ap.add_argument("--s7_csv", default=DEF_CSV, help="long-format mmn_s7_roi.csv to read")
+ap.add_argument("--out_dir", default=DEF_OUT, help="directory for the 2 PNGs + 2 CSVs")
+ap.add_argument("--sites", default=DEF_SITES,
+                help="comma-separated kind:roi panels, e.g. 'electrode:FCz' for an "
+                     "electrode-only screen (default: the two canonical sites)")
+args = ap.parse_args()
+CSV_IN, OUT = args.s7_csv, args.out_dir
 
 # 7-model Okabe-Ito style, identical to sec8b_mtrf_plots.py / analyze_mmn_screen_24freq.py
 MODEL_ORDER = ["whisper-tiny", "whisper-base", "whisper-small", "whisper-medium", "whisper-large",
@@ -59,7 +88,8 @@ MLABEL = {"whisper-tiny": "whisper tiny", "whisper-base": "whisper base",
           "whisper-small": "whisper small", "whisper-medium": "whisper medium",
           "whisper-large": "whisper large", "wav2vec2-medium": "wav2vec2 medium",
           "wav2vec2-large": "wav2vec2 large"}
-SITES = [("parcel", "frontal", "parcel (frontal)"), ("electrode", "FCz", "electrode (FCz)")]
+SITES = parse_sites(args.sites)   # one panel (Fig 1) / one row (Fig 2) per site
+N_SITES = len(SITES)
 
 mpl.rcParams.update({
     "figure.dpi": 150, "savefig.dpi": 150, "font.size": 10,
@@ -76,8 +106,10 @@ assert len(FREQ) == 24, f"expected 24 frequency methods in metadata, got {len(FR
 
 d = pd.read_csv(CSV_IN)
 d = d[(d.mapping == "mtrf") & np.isclose(d.dip_uv_threshold, 0.25)].copy()   # one row per trace
-d = d[((d.roi == "frontal") & (d.roi_kind == "parcel")) |
-      ((d.roi == "FCz") & (d.roi_kind == "electrode"))].copy()
+keep = np.zeros(len(d), dtype=bool)
+for kind, roi, _ in SITES:
+    keep |= ((d.roi == roi) & (d.roi_kind == kind)).values
+d = d[keep].copy()
 d["mnum"] = d.method.str.extract(r"(\d+)").astype(int)
 assert set(d.mnum) <= set(FREQ), f"methods missing from metadata: {sorted(set(d.mnum) - set(FREQ))}"
 d["semitones"] = d["mnum"].map(lambda n: 12 * abs(np.log2(FREQ[n][1] / FREQ[n][0]))).round(2)
@@ -103,10 +135,26 @@ def sub_of(roi, m=None):
     return s if m is None else s[s.model == m]
 
 
-# ============ FIG 1: dose-response, 2 panels (sites), 7 model lines, symlog y ============
-fig, axes = plt.subplots(1, 2, figsize=(11.8, 5.6), sharey=True)
+# whisper-large's scale-inflation factor, MEASURED rather than hardcoded: it is data-dependent (the
+# trailing-floor screen puts it near 13x at FCz where the older screen showed ~46x), and a caption
+# quoting a stale multiplier would contradict the section text it sits under.
+def _med(roi, model):
+    s = sub_of(roi, model)
+    return np.median(s[s.s2.astype(bool)].amp)
+
+
+WL_RATIO = np.median([abs(_med(roi, "whisper-large"))
+                      / abs(np.median([_med(roi, m) for m in MODEL_ORDER if m != "whisper-large"]))
+                      for _, roi, _ in SITES])
+
+
+# ============ FIG 1: dose-response, one panel per site, 7 model lines, symlog y ============
+# Width scales with the panel count so a 1-site run is not a wide, mostly-empty strip; the
+# N_SITES = 2 value is the committed (11.8, 5.6).
+fig, axes = plt.subplots(1, N_SITES, figsize=(round(1.0 + 5.4 * N_SITES, 2), 5.6), sharey=True,
+                         squeeze=False)
 handles = []
-for ax, (kind, roi, title) in zip(axes, SITES):
+for i, (ax, (kind, roi, title)) in enumerate(zip(axes.flat, SITES)):
     for m in MODEL_ORDER:
         sub = sub_of(roi, m)
         st = MODEL_STYLE[m]
@@ -114,23 +162,25 @@ for ax, (kind, roi, title) in zip(axes, SITES):
         s_ = blk(sub)
         ln, = ax.plot(g.semitones, g.amp, color=st["color"], marker=st["marker"], ms=6, lw=1.7,
                       mec="white", mew=0.7, zorder=3)
-        if roi == "frontal":       # per-panel rho differs, so the shared legend carries the name only
+        if i == 0:       # per-panel rho differs, so the shared legend carries the name only
             handles.append(Line2D([0], [0], color=st["color"], marker=st["marker"], lw=1.7, ms=6,
                                   mec="white", label=MLABEL[m]))
     ax.axhline(0, color="#9a9a9a", lw=1, ls=":", zorder=1)
     ax.set_yscale("symlog", linthresh=1, linscale=0.8)
     ax.set_xlabel("Deviance size  (semitones)")
     ax.set_title(title, fontweight="bold", loc="left")
-axes[0].set_ylabel("S2/S7 trough  (µV, symlog;  negative = deeper MMN)")
+axes.flat[0].set_ylabel("S2/S7 trough  (µV, symlog;  negative = deeper MMN)")
 # figure-level legend: the model lines wander across every corner of both panels, so an in-axes
 # legend collides with whisper-large. Per-model rho is on the small-multiples figure instead.
-fig.legend(handles=handles, loc="lower center", frameon=False, fontsize=8.4, ncol=7,
+fig.legend(handles=handles, loc="lower center", frameon=False, fontsize=8.4,
+           ncol=7 if N_SITES > 1 else 4,     # 7 labels do not fit under one narrow panel
            columnspacing=1.0, handletextpad=0.5, bbox_to_anchor=(0.5, -0.045))
 fig.suptitle("Deviance-scaling of the S2/S7 MMN trough (µV) per model — 24 methods × {regular, "
              "counter}, mTRF", fontweight="bold", x=0.01, ha="left")
-fig.text(0.5, -0.13, "Median S2/S7 trough per deviance size, one line per model (48 conditions per "
+fig.text(0.5, -0.13 if N_SITES > 1 else -0.22, "Median S2/S7 trough per deviance size, one line per model (48 conditions per "
          "model per site); per-model Spearman ρ is on the small-multiples figure. y is symlog: "
-         "whisper-large's predicted µV run ~40× the others (Section 7 scale caveat), so the models "
+         f"whisper-large's predicted µV run ~{WL_RATIO:.0f}× the others (Section 7 scale caveat), so "
+         "the models "
          "are NOT pooled — a pooled raw-µV mean would track feature-norm scale, not deviance. "
          "Median (not mean) per bin: the within-model tails are heavy and some bins hold 1–2 methods.",
          ha="center", fontsize=7.5, color="#666", wrap=True)
@@ -138,8 +188,10 @@ fig.tight_layout()
 fig.savefig(f"{OUT}/deviance_scaling_dose_response_24freq_7models.png", bbox_inches="tight")
 plt.close(fig)
 
-# ============ FIG 2: small multiples — 2 rows (sites) × 7 cols (models), own y per panel ========
-fig, axes = plt.subplots(2, 7, figsize=(19.0, 6.2), sharex=True)
+# ====== FIG 2: small multiples — one row per site × 7 cols (models), own y per panel ======
+# Height scales with the row count; the N_SITES = 2 value is the committed (19.0, 6.2).
+fig, axes = plt.subplots(N_SITES, 7, figsize=(19.0, round(0.5 + 2.85 * N_SITES, 2)), sharex=True,
+                         squeeze=False)
 xs = np.linspace(0, 12.5, 50)
 rng = np.random.default_rng(0)
 for r, (kind, roi, title) in enumerate(SITES):
@@ -159,7 +211,7 @@ for r, (kind, roi, title) in enumerate(SITES):
                     bbox=dict(boxstyle="round,pad=0.28", fc="white", ec="#ddd", alpha=0.9))
         if r == 0:
             ax.set_title(MLABEL[m], fontweight="bold", fontsize=9)
-        if r == 1:
+        if r == N_SITES - 1:
             ax.set_xlabel("deviance (st)", fontsize=8.5)
         if c == 0:
             ax.set_ylabel(f"{title}\nS2/S7 trough (µV)", fontsize=8.5)
@@ -168,7 +220,8 @@ fig.suptitle("S2/S7 MMN trough vs deviance size — raw points + OLS fit, per mo
              "(24 methods × {regular, counter}, mTRF)", fontweight="bold", x=0.01, ha="left")
 fig.text(0.5, -0.02, "One point per condition (48 per panel); line = OLS fit; ρ = Spearman "
          "(primary — rank-based, robust to the deep µV outliers that make OLS unreliable); "
-         "* = p < 0.05. Each panel keeps its OWN y-scale: whisper-large's µV are ~40× the others, so "
+         f"* = p < 0.05. Each panel keeps its OWN y-scale: whisper-large's µV are ~{WL_RATIO:.0f}× "
+         "the others, so "
          "a shared axis would flatten every other model to a line. Negative = deeper MMN; a negative "
          "ρ is the human-like (deepening) direction.", ha="center", fontsize=7.6, color="#666",
          wrap=True)

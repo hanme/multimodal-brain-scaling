@@ -68,6 +68,8 @@ Colour (dataviz skill; node unavailable, so scripts/validate_palette.js was port
 MODEL_STYLE / MLABEL are reused verbatim from sec8b_mtrf_plots.py so model identity is stable
 across Sections 8b/8c/10/11.
 """
+import argparse
+
 import numpy as np, pandas as pd
 from scipy import stats
 import matplotlib as mpl
@@ -78,9 +80,38 @@ from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
 
 REPO = "/Users/sophiesigfstead/Documents/multimodal-brain-scaling-2"
-OUT  = f"{REPO}/aux/analysis_with_counter/plots"
-CSV  = f"{REPO}/outputs/results_24freq_7models/mmn_s7_roi.csv"
 META = f"{REPO}/data/metadata/literature_frequency_intensity_duration_metadata.csv"
+# Defaults reproduce the committed figures under plots/ (the parent memo links them by name).
+DEF_OUT  = f"{REPO}/aux/analysis_with_counter/plots"
+DEF_CSV  = f"{REPO}/outputs/results_24freq_7models/mmn_s7_roi.csv"
+DEF_SITES = "parcel:frontal,electrode:FCz"
+
+
+def parse_sites(spec):
+    """'parcel:frontal,electrode:FCz' -> ([(kind, roi), ...], {roi: title}); order = panel order."""
+    sites, titles = [], {}
+    for tok in spec.split(","):
+        tok = tok.strip()
+        if not tok:
+            continue
+        kind, sep, roi = tok.partition(":")
+        assert sep and kind.strip() and roi.strip(), f"bad --sites token {tok!r}, want 'kind:roi'"
+        kind, roi = kind.strip(), roi.strip()
+        sites.append((kind, roi))
+        titles[roi] = f"{kind} — {roi}"
+    assert sites, "--sites is empty"
+    return sites, titles
+
+
+_ap = argparse.ArgumentParser(description=__doc__,
+                              formatter_class=argparse.RawDescriptionHelpFormatter)
+_ap.add_argument("--s7_csv", default=DEF_CSV, help="long-format mmn_s7_roi.csv to read")
+_ap.add_argument("--out_dir", default=DEF_OUT, help="directory for the 6 PNGs + 3 CSVs")
+_ap.add_argument("--sites", default=DEF_SITES,
+                 help="comma-separated kind:roi panels, e.g. 'electrode:FCz' for an "
+                      "electrode-only screen (default: the two canonical sites)")
+_args = _ap.parse_args()
+CSV, OUT = _args.s7_csv, _args.out_dir
 
 # ── model identity: reused verbatim from sec8b_mtrf_plots.py ──────────────────────────────────────
 MODEL_ORDER = ["whisper-tiny", "whisper-base", "whisper-small", "whisper-medium", "whisper-large",
@@ -101,8 +132,8 @@ MLABEL = {"whisper-tiny": "whisper tiny", "whisper-base": "whisper base",
 WHISPER  = [m for m in MODEL_ORDER if m.startswith("whisper")]
 WAV2VEC2 = [m for m in MODEL_ORDER if m.startswith("wav2vec2")]
 
-SITES   = [("parcel", "frontal"), ("electrode", "FCz")]
-SITE_T  = {"frontal": "parcel — frontal", "FCz": "electrode — FCz"}
+SITES, SITE_T = parse_sites(_args.sites)   # one panel per site in every figure
+N_SITES = len(SITES)
 N_COND, N_MODELS = 48, 7
 HEADLINE_X = 0.5
 # The amplitude floors swept in 11f/11g. Same list as Section 8b; includes the 0.25 and 2.5 µV
@@ -265,8 +296,10 @@ def fig_rank_heatmap(frames, ST, FSTD, FDEV, path):
     """Stimulus pairs × models; cell = within-model percentile of response height (100 = deepest)."""
     # each panel carries its OWN row order (sorted by that site's mean rank), so both panels need
     # their own row labels — hence the wide gutter rather than a shared axis.
-    fig, axes = plt.subplots(1, 2, figsize=(14.0, 11.6), gridspec_kw=dict(wspace=0.60))
-    for ax, (kind, roi) in zip(axes, SITES):
+    # width scales with the panel count; the N_SITES = 2 value is the committed 14.0
+    fig, axes = plt.subplots(1, N_SITES, figsize=(round(7.0 * N_SITES, 2), 11.6),
+                             gridspec_kw=dict(wspace=0.60), squeeze=False)
+    for ax, (kind, roi) in zip(axes.flat, SITES):
         pct = response_pct(frames[roi]["uv"])
         order = pct.mean(axis=1).sort_values(ascending=False).index      # consensus-high at the top
         P = pct.loc[order]
@@ -308,11 +341,13 @@ def fig_rank_heatmap(frames, ST, FSTD, FDEV, path):
 
 def fig_pairwise_spearman(frames, path):
     """7×7 Spearman of within-model ranks. Diverging, neutral gray at 0, models blocked by family."""
-    fig, axes = plt.subplots(1, 2, figsize=(12.6, 6.6), gridspec_kw=dict(wspace=0.06))
+    # width scales with the panel count; the N_SITES = 2 value is the committed 12.6
+    fig, axes = plt.subplots(1, N_SITES, figsize=(round(6.3 * N_SITES, 2), 6.6),
+                             gridspec_kw=dict(wspace=0.06), squeeze=False)
     # full -1..1 range on purpose: rescaling to the observed span would visually inflate what are
     # in fact weak correlations. The printed cell values carry the precision.
     norm = TwoSlopeNorm(vmin=-1, vcenter=0, vmax=1)
-    for k, (ax, (kind, roi)) in enumerate(zip(axes, SITES)):
+    for k, (ax, (kind, roi)) in enumerate(zip(axes.flat, SITES)):
         C = depth_ranks(frames[roi]["uv"]).corr(method="spearman").loc[MODEL_ORDER, MODEL_ORDER]
         A = C.to_numpy().copy()
         np.fill_diagonal(A, np.nan)                       # the diagonal is 1 by construction, not data
@@ -364,9 +399,11 @@ def fig_pairwise_spearman(frames, path):
 
 def fig_agreement_histogram(binary, path):
     """How many of 7 models call each stimulus pair S2-present — observed vs the base-rate-preserving null."""
-    fig, axes = plt.subplots(1, 2, figsize=(11.4, 4.7), sharey=True)
+    # width scales with the panel count; the N_SITES = 2 value is the committed 11.4
+    fig, axes = plt.subplots(1, N_SITES, figsize=(round(5.7 * N_SITES, 2), 4.7), sharey=True,
+                             squeeze=False)
     ks = np.arange(N_MODELS + 1)
-    for ax, (kind, roi) in zip(axes, SITES):
+    for ax, (kind, roi) in zip(axes.flat, SITES):
         b = binary[(roi, "S2")]
         ax.bar(ks, b["obs_hist"], width=0.66, color=OBS_C, zorder=3,
                label="observed", edgecolor=SURFACE, linewidth=1.4)
@@ -385,10 +422,13 @@ def fig_agreement_histogram(binary, path):
                     f"vs {b['null_unan']:.1f} by chance  (p = {b['p_unan']:.2f})",
                     xy=(0.03, 0.97), xycoords="axes fraction", va="top", fontsize=7.8, color=INK2,
                     bbox=dict(boxstyle="round,pad=0.4", fc=SURFACE, ec=GRID, lw=0.8))
-    axes[0].set_ylabel("stimulus pairs  (of 48)", fontsize=9, color=INK2)
-    axes[0].legend(frameon=False, fontsize=8, loc="upper left", bbox_to_anchor=(0.0, 0.80))
+    axes.flat[0].set_ylabel("stimulus pairs  (of 48)", fontsize=9, color=INK2)
+    axes.flat[0].legend(frameon=False, fontsize=8, loc="upper left", bbox_to_anchor=(0.0, 0.80))
+    # base rates read off the data: they are per-site, and an electrode-only run must not carry a
+    # stale frontal-parcel number in its subtitle.
+    rates = " / ".join(f"~{binary[(roi, 'S2')]['base'] * 100:.0f}% {roi}" for _, roi in SITES)
     fig.suptitle("“Most models agree” is what chance already predicts\n"
-                 "S2 base rates are high (~78% frontal / ~79% FCz), so the null puts most stimulus pairs "
+                 f"S2 base rates are high ({rates}), so the null puts most stimulus pairs "
                  "at 5–7 of 7 too", fontsize=11, color=INK, y=1.04)
     fig.savefig(path, dpi=170, bbox_inches="tight")
     plt.close(fig)
@@ -431,10 +471,12 @@ def fig_floor_agreement(frames, path):
     ramp = [CMAP_SEQ(t) for t in np.linspace(2 / 6, 1.0, N_MODELS)]
     kcol = {k: ramp[i] for i, k in enumerate(ks[::-1])}      # >=1 lightest … >=7 darkest
     marks = {7: "X", 6: "P", 5: "v", 4: "D", 3: "^", 2: "s", 1: "o"}
-    fig, axes = plt.subplots(1, 2, figsize=(12.4, 5.4), sharey=True)
+    # width scales with the panel count; the N_SITES = 2 value is the committed 12.4
+    fig, axes = plt.subplots(1, N_SITES, figsize=(round(6.2 * N_SITES, 2), 5.4), sharey=True,
+                             squeeze=False)
     xs = np.arange(len(FLOORS) + 1)
     xlab = ["S2\n(no floor)"] + [f"{fx(x)}" for x in FLOORS]
-    for ax, (kind, roi) in zip(axes, SITES):
+    for ax, (kind, roi) in zip(axes.flat, SITES):
         C = cumulative_agreement(frames[roi]["uv"], frames[roi]["s2"])
         for k in ks:
             y = C[f">={k}"].to_numpy()
@@ -447,10 +489,11 @@ def fig_floor_agreement(frames, path):
         ax.set_ylim(-2, 50)
         ax.set_title(SITE_T[roi], fontsize=10, color=INK, pad=6)
         ax.grid(axis="y", lw=0.6, zorder=0); ax.set_axisbelow(True)
-    axes[0].set_ylabel("stimulus pairs  (of 48)", fontsize=9, color=INK2)
-    h, l = axes[0].get_legend_handles_labels()
-    fig.legend(h, l, loc="lower center", bbox_to_anchor=(0.5, -0.14), ncol=7, frameon=False,
-               fontsize=8.3, handletextpad=0.35, columnspacing=1.4)
+    axes.flat[0].set_ylabel("stimulus pairs  (of 48)", fontsize=9, color=INK2)
+    h, l = axes.flat[0].get_legend_handles_labels()
+    fig.legend(h, l, loc="lower center", bbox_to_anchor=(0.5, -0.14),
+               ncol=7 if N_SITES > 1 else 4,     # 7 tiers do not fit under one narrow panel
+               frameon=False, fontsize=8.3, handletextpad=0.35, columnspacing=1.4)
     fig.suptitle("Agreement dies as soon as an amplitude floor is applied\n"
                  "Stimulus pairs on which AT LEAST k of 7 models call the criterion present · "
                  "the {≥7} set nests inside {≥6} inside … inside {≥1}",
@@ -462,8 +505,10 @@ def fig_floor_agreement(frames, path):
 
 def fig_z_by_method(frames, ST, FSTD, FDEV, path):
     """11h — per stimulus pair, the spread of within-model z across the 7 models. Box + the 7 points."""
-    fig, axes = plt.subplots(1, 2, figsize=(14.4, 12.2), gridspec_kw=dict(wspace=0.52))
-    for ax, (kind, roi) in zip(axes, SITES):
+    # width scales with the panel count; the N_SITES = 2 value is the committed 14.4
+    fig, axes = plt.subplots(1, N_SITES, figsize=(round(7.2 * N_SITES, 2), 12.2),
+                             gridspec_kw=dict(wspace=0.52), squeeze=False)
+    for ax, (kind, roi) in zip(axes.flat, SITES):
         z = within_model_z(frames[roi]["uv"])
         order = z.median(axis=1).sort_values().index          # deepest (most negative) median at top
         Z = z.loc[order]
@@ -496,7 +541,8 @@ def fig_z_by_method(frames, ST, FSTD, FDEV, path):
         ax.tick_params(axis="y", length=0)
     handles = [Line2D([0], [0], color=MODEL_STYLE[m]["color"], marker=MODEL_STYLE[m]["marker"],
                       ls="", ms=6, mec=SURFACE, mew=0.6, label=MLABEL[m]) for m in MODEL_ORDER]
-    fig.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.5, 0.955), ncol=7,
+    fig.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.5, 0.955),
+               ncol=7 if N_SITES > 1 else 4,     # 7 labels do not fit over one narrow panel
                frameon=False, fontsize=8.5, handletextpad=0.35, columnspacing=1.5)
     fig.suptitle("Each model on its OWN scale: z of the trough vs that model's 48-pair mean/SD\n"
                  "Box = spread across the 7 models for one stimulus pair · a tight box would mean the "
@@ -511,9 +557,10 @@ def fig_z_by_method(frames, ST, FSTD, FDEV, path):
 
 def fig_regular_vs_counter(frames, path):
     """11i — is 1000→1500 the same response as 1500→1000? One point per method × model."""
-    fig, axes = plt.subplots(1, 2, figsize=(11.8, 5.9))
+    # width scales with the panel count; the N_SITES = 2 value is the committed 11.8
+    fig, axes = plt.subplots(1, N_SITES, figsize=(round(5.9 * N_SITES, 2), 5.9), squeeze=False)
     stats_out = {}
-    for ax, (kind, roi) in zip(axes, SITES):
+    for ax, (kind, roi) in zip(axes.flat, SITES):
         z = within_model_z(frames[roi]["uv"])
         xs, ys = [], []
         for m in MODEL_ORDER:
@@ -543,9 +590,10 @@ def fig_regular_vs_counter(frames, path):
                      f"Pearson r = {r:+.3f} (p = {pf(pr)})  ·  Spearman ρ = {rho:+.3f} "
                      f"(p = {pf(prho)})", fontsize=9, color=INK, pad=8)
         ax.grid(lw=0.6, zorder=0); ax.set_axisbelow(True)
-    h, l = axes[0].get_legend_handles_labels()
-    fig.legend(h, l, loc="lower center", bbox_to_anchor=(0.5, -0.10), ncol=8, frameon=False,
-               fontsize=8.3, handletextpad=0.35, columnspacing=1.3)
+    h, l = axes.flat[0].get_legend_handles_labels()
+    fig.legend(h, l, loc="lower center", bbox_to_anchor=(0.5, -0.10),
+               ncol=8 if N_SITES > 1 else 4,     # 8 entries do not fit under one narrow panel
+               frameon=False, fontsize=8.3, handletextpad=0.35, columnspacing=1.3)
     fig.suptitle("Is 1000→1500 the same response as 1500→1000?\n"
                  "Each point is one method in one model, on that model's own z scale · "
                  "on the diagonal ⇒ the swap changes nothing",
@@ -658,16 +706,25 @@ def main():
         print(cons[roi].head(6)[cols].to_string(float_format=lambda v: f"{v:.1f}"))
         print(f"\n### {SITE_T[roi]} — CONSENSUS LOW (bottom 6)")
         print(cons[roi].tail(6)[cols].to_string(float_format=lambda v: f"{v:.1f}"))
-    j = cons["frontal"][["mean_pct"]].join(cons["FCz"][["mean_pct"]], lsuffix="_fr", rsuffix="_fcz")
-    rho, p = stats.spearmanr(j.mean_pct_fr, j.mean_pct_fcz)
-    print(f"\nfrontal ↔ FCz agreement on the mean ranking (48 stimulus pairs): ρ = {rho:+.3f}, p = {p:.3g}")
-    for k in (6, 12):
-        o_hi = len(set(cons["frontal"].head(k).index) & set(cons["FCz"].head(k).index))
-        o_lo = len(set(cons["frontal"].tail(k).index) & set(cons["FCz"].tail(k).index))
-        print(f"   top-{k} overlap = {o_hi}/{k}   bottom-{k} overlap = {o_lo}/{k}")
-        rows += [dict(site="both", stat=f"top{k}_overlap", value=o_hi, p=np.nan, extra=f"/{k}"),
-                 dict(site="both", stat=f"bottom{k}_overlap", value=o_lo, p=np.nan, extra=f"/{k}")]
-    rows.append(dict(site="both", stat="frontal_vs_fcz_meanrank_rho", value=rho, p=p, extra="n=48"))
+    # the site-vs-site consensus comparison needs two sites; a single-site run simply skips it
+    if N_SITES == 2:
+        (_, ra), (_, rb) = SITES
+        j = cons[ra][["mean_pct"]].join(cons[rb][["mean_pct"]], lsuffix="_a", rsuffix="_b")
+        rho, p = stats.spearmanr(j.mean_pct_a, j.mean_pct_b)
+        print(f"\n{ra} ↔ {rb} agreement on the mean ranking (48 stimulus pairs): "
+              f"ρ = {rho:+.3f}, p = {p:.3g}")
+        for k in (6, 12):
+            o_hi = len(set(cons[ra].head(k).index) & set(cons[rb].head(k).index))
+            o_lo = len(set(cons[ra].tail(k).index) & set(cons[rb].tail(k).index))
+            print(f"   top-{k} overlap = {o_hi}/{k}   bottom-{k} overlap = {o_lo}/{k}")
+            rows += [dict(site="both", stat=f"top{k}_overlap", value=o_hi, p=np.nan, extra=f"/{k}"),
+                     dict(site="both", stat=f"bottom{k}_overlap", value=o_lo, p=np.nan, extra=f"/{k}")]
+        rows.append(dict(site="both", stat="frontal_vs_fcz_meanrank_rho", value=rho, p=p,
+                         extra="n=48"))
+    elif N_SITES > 2:
+        print(f"\n(site↔site consensus overlap is reported only for a 2-site run; got {N_SITES})")
+    else:
+        print("\n(single-site run — the site↔site consensus comparison is not applicable)")
     pd.concat({r: cons[r] for r in cons}, names=["site"]).to_csv(f"{OUT}/sec11_stimulus_pairs.csv")
     print(f"\n  wrote {OUT}/sec11_stimulus_pairs.csv")
 
@@ -705,7 +762,7 @@ def main():
     print("\n" + "=" * 92)
     print("5. DIRECTION CHECK — regular ↔ counter rank correlation (paired on 24 methods, within model)")
     print("=" * 92)
-    print(f"{'model':17s} {'frontal ρ':>10s} {'p':>8s} {'FCz ρ':>8s} {'p':>8s}")
+    print(f"{'model':17s}" + "".join(f" {roi + ' ρ':>10s} {'p':>8s}" for _, roi in SITES))
     dirn = {}
     for m in MODEL_ORDER:
         vals = []
@@ -719,7 +776,8 @@ def main():
             vals += [rho_, p_]
             rows.append(dict(site=roi, stat=f"dir_rho_{m}", value=rho_, p=p_, extra="n=24 methods"))
         dirn[m] = vals
-        print(f"{MLABEL[m]:17s} {vals[0]:+10.3f} {vals[1]:8.3f} {vals[2]:+8.3f} {vals[3]:8.3f}")
+        print(f"{MLABEL[m]:17s}" + "".join(f" {vals[2 * i]:+10.3f} {vals[2 * i + 1]:8.3f}"
+                                           for i in range(N_SITES)))
     for i, (kind, roi) in enumerate(SITES):
         v = [dirn[m][2 * i] for m in MODEL_ORDER]
         n_sig = sum(1 for m in MODEL_ORDER if dirn[m][2 * i + 1] < 0.05)
