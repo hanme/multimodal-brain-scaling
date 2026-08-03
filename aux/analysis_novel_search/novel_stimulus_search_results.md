@@ -21,9 +21,10 @@
 > use. This asks whether pairs *absent* from that literature drive stronger and more
 > model-consistent responses.
 
-> **The short answer, up front.** The novel grid's top tier does beat the literature set's — its
-> top 10 averages 6.0 agreeing models and −2.21 µV against the literature top 10's 3.8 and
-> −1.56 µV — but **not one pair of 903 reaches the top tier in both directions.** Three independent
+> **The short answer, up front.** The novel grid's top tier beats the literature set's **on
+> cross-model consistency, and essentially not at all on amplitude** — its top 10 averages 6.0
+> agreeing models against the literature top 10's 4.0, but −2.21 µV against −2.07 µV, a gap of
+> 0.14 µV. And **not one pair of 903 reaches the top tier in both directions.** Three independent
 > views of the data — the empty both-directions column, the row-and-column striping of the µV
 > heatmap, and the mirror-image direction waveforms — all say the same thing: the models are
 > responding to **which frequencies are present**, not to the change between them. Table 3 puts a
@@ -260,7 +261,7 @@ the ramp's neutral midpoint pinned at exactly 0 µV so sign is readable directly
 - **A fifth of the grid is positive** (no trough at all), and those cells are also organised by
   frequency, not by deviance.
 
-![Two panels in standard-frequency by deviant-frequency space on logarithmic axes labelled from 200 to 8000 Hz, with a grey identity line. Circles are the 48 literature direction-instances; triangles are the top 24 novel direction-instances. Left panel colours both by n_agree on the same discrete light-to-dark Blues ramp as Figure 2: the literature circles are pale mid-ramp steps between 2 and 4 with one darker at 5, while the novel triangles are almost uniformly the darkest step at 6. Right panel colours both by mean trough depth on the same blue-white-red diverging ramp and the same zero-centred normalisation as Figure 3: the literature circles are pale blue or near-white, the novel triangles a clearly deeper blue. The two sets barely overlap in position — every circle sits in a tight cluster around a 1000 Hz standard with deviants from 600 to 2000 Hz, while the triangles sit mostly along the top edge at a 7611 Hz deviant and along the right at high standards.](plots/phase1_literature_heatmap.png)
+![Two panels in standard-frequency by deviant-frequency space on logarithmic axes labelled from 200 to 8000 Hz, with a grey identity line. Circles are the 48 literature direction-instances; triangles are the top 24 novel direction-instances. Left panel colours both by n_agree on the same discrete light-to-dark Blues ramp as Figure 2: the literature circles are mid-ramp steps, 35 of the 48 at 2 or 3, with six at 4, two at 5, four pale ones at 1 and a single near-white one at 0, while the novel triangles are uniformly the darkest step at 6, a step no circle reaches. Right panel colours both by mean trough depth across all six models on the same blue-white-red diverging ramp and the same zero-centred normalisation as Figure 3: the literature circles run from near-white through mid blue, a few of them faintly warm, and the novel triangles are a deeper and much more uniform blue, though the darkest circles and the lighter triangles now overlap in shade rather than separating cleanly. The two sets barely overlap in position — every circle sits in a tight cluster around a 1000 Hz standard with deviants from 600 to 2000 Hz, while the triangles sit mostly along the top edge at a 7611 Hz deviant, with a few at a 3100 Hz deviant and a group at low deviants of 200 to 250 Hz against standards near 1500 to 1750 Hz.](plots/phase1_literature_heatmap.png)
 
 **Figure 4. The 24 literature stimuli (circles) and the top 24 novel instances (triangles) on one
 pair of colour scales**, identical to Figures 2 and 3, so a marker here and a cell there of the
@@ -269,10 +270,16 @@ same colour mean the same number.
 - **The two sets barely overlap in position.** Every literature pair lives in 600–2000 Hz, which
   the novel ladder covers in 14 of its 43 rungs; the novel winners sit outside it, most of them
   against a 7611 Hz deviant.
-- **They also barely overlap in colour.** The novel triangles are almost uniformly the darkest
-  agreement step and a clearly deeper blue on the µV ramp; no literature circle reaches either.
+- **They separate on agreement, not on depth.** On the left panel the novel triangles are uniformly
+  the darkest step and no literature circle reaches it. On the right panel the two sets overlap:
+  the deepest literature circles are as dark as, and in places darker than, the lighter novel
+  triangles.
 - Because the scales are shared and not renormalised, that is a statement about magnitude rather
-  than about contrast stretching — and it is the same claim Tables 5 and 6 make numerically.
+  than about contrast stretching — and it is the same split Tables 5 and 6 make numerically, where
+  the sets differ by two agreeing models but only 0.139 µV in depth.
+- **Nothing on the µV panel is clipped.** Every literature `mean_uv_all6` falls inside the novel
+  grid's −3.44 to +1.11 µV range, so the shared normalisation shows the literature set at full
+  contrast rather than saturating it at the ramp end.
 
 ![Small-multiple grid of 30 panels, one per pair in the top 30 of the ranking. Each panel plots the FCz microvolt difference wave against time from -120 to 460 ms for the regular direction only, with the six models overlaid in Okabe-Ito colours and wav2vec2-large re-hued violet. The 100-240 ms scoring window is shaded and the zero line marked, and each panel autoscales because the models' microvolt scales differ by roughly fivefold. Whisper medium in orange and wav2vec2 large in violet swing several times wider than the four other models, both above and below zero.](plots/phase1_strong_waveforms_1.png)
 
@@ -318,7 +325,7 @@ can be averaged at all.
 > **Code:** `aux/analysis_novel_search/plots/phase1_results.py` (`load_literature`,
 > `compare_to_literature`, `table_novel_vs_literature_top`, `plot_literature_heatmaps`)
 > **Data:** `outputs/results_novel_search/phase1_mmn_s7_roi.csv` vs
-> `outputs/results_24freq_7models/mmn_s7_roi.csv`, **scored identically** — same S7@0.75, same
+> `outputs/results_soafix/mmn_s7_roi.csv`, **scored identically** — same S7@0.75, same
 > FCz, same mTRF, same 6 models (whisper-large dropped from the literature side too, so the
 > comparison is like-for-like). Frequencies from
 > `data/metadata/literature_frequency_intensity_duration_metadata.csv`. Tables:
@@ -331,11 +338,11 @@ direction-instances.
 |---:|---:|---:|
 | 6 | **0.9%** (17) | **0.0%** (0) |
 | 5 | 6.3% (114) | 4.2% (2) |
-| 4 | 16.0% (289) | 8.3% (4) |
-| 3 | 29.9% (540) | 22.9% (11) |
-| 2 | 31.1% (562) | 45.8% (22) |
-| 1 | 13.8% (249) | 10.4% (5) |
-| 0 | 1.9% (35) | 8.3% (4) |
+| 4 | 16.0% (289) | 12.5% (6) |
+| 3 | 29.9% (540) | 35.4% (17) |
+| 2 | 31.1% (562) | 37.5% (18) |
+| 1 | 13.8% (249) | 8.3% (4) |
+| 0 | 1.9% (35) | 2.1% (1) |
 
 **Table 5. The novel grid's top 10** (`plots/phase1_top10_vs_literature.csv`).
 
@@ -360,24 +367,28 @@ same two keys.
 |---:|---|---|---:|---:|
 | 1 | `method_20` | 1000 → 1850 Hz | 5 | −1.365 |
 | 2 | `method_21` | 1000 → 1850 Hz | 5 | −1.348 |
-| 3 | `method_53_counter` | 1200 → 1000 Hz | 4 | −1.834 |
-| 4 | `method_10_counter` | 1122 → 1000 Hz | 4 | −1.681 |
-| 5 | `method_75` | 1000 → 1200 Hz | 4 | −1.128 |
-| 6 | `method_72` | 1000 → 1200 Hz | 4 | −1.115 |
-| 7 | `method_60_counter` | 1500 → 1000 Hz | 3 | −1.946 |
-| 8 | `method_19_counter` | 1850 → 1000 Hz | 3 | −1.748 |
-| 9 | `method_18_counter` | 1850 → 1000 Hz | 3 | −1.745 |
-| 10 | `method_9` | 600 → 1000 Hz | 3 | −1.734 |
-| | **mean of the top 10** | | **3.8** | **-1.564** |
+| 3 | `method_19_counter` | 1850 → 1000 Hz | 4 | −3.270 |
+| 4 | `method_17_counter` | 1850 → 1000 Hz | 4 | −3.147 |
+| 5 | `method_18_counter` | 1850 → 1000 Hz | 4 | −3.132 |
+| 6 | `method_60` | 1000 → 1500 Hz | 4 | −1.968 |
+| 7 | `method_75` | 1000 → 1200 Hz | 4 | −1.128 |
+| 8 | `method_72` | 1000 → 1200 Hz | 4 | −1.115 |
+| 9 | `method_60_counter` | 1500 → 1000 Hz | 3 | −2.216 |
+| 10 | `method_17` | 1000 → 1850 Hz | 3 | −2.010 |
+| | **mean of the top 10** | | **4.0** | **-2.070** |
 
-- **The novel top 10 is unanimous and the literature top 10 is not close.** All ten novel
-  instances reach 6/6; the literature's best two reach 5/6 and its tenth reaches 3/6. Mean n_agree
-  **6.0 against 3.8**.
-- **The novel top 10 is also deeper**: mean `mean_uv` **−2.209 µV against −1.564 µV**, a 41%
-  larger predicted trough on the models' own scale.
-- **The margin is largest on agreement, not on depth.** The literature's deepest instance
-  (`method_60_counter`, −1.946 µV) is deeper than five of the novel top 10; what it cannot do is
-  get the models to agree.
+- **The novel top 10 is unanimous and the literature top 10 is not.** All ten novel instances reach
+  6/6; the literature's best two reach 5/6, no literature instance reaches 6/6 at all, and its
+  tenth reaches 3/6. Mean n_agree **6.0 against 4.0**.
+- **On depth the two sets are close to level**: mean `mean_uv` **−2.209 µV against −2.070 µV**, a
+  gap of 0.139 µV, or 7%. **Depth does not separate the novel grid from the literature set** — the
+  deepest instance in the literature top 10 (`method_19_counter`, 1850 → 1000 Hz, −3.270 µV) is
+  deeper than every one of the novel top 10, and the two behind it (`method_17_counter` −3.147,
+  `method_18_counter` −3.132) are deeper than nine of the ten.
+- **The whole of the margin is in agreement, not in depth.** A literature pair can drive a trough
+  as deep as anything on the novel grid; what no literature pair does is get all six models to
+  register it. That is the one axis on which the novel grid is clearly ahead, and it is the axis
+  the search was built to optimise.
 
 **Table 7. Where the best novel pairs sit relative to the literature set.**
 
@@ -389,23 +400,26 @@ same two keys.
 | higher tone, max | 2000 Hz | 7611 Hz | 7611 Hz |
 | share with higher tone ≥ 5869 Hz | **0 of 24** | **12 of 17** | 14% of grid |
 
-- **The novel grid's top tier beats the literature's, and does so entirely outside the literature's
+- **The novel grid's top tier out-agrees the literature's from entirely outside the literature's
   range.** No published pair in the 24-method set exceeds 12 semitones or puts either tone above
   2000 Hz; the novel 6/6 tier has a median deviance of 25.5 semitones and 12 of its 17 members have
-  a tone at or above 5869 Hz, 9 of 17 involving the grid's top rung, 7611 Hz.
+  a tone at or above 5869 Hz, 9 of 17 involving the grid's top rung, 7611 Hz. The stimuli that get
+  all six models to agree are ones the published literature has not tested.
 - **This is consistent with Section 2's finding, not independent of it.** 7611 Hz is a dark column
   in the heatmap regardless of what it is paired with, so the "winning" pairs are largely the pairs
   that happen to contain the frequencies these models respond to.
-- **A wider search space produced better-scoring pairs, not a different kind of pair.** Going from
-  24 literature pairs to 903 novel ones — a 37× larger space covering 8.8% to 3705% deviance —
-  moved the top tier from 5/6 to 6/6, and the winners are concentrated on individual preferred
-  frequencies.
+- **A wider search space produced more-agreed pairs, not deeper ones and not a different kind of
+  pair.** Going from 24 literature pairs to 903 novel ones — a 37× larger space covering 8.8% to
+  3705% deviance — moved the top tier from 5/6 to 6/6 but left mean top-10 depth essentially where
+  it was, and the winners are concentrated on individual preferred frequencies.
 
 ### Section 3 summary
-- **Yes, and by a clear margin on the search's own keys**: the novel top 10 averages 6.0 agreeing
-  models and −2.209 µV against the literature top 10's 3.8 and −1.564 µV.
-- **The margin is in agreement more than in depth** — the literature's deepest single instance
-  beats five of the novel top 10.
+- **On consistency yes; on amplitude no.** The novel top 10 averages 6.0 agreeing models against
+  the literature top 10's 4.0, but −2.209 µV against −2.070 µV — a 0.139 µV difference in depth
+  that carries no weight next to a two-model difference in agreement.
+- **The margin is in agreement alone** — the deepest instance in the literature top 10 (−3.270 µV)
+  beats every one of the novel top 10, so any claim that novel pairs drive *deeper* MMN is not
+  supported.
 - **The winners sit far outside the literature's frequency and deviance range**, and cluster on the
   frequencies Section 2 identifies as preferred: 9 of 17 6/6 instances contain 7611 Hz.
 
@@ -1206,7 +1220,8 @@ python scripts/analyze_mmn_s7_roi.py --predictions_root outputs/insilico_mmn_pre
     --dip_uv_threshold 0.75 --out outputs/results_novel_search/phase1_mmn_s7_roi.csv
 python scripts/rank_novel_phase1.py                            # the ranking CSVs
 python aux/analysis_novel_search/plots/novel_search_plots.py   # Section 2 heatmap + scaling
-python aux/analysis_novel_search/plots/phase1_results.py       # Sections 2–5
+python aux/analysis_novel_search/plots/phase1_results.py \
+    --literature_csv outputs/results_soafix/mmn_s7_roi.csv     # Sections 2–5
 python aux/analysis_novel_search/plots/phase1_results.py --only_waveforms --wave_units uv
 
 # Phase 2 — Sections 6–7. Same scorer, same ranker; only the deviant count differs.
@@ -1222,6 +1237,7 @@ for m in whisper-tiny whisper-base whisper-small whisper-medium wav2vec2-medium 
 done
 
 python aux/analysis_novel_search/plots/phase1_results.py --phase 2 --skip_deviance \
+    --literature_csv outputs/results_soafix/mmn_s7_roi.csv \
     --predictions_root outputs/insilico_mmn_predictions_novel_phase2   # Section 6, incl. Figs 13-14
 python aux/analysis_novel_search/plots/phase1_results.py --phase 2 --only_waveforms \
     --wave_units uv \
@@ -1239,7 +1255,10 @@ python scripts/md_to_pdf.py aux/analysis_novel_search/novel_stimulus_search_resu
 reads `phase2_mmn_s7_roi.csv` and writes every output under a `phase2_` prefix**, so the two phases
 cannot overwrite each other. It also takes `--results_dir` / `--out_dir` / `--predictions_root` /
 `--literature_csv`, so any re-run can be rendered anywhere, and it writes every table in this memo
-as a CSV beside its figure. **`--skip_deviance` is what Phase 2 runs with**: the deviance
+as a CSV beside its figure. **`--literature_csv` has to be passed explicitly** — its built-in
+default is `outputs/results_24freq_7models/mmn_s7_roi.csv`, not the screen Section 3 is computed
+from, so a bare re-run would rebuild Tables 4 and 6 and Figure 4 off the wrong CSV.
+**`--skip_deviance` is what Phase 2 runs with**: the deviance
 correlation is confounded by the selection (Caveat 6), so it is not computed rather than computed
 and disclaimed. `--skip_literature` suppresses the literature comparison; note it also drops the
 literature overlay from the grid-position figure, which is why the raw-µV pass must carry
