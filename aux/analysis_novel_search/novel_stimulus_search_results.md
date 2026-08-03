@@ -8,7 +8,7 @@
 > FCz electrode, same ranking code — the *only* thing that changed is how many deviants each
 > mean is built from. The two runs keep separate prediction roots
 > (`outputs/insilico_mmn_predictions_novel` and `..._novel_phase2`), so every waveform figure is
-> traceable to the deviant count its caption claims. **Sections 1–5 are Phase 1; Sections 6–7 are Phase 2 and the comparison.**
+> traceable to the deviant count its caption claims. **Section 0 is the literature screen on its own; Sections 1–5 are Phase 1; Sections 6–7 are Phase 2 and the comparison.**
 > This memo reports **results only** — run scale and disk requirements live in
 > `aux/sophies_repository_overview.md` §17.4 (*Scale of the run*).
 
@@ -99,6 +99,169 @@ directions under 15 deviants but happened to score 4 or below on its one Phase-1
 instances that *were* re-measured rose a tier (Table 21), all from the 3/6-or-below tiers, which
 is the region the screen cut at. This is a limitation of the two-phase design, not a defect in
 either run; closing it would mean evaluating pairs the screen rejected.
+
+---
+
+## Section 0 — The literature screen on its own terms
+
+> **Code:** `aux/analysis_novel_search/plots/literature_results.py`
+> **Data:** `outputs/results_soafix/mmn_s7_roi.csv` — the (FCz, mTRF, X = 0.75) slice over the same
+> six models, so every count here is commensurable with every Phase-1 and Phase-2 number in this
+> memo. Frequencies from `data/metadata/literature_frequency_intensity_duration_metadata.csv`;
+> waveforms from `outputs/insilico_mmn_predictions_soafix` (15 deviant realizations per condition).
+> Tables: `plots/literature_agreement_tiers.csv`, `plots/literature_top48.csv`,
+> `plots/literature_consensus_heatmap.csv`.
+
+Sections 1–7 use the 24 published frequency methods only as a *comparison arm* — a tier
+distribution and a top 10 held up against the novel grid in Section 3. This section reports that
+same set the way Sections 2–5 report the novel grid: its own agreement tiers, its own consensus
+yield, its full ranking, and the predicted waveforms behind its top 10. Nothing here is re-scored.
+**24 methods × {regular, counter} = 48 direction-instances**, and `n_agree` runs 0–6 throughout.
+
+**Table 0.1. n_agree × number of stimuli, at X = 0.75.** `direction-instances` counts the 48
+ordered instances; the last two columns count the 24 *methods*, split by whether both of a
+method's directions land in the tier or only one. Both-vs-either is the direction-asymmetry
+signal: a tier where the two columns nearly agree is measuring a deviance response, one where
+`both` collapses is measuring a frequency preference.
+
+| n_agree | direction-instances | % of 48 | methods with both directions | methods with either |
+|---:|---:|---:|---:|---:|
+| 6 | 0 | 0.0% | 0 | 0 |
+| 5 | 2 | 4.2% | 0 | 2 |
+| 4 | 6 | 12.5% | 0 | 6 |
+| 3 | 17 | 35.4% | 1 | 16 |
+| 2 | 18 | 37.5% | 3 | 15 |
+| 1 | 4 | 8.3% | 0 | 4 |
+| 0 | 1 | 2.1% | 0 | 1 |
+
+- **No literature instance reaches 6/6, and only two reach 5/6** (`method_20` and `method_21`,
+  both 1000 → 1850 Hz). The published set has no unanimous stimulus at this floor.
+- **The mass sits at 2 and 3** — 35 of 48 instances, 73% of the set.
+- **Agreement almost never survives reversal.** Of the 24 methods, only one has both directions at
+  3/6 and three have both at 2/6; no method has both directions at 4/6 or better. This is the same
+  frequency-preference result Section 2 finds on the novel grid, and it is already visible in the
+  published set.
+
+![Heatmap with the number of models agreeing on the vertical axis, 1 at the bottom to 6 at the top, and the top-X rank threshold on the horizontal axis running 2, 4, 6, 8, 10, 15, 20, 25, 30, 40, 48. Each cell is annotated with the number of the 48 literature direction-instances that sit in the top X of at least that many models, on a yellow-green-blue sequential ramp. The bottom row rises from 9 at top-2 to 48 by top-30. The 2-model row runs 2, 4, 9, 12, 16 across the first five columns; the 3-model row 1, 3, 3, 6, 10. The 4-model row is zero until top-6 and reaches only 5 at top-15. The 5-model row is zero across the whole 2-to-20 range and first appears at top-25 with 7, and the 6-model row is zero until a single stimulus appears at top-30, reaching 20 at top-40. The strongly coloured region is confined to the bottom-left-to-right sweep of the 1- and 2-model rows and the two right-hand columns, where the cut is so loose it admits most of the set.](plots/literature_consensus_heatmap.png)
+
+**Figure 0.1. Consensus yield over the literature set**, built exactly as the Phase-1 and Phase-2
+versions (Figures 11 and 20): each model ranks the instances by its *own* `trough_uv` among its S2
+responses, and the cell counts instances in the top X of at least Y models.
+
+- **The strict corner is empty.** No instance is in the top 10 of even 4 of the 6 models — the
+  4-model row reaches 5 at top-15, and the 5- and 6-model rows are flat zero until top-25 and
+  top-30 respectively.
+- **The right-hand columns are degenerate, not encouraging.** Top-48 of a 48-instance set is every
+  instance a model has an S2 response for, so the 30 at (6 models, top-48) is bounded by
+  wav2vec2-large's 38 S2 responses rather than by any agreement.
+- **This is the same shape the novel grid shows** (Section 5): the models order these stimuli
+  largely independently, and cross-model consensus only appears once the cut is loose enough to be
+  uninformative.
+
+**Table 0.2. All 48 literature direction-instances, ranked.** Same columns and same keys as
+Table 10 — n_agree descending, then `mean_uv` ascending. **mean/median/max/min are across all six
+models' `trough_uv`, agreeing or not**; `mean_uv` (the ranking key) stays the agreeing-models-only
+mean, and is undefined at `n_agree = 0`. Model names in the last column are abbreviated
+(`tiny`/`base`/`small`/`medium` are the whisper models, `w2v-med`/`w2v-lg` the wav2vec2 pair).
+
+| rank | method | stimulus | n_agree | mean_uv | mean all6 | median all6 | max all6 | min all6 | did not agree |
+|---:|---|---|---:|---:|---:|---:|---:|---:|---|
+| 1 | `method_20` | 1000 → 1850 Hz | 5 | −1.365 | −1.581 | −1.410 | −0.800 | −2.660 | w2v-lg |
+| 2 | `method_21` | 1000 → 1850 Hz | 5 | −1.348 | −1.579 | −1.413 | −0.808 | −2.735 | w2v-lg |
+| 3 | `method_19_counter` | 1850 → 1000 Hz | 4 | −3.270 | −2.164 | −1.266 | 0.777 | −7.902 | medium, w2v-med |
+| 4 | `method_17_counter` | 1850 → 1000 Hz | 4 | −3.147 | −2.102 | −1.250 | 0.621 | −7.456 | medium, w2v-med |
+| 5 | `method_18_counter` | 1850 → 1000 Hz | 4 | −3.132 | −2.098 | −1.255 | 0.625 | −7.377 | medium, w2v-med |
+| 6 | `method_60` | 1000 → 1500 Hz | 4 | −1.968 | −1.350 | −1.187 | 0.102 | −3.404 | tiny, base |
+| 7 | `method_75` | 1000 → 1200 Hz | 4 | −1.128 | −0.862 | −0.881 | 0.024 | −1.773 | base, small |
+| 8 | `method_72` | 1000 → 1200 Hz | 4 | −1.115 | −0.854 | −0.848 | 0.022 | −1.784 | base, small |
+| 9 | `method_60_counter` | 1500 → 1000 Hz | 3 | −2.216 | −1.303 | −0.809 | −0.165 | −3.119 | small, medium, w2v-med |
+| 10 | `method_17` | 1000 → 1850 Hz | 3 | −2.010 | −1.029 | −0.805 | 0.443 | −2.546 | tiny, small, w2v-med |
+| 11 | `method_18` | 1000 → 1850 Hz | 3 | −1.994 | −1.022 | −0.808 | 0.431 | −2.715 | tiny, small, w2v-med |
+| 12 | `method_53_counter` | 1200 → 1000 Hz | 3 | −1.971 | −1.306 | −0.797 | −0.584 | −4.035 | tiny, base, medium |
+| 13 | `method_19` | 1000 → 1850 Hz | 3 | −1.915 | −0.991 | −0.813 | 0.414 | −2.476 | tiny, small, w2v-med |
+| 14 | `method_9` | 600 → 1000 Hz | 3 | −1.733 | −0.902 | −0.829 | 0.387 | −2.728 | tiny, base, w2v-med |
+| 15 | `method_55_counter` | 2000 → 1000 Hz | 3 | −1.663 | −1.556 | −1.410 | 0.080 | −3.761 | small, medium, w2v-lg |
+| 16 | `method_21_counter` | 1850 → 1000 Hz | 3 | −1.537 | −0.953 | −0.889 | −0.208 | −1.677 | base, small, medium |
+| 17 | `method_20_counter` | 1850 → 1000 Hz | 3 | −1.530 | −0.977 | −0.930 | −0.200 | −1.682 | base, small, medium |
+| 18 | `method_44` | 633 → 1000 Hz | 3 | −1.457 | −0.709 | −0.573 | 0.318 | −2.279 | base, w2v-med, w2v-lg |
+| 19 | `method_55` | 1000 → 2000 Hz | 3 | −1.356 | −0.878 | −0.930 | −0.262 | −1.513 | medium, w2v-med, w2v-lg |
+| 20 | `method_30_counter` | 1200 → 1000 Hz | 3 | −1.162 | −0.859 | −0.843 | −0.415 | −1.261 | tiny, base, medium |
+| 21 | `method_29_counter` | 1200 → 1000 Hz | 3 | −1.130 | −0.848 | −0.838 | −0.418 | −1.221 | tiny, base, medium |
+| 22 | `method_74` | 1000 → 1500 Hz | 3 | −1.112 | −0.484 | −0.491 | 0.277 | −1.220 | tiny, base, small |
+| 23 | `method_31_counter` | 1200 → 1000 Hz | 3 | −1.102 | −0.833 | −0.843 | −0.424 | −1.192 | tiny, base, medium |
+| 24 | `method_28_counter` | 1200 → 1000 Hz | 3 | −1.088 | −0.822 | −0.840 | −0.420 | −1.193 | tiny, base, medium |
+| 25 | `method_32_counter` | 1200 → 1000 Hz | 3 | −1.070 | −0.818 | −0.838 | −0.421 | −1.181 | tiny, base, medium |
+| 26 | `method_43` | 633 → 700 Hz | 2 | −5.361 | −1.838 | −0.321 | 0.267 | −9.609 | tiny, base, small, w2v-med |
+| 27 | `method_44_counter` | 1000 → 633 Hz | 2 | −3.658 | −1.376 | −0.677 | 0.880 | −5.686 | tiny, base, small, w2v-lg |
+| 28 | `method_31` | 1000 → 1200 Hz | 2 | −1.812 | −0.829 | −0.474 | −0.190 | −1.864 | tiny, base, small, w2v-lg |
+| 29 | `method_28` | 1000 → 1200 Hz | 2 | −1.804 | −0.830 | −0.484 | −0.194 | −1.875 | tiny, base, small, w2v-lg |
+| 30 | `method_29` | 1000 → 1200 Hz | 2 | −1.801 | −0.845 | −0.526 | −0.202 | −1.902 | tiny, base, small, w2v-lg |
+| 31 | `method_30` | 1000 → 1200 Hz | 2 | −1.785 | −0.840 | −0.534 | −0.194 | −1.874 | tiny, base, small, w2v-lg |
+| 32 | `method_32` | 1000 → 1200 Hz | 2 | −1.773 | −0.832 | −0.518 | −0.196 | −1.868 | tiny, base, small, w2v-lg |
+| 33 | `method_33_counter` | 1200 → 1000 Hz | 2 | −1.766 | −0.610 | −0.264 | 0.365 | −2.595 | tiny, base, small, w2v-med |
+| 34 | `method_53` | 1000 → 1200 Hz | 2 | −1.645 | −0.752 | −0.502 | −0.058 | −2.193 | tiny, base, small, w2v-lg |
+| 35 | `method_27` | 1000 → 1064 Hz | 2 | −1.541 | −0.849 | −0.811 | 0.041 | −2.082 | tiny, base, small, medium |
+| 36 | `method_33` | 1000 → 1200 Hz | 2 | −1.435 | −0.825 | −0.670 | −0.297 | −2.081 | tiny, small, medium, w2v-lg |
+| 37 | `method_12_counter` | 1200 → 1000 Hz | 2 | −1.341 | −0.481 | −0.225 | 0.156 | −1.877 | tiny, small, medium, w2v-lg |
+| 38 | `method_9_counter` | 1000 → 600 Hz | 2 | −1.156 | 0.106 | −0.366 | 3.674 | −1.357 | base, small, medium, w2v-lg |
+| 39 | `method_74_counter` | 1500 → 1000 Hz | 2 | −1.145 | −0.551 | −0.457 | −0.038 | −1.251 | base, small, w2v-med, w2v-lg |
+| 40 | `method_12` | 1000 → 1200 Hz | 2 | −1.031 | −0.458 | −0.389 | 0.356 | −1.277 | tiny, base, small, w2v-lg |
+| 41 | `method_37` | 1000 → 1050 Hz | 2 | −0.961 | −0.476 | −0.269 | −0.188 | −1.145 | tiny, base, small, w2v-med |
+| 42 | `method_10` | 1000 → 1122 Hz | 2 | −0.941 | −0.320 | −0.130 | 0.191 | −1.097 | base, small, w2v-med, w2v-lg |
+| 43 | `method_37_counter` | 1050 → 1000 Hz | 2 | −0.935 | −0.557 | −0.528 | −0.057 | −0.981 | tiny, base, small, w2v-lg |
+| 44 | `method_10_counter` | 1122 → 1000 Hz | 1 | −1.987 | −0.780 | −0.592 | −0.387 | −1.987 | tiny, base, small, medium, w2v-med |
+| 45 | `method_27_counter` | 1064 → 1000 Hz | 1 | −0.966 | 0.063 | 0.034 | 1.282 | −0.966 | tiny, base, small, w2v-med, w2v-lg |
+| 46 | `method_75_counter` | 1200 → 1000 Hz | 1 | −0.906 | −0.345 | −0.283 | 0.102 | −0.906 | tiny, base, small, medium, w2v-med |
+| 47 | `method_72_counter` | 1200 → 1000 Hz | 1 | −0.820 | −0.340 | −0.270 | 0.107 | −0.820 | tiny, base, small, medium, w2v-lg |
+| 48 | `method_43_counter` | 700 → 633 Hz | 0 | — | −0.126 | −0.383 | 1.387 | −0.582 | tiny, base, small, medium, w2v-med, w2v-lg |
+
+
+- **The ranking is led by depth only after agreement.** `method_19/17/18_counter` (1850 → 1000 Hz)
+  carry by far the deepest agreeing-model troughs in the set at −3.27 to −3.13 µV, but sit at
+  ranks 3–5 because two models do not clear the floor on them; the two 5/6 instances above them
+  are less than half as deep.
+- **`min all6` shows how much of that depth is one model.** On those three instances the minimum
+  across models is −7.9 to −7.4 µV against a median near −1.26 — wav2vec2-large alone, whose µV
+  scale is not comparable with the others (Caveat 2).
+- **What fails is the µV floor, not the shape.** Across the 288 model-instance cells, 262 satisfy
+  S2 — an MMN-shaped trough with a recovery — but only 125 reach S7. So 137 of the 163 failures
+  are traces that dipped and recovered in the window and simply did not reach 0.75 µV; only 26
+  lack the shape at all.
+- **Both directions of the same method routinely land far apart** — `method_10` at rank 42 against
+  `method_10_counter` at 44, but `method_19` at 13 against `method_19_counter` at 3, and
+  `method_43` at 26 against `method_43_counter` at 48, last in the set.
+
+![Small-multiple grid of ten panels in two rows of five, one per instance in the literature top 10, each plotting the FCz microvolt difference wave against time from -120 to 360 ms after the final tone's onset with the six models overlaid in Okabe-Ito colours and wav2vec2-large re-hued violet. The 100-240 ms scoring window is shaded and the zero line marked, and each panel autoscales because the models' microvolt scales differ by roughly fivefold. Panels 1 and 2, method_20 and method_21, span about -3 to +3 microvolts with the traces crossing zero repeatedly and no common trough. Panels 3, 4 and 5, the three 1850 to 1000 Hz counter instances, are dominated by a single violet wav2vec2-large trace that descends to about -8 to -11 microvolts while the other five stay within about plus or minus 2.5, so the panel's vertical range is set by one model. Panels 6 through 10 span roughly -4 to +4 with whisper medium in orange swinging widest. Across all ten panels the traces are visibly jagged from sample to sample and no panel shows the six models dipping together inside the shaded window.](plots/literature_waveforms.png)
+
+**Figure 0.2. FCz µV difference wave for the literature top 10**, ranked by `n_agree` then
+`mean_uv` — the same order as Table 0.2's first ten rows. Five of the ten are `_counter`
+instances, so the figure is drawn per *direction-instance* rather than per method: plotting
+`method_19`'s regular trace under a panel titled by `method_19_counter`'s rank would show a trace
+the ranking never scored. The axis runs to **360 ms**, the full span the criteria read out over —
+S2's recovery search follows a trough that may itself sit as late as 240 ms.
+
+- **The deepest instances are one model, not six.** Panels 3–5 (`method_19/17/18_counter`) look
+  dramatic, but the excursion is wav2vec2-large alone, while the other five stay inside ±2.5 µV.
+  Its scored trough is the −7.90/−7.46/−7.38 µV `min all6` of Table 0.2, against a `median all6`
+  near −1.26; the trace then keeps descending past −10 µV *after* the scoring window, which is
+  drift the criteria never read. This is why `mean_uv` at 4/6 can be deeper than `mean_uv` at 5/6
+  without meaning a stronger response.
+- **No panel shows six models dipping together.** Even at the top of the ranking the traces cross
+  zero independently through the shaded window — the visual counterpart of no instance reaching
+  6/6.
+- **The traces are jagged at the 20 ms sample grid.** These are single-condition in-silico
+  predictions averaged over 15 deviant realizations, not trial-averaged EEG; read the presence and
+  timing of a trough, not its fine shape.
+
+### Section 0 summary
+- **The published set produces no unanimous stimulus.** 0 of 48 instances reach 6/6 and 2 reach
+  5/6; 73% sit at 2 or 3 of 6.
+- **Its failures are amplitude, not morphology** — 262 of 288 model-instance cells satisfy S2 and
+  only 125 clear the 0.75 µV floor.
+- **Agreement does not survive reversal**: no method has both directions at 4/6 or better, which
+  is the frequency-preference signature Section 2 finds across the whole novel grid.
+- **This is the baseline Section 3's comparison is against**, and it is why that comparison turns
+  on consistency rather than on trough depth.
 
 ---
 
@@ -1215,6 +1378,10 @@ Full run guide: `aux/sophies_repository_overview.md` §17.5 (Stages A–J). Afte
 and the rsync back:
 
 ```bash
+# Section 0 — the literature screen on its own. Reads the same scored CSV Section 3 compares
+# against and the soafix predictions; touches no novel-grid output, so it can run standalone.
+python aux/analysis_novel_search/plots/literature_results.py
+
 # Phase 1 — Sections 1–5
 python scripts/analyze_mmn_s7_roi.py --predictions_root outputs/insilico_mmn_predictions_novel \
     --dip_uv_threshold 0.75 --out outputs/results_novel_search/phase1_mmn_s7_roi.csv
