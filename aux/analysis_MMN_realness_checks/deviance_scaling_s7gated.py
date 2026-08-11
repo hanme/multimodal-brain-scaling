@@ -34,6 +34,11 @@ BINNING differs by set and is stated in every caption:
 The amplitude figure and the rate figure share the same bin edges within a set, so the censored
 (amplitude) and uncensored (rate) views line up column for column.
 
+The x-axis is LINEAR in semitones in every set, and each set keeps its own x-range. A log axis was
+tried for the wider sets and rejected -- semitones are already log-frequency, and a log axis
+compressed the >24 st region where the trend reverses. See the "X-AXIS IS LINEAR" comment in the
+binning section for all three reasons.
+
 NOT a replacement for deviance_scaling_plots_24freq_7models.py, which is the ungated, symlog,
 median-based, 7-model, two-site cousin referenced by name from the parent memo and is untouched.
 
@@ -59,7 +64,6 @@ SUBSET_MAX_ST = 24.0               # 2 octaves -- above this is arguably a diffe
 # letting the tail set a SHARED axis flattens every panel. The axis is clipped to cover all but
 # the deepest CLIP_FRAC of troughs and everything past it is ANNOTATED, never silently dropped.
 CLIP_FRAC = 0.02
-TICKS_ST = [1, 2, 4, 8, 16, 32, 64]
 
 
 # ------------------------------------------------------------------------------------------
@@ -95,7 +99,7 @@ def assign_bins(frame, edges):
                   0, len(edges) - 2)
     out["bin_lo"] = edges[idx]
     out["bin_hi"] = edges[idx + 1]
-    out["bin_x"] = np.sqrt(out["bin_lo"] * out["bin_hi"])       # geometric centre (log x-axis)
+    out["bin_x"] = 0.5 * (out["bin_lo"] + out["bin_hi"])        # midpoint (linear x-axis)
     return out
 
 
@@ -111,9 +115,16 @@ def bin_caption(set_key, edges, short=False):
     return head + ("" if short else "; bin median with IQR")
 
 
-def use_log_x(set_key):
-    """Linear reads fine over LIT's 0.84-12; the 4.5-63 and 0.84-63 spans do not."""
-    return set_key in ("p2", "lit_p2")
+# X-AXIS IS LINEAR IN SEMITONES, IN EVERY SET.
+# A log axis was tried for the wider sets and rejected on three counts:
+#   1. Semitones are ALREADY logarithmic in frequency (12*log2(f_dev/f_std)), so a log axis on
+#      them is log-of-log in Hz. The whole reason semitones are the right unit is that they
+#      linearize pitch distance; taking the log again undoes that for no perceptual gain.
+#   2. It hides the result. NOVEL-P2 spans 4.5-63 st and the trend REVERSES above ~24 st; a log
+#      axis compresses 24-63 into a narrow right-hand slice and flattens exactly the feature the
+#      analysis turns on, while wasting the left half of the panel on 1-4 st where p2 has no data.
+#   3. The stated justification (more even bins) does not hold: the lit_p2 bin widths span 7.5x
+#      linearly against 11.7x in log2, so linear is the more even of the two.
 
 
 def summarise(sub, set_key):
@@ -134,17 +145,12 @@ def summarise(sub, set_key):
 
 
 def _decorate(ax, set_key, xrange=None, ylabel=True):
-    """Shared axis furniture: the zero reference, the x-scale, and labels."""
+    """Shared axis furniture: the zero reference, the x-range, and labels. Linear x throughout."""
     ax.axhline(0, color="#9a9a9a", lw=1, ls=":", zorder=1)
-    if use_log_x(set_key):
-        ax.set_xscale("log")
-        if xrange is not None:
-            lo, hi = xrange[0] * 0.82, xrange[1] * 1.22
-            ax.set_xlim(lo, hi)
-            ax.set_xticks([t for t in TICKS_ST if lo <= t <= hi])
-        ax.get_xaxis().set_major_formatter(mpl.ticker.ScalarFormatter())
-        ax.get_xaxis().set_minor_formatter(mpl.ticker.NullFormatter())
-    ax.set_xlabel("Deviance size (semitones)" + ("  [log scale]" if use_log_x(set_key) else ""))
+    if xrange is not None:
+        span = xrange[1] - xrange[0]
+        ax.set_xlim(xrange[0] - 0.06 * span, xrange[1] + 0.06 * span)
+    ax.set_xlabel("Deviance size (semitones)")
     if ylabel:
         ax.set_ylabel("MMN trough (µV)\n↑ deeper")
 
@@ -192,8 +198,8 @@ def fig_pooled(tidy, out_png):
                 continue
             s = summarise(g, set_key)
             xs = s["bin_x"].to_numpy(float)
-            if ds is not None:                       # nudge the two sources apart in log-x
-                xs = xs * (0.97 if ds == "lit" else 1.03)
+            if ds is not None:                       # nudge the two sources apart
+                xs = xs + (-0.5 if ds == "lit" else 0.5)
             mk = C.DATASET_MARKER[ds] if ds else "o"
             ax.errorbar(xs, s["centre"], yerr=[s["centre"] - s["lo"], s["hi"] - s["centre"]],
                         color=POOLED_INK, marker=mk, ms=7, lw=1.8, elinewidth=1.1, capsize=3,
@@ -252,8 +258,7 @@ def fig_per_model(tidy, set_key, out_png):
         sub = gat[gat["model"] == model]
         for ds, g in sub.groupby("dataset", observed=True):
             x, y = g["semitones"].to_numpy(float), g["trough_uv"].to_numpy(float)
-            xj = (x * (1.0 + rng.uniform(-0.012, 0.012, x.size)) if use_log_x(set_key)
-                  else x + rng.uniform(-0.05, 0.05, x.size))
+            xj = x + rng.uniform(-0.25, 0.25, x.size)
             mk = C.DATASET_MARKER[ds] if set_key == "lit_p2" else st["marker"]
             on = y >= y_deep
             ax.scatter(xj[on], y[on], s=17, color=st["color"], alpha=0.42, marker=mk,
@@ -287,8 +292,7 @@ def fig_per_model(tidy, set_key, out_png):
         ax.set_xlabel("")
 
     extra = ("  Marker shape = source (● LIT, ▲ NOVEL-P2)." if set_key == "lit_p2" else "")
-    rho_note = ("rank-based, so unaffected by the log x-scale, and computed on UNCLIPPED values"
-                if use_log_x(set_key) else "rank-based, computed on UNCLIPPED values")
+    rho_note = "rank-based, computed on UNCLIPPED values"
     fig.suptitle(f"MMN trough vs deviance at FCz — per model — {C.SET_LABEL[set_key]} ({set_key})",
                  fontweight="bold", x=0.006, ha="left", y=1.015)
     fig.text(0.006, -0.015, C.wrap(
