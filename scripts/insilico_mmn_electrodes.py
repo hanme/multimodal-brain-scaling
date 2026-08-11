@@ -31,7 +31,7 @@ import h5py
 from mbs.evaluation.evaluate_features_mtrf import lags_in_bins
 # electrode/montage builders live in the shared module; the mTRF fit + time-locking are reused
 # unchanged from the parcel driver (electrodes are just singleton-member targets).
-from eeg_targets import FS, TIME_STEP_MS, build_electrodes
+from eeg_targets import FS, TIME_STEP_MS, build_electrodes, CLUSTERS
 # plot_method/plot_topo/mmn_metric/FC_ROI now live in insilico_mmn.py (shared with
 # insilico_mmn_attn.py, so Row A/B/C render identically for mTRF and encoder).
 from insilico_mmn import (
@@ -43,6 +43,16 @@ from insilico_mmn import (
 
 def _str2bool(s):
     return str(s).strip().lower() not in ("0", "false", "no", "off")
+
+
+# The fronto-central slice of the per-trial deviant stack that gets persisted. analyze_method
+# returns every deviant's own time course, but the driver historically averaged it into
+# `deviant_mean` and dropped the rest -- which makes any PER-TRIAL analysis (e.g. the MMN N-effect,
+# where each deviant carries its own N and variation) impossible without a full re-run.
+# Only the fronto-central cluster is stored: the full 47-electrode stack would take each h5 from
+# ~26 MB to ~230 MB for data that is 40 electrodes of unused scalp, whereas this slice costs
+# ~35 MB/model and covers every site the MMN is ever reported at here.
+FC_STACK_ELECTRODES = CLUSTERS["frontal"] + CLUSTERS["central"]   # Fz F3 F4 FCz Cz C3 C4
 
 
 def main():
@@ -114,6 +124,14 @@ def main():
 
     fz_fcz_idx = [i for i, e in enumerate(electrodes) if e[0] in ("Fz", "FCz")]
 
+    # Fronto-central columns of the per-trial deviant stack, in FC_STACK_ELECTRODES order.
+    # Intersected with the electrodes that survived the NC floor rather than assumed present --
+    # which of the seven survive depends on the training EEG, not on this script.
+    fc_stack_idx = [i for name in FC_STACK_ELECTRODES
+                    for i, e in enumerate(electrodes) if e[0] == name]
+    fc_stack_names = [electrodes[i][0] for i in fc_stack_idx]
+    print(f"  per-trial deviant stack stored for: {fc_stack_names or '(none survived the NC floor)'}")
+
     if args.methods == "all":
         run = methods_registry
     else:
@@ -130,7 +148,10 @@ def main():
                          note=("Per-ELECTRODE RAW predicted EEG. time_ms=0 = final/critical-tone onset. "
                                "MMN = deviant_mean - standard. roi_baseline_normalized_peak = the "
                                "z-scored baseline_normalized_peak (insilico_mmn.finalize_method), "
-                               "averaged over the fronto-central ROI; negative => MMN.")))
+                               "averaged over the fronto-central ROI; negative => MMN. "
+                               "deviants_fc [n_dev, n_t, n_fc] = the individual deviant trials "
+                               "behind deviant_mean, restricted to deviants_fc_electrodes; "
+                               "deviant_ids labels the trial axis of both it and deviant_mean.")))
     h5.create_dataset("electrodes", data=np.array([e[0] for e in electrodes], dtype="S8"))
     h5.create_dataset("electrode_nc_r", data=np.array([e[2] for e in electrodes], np.float32))
 
@@ -169,6 +190,18 @@ def main():
         g.create_dataset("deviant_mean", data=res["dev_raw"], compression="gzip", compression_opts=4)
         g.create_dataset("peak", data=res["peak"])
         g.create_dataset("n7v1_peak", data=res["n7v1_peak"])
+
+        # Per-trial deviant time courses over the fronto-central slice, plus the deviant ids that
+        # label them (e.g. "method_09_N3_var1_deviant_0000000" -> N=3, variation=1). n_dev is read
+        # from the stack, NEVER hardcoded: it is --trial_levels x --num_variations, which is 15 for
+        # the literature and novel-phase2 screens but legitimately 1 for other configs of this same
+        # driver. Any 15-trial assumption belongs in the analysis, not here.
+        if fc_stack_idx:
+            g.create_dataset("deviants_fc", data=res["dev_stack"][:, :, fc_stack_idx],
+                             compression="gzip", compression_opts=4)
+            g.create_dataset("deviants_fc_electrodes",
+                             data=np.array(fc_stack_names, dtype="S8"))
+        g.create_dataset("deviant_ids", data=np.array(res["dev_ids"], dtype="S40"))
         summary.append((method, label, amp, present))
     h5.close()
 

@@ -325,3 +325,109 @@ def test_main_writes_nothing_when_predictions_root_missing(tmp_path, monkeypatch
                                        "--out", str(out_csv)])
     bmrt.main()
     assert not out_csv.exists()
+
+
+# ──────────────────────────────────────────────────────────
+# insilico_mmn_electrodes.py persists the PER-TRIAL deviant stack (fronto-central slice)
+#
+# The driver used to average res["dev_stack"] into `deviant_mean` and throw the trials away, which
+# made every per-trial analysis (the MMN N-effect, where each deviant carries its own N and
+# variation) impossible without re-running the predictions. These tests pin the new datasets and,
+# critically, that the stored stack still AVERAGES to the already-committed deviant_mean -- the
+# guarantee that the trials and the method-level results describe the same traces.
+# ──────────────────────────────────────────────────────────
+
+def _fake_electrodes():
+    """(channel, [channel], r) triples: 3 fronto-central + 1 that must NOT be sliced in."""
+    names = ["FCz", "Fz", "Cz", "Pz"]
+    return [(n, [n], 0.5 - 0.01 * i) for i, n in enumerate(names)]
+
+
+def _run_electrode_driver(tmp_path, monkeypatch, n_dev=15, electrodes=None, n_t=40):
+    """Run insilico_mmn_electrodes.main() over fake predictions and return (h5 path, res)."""
+    import insilico_mmn_electrodes as ime
+
+    electrodes = electrodes if electrodes is not None else _fake_electrodes()
+    rng = np.random.default_rng(0)
+    dev_stack = rng.normal(size=(n_dev, n_t, len(electrodes))).astype(np.float32)
+    dev_ids = [f"method_09_N{n}_var{v}_deviant_{i:07d}"
+               for i, (n, v) in enumerate([(n, v) for n in (3, 5, 7) for v in range(1, 6)]
+                                          [:n_dev])]
+    res = dict(
+        rel_ms=np.linspace(-300, 400, n_t, dtype=np.float32),
+        std_raw=rng.normal(size=(n_t, len(electrodes))).astype(np.float32),
+        dev_raw=dev_stack.mean(0),                       # exactly what the driver stores
+        dev_stack=dev_stack, dev_ids=dev_ids, final_s=1.0,
+        peak=np.full(len(electrodes), -1.0, np.float32),
+        n7v1_peak=np.full(len(electrodes), -1.0, np.float32),
+        z_diff=rng.normal(size=(n_t, len(electrodes))).astype(np.float32),
+    )
+
+    feat_root = tmp_path / "features"
+    (feat_root / "mmn-method_09-delta-t").mkdir(parents=True)
+    monkeypatch.setattr(ime, "build_electrodes", lambda *a, **k: electrodes)
+    monkeypatch.setattr(ime, "fit_mapping", lambda *a, **k: (None, None, None, None))
+    monkeypatch.setattr(ime, "analyze_method", lambda *a, **k: res)
+    monkeypatch.setattr(ime, "build_methods_from_csv",
+                        lambda csv_path: [("method_09", "Sams_1985", "lit")])
+    monkeypatch.setattr(sys, "argv", [
+        "insilico_mmn_electrodes.py",
+        "--mmn_features_root", str(feat_root),
+        "--stimuli_root", str(tmp_path / "stim"),
+        "--data_dir", str(tmp_path / "preds"),
+        "--out_dir", str(tmp_path / "figs"),
+        "--layer", "blocks.0", "--save_plots", "false",
+    ])
+    ime.main()
+    return tmp_path / "preds" / "electrode_predictions__blocks.0.h5", res
+
+
+def test_electrode_driver_writes_per_trial_deviants_fc(tmp_path, monkeypatch):
+    h5_path, res = _run_electrode_driver(tmp_path, monkeypatch)
+
+    with h5py.File(h5_path, "r") as h5:
+        g = h5["method_09"]
+        assert "deviants_fc" in g, "the per-trial deviant stack was not written"
+        stack = g["deviants_fc"][:]
+        names = [n.decode() for n in g["deviants_fc_electrodes"][:]]
+        ids = [i.decode() for i in g["deviant_ids"][:]]
+        dev_mean = g["deviant_mean"][:]
+        electrodes = [e.decode() for e in h5["electrodes"][:]]
+
+        # Only the fronto-central cluster is stored, in CLUSTERS order -- Pz is present in the
+        # montage but must not appear in the slice.
+        assert names == ["Fz", "FCz", "Cz"]
+        assert "Pz" not in names
+        assert stack.dtype == np.float32
+        assert stack.shape == (15, len(res["rel_ms"]), 3)
+
+        # The trial axis is labelled, and the labels line up one-for-one with the trials.
+        assert stack.shape[0] == len(ids) == 15
+        assert ids[0].startswith("method_09_N3_var1_deviant_")
+
+        # THE load-bearing check: averaging the stored per-trial stack over the deviant axis
+        # reproduces the already-stored method-level deviant_mean at FCz.
+        fcz_stack = stack[:, :, names.index("FCz")].mean(0)
+        fcz_mean = dev_mean[:, electrodes.index("FCz")]
+        np.testing.assert_allclose(fcz_stack, fcz_mean, rtol=0, atol=1e-6)
+
+
+def test_electrode_driver_does_not_hardcode_15_deviants(tmp_path, monkeypatch):
+    """n_deviants is --trial_levels x --num_variations; other configs of this driver give 1."""
+    h5_path, _ = _run_electrode_driver(tmp_path, monkeypatch, n_dev=1)
+    with h5py.File(h5_path, "r") as h5:
+        g = h5["method_09"]
+        assert g["deviants_fc"].shape[0] == 1
+        assert len(g["deviant_ids"][:]) == 1
+        assert g.attrs["n_deviants"] == 1
+
+
+def test_electrode_driver_stores_only_the_fc_electrodes_that_survived_the_nc_floor(
+        tmp_path, monkeypatch):
+    """Which of the 7 fronto-central channels exist depends on the training EEG, not on us."""
+    survivors = [("FCz", ["FCz"], 0.5), ("Pz", ["Pz"], 0.4)]          # no Fz/Cz/F3/F4/C3/C4
+    h5_path, _ = _run_electrode_driver(tmp_path, monkeypatch, electrodes=survivors)
+    with h5py.File(h5_path, "r") as h5:
+        g = h5["method_09"]
+        assert [n.decode() for n in g["deviants_fc_electrodes"][:]] == ["FCz"]
+        assert g["deviants_fc"].shape[-1] == 1
