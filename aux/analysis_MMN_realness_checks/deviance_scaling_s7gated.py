@@ -20,7 +20,7 @@ reported as one. The `lit_p2` rho is never reported without the overlap rhos bes
 
 FIGURES (into this directory)
   1. deviance_pooled_s7gated.png        3 panels (lit | lit_p2 | p2), pooled over the 6 models,
-                                        raw uV, n annotated; source by marker shape in lit_p2.
+                                        raw uV, n annotated; ONE pooled line per panel.
   2. deviance_per_model_s7gated__{set}.png   3 files x 6 panels: raw points + OLS + rho.
   3. deviance_s7_rate.png               3 panels: S7@0.75 count / TOTAL conditions per bin.
   4. deviance_overlap_lit_vs_p2.png     the 4.50-12 st diagnostic, two sources, two fits.
@@ -189,35 +189,30 @@ def fig_pooled(tidy, out_png, gate="s7"):
         edges, gat = panels[set_key]
         clipped = []
 
-        # lit_p2 splits each bin by SOURCE (marker shape) so the reader sees which source
-        # occupies which part of the x-axis -- the whole caveat of the combined set, drawn.
-        groups = ([("lit", gat[gat.dataset == "lit"]), ("p2", gat[gat.dataset == "p2"])]
-                  if set_key == "lit_p2" else [(None, gat)])
-        for ds, g in groups:
-            if g.empty:
-                continue
-            s = summarise(g, set_key)
-            xs = s["bin_x"].to_numpy(float)
-            if ds is not None:                       # nudge the two sources apart
-                xs = xs + (-0.5 if ds == "lit" else 0.5)
-            mk = C.DATASET_MARKER[ds] if ds else "o"
-            ax.errorbar(xs, s["centre"], yerr=[s["centre"] - s["lo"], s["hi"] - s["centre"]],
-                        color=POOLED_INK, marker=mk, ms=7, lw=1.8, elinewidth=1.1, capsize=3,
-                        mfc="white" if ds == "p2" else POOLED_INK, mew=1.4,
-                        label=C.DATASET_LABEL[ds] if ds else None, zorder=3)
-            for x, y, n in zip(xs, s["centre"], s["n"]):
-                ax.annotate(f"{n}", (x, y), textcoords="offset points", xytext=(0, 10),
-                            ha="center", fontsize=7, color="#6b6b6b")
-            # Any bin centre past the clip is drawn AT the boundary with its true value written
-            # beside it -- clipped points stay visible and readable, never silently dropped.
-            for x, y, n in zip(xs, s["centre"], s["n"]):
-                if y < y_deep:
-                    ax.plot([x], [y_deep], marker="^", ms=8, color=POOLED_INK,
-                            mfc=POOLED_INK, clip_on=False, zorder=6)
-                    ax.annotate(f"{y:.1f} µV\n(n={n})", (x, y_deep), textcoords="offset points",
-                                xytext=(7, -2), ha="left", va="top", fontsize=7,
-                                color=POOLED_INK, zorder=6)
-                    clipped.append((x, y, n))
+        # ONE pooled series per panel -- this is the POOLED figure, so each panel shows the
+        # pooled result for its set, and lit_p2's line runs over the UNION of both sources.
+        # It used to split that panel into a LIT series and a NOVEL-P2 series, which turned the
+        # pooled figure into a source comparison; that is a different question and already has its
+        # own figure (deviance_overlap_lit_vs_p2). The lit_p2 source composition is stated in the
+        # caption instead of drawn.
+        s = summarise(gat, set_key)
+        xs = s["bin_x"].to_numpy(float)
+        ax.errorbar(xs, s["centre"], yerr=[s["centre"] - s["lo"], s["hi"] - s["centre"]],
+                    color=POOLED_INK, marker="o", ms=7, lw=1.8, elinewidth=1.1, capsize=3,
+                    mfc=POOLED_INK, mew=1.4, zorder=3)
+        for x, y, n in zip(xs, s["centre"], s["n"]):
+            ax.annotate(f"{n}", (x, y), textcoords="offset points", xytext=(0, 10),
+                        ha="center", fontsize=7, color="#6b6b6b")
+        # Any bin centre past the clip is drawn AT the boundary with its true value written
+        # beside it -- clipped points stay visible and readable, never silently dropped.
+        for x, y, n in zip(xs, s["centre"], s["n"]):
+            if y < y_deep:
+                ax.plot([x], [y_deep], marker="^", ms=8, color=POOLED_INK,
+                        mfc=POOLED_INK, clip_on=False, zorder=6)
+                ax.annotate(f"{y:.1f} µV\n(n={n})", (x, y_deep), textcoords="offset points",
+                            xytext=(7, -2), ha="left", va="top", fontsize=7,
+                            color=POOLED_INK, zorder=6)
+                clipped.append((x, y, n))
 
         n_s7, n_tot = int(gat.shape[0]), len(C.set_frame(tidy, set_key))
         note = bin_caption(set_key, edges)
@@ -228,8 +223,6 @@ def fig_pooled(tidy, out_png, gate="s7"):
         xr = (gat["bin_x"].min(), gat["bin_x"].max())
         _decorate(ax, set_key, xrange=xr, ylabel=(set_key == "lit"))
         ax.set_ylim(y_shallow + 0.15, y_deep)        # INVERTED: more negative = up
-        if set_key == "lit_p2":
-            ax.legend(frameon=False, fontsize=8.5, loc="upper left")
 
     fig.suptitle(f"MMN trough vs deviance size at FCz — pooled over 6 models "
                  f"(mTRF, {C.gate_label(gate, long=False)}-gated)",

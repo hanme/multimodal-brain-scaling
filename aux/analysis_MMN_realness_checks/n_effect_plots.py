@@ -93,24 +93,22 @@ def fig_pooled(tidy, out_png, gate="s7"):
         frame = C.set_frame(tidy, set_key)
         gat = C.gated(frame, gate)
 
-        groups = ([("lit", gat[gat.dataset == "lit"]), ("p2", gat[gat.dataset == "p2"])]
-                  if set_key == "lit_p2" else [(None, gat)])
-        for ds, g in groups:
-            xs, ys, es, ns = [], [], [], []
-            for n in C.N_LEVELS:
-                v = g.loc[g["N"] == n, "trough_uv"].to_numpy(float)
-                v = v[np.isfinite(v)]
-                if v.size == 0:
-                    continue
-                xs.append(XPOS[n] + (0.0 if ds is None else (-0.06 if ds == "lit" else 0.06)))
-                ys.append(v.mean()); es.append(C.sem(v)); ns.append(v.size)
-            if not xs:
+        # ONE pooled series per panel -- this is the POOLED figure, so each panel shows the
+        # pooled result for its set, and lit_p2's line runs over the UNION of both sources.
+        # It used to split that panel into a LIT series and a NOVEL-P2 series, which turned the
+        # pooled figure into a source comparison rather than the pooled result. Per-source detail
+        # lives in n_effect_source_agreement.csv and the per-model panels.
+        xs, ys, es, ns = [], [], [], []
+        for n in C.N_LEVELS:
+            v = gat.loc[gat["N"] == n, "trough_uv"].to_numpy(float)
+            v = v[np.isfinite(v)]
+            if v.size == 0:
                 continue
-            mk = C.DATASET_MARKER[ds] if ds else "o"
-            ax.errorbar(xs, ys, yerr=es, color=POOLED_INK, marker=mk, ms=8, lw=2.0,
-                        elinewidth=1.2, capsize=4, mew=1.4,
-                        mfc="white" if ds == "p2" else POOLED_INK,
-                        label=C.DATASET_LABEL[ds] if ds else None, zorder=3)
+            xs.append(XPOS[n])
+            ys.append(v.mean()); es.append(C.sem(v)); ns.append(v.size)
+        if xs:
+            ax.errorbar(xs, ys, yerr=es, color=POOLED_INK, marker="o", ms=8, lw=2.0,
+                        elinewidth=1.2, capsize=4, mew=1.4, mfc=POOLED_INK, zorder=3)
             for x, y, n in zip(xs, ys, ns):
                 ax.annotate(f"{n}", (x, y), textcoords="offset points", xytext=(0, 11),
                             ha="center", fontsize=7.5, color="#6b6b6b")
@@ -125,9 +123,6 @@ def fig_pooled(tidy, out_png, gate="s7"):
         _n_axis(ax)
         if set_key == "lit":
             ax.set_ylabel("MMN trough (µV)\n↑ deeper")
-        if set_key == "lit_p2":
-            ax.legend(frameon=True, facecolor="white", edgecolor="none", framealpha=0.85,
-                      fontsize=8.5, loc="upper right")
 
     lo, hi = min(lo_all), max(hi_all)
     pad = 0.16 * (hi - lo)
