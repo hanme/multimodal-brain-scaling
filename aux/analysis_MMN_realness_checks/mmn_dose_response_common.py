@@ -423,6 +423,44 @@ def sem(a):
     return float(a.std(ddof=1) / np.sqrt(a.size)) if a.size > 1 else float("nan")
 
 
+# ONE summary statistic for every centre-and-interval drawn in this deliverable: the MEDIAN with a
+# 95% bootstrap CI of the median.
+#
+# It replaces a mix of mean+-SEM (the lit panel) and median+IQR (the lit_p2 and p2 panels) that was
+# wrong three ways. Those panels share a y-axis and so read as comparable, but (a) they were not the
+# same statistic, (b) SEM measures precision of the centre while IQR measures spread of the data --
+# on these bins the IQR runs ~10x wider than the SEM, so the p2 panels looked an order of magnitude
+# noisier than lit purely from the choice, when p2 actually has ~90-100 conditions per bin against
+# lit's 2-48 -- and (c) the small-n robustness argument for the median was being applied to p2,
+# which has the LARGE bins, while lit, which has the n=2 bins, used the mean.
+#
+# Median because the trough distributions are genuinely skewed (mean - median runs 0.19-0.27 uV
+# typically, up to 0.71, on a ~1.5 uV signal). Bootstrap CI rather than IQR because every error bar
+# in the deliverable should mean the same thing -- uncertainty about the plotted centre -- so that
+# whisker lengths are comparable across panels sharing an axis.
+BOOTSTRAP_N = 2000
+BOOTSTRAP_SEED = 0          # fixed: figures must be byte-reproducible
+
+
+def central(values, n_boot=BOOTSTRAP_N, alpha=0.05, seed=BOOTSTRAP_SEED):
+    """(median, ci_lo, ci_hi) -- the one centre-and-interval used by every figure here."""
+    v = np.asarray(values, float)
+    v = v[np.isfinite(v)]
+    if v.size == 0:
+        return float("nan"), float("nan"), float("nan")
+    med = float(np.median(v))
+    if v.size == 1:
+        return med, med, med
+    rng = np.random.default_rng(seed)
+    boot = np.median(rng.choice(v, size=(n_boot, v.size), replace=True), axis=1)
+    return med, float(np.percentile(boot, 100 * alpha / 2)), \
+        float(np.percentile(boot, 100 * (1 - alpha / 2)))
+
+
+CENTRAL_LABEL = "median with 95% bootstrap CI"
+CENTRAL_LABEL_CAP = "Median with 95% bootstrap CI"   # .capitalize() would lowercase "CI"
+
+
 def wrap(text, width=118):
     """Hard-wrap a caption.
 

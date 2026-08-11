@@ -39,7 +39,17 @@ small gap: S7 keeps only 48% of LIT's S2 traces and 73% of NOVEL-P2's.
 
 **Colour = model identity**, always the same six colours (Okabe–Ito, CVD-checked). Every line is
 solid; linestyle encodes nothing. Dotted grey is the y = 0 reference, not data. The dark grey
-series is the **pooled** mean over the six models.
+series is the **pooled** result over the six models.
+
+**One summary statistic everywhere: the median with a 95% bootstrap CI of the median.** Earlier
+versions mixed mean ± SEM (the `lit` panel) with median + IQR (the `lit_p2` and `p2` panels) on a
+*shared* axis, which was misleading three ways: the panels were not the same statistic; SEM measures
+precision of the centre while IQR measures spread of the data, and on these bins the IQR runs ~10×
+wider, so `p2` looked an order of magnitude noisier than `lit` when it actually has ~90–100
+conditions per bin against `lit`'s 2–48; and the small-n robustness argument for the median was
+being applied to the panel with the *large* bins. Median because the trough distributions really are
+skewed (mean − median ≈ 0.2 µV on a ~1.5 µV signal); bootstrap CI so that every error bar in the
+deliverable means the same thing and whisker lengths are comparable across panels.
 
 ---
 
@@ -62,7 +72,9 @@ Three panels, one per set, pooled over the six models. **One series per panel** 
 pools both sources into a single line. Grey numbers above each point are the n behind it. The
 y-axis is shared across all three panels so the sets are directly comparable, and is scaled to the
 plotted **bin summaries** (not to the individual troughs behind them, which run ~4× deeper and
-would leave most of each panel empty).
+would leave most of each panel empty). Bins under n = 10 do not set that scale — a bootstrap CI
+widens as n shrinks, and LIT's 2-condition bins would otherwise drag every panel's axis down — so
+their CIs may run off the bottom; any bin whose *centre* is off-axis is marked with its true value.
 
 *How to read it:* a line descending left-to-right = deeper with more deviance/more standards =
 the MMN-like direction. Flat = no amplitude effect.
@@ -83,8 +95,7 @@ the MMN-like direction. Flat = no amplitude effect.
 
 Six panels, one per model. Deviance versions show raw points plus a per-model OLS fit and ρ on a
 **shared y-axis** (their scatter spans the full range in every panel, so one scale is readable and
-lets you compare amplitude across models). N versions show mean ± SEM at each N on **per-panel
-y-scales** — the models sit ~2 µV apart while each one's change across N is ~0.05–0.35 µV, so a
+lets you compare amplitude across models). N versions show the median with its bootstrap CI at each N on **per-panel y-scales** — the models sit ~2 µV apart while each one's change across N is ~0.05–0.35 µV, so a
 shared axis flattens every trend to a few percent of its height. In the N files compare the SHAPE
 of each panel, not its height; the pooled figure carries the cross-model amplitude comparison.
 

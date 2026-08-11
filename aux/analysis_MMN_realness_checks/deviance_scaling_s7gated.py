@@ -64,7 +64,7 @@ SUBSET_MAX_ST = 24.0               # 2 octaves -- above this is arguably a diffe
 # letting the tail set a SHARED axis flattens every panel. The axis is clipped to cover all but
 # the deepest CLIP_FRAC of troughs and everything past it is ANNOTATED, never silently dropped.
 CLIP_FRAC = 0.02          # per-POINT clip, for the scatter figures
-CLIP_FRAC_BINS = 0.05     # per-BIN clip, for the pooled figure's summary axis
+MIN_N_FOR_SCALE = 10      # a bin below this size cannot set the pooled figure's shared y-axis
 
 
 # ------------------------------------------------------------------------------------------
@@ -107,13 +107,12 @@ def assign_bins(frame, edges):
 def bin_caption(set_key, edges, short=False):
     """How this set is binned -- restated in every caption, because it differs by set."""
     if set_key == "lit":
-        return "10 discrete semitone values" + ("" if short else "; mean ± SEM at each")
-    n = len(edges) - 1
-    if set_key == "lit_p2":
-        head = f"{n} bins: the p2 equal-count edges + a {LIT_EXT_EDGE:g} st extension"
+        head = "10 discrete semitone values"
+    elif set_key == "lit_p2":
+        head = f"{len(edges) - 1} bins: the p2 equal-count edges + a {LIT_EXT_EDGE:g} st extension"
     else:
-        head = f"{n} equal-count bins"
-    return head + ("" if short else "; bin median with IQR")
+        head = f"{len(edges) - 1} equal-count bins"
+    return head + ("" if short else f"; {C.CENTRAL_LABEL}")
 
 
 # X-AXIS IS LINEAR IN SEMITONES, IN EVERY SET.
@@ -129,17 +128,18 @@ def bin_caption(set_key, edges, short=False):
 
 
 def summarise(sub, set_key):
-    """Per-bin summary of the gated troughs: mean+-SEM for `lit`, median+IQR otherwise."""
+    """Per-bin summary of the gated troughs -- C.central for EVERY set (see its comment).
+
+    `set_key` no longer selects the statistic; it is kept because callers pass it and because the
+    BINNING still differs by set.
+    """
     rows = []
     for bx, g in sub.groupby("bin_x", observed=True):
         v = g["trough_uv"].to_numpy(float)
         v = v[np.isfinite(v)]
         if v.size == 0:
             continue
-        if set_key == "lit":
-            centre, lo, hi = v.mean(), v.mean() - C.sem(v), v.mean() + C.sem(v)
-        else:
-            centre, lo, hi = np.median(v), np.percentile(v, 25), np.percentile(v, 75)
+        centre, lo, hi = C.central(v)
         rows.append(dict(bin_x=bx, centre=centre, lo=lo, hi=hi, n=v.size,
                          bin_lo=g["bin_lo"].iloc[0], bin_hi=g["bin_hi"].iloc[0]))
     return pd.DataFrame(rows).sort_values("bin_x")
@@ -189,12 +189,15 @@ def fig_pooled(tidy, out_png, gate="s7"):
         panels[set_key] = (edges, gat)
         summaries[set_key] = summarise(gat, set_key)
 
-    los = np.concatenate([s["lo"].to_numpy(float) for s in summaries.values()])
+    # Only WELL-POPULATED bins set the shared scale. A bootstrap CI widens as n shrinks, so LIT's
+    # 2-condition bins carry CIs an order of magnitude longer than everything else and would drag
+    # the axis (and every other panel with it) down to -4.5 uV for a figure whose centres all sit
+    # above -1.8. Small bins are still drawn -- their CI simply runs off the bottom, and any bin
+    # whose CENTRE is off-axis is marked on the boundary with its true value.
+    big = [s[s["n"] >= MIN_N_FOR_SCALE] for s in summaries.values()]
+    los = np.concatenate([b["lo"].to_numpy(float) for b in big if len(b)])
     his = np.concatenate([s["hi"].to_numpy(float) for s in summaries.values()])
-    # A 5% clip on the whisker ends, so one pathological bin (LIT's n=2 value at 1.07 st, whose
-    # SEM runs to -9.6 uV) cannot set the scale for all three panels. Bins past the limit are
-    # drawn on the boundary with their true value written beside them -- never dropped.
-    y_deep = float(np.quantile(los, CLIP_FRAC_BINS))
+    y_deep = float(los.min())
     y_shallow = float(his.max())
     pad = 0.06 * (y_shallow - y_deep)
     y_deep, y_shallow = y_deep - pad, y_shallow + pad
@@ -242,9 +245,10 @@ def fig_pooled(tidy, out_png, gate="s7"):
                  f"(mTRF, {C.gate_label(gate, long=False)}-gated)",
                  fontweight="bold", x=0.006, ha="left", y=1.02)
     fig.text(0.006, -0.02, C.wrap(
-             f"Shared y-axis, scaled to the plotted bin summaries with the deepest "
-             f"{CLIP_FRAC_BINS:.0%} of bin whiskers clipped; clipped bins are drawn on the "
-             f"boundary with their true value. Gate = {C.gate_label(gate)}: "
+             f"Shared y-axis, scaled to the plotted bin summaries; bins under n={MIN_N_FOR_SCALE} "
+             f"do not set the scale (a bootstrap CI widens as n shrinks), so their CIs may run off "
+             f"the bottom. Any bin whose CENTRE is off-axis is drawn on the boundary with its true "
+             f"value. Gate = {C.gate_label(gate)}: "
              + ("every plotted trough passes ≤ −0.75 µV, so each bin's shallow tail is absent and "
                 "the slope is a LOWER BOUND on any amplitude effect."
                 if gate == "s7" else

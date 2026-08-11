@@ -107,16 +107,17 @@ def fig_pooled(tidy, out_png, gate="s7"):
             v = v[np.isfinite(v)]
             if v.size == 0:
                 continue
+            c, clo, chi = C.central(v)
             xs.append(XPOS[n])
-            ys.append(v.mean()); es.append(C.sem(v)); ns.append(v.size)
+            ys.append(c); es.append([c - clo, chi - c]); ns.append(v.size)
         if xs:
-            ax.errorbar(xs, ys, yerr=es, color=POOLED_INK, marker="o", ms=8, lw=2.0,
+            ax.errorbar(xs, ys, yerr=np.array(es).T, color=POOLED_INK, marker="o", ms=8, lw=2.0,
                         elinewidth=1.2, capsize=4, mew=1.4, mfc=POOLED_INK, zorder=3)
             for x, y, n in zip(xs, ys, ns):
                 ax.annotate(f"{n}", (x, y), textcoords="offset points", xytext=(0, 11),
                             ha="center", fontsize=7.5, color="#6b6b6b")
-            lo_all += [a - b for a, b in zip(ys, es)]
-            hi_all += [a + b for a, b in zip(ys, es)]
+            lo_all += [y - e[0] for y, e in zip(ys, es)]
+            hi_all += [y + e[1] for y, e in zip(ys, es)]
 
         rho, p, n = C.spearman(*_cell_xy(frame, gate))
         ax.set_title(f"{C.SET_LABEL[set_key]}  ({set_key})", fontweight="bold", loc="left", pad=26)
@@ -135,7 +136,8 @@ def fig_pooled(tidy, out_png, gate="s7"):
     fig.suptitle(f"MMN trough vs N (tones between deviants) at FCz — pooled over 6 models "
                  f"(mTRF, {C.gate_label(gate, long=False)}-gated)", fontweight="bold", x=0.006, ha="left", y=1.02)
     fig.text(0.006, -0.02, C.wrap(
-        f"Mean ± SEM over the {C.gate_label(gate, long=False)}-passing trials of all 6 models; "
+        f"{C.CENTRAL_LABEL_CAP} over the {C.gate_label(gate, long=False)}-passing trials of "
+        "all 6 models; "
         "grey numbers = trials per point. BALANCED SET: only stimuli that pass the criterion at "
         "N=3 AND 5 AND 7 are included, so N is a within-stimulus manipulation and a change across "
         "N cannot be a change in which stimuli are averaged. Shared y-axis across the three sets. ρ is Spearman on one value per "
@@ -180,12 +182,14 @@ def fig_per_model(tidy, set_key, out_png, gate="s7"):
             v = v[np.isfinite(v)]
             if v.size == 0:
                 continue
-            xs.append(XPOS[n]); ys.append(v.mean()); es.append(C.sem(v)); ns.append(v.size)
+            c, clo, chi = C.central(v)
+            xs.append(XPOS[n]); ys.append(c); es.append([c - clo, chi - c]); ns.append(v.size)
         if xs:
-            ax.errorbar(xs, ys, yerr=es, color=st["color"], marker=st["marker"], ls=st["ls"],
-                        ms=8, lw=2.0, elinewidth=1.2, capsize=4, mec="white", mew=0.8, zorder=3)
-            lo = min(a - b for a, b in zip(ys, es))
-            hi = max(a + b for a, b in zip(ys, es))
+            ax.errorbar(xs, ys, yerr=np.array(es).T, color=st["color"], marker=st["marker"],
+                        ls=st["ls"], ms=8, lw=2.0, elinewidth=1.2, capsize=4, mec="white",
+                        mew=0.8, zorder=3)
+            lo = min(y - e[0] for y, e in zip(ys, es))
+            hi = max(y + e[1] for y, e in zip(ys, es))
             pad = max(0.25 * (hi - lo), 0.05)          # never a hairline-tight axis
             ax.set_ylim(lo - pad, hi + pad)
         rho, p, n = C.spearman(*_cell_xy(frame[frame["model"] == model], gate))
@@ -202,7 +206,7 @@ def fig_per_model(tidy, set_key, out_png, gate="s7"):
     fig.suptitle(f"MMN trough vs N at FCz — per model — {C.SET_LABEL[set_key]} ({set_key})",
                  fontweight="bold", x=0.006, ha="left", y=1.015)
     fig.text(0.006, -0.02, C.wrap(
-        f"Mean ± SEM of the {C.gate_label(gate, long=False)}-passing trials, over stimuli "
+        f"{C.CENTRAL_LABEL_CAP} of the {C.gate_label(gate, long=False)}-passing trials, over stimuli "
         "balanced across all three N levels. EACH PANEL HAS ITS OWN y-SCALE — the models sit "
         "~2 µV apart while each one's change across N is ~0.05–0.35 µV, so a shared axis would "
         "flatten every trend to a few percent of its height. Compare SHAPE across panels, not "
