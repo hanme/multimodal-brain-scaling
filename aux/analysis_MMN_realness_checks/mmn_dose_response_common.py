@@ -442,12 +442,24 @@ BOOTSTRAP_N = 2000
 BOOTSTRAP_SEED = 0          # fixed: figures must be byte-reproducible
 
 
-def central(values, n_boot=BOOTSTRAP_N, alpha=0.05, seed=BOOTSTRAP_SEED):
-    """(median, ci_lo, ci_hi) -- the one centre-and-interval used by every figure here."""
+def central(values, kind="median", n_boot=BOOTSTRAP_N, alpha=0.05, seed=BOOTSTRAP_SEED):
+    """(centre, lo, hi) for one group of troughs.
+
+    kind="median"  median + 95% bootstrap CI of the median   -- the PRIMARY statistic
+    kind="mean"    mean +- SEM                               -- the companion
+
+    The mean companion exists so the choice can be audited rather than taken on trust: the two
+    give the same TREND (the N=3->7 change agrees to <=0.02 uV in every set) but a level that
+    differs by ~0.3-0.4 uV, all of it the deep tail pulling the mean. Which is the point -- the
+    median describes a typical condition, the mean describes a typical condition plus the tail.
+    """
     v = np.asarray(values, float)
     v = v[np.isfinite(v)]
     if v.size == 0:
         return float("nan"), float("nan"), float("nan")
+    if kind == "mean":
+        mu, e = float(v.mean()), sem(v)
+        return (mu, mu, mu) if not np.isfinite(e) else (mu, mu - e, mu + e)
     med = float(np.median(v))
     if v.size == 1:
         return med, med, med
@@ -457,8 +469,10 @@ def central(values, n_boot=BOOTSTRAP_N, alpha=0.05, seed=BOOTSTRAP_SEED):
         float(np.percentile(boot, 100 * (1 - alpha / 2)))
 
 
-CENTRAL_LABEL = "median with 95% bootstrap CI"
-CENTRAL_LABEL_CAP = "Median with 95% bootstrap CI"   # .capitalize() would lowercase "CI"
+CENTRAL_KINDS = ("median", "mean")
+CENTRAL_LABEL = {"median": "median with 95% bootstrap CI", "mean": "mean ± SEM"}
+CENTRAL_LABEL_CAP = {"median": "Median with 95% bootstrap CI", "mean": "Mean ± SEM"}
+CENTRAL_SUFFIX = {"median": "", "mean": "__mean_sem"}   # median keeps the primary filename
 
 
 def wrap(text, width=118):

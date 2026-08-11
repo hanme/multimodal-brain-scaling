@@ -41,7 +41,8 @@ small gap: S7 keeps only 48% of LIT's S2 traces and 73% of NOVEL-P2's.
 solid; linestyle encodes nothing. Dotted grey is the y = 0 reference, not data. The dark grey
 series is the **pooled** result over the six models.
 
-**One summary statistic everywhere: the median with a 95% bootstrap CI of the median.** Earlier
+**One summary statistic everywhere: the median with a 95% bootstrap CI of the median**, with a
+mean ± SEM companion of the two pooled figures so the choice can be audited rather than trusted. Earlier
 versions mixed mean ± SEM (the `lit` panel) with median + IQR (the `lit_p2` and `p2` panels) on a
 *shared* axis, which was misleading three ways: the panels were not the same statistic; SEM measures
 precision of the centre while IQR measures spread of the data, and on these bins the IQR runs ~10×
@@ -50,6 +51,17 @@ conditions per bin against `lit`'s 2–48; and the small-n robustness argument f
 being applied to the panel with the *large* bins. Median because the trough distributions really are
 skewed (mean − median ≈ 0.2 µV on a ~1.5 µV signal); bootstrap CI so that every error bar in the
 deliverable means the same thing and whisker lengths are comparable across panels.
+
+The evidence for that choice, and its limits: **0 of 31 bins are consistent with normality**
+(Shapiro–Wilk), with skewness around −2 to −3 — a tight body near −1.3 µV and a long tail to
+−9.6 µV. A mean under that shape is dragged toward the tail and stops describing a typical
+condition (in LIT it sits 0.4 µV deeper than the median). There is also no closed-form standard
+error for a median, and its sampling distribution is not normal here, so ±1.96·SE would be
+unsupported — the bootstrap assumes nothing about shape. **The choice does not manufacture a
+result:** the N=3→7 change agrees to ≤0.02 µV between mean- and median-based versions in every
+set, so only the level moves, not the trend. Compare `n_effect_pooled.png` against
+`n_effect_pooled__mean_sem.png` — same axis, same shape, ~0.35 µV apart. What the median does
+cost you is the tail, which is real data: for depth extremes read the per-model scatter.
 
 ---
 
@@ -67,6 +79,8 @@ Both are among the best-replicated properties of the human MMN, which is why the
 ### A. `*_pooled_*` — the headline amplitude result
 
 `<gate>/all_sets/deviance_pooled.png`, `<gate>/all_sets/n_effect_pooled.png`
+…and a `__mean_sem` companion of each, **on an identical axis** so the two can be flipped
+between directly.
 
 Three panels, one per set, pooled over the six models. **One series per panel** — the middle panel
 pools both sources into a single line. Grey numbers above each point are the n behind it. The

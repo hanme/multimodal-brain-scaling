@@ -104,7 +104,7 @@ def assign_bins(frame, edges):
     return out
 
 
-def bin_caption(set_key, edges, short=False):
+def bin_caption(set_key, edges, short=False, kind="median"):
     """How this set is binned -- restated in every caption, because it differs by set."""
     if set_key == "lit":
         head = "10 discrete semitone values"
@@ -112,7 +112,7 @@ def bin_caption(set_key, edges, short=False):
         head = f"{len(edges) - 1} bins: the p2 equal-count edges + a {LIT_EXT_EDGE:g} st extension"
     else:
         head = f"{len(edges) - 1} equal-count bins"
-    return head + ("" if short else f"; {C.CENTRAL_LABEL}")
+    return head + ("" if short else f"; {C.CENTRAL_LABEL[kind]}")
 
 
 # X-AXIS IS LINEAR IN SEMITONES, IN EVERY SET.
@@ -127,11 +127,11 @@ def bin_caption(set_key, edges, short=False):
 #      linearly against 11.7x in log2, so linear is the more even of the two.
 
 
-def summarise(sub, set_key):
+def summarise(sub, set_key, kind="median"):
     """Per-bin summary of the gated troughs -- C.central for EVERY set (see its comment).
 
     `set_key` no longer selects the statistic; it is kept because callers pass it and because the
-    BINNING still differs by set.
+    BINNING still differs by set. `kind` picks median+bootstrap CI or the mean+-SEM companion.
     """
     rows = []
     for bx, g in sub.groupby("bin_x", observed=True):
@@ -139,7 +139,7 @@ def summarise(sub, set_key):
         v = v[np.isfinite(v)]
         if v.size == 0:
             continue
-        centre, lo, hi = C.central(v)
+        centre, lo, hi = C.central(v, kind)
         rows.append(dict(bin_x=bx, centre=centre, lo=lo, hi=hi, n=v.size,
                          bin_lo=g["bin_lo"].iloc[0], bin_hi=g["bin_hi"].iloc[0]))
     return pd.DataFrame(rows).sort_values("bin_x")
@@ -172,7 +172,29 @@ def panel_title(ax, main, sub):
 # ------------------------------------------------------------------------------------------
 # Figure 1 -- pooled over the six models
 # ------------------------------------------------------------------------------------------
-def fig_pooled(tidy, out_png, gate="s7"):
+def pooled_ylim(tidy, gate):
+    """One y-range covering BOTH summary statistics, so the two variants overlay exactly.
+
+    Bins under MIN_N_FOR_SCALE are excluded: a bootstrap CI widens as n shrinks, and LIT's
+    2-condition bins would otherwise drag every panel's axis down by ~2 uV.
+    """
+    los, his = [], []
+    for kind in C.CENTRAL_KINDS:
+        for set_key in ("lit", "lit_p2", "p2"):
+            edges = bin_edges(tidy, set_key)
+            s = summarise(assign_bins(C.gated(C.set_frame(tidy, set_key), gate), edges),
+                          set_key, kind)
+            big = s[s["n"] >= MIN_N_FOR_SCALE]
+            if len(big):
+                los.append(float(big["lo"].min()))
+            his.append(float(s["hi"].max()))
+    y_deep, y_shallow = min(los), max(his)
+    pad = 0.06 * (y_shallow - y_deep)
+    return y_deep - pad, y_shallow + pad
+
+
+
+def fig_pooled(tidy, out_png, gate="s7", kind="median", ylim=None):
     fig, axes = plt.subplots(1, 3, figsize=(13.8, 5.4))
 
     # One SHARED y-axis across the three sets so they are visually comparable.
@@ -187,20 +209,22 @@ def fig_pooled(tidy, out_png, gate="s7"):
         edges = bin_edges(tidy, set_key)
         gat = assign_bins(C.gated(C.set_frame(tidy, set_key), gate), edges)
         panels[set_key] = (edges, gat)
-        summaries[set_key] = summarise(gat, set_key)
+        summaries[set_key] = summarise(gat, set_key, kind)
 
     # Only WELL-POPULATED bins set the shared scale. A bootstrap CI widens as n shrinks, so LIT's
     # 2-condition bins carry CIs an order of magnitude longer than everything else and would drag
     # the axis (and every other panel with it) down to -4.5 uV for a figure whose centres all sit
     # above -1.8. Small bins are still drawn -- their CI simply runs off the bottom, and any bin
     # whose CENTRE is off-axis is marked on the boundary with its true value.
-    big = [s[s["n"] >= MIN_N_FOR_SCALE] for s in summaries.values()]
-    los = np.concatenate([b["lo"].to_numpy(float) for b in big if len(b)])
-    his = np.concatenate([s["hi"].to_numpy(float) for s in summaries.values()])
-    y_deep = float(los.min())
-    y_shallow = float(his.max())
-    pad = 0.06 * (y_shallow - y_deep)
-    y_deep, y_shallow = y_deep - pad, y_shallow + pad
+    if ylim is not None:
+        y_deep, y_shallow = ylim          # shared with the companion figure, so the two overlay
+    else:
+        big = [s[s["n"] >= MIN_N_FOR_SCALE] for s in summaries.values()]
+        los = np.concatenate([b["lo"].to_numpy(float) for b in big if len(b)])
+        his = np.concatenate([s["hi"].to_numpy(float) for s in summaries.values()])
+        y_deep, y_shallow = float(los.min()), float(his.max())
+        pad = 0.06 * (y_shallow - y_deep)
+        y_deep, y_shallow = y_deep - pad, y_shallow + pad
 
     for ax, set_key in zip(axes, ("lit", "lit_p2", "p2")):
         edges, gat = panels[set_key]
@@ -232,7 +256,7 @@ def fig_pooled(tidy, out_png, gate="s7"):
                 clipped.append((x, y, n))
 
         n_s7, n_tot = int(gat.shape[0]), len(C.set_frame(tidy, set_key))
-        note = bin_caption(set_key, edges)
+        note = bin_caption(set_key, edges, kind=kind)
         if clipped:
             note += f"; {len(clipped)} bin(s) off-axis, labelled"
         panel_title(ax, f"{C.SET_LABEL[set_key]}  ({set_key})",
@@ -562,7 +586,11 @@ def main():
 
     print("\nFigures:")
     root = out if args.out_dir != str(C.PLOTS_DIR) else None
-    fig_pooled(tidy, C.fig_path(gate, None, "deviance_pooled", root), gate)
+    # Both summary statistics, on ONE shared axis so they can be compared directly.
+    ylim = pooled_ylim(tidy, gate)
+    for kind in C.CENTRAL_KINDS:
+        fig_pooled(tidy, C.fig_path(gate, None, f"deviance_pooled{C.CENTRAL_SUFFIX[kind]}", root),
+                   gate, kind, ylim)
     for set_key in ("lit", "lit_p2", "p2"):
         fig_per_model(tidy, set_key,
                       C.fig_path(gate, set_key, f"deviance_per_model__{set_key}", root), gate)

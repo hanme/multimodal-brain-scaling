@@ -86,7 +86,26 @@ def _n_axis(ax):
 # ------------------------------------------------------------------------------------------
 # Figure 1 -- pooled over the six models
 # ------------------------------------------------------------------------------------------
-def fig_pooled(tidy, out_png, gate="s7"):
+def pooled_ylim(tidy, gate):
+    """One y-range covering BOTH summary statistics, so the two variants overlay exactly."""
+    los, his = [], []
+    for kind in C.CENTRAL_KINDS:
+        for set_key in ("lit", "lit_p2", "p2"):
+            gat = C.gated(C.balanced_across_n(C.set_frame(tidy, set_key), gate), gate)
+            for lvl in C.N_LEVELS:
+                v = gat.loc[gat["N"] == lvl, "trough_uv"].to_numpy(float)
+                v = v[np.isfinite(v)]
+                if v.size == 0:
+                    continue
+                _, lo, hi = C.central(v, kind)
+                los.append(lo); his.append(hi)
+    lo, hi = min(los), max(his)
+    pad = 0.16 * (hi - lo)
+    return lo - pad, hi + pad
+
+
+
+def fig_pooled(tidy, out_png, gate="s7", kind="median", ylim=None):
     fig, axes = plt.subplots(1, 3, figsize=(11.4, 4.9))
     lo_all, hi_all = [], []
     for ax, set_key in zip(axes, ("lit", "lit_p2", "p2")):
@@ -107,7 +126,7 @@ def fig_pooled(tidy, out_png, gate="s7"):
             v = v[np.isfinite(v)]
             if v.size == 0:
                 continue
-            c, clo, chi = C.central(v)
+            c, clo, chi = C.central(v, kind)
             xs.append(XPOS[n])
             ys.append(c); es.append([c - clo, chi - c]); ns.append(v.size)
         if xs:
@@ -129,14 +148,18 @@ def fig_pooled(tidy, out_png, gate="s7"):
         if set_key == "lit":
             ax.set_ylabel("MMN trough (µV)\n↓ deeper")
 
-    lo, hi = min(lo_all), max(hi_all)
-    pad = 0.16 * (hi - lo)
+    if ylim is not None:
+        lo_lim, hi_lim = ylim              # shared with the companion figure
+    else:
+        lo, hi = min(lo_all), max(hi_all)
+        pad = 0.16 * (hi - lo)
+        lo_lim, hi_lim = lo - pad, hi + pad
     for ax in axes:
-        ax.set_ylim(lo - pad, hi + pad)              # conventional (negative DOWN), shared
+        ax.set_ylim(lo_lim, hi_lim)                  # conventional (negative DOWN), shared
     fig.suptitle(f"MMN trough vs N (tones between deviants) at FCz — pooled over 6 models "
                  f"(mTRF, {C.gate_label(gate, long=False)}-gated)", fontweight="bold", x=0.006, ha="left", y=1.02)
     fig.text(0.006, -0.02, C.wrap(
-        f"{C.CENTRAL_LABEL_CAP} over the {C.gate_label(gate, long=False)}-passing trials of "
+        f"{C.CENTRAL_LABEL_CAP[kind]} over the {C.gate_label(gate, long=False)}-passing trials of "
         "all 6 models; "
         "grey numbers = trials per point. BALANCED SET: only stimuli that pass the criterion at "
         "N=3 AND 5 AND 7 are included, so N is a within-stimulus manipulation and a change across "
@@ -206,7 +229,7 @@ def fig_per_model(tidy, set_key, out_png, gate="s7"):
     fig.suptitle(f"MMN trough vs N at FCz — per model — {C.SET_LABEL[set_key]} ({set_key})",
                  fontweight="bold", x=0.006, ha="left", y=1.015)
     fig.text(0.006, -0.02, C.wrap(
-        f"{C.CENTRAL_LABEL_CAP} of the {C.gate_label(gate, long=False)}-passing trials, over stimuli "
+        f"{C.CENTRAL_LABEL_CAP['median']} of the {C.gate_label(gate, long=False)}-passing trials, over stimuli "
         "balanced across all three N levels. EACH PANEL HAS ITS OWN y-SCALE — the models sit "
         "~2 µV apart while each one's change across N is ~0.05–0.35 µV, so a shared axis would "
         "flatten every trend to a few percent of its height. Compare SHAPE across panels, not "
@@ -438,7 +461,11 @@ def main():
 
     print("\nFigures:")
     root = out if args.out_dir != str(C.PLOTS_DIR) else None
-    fig_pooled(tidy, C.fig_path(gate, None, "n_effect_pooled", root), gate)
+    # Both summary statistics, on ONE shared axis so they can be compared directly.
+    ylim = pooled_ylim(tidy, gate)
+    for kind in C.CENTRAL_KINDS:
+        fig_pooled(tidy, C.fig_path(gate, None, f"n_effect_pooled{C.CENTRAL_SUFFIX[kind]}", root),
+                   gate, kind, ylim)
     for set_key in ("lit", "lit_p2", "p2"):
         fig_per_model(tidy, set_key,
                       C.fig_path(gate, set_key, f"n_effect_per_model__{set_key}", root), gate)
