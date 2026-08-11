@@ -86,8 +86,15 @@ ANALYSIS_DIR = Path(__file__).resolve().parent
 PLOTS_DIR = ANALYSIS_DIR / "plots"
 SVG_DIRNAME = "svgs"
 
-# Colour is reserved for MODEL identity throughout, so the two sources are told apart by MARKER
-# SHAPE wherever they share an axis (the lit_p2 panels and the overlap diagnostic).
+# THE VISUAL GRAMMAR -- one channel, one meaning, everywhere in this deliverable:
+#   colour     = model identity          (MODEL_STYLE, the committed Okabe-Ito palette)
+#   linestyle  = model FAMILY            (whisper solid, wav2vec2 dashed) -- a redundant encoding
+#                                        so the families survive greyscale, print and CVD
+#   marker     = model identity, and DATA SOURCE wherever the two sources share an axis
+#                                        (the lit_p2 panels and the overlap diagnostic)
+#   dotted grey = the y=0 reference line, which is NOT data
+# Source is never encoded by linestyle: that would make dashed mean "wav2vec2" in most panels and
+# "NOVEL-P2" in one.
 DATASET_MARKER = {"lit": "o", "p2": "^"}
 DATASET_LABEL = {"lit": "LIT (literature)", "p2": "NOVEL-P2 (search)"}
 
