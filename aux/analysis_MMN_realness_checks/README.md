@@ -91,7 +91,7 @@ Both are among the best-replicated properties of the human MMN, which is why the
 
 `<gate>/all_sets/deviance_pooled.png`, `<gate>/all_sets/n_effect_pooled.png`
 …and a `__mean_sem` companion of each, **on an identical axis** so the two can be flipped
-between directly.
+between directly. Every figure that draws a centre-and-interval has such a companion.
 
 Three panels, one per set, pooled over the six models. **One series per panel** — the middle panel
 pools both sources into a single line. Grey numbers above each point are the n behind it. The
@@ -117,6 +117,9 @@ the MMN-like direction. Flat = no amplitude effect.
 ### B. `*_per_model_*` — is the effect in every model, or one of them?
 
 `<gate>/<set>/deviance_per_model__<set>.png`, `<gate>/<set>/n_effect_per_model__<set>.png`
+…and a `__mean_sem` companion of each **N** file, sharing that file's per-panel scales so the
+pair can be compared panel by panel. The deviance per-model files have no companion: they are
+raw scatter plus an OLS fit, with no centre-and-interval to vary.
 
 Six panels, one per model. Deviance versions show raw points plus a per-model OLS fit and ρ on a
 **shared y-axis** (their scatter spans the full range in every panel, so one scale is readable and

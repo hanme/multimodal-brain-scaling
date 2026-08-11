@@ -190,7 +190,7 @@ def _cell_xy(frame, gate="s7"):
 # ------------------------------------------------------------------------------------------
 # Figure 2 -- small multiples, one panel per model
 # ------------------------------------------------------------------------------------------
-def fig_per_model(tidy, set_key, out_png, gate="s7"):
+def fig_per_model(tidy, set_key, out_png, gate="s7", kind="median"):
     frame = C.balanced_across_n(C.set_frame(tidy, set_key), gate)   # see fig_pooled
     gat = C.gated(frame, gate)
     # PER-PANEL y-scales, not shared. The question this figure asks is within-model ("does THIS
@@ -203,20 +203,30 @@ def fig_per_model(tidy, set_key, out_png, gate="s7"):
     for ax, model in zip(axes.ravel(), C.MODEL_ORDER):
         st = C.style(model)
         sub = gat[gat["model"] == model]
-        xs, ys, es, ns = [], [], [], []
-        for n in C.N_LEVELS:
-            v = sub.loc[sub["N"] == n, "trough_uv"].to_numpy(float)
-            v = v[np.isfinite(v)]
-            if v.size == 0:
+        # Both statistics are evaluated for this model, but only `kind` is drawn. The y-limits
+        # come from the UNION of the two, so this panel keeps the same scale in the median figure
+        # and its mean+-SEM companion -- which is what makes the pair comparable panel by panel.
+        drawn, bounds = None, []
+        for k in C.CENTRAL_KINDS:
+            xs, ys, es, ns = [], [], [], []
+            for n in C.N_LEVELS:
+                v = sub.loc[sub["N"] == n, "trough_uv"].to_numpy(float)
+                v = v[np.isfinite(v)]
+                if v.size == 0:
+                    continue
+                c, clo, chi = C.central(v, k)
+                xs.append(XPOS[n]); ys.append(c); es.append([c - clo, chi - c]); ns.append(v.size)
+            if not xs:
                 continue
-            c, clo, chi = C.central(v)
-            xs.append(XPOS[n]); ys.append(c); es.append([c - clo, chi - c]); ns.append(v.size)
-        if xs:
+            bounds += [y - e[0] for y, e in zip(ys, es)] + [y + e[1] for y, e in zip(ys, es)]
+            if k == kind:
+                drawn = (xs, ys, es, ns)
+        if drawn:
+            xs, ys, es, ns = drawn
             ax.errorbar(xs, ys, yerr=np.array(es).T, color=st["color"], marker=st["marker"],
                         ls=st["ls"], ms=8, lw=2.0, elinewidth=1.2, capsize=4, mec="white",
                         mew=0.8, zorder=3)
-            lo = min(y - e[0] for y, e in zip(ys, es))
-            hi = max(y + e[1] for y, e in zip(ys, es))
+            lo, hi = min(bounds), max(bounds)
             pad = max(0.25 * (hi - lo), 0.05)          # never a hairline-tight axis
             ax.set_ylim(lo - pad, hi + pad)
         rho, p, n = C.spearman(*_cell_xy(frame[frame["model"] == model], gate))
@@ -233,8 +243,9 @@ def fig_per_model(tidy, set_key, out_png, gate="s7"):
     fig.suptitle(f"MMN trough vs N at FCz — per model — {C.SET_LABEL[set_key]} ({set_key})",
                  fontweight="bold", x=0.006, ha="left", y=1.015)
     fig.text(0.006, -0.02, C.wrap(
-        f"{C.CENTRAL_LABEL_CAP['median']} of the {C.gate_label(gate, long=False)}-passing trials, over stimuli "
-        "balanced across all three N levels. EACH PANEL HAS ITS OWN y-SCALE — the models sit "
+        f"{C.CENTRAL_LABEL_CAP[kind]} of the {C.gate_label(gate, long=False)}-passing trials, over stimuli "
+        "balanced across all three N levels. EACH PANEL HAS ITS OWN y-SCALE, shared with this "
+        "figure's mean/median companion so the pair can be compared panel by panel — the models sit "
         "~2 µV apart while each one's change across N is ~0.05–0.35 µV, so a shared axis would "
         "flatten every trend to a few percent of its height. Compare SHAPE across panels, not "
         "height; the pooled figure carries the cross-model amplitude comparison on a shared axis. "
@@ -470,9 +481,10 @@ def main():
     for kind in C.CENTRAL_KINDS:
         fig_pooled(tidy, C.fig_path(gate, None, f"n_effect_pooled{C.CENTRAL_SUFFIX[kind]}", root),
                    gate, kind, ylim)
-    for set_key in ("lit", "lit_p2", "p2"):
-        fig_per_model(tidy, set_key,
-                      C.fig_path(gate, set_key, f"n_effect_per_model__{set_key}", root), gate)
+    for set_key in C.ANALYSIS_SETS:
+        for kind in C.CENTRAL_KINDS:
+            stem = f"n_effect_per_model__{set_key}{C.CENTRAL_SUFFIX[kind]}"
+            fig_per_model(tidy, set_key, C.fig_path(gate, set_key, stem, root), gate, kind)
     fig_rate(tidy, C.fig_path(gate, None, "n_effect_pass_rate", root), gate)
 
     st = stats_table(tidy, gate)
