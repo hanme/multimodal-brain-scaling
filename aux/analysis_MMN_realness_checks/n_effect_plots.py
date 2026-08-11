@@ -90,7 +90,10 @@ def fig_pooled(tidy, out_png, gate="s7"):
     fig, axes = plt.subplots(1, 3, figsize=(11.4, 4.9))
     lo_all, hi_all = [], []
     for ax, set_key in zip(axes, ("lit", "lit_p2", "p2")):
-        frame = C.set_frame(tidy, set_key)
+        # BALANCED: only stimuli that pass the criterion at every N. Without this the mean can
+        # move across N because the set of contributing stimuli changed, not because any stimulus
+        # deepened -- see C.balanced_across_n.
+        frame = C.balanced_across_n(C.set_frame(tidy, set_key), gate)
         gat = C.gated(frame, gate)
 
         # ONE pooled series per panel -- this is the POOLED figure, so each panel shows the
@@ -117,31 +120,34 @@ def fig_pooled(tidy, out_png, gate="s7"):
 
         rho, p, n = C.spearman(*_cell_xy(frame, gate))
         ax.set_title(f"{C.SET_LABEL[set_key]}  ({set_key})", fontweight="bold", loc="left", pad=26)
-        ax.text(0.0, 1.012, f"{C.gate_label(gate, long=False)} only: {len(gat)}/{len(frame)} trials"
+        n_stim = frame.groupby(["dataset", "method"], observed=True).ngroups
+        ax.text(0.0, 1.012, f"{C.gate_label(gate, long=False)} · {n_stim} stimuli balanced across N"
                             f"\nρ={rho:+.2f} (p={p:.2g}, n={n} cells)",
                 transform=ax.transAxes, fontsize=7.6, color="#6b6b6b", va="bottom")
         _n_axis(ax)
         if set_key == "lit":
-            ax.set_ylabel("MMN trough (µV)\n↑ deeper")
+            ax.set_ylabel("MMN trough (µV)\n↓ deeper")
 
     lo, hi = min(lo_all), max(hi_all)
     pad = 0.16 * (hi - lo)
     for ax in axes:
-        ax.set_ylim(hi + pad, lo - pad)              # INVERTED + SHARED across the three sets
+        ax.set_ylim(lo - pad, hi + pad)              # conventional (negative DOWN), shared
     fig.suptitle(f"MMN trough vs N (tones between deviants) at FCz — pooled over 6 models "
                  f"(mTRF, {C.gate_label(gate, long=False)}-gated)", fontweight="bold", x=0.006, ha="left", y=1.02)
     fig.text(0.006, -0.02, C.wrap(
-        f"Mean ± SEM over the {C.gate_label(gate, long=False)}-passing trials of all 6 models; grey numbers = trials per "
-        "point. Shared y-axis across the three sets. ρ is Spearman on one value per "
+        f"Mean ± SEM over the {C.gate_label(gate, long=False)}-passing trials of all 6 models; "
+        "grey numbers = trials per point. BALANCED SET: only stimuli that pass the criterion at "
+        "N=3 AND 5 AND 7 are included, so N is a within-stimulus manipulation and a change across "
+        "N cannot be a change in which stimuli are averaged. Shared y-axis across the three sets. ρ is Spearman on one value per "
         "(model, condition, N) cell, NOT on raw trials — the 5 variations of a cell are the same "
         "paradigm re-rolled and are not independent. N is confounded with oddball probability by "
         "construction: the generator sets rare-tone probability to 1/(N+1), so N = 3/5/7 means "
         "25%/16.7%/12.5% (shown on the x-axis). A trough that deepens across N is MMN-like but "
         "cannot be attributed to local spacing rather than global rarity.\n"
-        f"READ WITH CARE: these means are UNPAIRED, and the gate admits a different mix of "
-        f"conditions at each N, so a rising line here can be composition rather than deepening. "
-        f"The paired within-condition test (n_effect_paired_n3_vs_n7{sfx_for(gate)}.csv) is what "
-        f"settles it; on LIT it is null at both gates despite the rise drawn here."),
+        f"Balancing removes the composition confound that made the earlier unpaired version of "
+        f"this figure misleading. n_effect_change_table{sfx_for(gate)}.csv gives the average "
+        f"within-stimulus change in µV from N=3→5→7, and "
+        f"n_effect_paired_n3_vs_n7{sfx_for(gate)}.csv the paired significance test."),
         fontsize=7.8, color="#555555", ha="left", va="top")
     return C.finish(fig, out_png)
 
@@ -156,7 +162,7 @@ def _cell_xy(frame, gate="s7"):
 # Figure 2 -- small multiples, one panel per model
 # ------------------------------------------------------------------------------------------
 def fig_per_model(tidy, set_key, out_png, gate="s7"):
-    frame = C.set_frame(tidy, set_key)
+    frame = C.balanced_across_n(C.set_frame(tidy, set_key), gate)   # see fig_pooled
     gat = C.gated(frame, gate)
     fig, axes = plt.subplots(2, 3, figsize=(11.8, 7.0), sharex=True, sharey=True)
     lo_all, hi_all = [], []
@@ -183,17 +189,18 @@ def fig_per_model(tidy, set_key, out_png, gate="s7"):
                 bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="none", alpha=0.8))
         _n_axis(ax)
     for ax in axes[:, 0]:
-        ax.set_ylabel("MMN trough (µV)\n↑ deeper")
+        ax.set_ylabel("MMN trough (µV)\n↓ deeper")
     for ax in axes[0, :]:
         ax.set_xlabel("")
     lo, hi = min(lo_all), max(hi_all)
     pad = 0.18 * (hi - lo)
-    axes[0, 0].set_ylim(hi + pad, lo - pad)          # INVERTED, shared across all six panels
+    axes[0, 0].set_ylim(lo - pad, hi + pad)          # conventional; shared across all six panels
 
     fig.suptitle(f"MMN trough vs N at FCz — per model — {C.SET_LABEL[set_key]} ({set_key})",
                  fontweight="bold", x=0.006, ha="left", y=1.015)
     fig.text(0.006, -0.02, C.wrap(
-        f"Mean ± SEM of the {C.gate_label(gate, long=False)}-passing trials. Shared y-axis across all six panels: with "
+        f"Mean ± SEM of the {C.gate_label(gate, long=False)}-passing trials, over stimuli "
+        "balanced across all three N levels. Shared y-axis across all six panels: with "
         "whisper-large excluded the models span a ~2× µV range rather than ~35×, so one scale is "
         "readable for all of them. ρ is Spearman at the (model, condition, N) cell level."),
         fontsize=7.8, color="#555555", ha="left", va="top")
@@ -302,6 +309,34 @@ def paired_n3_vs_n7(tidy, gate="s7"):
     return pd.DataFrame(rows)
 
 
+def change_table(tidy, gate="s7"):
+    """Average within-stimulus trough change across N, per set -- the requested uV table."""
+    out = []
+    for set_key in ("lit", "lit_p2", "p2"):
+        t = C.n_change_table(C.set_frame(tidy, set_key), gate)
+        if t.empty:
+            continue
+        t.insert(0, "set", set_key)
+        out.append(t)
+    return pd.concat(out, ignore_index=True) if out else pd.DataFrame()
+
+
+def print_change_table(ct, gate):
+    lab = C.gate_label(gate, long=False)
+    print("\n" + "=" * 100)
+    print(f"Average WITHIN-STIMULUS trough change across N ({lab}-passing trials, uV)")
+    print("Only stimuli passing the criterion at N=3 AND 5 AND 7. Negative = deeper at higher N.")
+    print("=" * 100)
+    print(f"  {'set':<8}{'model':<17}{'stim':>6}{'N=3':>9}{'N=5':>9}{'N=7':>9}"
+          f"{'3→5':>9}{'5→7':>9}{'3→7':>9}{'% deeper':>10}{'p(3v7)':>10}")
+    for _, r in ct.iterrows():
+        p = r.get("wilcoxon_p_N3_vs_N7", float("nan"))
+        print(f"  {r['set']:<8}{r.model:<17}{int(r.n_stimuli):>6}{r.mean_N3:>9.3f}"
+              f"{r.mean_N5:>9.3f}{r.mean_N7:>9.3f}{r.d_N3_to_N5:>+9.3f}{r.d_N5_to_N7:>+9.3f}"
+              f"{r.d_N3_to_N7:>+9.3f}{r.pct_deeper_N3_to_N7:>9.0f}%"
+              + (f"{p:>10.3g}" if p == p else f"{'--':>10}"))
+
+
 def source_agreement(st):
     """Per model: do LIT and NOVEL-P2 give the same rho sign? This is what licenses lit_p2.
 
@@ -393,24 +428,30 @@ def main():
           f"{tidy[tidy.dataset == 'p2'].method.nunique()} NOVEL-P2 conditions x 15 trials)")
 
     print("\nFigures:")
-    fig_pooled(tidy, out / f"n_effect_pooled{sfx}.png", gate)
+    root = out if args.out_dir != str(C.PLOTS_DIR) else None
+    fig_pooled(tidy, C.fig_path(gate, None, "n_effect_pooled", root), gate)
     for set_key in ("lit", "lit_p2", "p2"):
-        fig_per_model(tidy, set_key, out / f"n_effect_per_model__{set_key}{sfx}.png", gate)
-    fig_rate(tidy, out / f"n_effect_s7_rate{sfx}.png", gate)
+        fig_per_model(tidy, set_key,
+                      C.fig_path(gate, set_key, f"n_effect_per_model__{set_key}", root), gate)
+    fig_rate(tidy, C.fig_path(gate, None, "n_effect_pass_rate", root), gate)
 
     st = stats_table(tidy, gate)
     agree = source_agreement(st)
     paired = paired_n3_vs_n7(tidy, gate)
+    ct = change_table(tidy, gate)
     csv_dir = Path(args.csv_dir)
     csv_dir.mkdir(parents=True, exist_ok=True)
     st_path = csv_dir / f"n_effect_stats{sfx}.csv"
     st.to_csv(st_path, index=False, float_format="%.6g")
     agree.to_csv(csv_dir / f"n_effect_source_agreement{sfx}.csv", index=False, float_format="%.6g")
     paired.to_csv(csv_dir / f"n_effect_paired_n3_vs_n7{sfx}.csv", index=False, float_format="%.6g")
+    ct.to_csv(csv_dir / f"n_effect_change_table{sfx}.csv", index=False, float_format="%.6g")
     print(f"  wrote {st_path}  ({len(st)} rows)")
     print(f"  wrote {csv_dir / f'n_effect_source_agreement{sfx}.csv'}")
     print(f"  wrote {csv_dir / f'n_effect_paired_n3_vs_n7{sfx}.csv'}")
+    print(f"  wrote {csv_dir / f'n_effect_change_table{sfx}.csv'}")
     print_summary(tidy, st, agree, paired, gate)
+    print_change_table(ct, gate)
 
 
 if __name__ == "__main__":

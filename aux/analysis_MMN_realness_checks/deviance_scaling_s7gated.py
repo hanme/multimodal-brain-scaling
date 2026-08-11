@@ -152,7 +152,7 @@ def _decorate(ax, set_key, xrange=None, ylabel=True):
         ax.set_xlim(xrange[0] - 0.06 * span, xrange[1] + 0.06 * span)
     ax.set_xlabel("Deviance size (semitones)")
     if ylabel:
-        ax.set_ylabel("MMN trough (µV)\n↑ deeper")
+        ax.set_ylabel("MMN trough (µV)\n↓ deeper")
 
 
 def deep_clip(values, frac=CLIP_FRAC):
@@ -207,10 +207,10 @@ def fig_pooled(tidy, out_png, gate="s7"):
         # beside it -- clipped points stay visible and readable, never silently dropped.
         for x, y, n in zip(xs, s["centre"], s["n"]):
             if y < y_deep:
-                ax.plot([x], [y_deep], marker="^", ms=8, color=POOLED_INK,
+                ax.plot([x], [y_deep], marker="v", ms=8, color=POOLED_INK,
                         mfc=POOLED_INK, clip_on=False, zorder=6)
                 ax.annotate(f"{y:.1f} µV\n(n={n})", (x, y_deep), textcoords="offset points",
-                            xytext=(7, -2), ha="left", va="top", fontsize=7,
+                            xytext=(7, 2), ha="left", va="bottom", fontsize=7,
                             color=POOLED_INK, zorder=6)
                 clipped.append((x, y, n))
 
@@ -222,7 +222,7 @@ def fig_pooled(tidy, out_png, gate="s7"):
                     f"{C.gate_label(gate, long=False)} only: {n_s7}/{n_tot} rows\n{note}")
         xr = (gat["bin_x"].min(), gat["bin_x"].max())
         _decorate(ax, set_key, xrange=xr, ylabel=(set_key == "lit"))
-        ax.set_ylim(y_shallow + 0.15, y_deep)        # INVERTED: more negative = up
+        ax.set_ylim(y_deep, y_shallow + 0.15)        # conventional: more negative = DOWN
 
     fig.suptitle(f"MMN trough vs deviance size at FCz — pooled over 6 models "
                  f"(mTRF, {C.gate_label(gate, long=False)}-gated)",
@@ -265,7 +265,7 @@ def fig_per_model(tidy, set_key, out_png, gate="s7"):
             # Off-scale points get a hollow up-caret ON the boundary: visible and located, but
             # plainly not a data value at that depth. Their true depths still drive rho and OLS.
             if (~on).any():
-                ax.scatter(xj[~on], np.full((~on).sum(), y_deep), s=22, marker="^",
+                ax.scatter(xj[~on], np.full((~on).sum(), y_deep), s=22, marker="v",
                            facecolors="none", edgecolors=st["color"], linewidths=0.9,
                            alpha=0.75, clip_on=False, zorder=4)
         x, y = sub["semitones"].to_numpy(float), sub["trough_uv"].to_numpy(float)
@@ -280,13 +280,13 @@ def fig_per_model(tidy, set_key, out_png, gate="s7"):
         # Top-left is the deep/low-deviance corner and is empty in every panel, so the stat block
         # sits there rather than over the dense shallow band along the bottom.
         ax.text(0.025, 0.955, f"ρ={rho:+.2f}   p={p:.3g}   n={n}"
-                              + (f"\n△ {n_clip} off-scale" if n_clip else ""),
+                              + (f"\n▽ {n_clip} off-scale" if n_clip else ""),
                 transform=ax.transAxes, ha="left", va="top", fontsize=8.4, color="#444444",
                 bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="none", alpha=0.8))
         _decorate(ax, set_key, xrange=xr, ylabel=False)
     for ax in axes[:, 0]:
-        ax.set_ylabel("MMN trough (µV)\n↑ deeper")
-    axes[0, 0].set_ylim(-0.6, y_deep)                # INVERTED, shared across all six panels
+        ax.set_ylabel("MMN trough (µV)\n↓ deeper")
+    axes[0, 0].set_ylim(y_deep, -0.6)                # conventional; shared across 6 panels
     for ax in axes[0, :]:
         ax.set_xlabel("")
 
@@ -389,8 +389,8 @@ def fig_overlap(tidy, out_png, gate="s7"):
                                    f"n={n} of {n_all} rows")))
     ax.axhline(0, color="#9a9a9a", lw=1, ls=":", zorder=1)
     ax.set_xlabel("Deviance size (semitones)")
-    ax.set_ylabel("MMN trough (µV)\n↑ deeper")
-    ax.set_ylim(-0.5, deep_clip(C.gated(frame, gate)["trough_uv"], 0.01))   # INVERTED
+    ax.set_ylabel("MMN trough (µV)\n↓ deeper")
+    ax.set_ylim(deep_clip(C.gated(frame, gate)["trough_uv"], 0.01), -0.5)
     ax.legend(handles=lines, fontsize=9, loc="lower left", frameon=True, facecolor="white",
               edgecolor="none", framealpha=0.85)
     ax.set_title(f"Overlap diagnostic — LIT vs NOVEL-P2 within {lo:g}–{hi:g} semitones at FCz",
@@ -528,11 +528,13 @@ def main():
     print(f"Overlap {lo:g}-{hi:g} st verified: LIT 120 rows/65 S7, NOVEL-P2 336 rows/189 S7")
 
     print("\nFigures:")
-    fig_pooled(tidy, out / f"deviance_pooled_s7gated{sfx}.png", gate)
+    root = out if args.out_dir != str(C.PLOTS_DIR) else None
+    fig_pooled(tidy, C.fig_path(gate, None, "deviance_pooled", root), gate)
     for set_key in ("lit", "lit_p2", "p2"):
-        fig_per_model(tidy, set_key, out / f"deviance_per_model_s7gated__{set_key}{sfx}.png", gate)
-    fig_rate(tidy, out / f"deviance_s7_rate{sfx}.png", gate)
-    fig_overlap(tidy, out / f"deviance_overlap_lit_vs_p2{sfx}.png", gate)
+        fig_per_model(tidy, set_key,
+                      C.fig_path(gate, set_key, f"deviance_per_model__{set_key}", root), gate)
+    fig_rate(tidy, C.fig_path(gate, None, "deviance_pass_rate", root), gate)
+    fig_overlap(tidy, C.fig_path(gate, "lit_p2", "deviance_overlap_lit_vs_p2", root), gate)
 
     st = stats_table(tidy, gate)
     st_path = Path(args.csv_dir) / f"deviance_scaling_s7gated_stats{sfx}.csv"

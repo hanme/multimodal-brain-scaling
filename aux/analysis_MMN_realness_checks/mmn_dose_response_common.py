@@ -84,7 +84,19 @@ P2_GRID = REPO / "outputs/results_novel_search/grid_index.csv"
 # raster copy loses at print size). finish() writes both from the one render.
 ANALYSIS_DIR = Path(__file__).resolve().parent
 PLOTS_DIR = ANALYSIS_DIR / "plots"
-SVG_DIRNAME = "svgs"
+SVG_DIR = ANALYSIS_DIR / "svgs"
+
+# Figures are filed by GATE then by SET, and svgs/ mirrors plots/ exactly:
+#     plots/<gate>/<set>/<figure>.png   ->   svgs/<gate>/<set>/<figure>.svg
+# Multi-set figures (the 3-panel pooled and rate views, which show all three sets side by
+# side) have no single owning set, so they live under <gate>/all_sets/.
+ALL_SETS_DIR = "all_sets"
+
+
+def fig_path(gate, set_key, stem, out_root=None):
+    """plots/<gate>/<set|all_sets>/<stem>.png -- the one place figure paths are built."""
+    root = Path(out_root) if out_root else PLOTS_DIR
+    return root / gate / (set_key or ALL_SETS_DIR) / f"{stem}.png"
 
 # THE VISUAL GRAMMAR -- one channel, one meaning, everywhere in this deliverable:
 #   colour     = model identity          (MODEL_STYLE, the committed Okabe-Ito palette)
@@ -264,6 +276,67 @@ def load_per_trial(lit_csv=LIT_PER_TRIAL, p2_csv=P2_PER_TRIAL, verify=True):
     return tidy
 
 
+def balanced_across_n(frame, gate="s7"):
+    """Keep only stimuli that produce a criterion-passing MMN at EVERY N level.
+
+    A (dataset, model, method) cell survives only if it has at least one gate-passing trial at
+    N=3 AND N=5 AND N=7. Everything else is dropped entirely, at every N.
+
+    WHY THIS IS THE RIGHT SET FOR AN N-EFFECT PLOT. Without it the comparison is unbalanced: the
+    gate admits a different POPULATION of stimuli at each N, so the mean can move across N purely
+    because the membership changed, with no stimulus actually deepening. That is not hypothetical
+    -- it is what LIT's unpaired panel was doing (rising line, p=0.003 unpaired, but null paired at
+    50% of conditions). Restricting to stimuli present at all three N makes N a within-stimulus
+    manipulation, so a change across N is a change in the SAME stimuli rather than a change in
+    which stimuli are being averaged.
+
+    The cost is n and a selection caveat of its own: surviving stimuli are the reliable responders,
+    so this set cannot speak for stimuli that only ever respond at one N.
+    """
+    col = GATES[gate][0]
+    passing = frame[frame[col]]
+    n_per_cell = (passing.groupby(["dataset", "model", "method"], observed=True)["N"]
+                  .nunique())
+    keep = set(n_per_cell[n_per_cell == len(N_LEVELS)].index)
+    idx = list(zip(frame["dataset"], frame["model"], frame["method"]))
+    return frame[[k in keep for k in idx]].copy()
+
+
+def n_change_table(frame, gate="s7"):
+    """Average within-stimulus trough change across N=3 -> 5 -> 7, in uV.
+
+    Restricted to balanced stimuli (see balanced_across_n). For each (model, stimulus) the trough
+    at each N is the median of that cell's gate-passing trials; the deltas are then averaged over
+    stimuli, and reported per model plus POOLED over all six.
+
+    Negative delta = DEEPER at the higher N = the MMN-like direction.
+    """
+    bal = balanced_across_n(frame, gate)
+    g = gated(bal, gate)
+    if g.empty:
+        return pd.DataFrame()
+    cells = (g.groupby(["dataset", "model", "method", "N"], observed=True)["trough_uv"]
+             .median().reset_index())
+    wide = cells.pivot_table(index=["dataset", "model", "method"], columns="N",
+                             values="trough_uv").dropna(subset=list(N_LEVELS))
+
+    rows = []
+    for model in ["POOLED"] + MODEL_ORDER:
+        w = wide if model == "POOLED" else wide[wide.index.get_level_values("model") == model]
+        if w.empty:
+            continue
+        rec = dict(model=model, n_stimuli=len(w),
+                   mean_N3=w[3].mean(), mean_N5=w[5].mean(), mean_N7=w[7].mean(),
+                   d_N3_to_N5=(w[5] - w[3]).mean(),
+                   d_N5_to_N7=(w[7] - w[5]).mean(),
+                   d_N3_to_N7=(w[7] - w[3]).mean(),
+                   pct_deeper_N3_to_N7=100.0 * ((w[7] - w[3]) < 0).mean())
+        if len(w) >= 10:
+            rec["wilcoxon_p_N3_vs_N7"] = float(stats.wilcoxon(w[7], w[3]).pvalue)
+        rows.append(rec)
+    return pd.DataFrame(rows)
+
+
 def per_method_cells(frame, extra_keys=(), gate="s7"):
     """Collapse the 5 variations to ONE value per (dataset, model, condition, N).
 
@@ -361,14 +434,17 @@ def wrap(text, width=118):
 
 
 def finish(fig, out_png, tight_rect=None):
-    """Save one figure as PNG under plots/ AND as SVG under the sibling svgs/.
+    """Save one figure as PNG under plots/ AND as SVG at the MIRRORED path under svgs/.
 
     Both come from the SAME render, so the vector copy can never drift from the raster one. The
-    svgs/ dir is derived from the png's parent rather than hardcoded, so a custom --out_dir keeps
-    the pair together.
+    SVG path mirrors the PNG's position under plots/ at any nesting depth, so the two trees stay
+    in step as the gate/set hierarchy changes.
     """
     out_png = Path(out_png)
-    out_svg = out_png.parent.parent / SVG_DIRNAME / (out_png.stem + ".svg")
+    try:
+        out_svg = SVG_DIR / out_png.relative_to(PLOTS_DIR).with_suffix(".svg")
+    except ValueError:                       # custom --out_dir: keep the pair side by side
+        out_svg = out_png.parent / "svgs" / (out_png.stem + ".svg")
     for p in (out_png, out_svg):
         p.parent.mkdir(parents=True, exist_ok=True)
     fig.tight_layout(rect=tight_rect) if tight_rect else fig.tight_layout()
@@ -377,5 +453,5 @@ def finish(fig, out_png, tight_rect=None):
     # identical data produce different files and the tracked SVGs churn in git on every run.
     fig.savefig(out_svg, bbox_inches="tight", metadata={"Date": None})
     plt.close(fig)
-    print(f"  wrote {out_png.name}  (+ {SVG_DIRNAME}/{out_svg.name})")
+    print(f"  wrote {out_png.parent.name}/{out_png.name}")
     return out_png
