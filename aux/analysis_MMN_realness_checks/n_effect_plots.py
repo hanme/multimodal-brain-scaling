@@ -164,8 +164,12 @@ def _cell_xy(frame, gate="s7"):
 def fig_per_model(tidy, set_key, out_png, gate="s7"):
     frame = C.balanced_across_n(C.set_frame(tidy, set_key), gate)   # see fig_pooled
     gat = C.gated(frame, gate)
-    fig, axes = plt.subplots(2, 3, figsize=(11.8, 7.0), sharex=True, sharey=True)
-    lo_all, hi_all = [], []
+    # PER-PANEL y-scales, not shared. The question this figure asks is within-model ("does THIS
+    # model track N?"), and a shared axis is set by the ~2 uV spread BETWEEN models while each
+    # model's change across N is ~0.05-0.35 uV -- so every trend was compressed into a flat line
+    # occupying a few percent of the axis. The cross-model amplitude comparison lives in the
+    # pooled figure, which does share its axis.
+    fig, axes = plt.subplots(2, 3, figsize=(11.8, 7.0), sharex=True, sharey=False)
 
     for ax, model in zip(axes.ravel(), C.MODEL_ORDER):
         st = C.style(model)
@@ -180,8 +184,10 @@ def fig_per_model(tidy, set_key, out_png, gate="s7"):
         if xs:
             ax.errorbar(xs, ys, yerr=es, color=st["color"], marker=st["marker"], ls=st["ls"],
                         ms=8, lw=2.0, elinewidth=1.2, capsize=4, mec="white", mew=0.8, zorder=3)
-            lo_all += [a - b for a, b in zip(ys, es)]
-            hi_all += [a + b for a, b in zip(ys, es)]
+            lo = min(a - b for a, b in zip(ys, es))
+            hi = max(a + b for a, b in zip(ys, es))
+            pad = max(0.25 * (hi - lo), 0.05)          # never a hairline-tight axis
+            ax.set_ylim(lo - pad, hi + pad)
         rho, p, n = C.spearman(*_cell_xy(frame[frame["model"] == model], gate))
         ax.set_title(model, fontweight="bold", loc="left", fontsize=10)
         ax.text(0.03, 0.955, f"ρ={rho:+.2f}  p={p:.3g}\nn={n} cells", transform=ax.transAxes,
@@ -192,17 +198,16 @@ def fig_per_model(tidy, set_key, out_png, gate="s7"):
         ax.set_ylabel("MMN trough (µV)\n↓ deeper")
     for ax in axes[0, :]:
         ax.set_xlabel("")
-    lo, hi = min(lo_all), max(hi_all)
-    pad = 0.18 * (hi - lo)
-    axes[0, 0].set_ylim(lo - pad, hi + pad)          # conventional; shared across all six panels
 
     fig.suptitle(f"MMN trough vs N at FCz — per model — {C.SET_LABEL[set_key]} ({set_key})",
                  fontweight="bold", x=0.006, ha="left", y=1.015)
     fig.text(0.006, -0.02, C.wrap(
         f"Mean ± SEM of the {C.gate_label(gate, long=False)}-passing trials, over stimuli "
-        "balanced across all three N levels. Shared y-axis across all six panels: with "
-        "whisper-large excluded the models span a ~2× µV range rather than ~35×, so one scale is "
-        "readable for all of them. ρ is Spearman at the (model, condition, N) cell level."),
+        "balanced across all three N levels. EACH PANEL HAS ITS OWN y-SCALE — the models sit "
+        "~2 µV apart while each one's change across N is ~0.05–0.35 µV, so a shared axis would "
+        "flatten every trend to a few percent of its height. Compare SHAPE across panels, not "
+        "height; the pooled figure carries the cross-model amplitude comparison on a shared axis. "
+        "ρ is Spearman at the (model, condition, N) cell level."),
         fontsize=7.8, color="#555555", ha="left", va="top")
     return C.finish(fig, out_png)
 

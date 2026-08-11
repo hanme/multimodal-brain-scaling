@@ -60,7 +60,9 @@ Both are among the best-replicated properties of the human MMN, which is why the
 
 Three panels, one per set, pooled over the six models. **One series per panel** — the middle panel
 pools both sources into a single line. Grey numbers above each point are the n behind it. The
-y-axis is shared across all three panels so the sets are directly comparable.
+y-axis is shared across all three panels so the sets are directly comparable, and is scaled to the
+plotted **bin summaries** (not to the individual troughs behind them, which run ~4× deeper and
+would leave most of each panel empty).
 
 *How to read it:* a line descending left-to-right = deeper with more deviance/more standards =
 the MMN-like direction. Flat = no amplitude effect.
@@ -79,17 +81,20 @@ the MMN-like direction. Flat = no amplitude effect.
 
 `<gate>/<set>/deviance_per_model__<set>.png`, `<gate>/<set>/n_effect_per_model__<set>.png`
 
-Six panels, one per model, **shared y-axis** within a file. Deviance versions show raw points plus
-a per-model OLS fit and ρ; N versions show mean ± SEM at each N. The stat block gives Spearman ρ,
-p, and n.
+Six panels, one per model. Deviance versions show raw points plus a per-model OLS fit and ρ on a
+**shared y-axis** (their scatter spans the full range in every panel, so one scale is readable and
+lets you compare amplitude across models). N versions show mean ± SEM at each N on **per-panel
+y-scales** — the models sit ~2 µV apart while each one's change across N is ~0.05–0.35 µV, so a
+shared axis flattens every trend to a few percent of its height. In the N files compare the SHAPE
+of each panel, not its height; the pooled figure carries the cross-model amplitude comparison.
 
 *How to read it:* look for consistency of **sign** across the six panels, not just significance.
 Six same-signed weak effects are stronger evidence than one significant model. In the `lit_p2`
 files, marker shape distinguishes the two sources (● LIT, △ NOVEL-P2).
 
-*Watch:* `▽ k off-scale` in a panel means k points are deeper than the clip and are drawn as hollow
-carets on the BOTTOM edge (deep is downward). They are **included** in ρ and the fit — only their
-drawn position is clipped.
+*Watch:* `▽ k off-scale` means k points are deeper than the axis and are drawn as hollow carets on
+the bottom edge. They are **included** in ρ and the fit — only their drawn position is clipped. The
+same convention appears on the pooled and overlap figures.
 
 ### C. `*_pass_rate*` — the uncensored view, and often the real result
 

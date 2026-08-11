@@ -63,7 +63,8 @@ SUBSET_MAX_ST = 24.0               # 2 octaves -- above this is arguably a diffe
 # Deep-tail clip. Medians sit in a -1.1..-2.4 uV band but individual troughs reach -9.6 uV, so
 # letting the tail set a SHARED axis flattens every panel. The axis is clipped to cover all but
 # the deepest CLIP_FRAC of troughs and everything past it is ANNOTATED, never silently dropped.
-CLIP_FRAC = 0.02
+CLIP_FRAC = 0.02          # per-POINT clip, for the scatter figures
+CLIP_FRAC_BINS = 0.05     # per-BIN clip, for the pooled figure's summary axis
 
 
 # ------------------------------------------------------------------------------------------
@@ -174,16 +175,29 @@ def panel_title(ax, main, sub):
 def fig_pooled(tidy, out_png, gate="s7"):
     fig, axes = plt.subplots(1, 3, figsize=(13.8, 5.4))
 
-    # One SHARED y-axis across the three sets so they are visually comparable, clipped to the
-    # deep-tail limit of the union so a single 2-condition LIT bin cannot set the scale.
-    all_gated = C.gated(tidy, gate)
-    y_deep = deep_clip(all_gated["trough_uv"])
-    y_shallow = -0.75                                        # the gate itself: the shallow edge
-
+    # One SHARED y-axis across the three sets so they are visually comparable.
+    #
+    # The limits come from what this figure actually DRAWS -- the per-bin summaries -- not from the
+    # individual troughs behind them. Those are different distributions by an order of magnitude:
+    # single troughs reach -9.6 uV while every bin summary sits within about -2.5 uV, so scaling to
+    # the trough tail left ~60% of each panel empty and squashed the entire result into a strip.
     panels = {}
+    summaries = {}
     for set_key in ("lit", "lit_p2", "p2"):
         edges = bin_edges(tidy, set_key)
-        panels[set_key] = (edges, assign_bins(C.gated(C.set_frame(tidy, set_key), gate), edges))
+        gat = assign_bins(C.gated(C.set_frame(tidy, set_key), gate), edges)
+        panels[set_key] = (edges, gat)
+        summaries[set_key] = summarise(gat, set_key)
+
+    los = np.concatenate([s["lo"].to_numpy(float) for s in summaries.values()])
+    his = np.concatenate([s["hi"].to_numpy(float) for s in summaries.values()])
+    # A 5% clip on the whisker ends, so one pathological bin (LIT's n=2 value at 1.07 st, whose
+    # SEM runs to -9.6 uV) cannot set the scale for all three panels. Bins past the limit are
+    # drawn on the boundary with their true value written beside them -- never dropped.
+    y_deep = float(np.quantile(los, CLIP_FRAC_BINS))
+    y_shallow = float(his.max())
+    pad = 0.06 * (y_shallow - y_deep)
+    y_deep, y_shallow = y_deep - pad, y_shallow + pad
 
     for ax, set_key in zip(axes, ("lit", "lit_p2", "p2")):
         edges, gat = panels[set_key]
@@ -195,7 +209,7 @@ def fig_pooled(tidy, out_png, gate="s7"):
         # pooled figure into a source comparison; that is a different question and already has its
         # own figure (deviance_overlap_lit_vs_p2). The lit_p2 source composition is stated in the
         # caption instead of drawn.
-        s = summarise(gat, set_key)
+        s = summaries[set_key]
         xs = s["bin_x"].to_numpy(float)
         ax.errorbar(xs, s["centre"], yerr=[s["centre"] - s["lo"], s["hi"] - s["centre"]],
                     color=POOLED_INK, marker="o", ms=7, lw=1.8, elinewidth=1.1, capsize=3,
@@ -217,18 +231,19 @@ def fig_pooled(tidy, out_png, gate="s7"):
         n_s7, n_tot = int(gat.shape[0]), len(C.set_frame(tidy, set_key))
         note = bin_caption(set_key, edges)
         if clipped:
-            note += f"; {len(clipped)} bin off-axis, labelled"
+            note += f"; {len(clipped)} bin(s) off-axis, labelled"
         panel_title(ax, f"{C.SET_LABEL[set_key]}  ({set_key})",
                     f"{C.gate_label(gate, long=False)} only: {n_s7}/{n_tot} rows\n{note}")
         xr = (gat["bin_x"].min(), gat["bin_x"].max())
         _decorate(ax, set_key, xrange=xr, ylabel=(set_key == "lit"))
-        ax.set_ylim(y_deep, y_shallow + 0.15)        # conventional: more negative = DOWN
+        ax.set_ylim(y_deep, y_shallow)               # conventional: more negative = DOWN
 
     fig.suptitle(f"MMN trough vs deviance size at FCz — pooled over 6 models "
                  f"(mTRF, {C.gate_label(gate, long=False)}-gated)",
                  fontweight="bold", x=0.006, ha="left", y=1.02)
     fig.text(0.006, -0.02, C.wrap(
-             f"Shared y-axis, clipped at the deepest 2% of troughs; clipped bins are drawn on the "
+             f"Shared y-axis, scaled to the plotted bin summaries with the deepest "
+             f"{CLIP_FRAC_BINS:.0%} of bin whiskers clipped; clipped bins are drawn on the "
              f"boundary with their true value. Gate = {C.gate_label(gate)}: "
              + ("every plotted trough passes ≤ −0.75 µV, so each bin's shallow tail is absent and "
                 "the slope is a LOWER BOUND on any amplitude effect."
@@ -367,13 +382,24 @@ def fig_overlap(tidy, out_png, gate="s7"):
     fig, ax = plt.subplots(figsize=(8.4, 5.6))
     rng = np.random.default_rng(0)
     lines = []
+    y_deep = deep_clip(C.gated(frame, gate)["trough_uv"], CLIP_FRAC)
+    n_off = 0
     for ds in ("lit", "p2"):
         g = C.gated(frame[frame["dataset"] == ds], gate)
         x, y = g["semitones"].to_numpy(float), g["trough_uv"].to_numpy(float)
         mk = C.DATASET_MARKER[ds]
-        ax.scatter(x + rng.uniform(-0.08, 0.08, x.size), y, s=26, marker=mk,
+        xj = x + rng.uniform(-0.08, 0.08, x.size)
+        on = y >= y_deep
+        ax.scatter(xj[on], y[on], s=26, marker=mk,
                    facecolors="none" if ds == "p2" else POOLED_INK,
                    edgecolors=POOLED_INK, linewidths=1.0, alpha=0.55, zorder=3)
+        # Off-scale points sit on the bottom edge as hollow down-carets: located and counted,
+        # but plainly not a value at that depth. Their true depths still drive rho and the fit.
+        if (~on).any():
+            ax.scatter(xj[~on], np.full((~on).sum(), y_deep), s=26, marker="v",
+                       facecolors="none", edgecolors=POOLED_INK, linewidths=1.0,
+                       alpha=0.75, clip_on=False, zorder=4)
+            n_off += int((~on).sum())
         ok = np.isfinite(x) & np.isfinite(y)
         sl, ic = np.polyfit(x[ok], y[ok], 1)
         # Source is carried by MARKER SHAPE here, as in every other panel. Every line in this
@@ -390,16 +416,19 @@ def fig_overlap(tidy, out_png, gate="s7"):
     ax.axhline(0, color="#9a9a9a", lw=1, ls=":", zorder=1)
     ax.set_xlabel("Deviance size (semitones)")
     ax.set_ylabel("MMN trough (µV)\n↓ deeper")
-    ax.set_ylim(deep_clip(C.gated(frame, gate)["trough_uv"], 0.01), -0.5)
+    ax.set_ylim(y_deep, -0.5)
     ax.legend(handles=lines, fontsize=9, loc="lower left", frameon=True, facecolor="white",
               edgecolor="none", framealpha=0.85)
     ax.set_title(f"Overlap diagnostic — LIT vs NOVEL-P2 within {lo:g}–{hi:g} semitones at FCz",
                  fontweight="bold", loc="left")
     fig.text(0.0, -0.115, C.wrap(
-             "The one region where both sources have conditions, so the two can be compared "
-             "WITHOUT the range confound. Pooled over the 6 models, S7@0.75-gated, mTRF; lines "
-             "are per-source OLS, labelled by the marker riding them (● LIT, △ NOVEL-P2). "
-             "Rising left-to-right = deeper with more deviance (y inverted).\n"
+             f"The one region where both sources have conditions, so the two can be compared "
+             f"WITHOUT the range confound. Pooled over the 6 models, "
+             f"{C.gate_label(gate, long=False)}-gated, mTRF; lines are per-source OLS, labelled "
+             f"by the marker riding them (● LIT, △ NOVEL-P2). DESCENDING left-to-right = deeper "
+             f"with more deviance."
+             + (f" ▽ {n_off} point(s) lie deeper than the axis and are drawn on the bottom edge; "
+                f"they still count in ρ and the fits." if n_off else "") + "\n"
              "If the two agree here, the lit_p2 combined slope is credible as a deviance effect; "
              "if they diverge, that slope is a source effect — the sources also differ in SOA, "
              "tone duration, deviant probability, and selection.", 96),
