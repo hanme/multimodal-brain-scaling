@@ -1,7 +1,8 @@
 # How to read these figures
 
 Two dose-response checks on whether the in-silico MMN behaves like a human MMN, at the **FCz
-electrode**, **mTRF** mapping, **six models**. 22 figures = 11 views × 2 gates.
+electrode**, **mTRF** mapping, **six models**. 32 figures = 16 views × 2 gates, filed as
+`plots/<gate>/<set>/` — see §6.
 
 Read §1 first — it is the vocabulary every figure uses. Then find your figure in §3.
 
