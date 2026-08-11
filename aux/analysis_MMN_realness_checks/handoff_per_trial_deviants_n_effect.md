@@ -70,13 +70,22 @@ Tests added to `tests/test_insilico_mmn.py` (3 new, 23 pass in the file, 465 pas
 
 ## A2 — the two re-runs
 
-> ### ⚠️ Both runs OVERWRITE their existing electrode h5s
-> `insilico_mmn_electrodes.py` opens with `h5py.File(path, "w")` — truncating. **Back up first**, or
-> write to sibling roots and reconcile afterwards. The novel-phase2 root is ~602 MB.
-> ```bash
-> cp -r outputs/insilico_mmn_predictions_soafix       outputs/insilico_mmn_predictions_soafix.bak
-> cp -r outputs/insilico_mmn_predictions_novel_phase2 outputs/insilico_mmn_predictions_novel_phase2.bak
-> ```
+> ### The original prediction roots are NEVER written to
+> Both re-runs go to **new sibling roots**, so the committed h5s stay byte-identical and no backup
+> is needed. `insilico_mmn_electrodes.py` opens its output with `h5py.File(path, "w")` —
+> truncating — so pointing it at the existing roots would destroy them. The sibling roots are what
+> make this re-run reversible.
+>
+> | | original (read-only) | new |
+> |---|---|---|
+> | LIT | `outputs/insilico_mmn_predictions_soafix` | `outputs/insilico_mmn_predictions_soafix_pertrial` |
+> | NOVEL-P2 | `outputs/insilico_mmn_predictions_novel_phase2` | `outputs/insilico_mmn_predictions_novel_phase2_pertrial` |
+>
+> Both new names clear `submit_novel_insilico.sh`'s guard, which refuses only
+> `outputs/insilico_mmn_predictions` itself and paths beneath it.
+>
+> **Disk:** the new roots roughly double this footprint — NOVEL-P2 is ~602 MB, plus ~35 MB/model
+> for the new `deviants_fc`. Check headroom first: `lfs quota -g upschrimpf1 /work`.
 
 ```bash
 cd /work/upschrimpf1/sigfstea/multimodal-brain-scaling
@@ -98,8 +107,8 @@ export SOAFIX_MODELS="whisper-tiny whisper-base whisper-small whisper-medium wav
 DRY_RUN=1 METADATA_CSV=data/metadata/literature_frequency_intensity_duration_metadata.csv \
 FEATURES_TAG=soafix \
 MODELS="$SOAFIX_MODELS" \
-PREDICTIONS_ROOT=outputs/insilico_mmn_predictions_soafix \
-FIGURES_ROOT=outputs/figures/insilico_mmn_electrodes_soafix \
+PREDICTIONS_ROOT=outputs/insilico_mmn_predictions_soafix_pertrial \
+FIGURES_ROOT=outputs/figures/insilico_mmn_electrodes_soafix_pertrial \
 WHISPER_STIM=outputs/mmn_stimuli_soafix \
 WAV2VEC2_STIM=outputs/mmn_stimuli_soafix_wav2vec2 \
     scripts/submit_novel_insilico.sh
@@ -117,7 +126,8 @@ Stage J of the novel-search runbook. Phase 2 topped up the phase-1 feature direc
 
 ```bash
 DRY_RUN=1 METADATA_CSV=data/metadata/novel_grid_phase2_subset.csv \
-PREDICTIONS_ROOT=outputs/insilico_mmn_predictions_novel_phase2 \
+PREDICTIONS_ROOT=outputs/insilico_mmn_predictions_novel_phase2_pertrial \
+FIGURES_ROOT=outputs/figures/insilico_mmn_electrodes_novel_phase2_pertrial \
     scripts/submit_novel_insilico.sh
 ```
 
@@ -150,11 +160,11 @@ for LIT, 254 for NOVEL-P2, every group carrying `deviants_fc` with `n_dev == 15`
 ```bash
 python - <<'PY'
 import h5py, glob
-for root, n_expect in (("outputs/insilico_mmn_predictions_soafix", 48),
-                       ("outputs/insilico_mmn_predictions_novel_phase2", 254)):
+for root, n_expect in (("outputs/insilico_mmn_predictions_soafix_pertrial", 48),
+                       ("outputs/insilico_mmn_predictions_novel_phase2_pertrial", 254)):
     for f in sorted(glob.glob(f"{root}/*/electrode_predictions__*.h5")):
         model = f.split("/")[-2]
-        if model == "whisper-large":       # out of scope, stale file, not re-run
+        if model == "whisper-large":       # out of scope, absent from the new root
             continue
         with h5py.File(f) as h:
             gs = [k for k, v in h.items() if isinstance(v, h5py.Group)]
@@ -173,29 +183,50 @@ something other than the driver changed and the run is **not** comparable to the
 **Gate 3 — re-score and reproduce the committed verdicts exactly.** The patch adds a dataset and
 must not perturb a single verdict; any drift means the re-run is not the same experiment.
 
+> ⚠️ Score into **new** CSV paths. `outputs/results_soafix_full/mmn_s7_roi.csv` and
+> `outputs/results_novel_search/phase2_mmn_s7_roi.csv` are the committed inputs the deviance
+> analysis reads (`mmn_dose_response_common.py:78-79`). Overwriting them would silently swap
+> Part C's inputs for re-run output — the last destructive step left in this procedure.
+
 ```bash
 python scripts/analyze_mmn_s7_roi.py --dip_uv_threshold 0.75 \
-    --predictions_root outputs/insilico_mmn_predictions_soafix \
-    --out outputs/results_soafix_full/mmn_s7_roi.csv
+    --predictions_root outputs/insilico_mmn_predictions_soafix_pertrial \
+    --out outputs/results_soafix_pertrial/mmn_s7_roi.csv
 python scripts/analyze_mmn_s7_roi.py --dip_uv_threshold 0.75 \
-    --predictions_root outputs/insilico_mmn_predictions_novel_phase2 \
-    --out outputs/results_novel_search/phase2_mmn_s7_roi.csv
+    --predictions_root outputs/insilico_mmn_predictions_novel_phase2_pertrial \
+    --out outputs/results_novel_search_pertrial/phase2_mmn_s7_roi.csv
 ```
 
-FCz S2 / S7@0.75 counts must reproduce these **exactly** (all verified against the current CSVs):
+Then diff the FCz counts against the committed CSVs. This must print `MATCH` twice:
 
-| model | LIT S2/48 | LIT S7/48 | P2 S2/254 | P2 S7/254 |
-|---|---|---|---|---|
-| whisper-tiny | 44 | 16 | 219 | 125 |
-| whisper-base | 42 | 13 | 165 | 122 |
-| whisper-small | 45 | 15 | 185 | 126 |
-| whisper-medium | 46 | 26 | 203 | 155 |
-| wav2vec2-medium | 47 | 29 | 227 | 187 |
-| wav2vec2-large | 38 | 26 | 186 | 141 |
-| **pooled** | **262** | **125/288** | **1185** | **856/1524** |
+```bash
+python - <<'EOF'
+import pandas as pd, numpy as np
+M6 = ["whisper-tiny","whisper-base","whisper-small","whisper-medium",
+      "wav2vec2-medium","wav2vec2-large"]
+def fcz(p):
+    d = pd.read_csv(p)
+    d = d[(d.roi=="FCz") & (d.roi_kind=="electrode") & (d.mapping=="mtrf")
+          & np.isclose(d.dip_uv_threshold, 0.75) & d.model.isin(M6)]
+    return d.groupby("model")[["s2","s7"]].sum()
+for old, new, tag in (
+    ("outputs/results_soafix_full/mmn_s7_roi.csv",
+     "outputs/results_soafix_pertrial/mmn_s7_roi.csv", "LIT"),
+    ("outputs/results_novel_search/phase2_mmn_s7_roi.csv",
+     "outputs/results_novel_search_pertrial/phase2_mmn_s7_roi.csv", "NOVEL-P2")):
+    a, b = fcz(old), fcz(new)
+    print(f"{tag}: {'MATCH' if a.equals(b) else '*** DRIFT ***'}")
+    if not a.equals(b):
+        print(a.compare(b))
+EOF
+```
 
-`analyze_mmn_s7_roi.py` will still pick up whisper-large's **stale** soafix h5 if it is present in
-the root. Ignore those rows — they are not a mismatch.
+Expected FCz S2 / S7@0.75 counts (all verified against the current CSVs):
+
+whisper-large will simply be **absent** from the new roots — it is not re-run, and nothing copies
+its old h5 across — so the comparison above is over exactly the six in-scope models and needs no
+filtering. (Scoring the *original* roots would still surface whisper-large's rows; the comparison
+script restricts to `M6` either way.)
 
 ---
 
@@ -204,11 +235,11 @@ the root. Ignore those rows — they are not a mismatch.
 ```bash
 # per-trial scoring, FCz (both assert their row counts and the n7v1 sanity residual)
 python aux/analysis_MMN_realness_checks/analyze_mmn_per_trial_n.py \
-    --predictions_root outputs/insilico_mmn_predictions_soafix --dataset lit \
+    --predictions_root outputs/insilico_mmn_predictions_soafix_pertrial --dataset lit \
     --out outputs/results_soafix_full/mmn_per_trial_n_fcz.csv          # 4,320 rows
 
 python aux/analysis_MMN_realness_checks/analyze_mmn_per_trial_n.py \
-    --predictions_root outputs/insilico_mmn_predictions_novel_phase2 --dataset p2 \
+    --predictions_root outputs/insilico_mmn_predictions_novel_phase2_pertrial --dataset p2 \
     --out outputs/results_novel_search/phase2_mmn_per_trial_n_fcz.csv  # 22,860 rows
 
 # the 5 figures + stats
