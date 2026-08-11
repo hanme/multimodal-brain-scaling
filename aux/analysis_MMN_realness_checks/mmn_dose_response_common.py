@@ -109,9 +109,36 @@ def fig_path(gate, set_key, stem, out_root=None):
 DATASET_MARKER = {"lit": "o", "p2": "^"}
 DATASET_LABEL = {"lit": "LIT (literature)", "p2": "NOVEL-P2 (search)"}
 
-# Which sources each analysis set draws from. The ONLY place the three sets are defined.
-SETS = {"lit": ("lit",), "lit_p2": ("lit", "p2"), "p2": ("p2",)}
-SET_LABEL = {"lit": "LIT only", "lit_p2": "LIT + NOVEL-P2", "p2": "NOVEL-P2 only"}
+# Which sources each analysis set draws from. The ONLY place the sets are defined.
+SETS = {"lit": ("lit",), "lit_p2": ("lit", "p2"), "p2": ("p2",), "p2_top100": ("p2",)}
+SET_LABEL = {"lit": "LIT only", "lit_p2": "LIT + NOVEL-P2", "p2": "NOVEL-P2 only",
+             "p2_top100": "NOVEL-P2 top 100"}
+
+# The three sets that every figure family reports. p2_top100 is NOT one of them -- it appears only
+# as a fourth panel on the pooled figures, for the reason below.
+ANALYSIS_SETS = ("lit", "lit_p2", "p2")
+PANEL_SETS = ("lit", "lit_p2", "p2", "p2_top100")
+
+# "Top 100" = the first 100 rows of the search's own committed ranking, which orders the 254
+# direction-instances by n_agree (how many of the 6 models showed S7 at FCz) then by mean_uv
+# (deepest first). Ranks 1-100 are 9 instances at 6/6 agreement, 82 at 5/6 and 9 at 4/6.
+#
+# SELECTED ON THE OUTCOME, TWICE. NOVEL-P2 is already the subset of the 903-pair grid that reached
+# n_agree >= 5 in phase 1; ranking within it by agreement and trough depth selects AGAIN on the
+# quantity these figures plot. So the top-100 panel is a "best responders" view: its troughs are
+# deeper by construction, and a dose-response there is more confounded by selection than p2's, not
+# less. It answers "among the stimuli that most reliably evoke a model MMN, does the trough still
+# track the manipulation?" -- never "how strong is the effect?".
+TOP_N_P2 = 100
+P2_RANKING = REPO / "outputs/results_novel_search/phase2_final_ranking.csv"
+
+
+def top_p2_methods(n=TOP_N_P2):
+    """The `method` names of the top-n direction-instances in the committed phase-2 ranking."""
+    r = pd.read_csv(P2_RANKING).sort_values("rank")
+    if len(r) < n:
+        raise SystemExit(f"{P2_RANKING} has only {len(r)} rows; cannot take a top {n}")
+    return set(r.head(n)["method"])
 
 # Expected condition counts per source -- asserted at load, so a wrong vintage or a bad filter
 # fails loudly instead of quietly producing a plausible-looking figure.
@@ -354,8 +381,16 @@ def per_method_cells(frame, extra_keys=(), gate="s7"):
 
 
 def set_frame(tidy, set_key):
-    """One analysis set, by filtering the tidy frame. The three sets share this one path."""
-    return tidy[tidy["dataset"].isin(SETS[set_key])].copy()
+    """One analysis set, by filtering the tidy frame. Every set shares this one path."""
+    frame = tidy[tidy["dataset"].isin(SETS[set_key])].copy()
+    if set_key == "p2_top100":
+        keep = top_p2_methods()
+        frame = frame[frame["method"].isin(keep)]
+        got = frame["method"].nunique()
+        if got != TOP_N_P2:
+            raise SystemExit(f"p2_top100 matched {got} of {TOP_N_P2} ranked methods -- the ranking "
+                             f"and the scored CSV disagree about method names")
+    return frame
 
 
 # The two amplitude reporting sets.

@@ -29,13 +29,24 @@ shallow tail *by construction* — exactly the traces a weak dose-response moves
 are a lower bound** and the gap between the two gates is what the floor was hiding. It is not a
 small gap: S7 keeps only 48% of LIT's S2 traces and 73% of NOVEL-P2's.
 
-**The three sets** appear as the three panels of every multi-panel figure, always in this order:
+**The three sets** appear as panels of every multi-panel figure, always in this order:
 
 | panel | set | what it is |
 |---|---|---|
-| left | `lit` | 48 literature conditions. Unselected, but timing varies and coverage is lumpy. |
-| middle | `lit_p2` | both sources pooled (302 conditions). ~87% NOVEL-P2 rows. |
-| right | `p2` | 254 selected conditions. Timing fixed, but **selected on the outcome**. |
+| 1 | `lit` | 48 literature conditions. Unselected, but timing varies and coverage is lumpy. |
+| 2 | `lit_p2` | both sources pooled (302 conditions). ~87% NOVEL-P2 rows. |
+| 3 | `p2` | 254 selected conditions. Timing fixed, but **selected on the outcome**. |
+| 4 | `p2_top100` | **pooled figures only** — the top 100 of the phase-2 ranking. |
+
+`p2_top100` is the first 100 rows of the search's own committed ranking
+(`phase2_final_ranking.csv`, ordered by `n_agree` then `mean_uv`): 9 direction-instances at 6/6
+model agreement, 82 at 5/6, 9 at 4/6. **It is selected on the outcome twice over** — NOVEL-P2 is
+already the subset of the 903-pair grid that reached 5/6 agreement in phase 1, and ranking within
+it by agreement and trough depth selects again on the quantity the figure plots. Its S7 pass rate
+is 83% against p2's 56%, and its troughs are deeper by construction (median −1.57 vs −1.49 µV). It
+answers *"among the stimuli that most reliably evoke a model MMN, does the trough still track the
+manipulation?"* — never *"how big is the effect?"*. It is deliberately **not** one of the three
+analysis sets: no statistic, rate figure or per-model panel is computed on it.
 
 **Colour = model identity**, always the same six colours (Okabe–Ito, CVD-checked). Every line is
 solid; linestyle encodes nothing. Dotted grey is the y = 0 reference, not data. The dark grey

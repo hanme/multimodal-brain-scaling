@@ -90,7 +90,7 @@ def pooled_ylim(tidy, gate):
     """One y-range covering BOTH summary statistics, so the two variants overlay exactly."""
     los, his = [], []
     for kind in C.CENTRAL_KINDS:
-        for set_key in ("lit", "lit_p2", "p2"):
+        for set_key in C.PANEL_SETS:
             gat = C.gated(C.balanced_across_n(C.set_frame(tidy, set_key), gate), gate)
             for lvl in C.N_LEVELS:
                 v = gat.loc[gat["N"] == lvl, "trough_uv"].to_numpy(float)
@@ -106,9 +106,9 @@ def pooled_ylim(tidy, gate):
 
 
 def fig_pooled(tidy, out_png, gate="s7", kind="median", ylim=None):
-    fig, axes = plt.subplots(1, 3, figsize=(11.4, 4.9))
+    fig, axes = plt.subplots(1, len(C.PANEL_SETS), figsize=(15.0, 4.9))
     lo_all, hi_all = [], []
-    for ax, set_key in zip(axes, ("lit", "lit_p2", "p2")):
+    for ax, set_key in zip(axes, C.PANEL_SETS):
         # BALANCED: only stimuli that pass the criterion at every N. Without this the mean can
         # move across N because the set of contributing stimuli changed, not because any stimulus
         # deepened -- see C.balanced_across_n.
@@ -145,7 +145,7 @@ def fig_pooled(tidy, out_png, gate="s7", kind="median", ylim=None):
                             f"\nρ={rho:+.2f} (p={p:.2g}, n={n} cells)",
                 transform=ax.transAxes, fontsize=7.6, color="#6b6b6b", va="bottom")
         _n_axis(ax)
-        if set_key == "lit":
+        if set_key == C.PANEL_SETS[0]:
             ax.set_ylabel("MMN trough (µV)\n↓ deeper")
 
     if ylim is not None:
@@ -169,6 +169,10 @@ def fig_pooled(tidy, out_png, gate="s7", kind="median", ylim=None):
         "construction: the generator sets rare-tone probability to 1/(N+1), so N = 3/5/7 means "
         "25%/16.7%/12.5% (shown on the x-axis). A trough that deepens across N is MMN-like but "
         "cannot be attributed to local spacing rather than global rarity.\n"
+        "The 4th panel is the top 100 of the search's own phase-2 ranking (by model agreement, "
+        "then trough depth) — SELECTED ON THE OUTCOME on top of NOVEL-P2's own selection, so its "
+        "troughs are deeper by construction. It bounds the best responders; it does not estimate "
+        "an effect size.\n"
         f"Balancing removes the composition confound that made the earlier unpaired version of "
         f"this figure misleading. n_effect_change_table{sfx_for(gate)}.csv gives the average "
         f"within-stimulus change in µV from N=3→5→7, and "

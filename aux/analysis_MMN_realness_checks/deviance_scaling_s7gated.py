@@ -78,6 +78,7 @@ def bin_edges(tidy, set_key):
     """
     if set_key == "lit":
         return None
+    # p2_top100 reuses the p2 edges so the two panels line up bin for bin and can be read across.
     p2_st = tidy[tidy["dataset"] == "p2"]["semitones"].to_numpy(float)
     q = np.linspace(0, 1, N_P2_BINS + 1)
     edges = np.unique(np.quantile(p2_st, q))
@@ -109,7 +110,9 @@ def bin_caption(set_key, edges, short=False, kind="median"):
     if set_key == "lit":
         head = "10 discrete semitone values"
     elif set_key == "lit_p2":
-        head = f"{len(edges) - 1} bins: the p2 equal-count edges + a {LIT_EXT_EDGE:g} st extension"
+        head = f"{len(edges) - 1} bins (p2 edges + {LIT_EXT_EDGE:g} st extension)"
+    elif set_key == "p2_top100":
+        head = f"{len(edges) - 1} bins (same edges as p2)"
     else:
         head = f"{len(edges) - 1} equal-count bins"
     return head + ("" if short else f"; {C.CENTRAL_LABEL[kind]}")
@@ -180,7 +183,7 @@ def pooled_ylim(tidy, gate):
     """
     los, his = [], []
     for kind in C.CENTRAL_KINDS:
-        for set_key in ("lit", "lit_p2", "p2"):
+        for set_key in C.PANEL_SETS:
             edges = bin_edges(tidy, set_key)
             s = summarise(assign_bins(C.gated(C.set_frame(tidy, set_key), gate), edges),
                           set_key, kind)
@@ -195,7 +198,7 @@ def pooled_ylim(tidy, gate):
 
 
 def fig_pooled(tidy, out_png, gate="s7", kind="median", ylim=None):
-    fig, axes = plt.subplots(1, 3, figsize=(13.8, 5.4))
+    fig, axes = plt.subplots(1, len(C.PANEL_SETS), figsize=(18.0, 5.4))
 
     # One SHARED y-axis across the three sets so they are visually comparable.
     #
@@ -205,7 +208,7 @@ def fig_pooled(tidy, out_png, gate="s7", kind="median", ylim=None):
     # the trough tail left ~60% of each panel empty and squashed the entire result into a strip.
     panels = {}
     summaries = {}
-    for set_key in ("lit", "lit_p2", "p2"):
+    for set_key in C.PANEL_SETS:
         edges = bin_edges(tidy, set_key)
         gat = assign_bins(C.gated(C.set_frame(tidy, set_key), gate), edges)
         panels[set_key] = (edges, gat)
@@ -226,7 +229,7 @@ def fig_pooled(tidy, out_png, gate="s7", kind="median", ylim=None):
         pad = 0.06 * (y_shallow - y_deep)
         y_deep, y_shallow = y_deep - pad, y_shallow + pad
 
-    for ax, set_key in zip(axes, ("lit", "lit_p2", "p2")):
+    for ax, set_key in zip(axes, C.PANEL_SETS):
         edges, gat = panels[set_key]
         clipped = []
 
@@ -256,13 +259,13 @@ def fig_pooled(tidy, out_png, gate="s7", kind="median", ylim=None):
                 clipped.append((x, y, n))
 
         n_s7, n_tot = int(gat.shape[0]), len(C.set_frame(tidy, set_key))
-        note = bin_caption(set_key, edges, kind=kind)
+        note = bin_caption(set_key, edges, short=True)
         if clipped:
             note += f"; {len(clipped)} bin(s) off-axis, labelled"
         panel_title(ax, f"{C.SET_LABEL[set_key]}  ({set_key})",
                     f"{C.gate_label(gate, long=False)} only: {n_s7}/{n_tot} rows\n{note}")
         xr = (gat["bin_x"].min(), gat["bin_x"].max())
-        _decorate(ax, set_key, xrange=xr, ylabel=(set_key == "lit"))
+        _decorate(ax, set_key, xrange=xr, ylabel=(set_key == C.PANEL_SETS[0]))
         ax.set_ylim(y_deep, y_shallow)               # conventional: more negative = DOWN
 
     fig.suptitle(f"MMN trough vs deviance size at FCz — pooled over 6 models "
@@ -280,7 +283,11 @@ def fig_pooled(tidy, out_png, gate="s7", kind="median", ylim=None):
                 "UNCENSORED companion to the S7 figure, and the gap between the two is what the "
                 "floor was hiding.")
              + " lit_p2 is dominated by NOVEL-P2 rows and its two sources barely overlap in x — "
-               "read it with the overlap diagnostic, not alone."),
+               "read it with the overlap diagnostic, not alone. The 4th panel is the top 100 of "
+               "the search's own phase-2 ranking (by model agreement, then trough depth) — "
+               "SELECTED ON THE OUTCOME on top of NOVEL-P2's own selection, so its troughs are "
+               "deeper by construction. It bounds the best responders; it does not estimate an "
+               "effect size."),
              fontsize=7.8, color="#555555", ha="left", va="top")
     return C.finish(fig, out_png)
 
