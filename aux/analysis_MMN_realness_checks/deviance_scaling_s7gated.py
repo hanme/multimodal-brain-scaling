@@ -171,19 +171,19 @@ def panel_title(ax, main, sub):
 # ------------------------------------------------------------------------------------------
 # Figure 1 -- pooled over the six models
 # ------------------------------------------------------------------------------------------
-def fig_pooled(tidy, out_png):
+def fig_pooled(tidy, out_png, gate="s7"):
     fig, axes = plt.subplots(1, 3, figsize=(13.8, 5.4))
 
     # One SHARED y-axis across the three sets so they are visually comparable, clipped to the
     # deep-tail limit of the union so a single 2-condition LIT bin cannot set the scale.
-    all_gated = C.gated(tidy)
+    all_gated = C.gated(tidy, gate)
     y_deep = deep_clip(all_gated["trough_uv"])
     y_shallow = -0.75                                        # the gate itself: the shallow edge
 
     panels = {}
     for set_key in ("lit", "lit_p2", "p2"):
         edges = bin_edges(tidy, set_key)
-        panels[set_key] = (edges, assign_bins(C.gated(C.set_frame(tidy, set_key)), edges))
+        panels[set_key] = (edges, assign_bins(C.gated(C.set_frame(tidy, set_key), gate), edges))
 
     for ax, set_key in zip(axes, ("lit", "lit_p2", "p2")):
         edges, gat = panels[set_key]
@@ -224,21 +224,27 @@ def fig_pooled(tidy, out_png):
         if clipped:
             note += f"; {len(clipped)} bin off-axis, labelled"
         panel_title(ax, f"{C.SET_LABEL[set_key]}  ({set_key})",
-                    f"S7@0.75 only: {n_s7}/{n_tot} rows\n{note}")
+                    f"{C.gate_label(gate, long=False)} only: {n_s7}/{n_tot} rows\n{note}")
         xr = (gat["bin_x"].min(), gat["bin_x"].max())
         _decorate(ax, set_key, xrange=xr, ylabel=(set_key == "lit"))
         ax.set_ylim(y_shallow + 0.15, y_deep)        # INVERTED: more negative = up
         if set_key == "lit_p2":
             ax.legend(frameon=False, fontsize=8.5, loc="upper left")
 
-    fig.suptitle("MMN trough vs deviance size at FCz — pooled over 6 models (mTRF, S7@0.75-gated)",
+    fig.suptitle(f"MMN trough vs deviance size at FCz — pooled over 6 models "
+                 f"(mTRF, {C.gate_label(gate, long=False)}-gated)",
                  fontweight="bold", x=0.006, ha="left", y=1.02)
     fig.text(0.006, -0.02, C.wrap(
-             "Shared y-axis, clipped at the deepest 2% of troughs (tails reach −9.6 µV); clipped "
-             "bins are drawn on the boundary with their true value. Gated: every plotted trough "
-             "passes ≤ −0.75 µV, so each bin's shallow tail is absent and the slope is a LOWER "
-             "BOUND on any amplitude effect. lit_p2 is 87% NOVEL-P2 rows (856 of 981) and its two "
-             "sources barely overlap in x — read it with deviance_overlap_lit_vs_p2.png, not alone."),
+             f"Shared y-axis, clipped at the deepest 2% of troughs; clipped bins are drawn on the "
+             f"boundary with their true value. Gate = {C.gate_label(gate)}: "
+             + ("every plotted trough passes ≤ −0.75 µV, so each bin's shallow tail is absent and "
+                "the slope is a LOWER BOUND on any amplitude effect."
+                if gate == "s7" else
+                "no µV floor, so the shallow tail that S7 removes is present here. This is the "
+                "UNCENSORED companion to the S7 figure, and the gap between the two is what the "
+                "floor was hiding.")
+             + " lit_p2 is dominated by NOVEL-P2 rows and its two sources barely overlap in x — "
+               "read it with the overlap diagnostic, not alone."),
              fontsize=7.8, color="#555555", ha="left", va="top")
     return C.finish(fig, out_png)
 
@@ -246,8 +252,8 @@ def fig_pooled(tidy, out_png):
 # ------------------------------------------------------------------------------------------
 # Figure 2 -- small multiples, one panel per model
 # ------------------------------------------------------------------------------------------
-def fig_per_model(tidy, set_key, out_png):
-    gat = C.gated(C.set_frame(tidy, set_key))
+def fig_per_model(tidy, set_key, out_png, gate="s7"):
+    gat = C.gated(C.set_frame(tidy, set_key), gate)
     fig, axes = plt.subplots(2, 3, figsize=(13.6, 7.6), sharex=True, sharey=True)
     rng = np.random.default_rng(0)
     y_deep = deep_clip(gat["trough_uv"])
@@ -296,7 +302,7 @@ def fig_per_model(tidy, set_key, out_png):
     fig.suptitle(f"MMN trough vs deviance at FCz — per model — {C.SET_LABEL[set_key]} ({set_key})",
                  fontweight="bold", x=0.006, ha="left", y=1.015)
     fig.text(0.006, -0.015, C.wrap(
-             f"S7@0.75-gated troughs, mTRF. Shared y-axis across all six panels, clipped at the "
+             f"{C.gate_label(gate, long=False)}-gated troughs, mTRF. Shared y-axis across all six panels, clipped at the "
              f"deepest {CLIP_FRAC:.0%} of the set's troughs (△ = points past it, drawn on the "
              f"boundary and counted per panel). Line = OLS in linear semitones; ρ = Spearman "
              f"({rho_note}).{extra}"),
@@ -307,7 +313,7 @@ def fig_per_model(tidy, set_key, out_png):
 # ------------------------------------------------------------------------------------------
 # Figure 3 -- the UNCENSORED view: S7@0.75 rate per bin
 # ------------------------------------------------------------------------------------------
-def fig_rate(tidy, out_png):
+def fig_rate(tidy, out_png, gate="s7"):
     fig, axes = plt.subplots(1, 3, figsize=(13.8, 5.4), sharey=True)
     handles = []
     for ax, set_key in zip(axes, ("lit", "lit_p2", "p2")):
@@ -315,10 +321,10 @@ def fig_rate(tidy, out_png):
         allrows = assign_bins(C.set_frame(tidy, set_key), edges)
         for model in C.MODEL_ORDER:
             st = C.style(model)
-            r = C.s7_rate(allrows[allrows["model"] == model], ["bin_x"]).sort_values("bin_x")
+            r = C.pass_rate(allrows[allrows["model"] == model], ["bin_x"], gate).sort_values("bin_x")
             ax.plot(r["bin_x"], r["rate"], color=st["color"], marker=st["marker"], ls=st["ls"],
                     lw=1.1, ms=5.0, alpha=0.55, mec="white", mew=0.5, zorder=3)
-        pooled = C.s7_rate(allrows, ["bin_x"]).sort_values("bin_x")
+        pooled = C.pass_rate(allrows, ["bin_x"], gate).sort_values("bin_x")
         ax.plot(pooled["bin_x"], pooled["rate"], color=POOLED_INK, marker="o", ls="-", lw=2.8,
                 ms=7.5, mec="white", mew=1.0, zorder=5)
 
@@ -337,7 +343,8 @@ def fig_rate(tidy, out_png):
         panel_title(ax, f"{C.SET_LABEL[set_key]}  ({set_key})",
                     f"{bin_caption(set_key, edges, short=True)}\n{denom}")
         _decorate(ax, set_key, xrange=(pooled["bin_x"].min(), pooled["bin_x"].max()), ylabel=False)
-        ax.set_ylabel("S7@0.75 rate  (S7 / all conditions)" if set_key == "lit" else "")
+        ax.set_ylabel(f"{C.gate_label(gate, long=False)} rate  (pass / all conditions)"
+                      if set_key == "lit" else "")
 
     handles = [Line2D([0], [0], color=C.style(m)["color"], marker=C.style(m)["marker"],
                       ls=C.style(m)["ls"], lw=1.1, ms=5.5, mec="white", label=m)
@@ -346,7 +353,7 @@ def fig_rate(tidy, out_png):
                           mec="white", label="pooled (6 models)"))
     fig.legend(handles=handles, loc="upper center", frameon=False, fontsize=8.5,
                ncol=len(handles), bbox_to_anchor=(0.5, 1.055))
-    fig.suptitle("S7@0.75 rate vs deviance size at FCz — denominator is ALL conditions",
+    fig.suptitle(f"{C.gate_label(gate, long=False)} rate vs deviance size at FCz — denominator is ALL conditions",
                  fontweight="bold", x=0.006, ha="left", y=1.10)
     fig.text(0.006, -0.02, C.wrap(
              "The only UNCENSORED view in this deliverable: a count outcome is not floored by the "
@@ -361,14 +368,14 @@ def fig_rate(tidy, out_png):
 # ------------------------------------------------------------------------------------------
 # Figure 4 -- the overlap diagnostic: is the lit_p2 slope deviance, or source?
 # ------------------------------------------------------------------------------------------
-def fig_overlap(tidy, out_png):
+def fig_overlap(tidy, out_png, gate="s7"):
     lo, hi = C.OVERLAP_ST
     frame = tidy[(tidy["semitones"] >= lo) & (tidy["semitones"] <= hi)]
     fig, ax = plt.subplots(figsize=(8.4, 5.6))
     rng = np.random.default_rng(0)
     lines = []
     for ds in ("lit", "p2"):
-        g = C.gated(frame[frame["dataset"] == ds])
+        g = C.gated(frame[frame["dataset"] == ds], gate)
         x, y = g["semitones"].to_numpy(float), g["trough_uv"].to_numpy(float)
         mk = C.DATASET_MARKER[ds]
         ax.scatter(x + rng.uniform(-0.08, 0.08, x.size), y, s=26, marker=mk,
@@ -390,7 +397,7 @@ def fig_overlap(tidy, out_png):
     ax.axhline(0, color="#9a9a9a", lw=1, ls=":", zorder=1)
     ax.set_xlabel("Deviance size (semitones)")
     ax.set_ylabel("MMN trough (µV)\n↑ deeper")
-    ax.set_ylim(-0.5, deep_clip(C.gated(frame)["trough_uv"], 0.01))   # INVERTED
+    ax.set_ylim(-0.5, deep_clip(C.gated(frame, gate)["trough_uv"], 0.01))   # INVERTED
     ax.legend(handles=lines, fontsize=9, loc="lower left", frameon=True, facecolor="white",
               edgecolor="none", framealpha=0.85)
     ax.set_title(f"Overlap diagnostic — LIT vs NOVEL-P2 within {lo:g}–{hi:g} semitones at FCz",
@@ -410,12 +417,12 @@ def fig_overlap(tidy, out_png):
 # ------------------------------------------------------------------------------------------
 # Statistics
 # ------------------------------------------------------------------------------------------
-def stats_table(tidy):
+def stats_table(tidy, gate="s7"):
     """Spearman rho of trough_uv vs semitones for every cell reported in the memo."""
     rows = []
 
     def add(set_key, model, subset, frame):
-        g = C.gated(frame)
+        g = C.gated(frame, gate)
         rho, p, n = C.spearman(g["semitones"], g["trough_uv"])
         rows.append(dict(set=set_key, model=model, subset=subset, rho=rho, p=p, n_s7=n,
                          n_total=len(frame),
@@ -445,10 +452,10 @@ def stats_table(tidy):
     return pd.DataFrame(rows)
 
 
-def print_summary(tidy, st):
+def print_summary(tidy, st, gate="s7"):
     lo, hi = C.OVERLAP_ST
     print("\n" + "=" * 86)
-    print("Spearman rho: trough_uv vs semitones, FCz, mTRF, S7@0.75-gated (negative rho = "
+    print(f"Spearman rho: trough_uv vs semitones, FCz, mTRF, {C.gate_label(gate, long=False)}-gated (negative rho = "
           "DEEPER with more deviance = the MMN-like direction)")
     print("=" * 86)
     for subset in ("all", f"<= {SUBSET_MAX_ST:g} st"):
@@ -489,7 +496,7 @@ def print_summary(tidy, st):
               "effect and must be reported as a source effect.")
 
     print("\n" + "=" * 86)
-    print("S7@0.75 rate by set (count / ALL conditions) -- the uncensored companion")
+    print(f"{C.gate_label(gate, long=False)} rate by set (count / ALL conditions)")
     print("=" * 86)
     for k in ("lit", "lit_p2", "p2"):
         f = C.set_frame(tidy, k)
@@ -503,7 +510,12 @@ def main():
                    help="where the PNGs go; SVGs go to the sibling svgs/")
     p.add_argument("--csv_dir", default=str(C.ANALYSIS_DIR),
                    help="where the stats CSV goes (data, not a figure)")
+    p.add_argument("--gate", default="s7", choices=("s7", "s2"),
+                   help="amplitude gate. s7 = shape + 0.75 uV floor (the headline). s2 = shape "
+                        "only, no floor -- the UNCENSORED companion, whose outputs all take an "
+                        "__s2 suffix so the two sets never overwrite each other.")
     args = p.parse_args()
+    gate, sfx = args.gate, ("" if args.gate == "s7" else f"__{args.gate}")
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)
 
@@ -516,24 +528,24 @@ def main():
     # anything, and a silent change in either source would gut the diagnostic.
     lo, hi = C.OVERLAP_ST
     ov = tidy[(tidy["semitones"] >= lo) & (tidy["semitones"] <= hi)]
-    for ds, n_rows, n_s7 in (("lit", 120, 65), ("p2", 336, 189)):
+    for ds, n_rows, n_s7 in ((("lit", 120, 65), ("p2", 336, 189)) if gate == "s7" else ()):
         d = ov[ov["dataset"] == ds]
         assert (len(d), int(d["s7"].sum())) == (n_rows, n_s7), \
             f"overlap {ds}: {len(d)} rows / {int(d['s7'].sum())} S7, expected {n_rows}/{n_s7}"
     print(f"Overlap {lo:g}-{hi:g} st verified: LIT 120 rows/65 S7, NOVEL-P2 336 rows/189 S7")
 
     print("\nFigures:")
-    fig_pooled(tidy, out / "deviance_pooled_s7gated.png")
+    fig_pooled(tidy, out / f"deviance_pooled_s7gated{sfx}.png", gate)
     for set_key in ("lit", "lit_p2", "p2"):
-        fig_per_model(tidy, set_key, out / f"deviance_per_model_s7gated__{set_key}.png")
-    fig_rate(tidy, out / "deviance_s7_rate.png")
-    fig_overlap(tidy, out / "deviance_overlap_lit_vs_p2.png")
+        fig_per_model(tidy, set_key, out / f"deviance_per_model_s7gated__{set_key}{sfx}.png", gate)
+    fig_rate(tidy, out / f"deviance_s7_rate{sfx}.png", gate)
+    fig_overlap(tidy, out / f"deviance_overlap_lit_vs_p2{sfx}.png", gate)
 
-    st = stats_table(tidy)
-    st_path = Path(args.csv_dir) / "deviance_scaling_s7gated_stats.csv"
+    st = stats_table(tidy, gate)
+    st_path = Path(args.csv_dir) / f"deviance_scaling_s7gated_stats{sfx}.csv"
     st.to_csv(st_path, index=False, float_format="%.6g")
     print(f"  wrote {st_path}  ({len(st)} rows)")
-    print_summary(tidy, st)
+    print_summary(tidy, st, gate)
 
 
 if __name__ == "__main__":

@@ -111,6 +111,10 @@ mpl.rcParams.update({
     "axes.spines.top": False, "axes.spines.right": False,
     "axes.grid": True, "grid.color": "#e6e6e6", "grid.linewidth": 0.8,
     "axes.axisbelow": True, "font.family": "DejaVu Sans",
+    # Deterministic SVG element ids. Without a fixed salt matplotlib randomises them per run, so
+    # every re-render rewrote all six tracked SVGs in git with thousands of no-op line changes
+    # even when the plotted content was byte-identical.
+    "svg.hashsalt": "mmn-realness-checks",
 })
 
 
@@ -260,7 +264,7 @@ def load_per_trial(lit_csv=LIT_PER_TRIAL, p2_csv=P2_PER_TRIAL, verify=True):
     return tidy
 
 
-def per_method_cells(frame, extra_keys=()):
+def per_method_cells(frame, extra_keys=(), gate="s7"):
     """Collapse the 5 variations to ONE value per (dataset, model, condition, N).
 
     The 5 variations of a given (model, condition, N) are the SAME paradigm re-rolled, so their
@@ -270,7 +274,7 @@ def per_method_cells(frame, extra_keys=()):
     optimistic bound. Cells with no S7-passing trial are absent, not zero.
     """
     keys = ["dataset", "model", "method", "N", *extra_keys]
-    g = gated(frame)
+    g = gated(frame, gate)
     if g.empty:
         return g.assign(trough_uv=[]).loc[:, keys + ["trough_uv"]]
     return (g.groupby(keys, observed=True)["trough_uv"].median().reset_index())
@@ -281,9 +285,35 @@ def set_frame(tidy, set_key):
     return tidy[tidy["dataset"].isin(SETS[set_key])].copy()
 
 
-def gated(frame):
-    """S7@0.75-passing rows -- the ONLY amplitude reporting set in this deliverable."""
-    return frame[frame["s7"]].copy()
+# The two amplitude reporting sets.
+#
+#   s7  S2 AND trough_uv <= -0.75 uV. The headline gate.
+#   s2  shape only: an interior trough in 100-240 ms that recovers >=50% within 120 ms, with NO
+#       microvolt floor. The uncensored companion.
+#
+# S7 censors the shallow tail BY CONSTRUCTION, so any S7 amplitude slope is a LOWER BOUND and the
+# gap between the two gates measures how much the floor is doing. On the N-effect that gap is
+# large: the paired N7-N3 shift is -0.085 uV at S2 (p=9e-5) against -0.047 uV at S7 (p=0.004), so
+# the floor hides roughly half the effect.
+#
+# "Ungated" means S2, NOT every trial. For a trace that never dips-and-recovers, trough_uv is
+# sampled at the argmin of a shape that is not an MMN at all, so pooling those in would add noise
+# rather than remove censoring. S2 keeps every trace whose trough LATENCY is meaningful and drops
+# only the depth requirement -- which is exactly the censoring we want to undo.
+GATES = {
+    "s7": ("s7", "S7@0.75", "shape + ≥0.75 µV floor"),
+    "s2": ("s2", "S2", "shape only — no µV floor"),
+}
+
+
+def gated(frame, gate="s7"):
+    """Rows passing the chosen amplitude gate: 's7' (default, the headline) or 's2' (uncensored)."""
+    return frame[frame[GATES[gate][0]]].copy()
+
+
+def gate_label(gate, long=True):
+    key, short, desc = GATES[gate]
+    return f"{short} ({desc})" if long else short
 
 
 # ------------------------------------------------------------------------------------------
@@ -301,13 +331,14 @@ def spearman(x, y):
     return float(rho), float(p), n
 
 
-def s7_rate(frame, by):
-    """S7@0.75 count / TOTAL conditions in each bin -- denominator is all conditions, not S2.
+def pass_rate(frame, by, gate="s7"):
+    """Gate-passing count / TOTAL conditions in each bin -- denominator is ALL conditions.
 
-    This is the one uncensored view in the deliverable: unlike the gated trough, a count outcome
-    is not floored by the gate, so a dose-response can show here that the amplitude axis cannot.
+    A count outcome is not floored by an amplitude gate, so a dose-response can show here that the
+    S7 amplitude axis cannot. At gate="s2" this is the rate of producing an MMN-SHAPED response at
+    all, irrespective of depth.
     """
-    g = frame.groupby(by, observed=False)["s7"]
+    g = frame.groupby(by, observed=False)[GATES[gate][0]]
     out = g.agg(n_s7="sum", n_total="size").reset_index()
     out["rate"] = out["n_s7"] / out["n_total"].where(out["n_total"] > 0)
     return out
@@ -342,7 +373,9 @@ def finish(fig, out_png, tight_rect=None):
         p.parent.mkdir(parents=True, exist_ok=True)
     fig.tight_layout(rect=tight_rect) if tight_rect else fig.tight_layout()
     fig.savefig(out_png, bbox_inches="tight")
-    fig.savefig(out_svg, bbox_inches="tight")
+    # Date=None drops the <dc:date> matplotlib stamps into every SVG. With it, two renders of
+    # identical data produce different files and the tracked SVGs churn in git on every run.
+    fig.savefig(out_svg, bbox_inches="tight", metadata={"Date": None})
     plt.close(fig)
     print(f"  wrote {out_png.name}  (+ {SVG_DIRNAME}/{out_svg.name})")
     return out_png

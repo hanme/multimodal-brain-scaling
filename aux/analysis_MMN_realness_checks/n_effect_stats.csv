@@ -1,4 +1,4 @@
-set,model,unit,rho,p,n,n_s7,n_trials,s7_rate,median_trough_uv
+set,model,unit,rho,p,n,n_pass,n_trials,pass_rate,median_trough_uv
 lit,POOLED,cell,-0.0638277,0.185456,432,1882,4320,0.435648,-1.26038
 lit,whisper-tiny,cell,-0.0443695,0.75479,52,239,720,0.331944,-1.37305
 lit,whisper-base,cell,-0.0960093,0.555643,40,192,720,0.266667,-1.18575
