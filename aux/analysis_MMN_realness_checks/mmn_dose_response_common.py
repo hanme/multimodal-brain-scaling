@@ -88,13 +88,12 @@ SVG_DIRNAME = "svgs"
 
 # THE VISUAL GRAMMAR -- one channel, one meaning, everywhere in this deliverable:
 #   colour     = model identity          (MODEL_STYLE, the committed Okabe-Ito palette)
-#   linestyle  = model FAMILY            (whisper solid, wav2vec2 dashed) -- a redundant encoding
-#                                        so the families survive greyscale, print and CVD
+#   linestyle  = NOTHING                 every model line is solid (see style() below)
 #   marker     = model identity, and DATA SOURCE wherever the two sources share an axis
 #                                        (the lit_p2 panels and the overlap diagnostic)
 #   dotted grey = the y=0 reference line, which is NOT data
-# Source is never encoded by linestyle: that would make dashed mean "wav2vec2" in most panels and
-# "NOVEL-P2" in one.
+# Source is never encoded by linestyle either: with every line solid, a dashed line in these
+# figures would be read as a distinct series that does not exist.
 DATASET_MARKER = {"lit": "o", "p2": "^"}
 DATASET_LABEL = {"lit": "LIT (literature)", "p2": "NOVEL-P2 (search)"}
 
@@ -115,9 +114,26 @@ mpl.rcParams.update({
 })
 
 
+# Every model line is drawn SOLID here. The shared MODEL_STYLE dashes the wav2vec2 entries to
+# encode architecture family a second time, but that reads as a semantic difference between the
+# series when the analysis treats all six models alike, so this deliverable overrides it.
+#
+# What that costs, and why it is affordable: the dashes were the redundant channel keeping the
+# families apart in greyscale and print. Identity now rests on colour + marker alone. The palette
+# validator's one WARN pair (whisper-small vs wav2vec2-medium, CVD dE 7.6, inside the 6-8 band
+# that is legal ONLY with secondary encoding) is still covered, because those two carry different
+# MARKERS (^ vs P) -- marker, not linestyle, is what satisfies that requirement.
+#
+# The override is LOCAL. MODEL_STYLE is imported by analyze_mmn_screen_24freq.py and others, so
+# editing the shared dict would silently restyle their committed figures.
+LINESTYLE = "-"
+
+
 def style(model):
-    """Per-model colour/marker/linestyle, identical in every set and every panel."""
-    return MODEL_STYLE.get(model, dict(color="#666666", marker="o", ls="-"))
+    """Per-model colour/marker, identical in every set and every panel; linestyle always solid."""
+    st = dict(MODEL_STYLE.get(model, dict(color="#666666", marker="o")))
+    st["ls"] = LINESTYLE
+    return st
 
 
 # ------------------------------------------------------------------------------------------

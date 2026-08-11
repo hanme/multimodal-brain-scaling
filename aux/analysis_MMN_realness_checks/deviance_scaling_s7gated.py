@@ -376,9 +376,8 @@ def fig_overlap(tidy, out_png):
                    edgecolors=POOLED_INK, linewidths=1.0, alpha=0.55, zorder=3)
         ok = np.isfinite(x) & np.isfinite(y)
         sl, ic = np.polyfit(x[ok], y[ok], 1)
-        # Source is carried by MARKER SHAPE here, as in every other panel -- never by
-        # linestyle, which means model family (whisper solid / wav2vec2 dashed) everywhere
-        # else in this deliverable. Both fits are solid; the marker riding the line names it.
+        # Source is carried by MARKER SHAPE here, as in every other panel. Every line in this
+        # deliverable is solid, so both fits are solid and the marker riding each one names it.
         xs = np.linspace(lo, hi, 100)
         ax.plot(xs, ic + sl * xs, color=POOLED_INK, lw=2.0, ls="-", marker=mk, ms=7,
                 markevery=18, mfc="none" if ds == "p2" else POOLED_INK, mew=1.4, zorder=4)
@@ -399,8 +398,7 @@ def fig_overlap(tidy, out_png):
     fig.text(0.0, -0.115, C.wrap(
              "The one region where both sources have conditions, so the two can be compared "
              "WITHOUT the range confound. Pooled over the 6 models, S7@0.75-gated, mTRF; lines "
-             "are per-source OLS, labelled by the marker riding them (● LIT, △ NOVEL-P2) — "
-             "linestyle means model family elsewhere in this deliverable, never source. "
+             "are per-source OLS, labelled by the marker riding them (● LIT, △ NOVEL-P2). "
              "Rising left-to-right = deeper with more deviance (y inverted).\n"
              "If the two agree here, the lit_p2 combined slope is credible as a deviance effect; "
              "if they diverge, that slope is a source effect — the sources also differ in SOA, "
