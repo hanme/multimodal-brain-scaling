@@ -19,12 +19,12 @@ statistic. **Models:** six — whisper tiny/base/small/medium, wav2vec2 medium/l
 
 Three analysis sets throughout: `lit` (48), `lit_p2` (302), `p2` (254).
 
-**Status.** Part C (deviance) is complete. **Part B (N-effect) is blocked** on a cluster re-run —
-see §2; the scripts are written and validated, only the input is missing.
+**Status.** Both analyses are complete. The N-effect re-run landed on 2026-08-10; all three
+verification gates passed, including a byte-level match of the committed FCz S2/S7 counts.
 
 ---
 
-## 1. Deviance scaling — the headline
+## 1. Deviance scaling
 
 Figures: `plots/*.png` (vector twins in `svgs/*.svg`) —
 `deviance_pooled_s7gated`, `deviance_per_model_s7gated__{lit,lit_p2,p2}`, `deviance_s7_rate`,
@@ -116,36 +116,85 @@ strongest evidence available here, and it supports a weak deviance effect rather
 
 ---
 
-## 2. The N-effect — blocked, not null
+## 2. The N-effect — a rate effect, not an amplitude one
 
-**No N result is reported, because the data to compute it does not exist yet.** This is a missing
-input, not a null finding, and must not be read as one.
+`plots/n_effect_*.png` (vector twins in `svgs/`), `n_effect_stats.csv`,
+`n_effect_source_agreement.csv`, `n_effect_paired_n3_vs_n7.csv`.
 
-The 15 deviants of each method are a 3 × 5 grid of `N ∈ {3,5,7}` × `variation ∈ {1..5}`, so N lives
-entirely inside the average the pipeline takes. `insilico_mmn_electrodes.py` wrote `deviant_mean`
-and discarded the per-trial stack — verified absent in every committed electrode h5 for both
-sources, though `n_deviants = 15` confirms the trials were computed. One driver patch plus two
-prediction re-runs fixes it; see **`aux/analysis_MMN_realness_checks/handoff_per_trial_deviants_n_effect.md`** for the patch, the
-exact cluster commands and three verification gates.
+27,180 per-trial rows (6 models × 302 conditions × 15 trials). The per-trial scoring reproduced the
+pipeline's own stored `n7v1_peak` to 2.1e-7 (LIT) and 3.0e-7 (NOVEL-P2), so these are the committed
+criterion applied to single trials, not a re-implementation of it.
 
-Both analysis scripts are written and **validated end-to-end on real data**. The soafix *parcel*
-h5s do retain the legacy full-axis per-trial stack, so the whole path was exercised at the frontal
-and central parcels before any cluster time was requested:
+### 2a. Gated amplitude: essentially null
 
-- `analyze_mmn_per_trial_n.py` reproduced the pipeline's own stored `n7v1_peak` to **2.4 × 10⁻⁷**
-  across all 288 (model × method) cells — the per-trial scoring is the committed criterion exactly;
-- it emitted exactly **4,320 rows** = 6 × 48 × 15, all assertions passing;
-- `n_effect_plots.py` rendered all 5 figures and both stats CSVs from that input.
+Spearman ρ of `trough_uv` vs N, at the (model, condition, N) cell level — **negative = deeper with
+more standards = MMN-like**:
 
-Those parcel numbers are a plumbing check, **not** a result, and appear in no figure or table.
+| set | ρ | p | n cells |
+|---|---|---|---|
+| `lit` | −0.06 | 0.185 | 432 |
+| `lit_p2` | −0.02 | 0.378 | 3,340 |
+| `p2` | −0.01 | 0.754 | 2,908 |
 
-When the re-run lands, the N analysis is the better-founded of the two: N is produced by the same
-code path in both sources (`generate_deviant_sequence`, the same 1/(N+1) prefix rule, the same
-3 × 5 grid) and both span the identical `N ∈ {3,5,7}`, so `lit_p2` is a straightforward n-boost on
-an identical manipulation rather than a between-source contrast. It needs no overlap diagnostic —
-only the per-model sign-agreement check, which is emitted.
+No individual model reaches significance in any set. Only 3 of 6 models share a ρ sign between the
+two sources, so — unlike what the identical-manipulation argument predicted — **`lit_p2` reads as a
+mixture for amplitude and is reported per source, not as one experiment.**
 
----
+The paired test, which makes each condition its own control, agrees:
+
+| set | Δ (N7 − N3) | Wilcoxon p | pairs deeper at N7 |
+|---|---|---|---|
+| `lit` | −0.065 µV | 0.228 | **50%** |
+| `lit_p2` | −0.049 µV | 0.0021 | 54% |
+| `p2` | −0.047 µV | 0.0041 | 55% |
+
+NOVEL-P2 shows a **real but negligible** deepening: ~0.05 µV, with 55% of conditions deepening
+against a 50% coin flip. LIT is flat outright.
+
+> **A trap in the pooled figure.** Its LIT panel draws a clean monotone rise (−1.65 → −1.72 →
+> −1.79 µV, unpaired Mann-Whitney p = 0.003). That is **composition, not deepening**: the S7 gate
+> admits a different mix of conditions at each N, so the unpaired mean moves while no individual
+> condition deepens (paired p = 0.23, 50% of pairs). The paired column above is the one to quote.
+> NOVEL-P2 runs the other way — unpaired null (p = 0.91), paired significant — because pairing
+> removes the between-condition variance that swamps a 0.05 µV shift.
+
+### 2b. S7@0.75 rate: a robust monotone positive
+
+The uncensored view, tested with Cochran–Armitage trend:
+
+| set | N=3 | N=5 | N=7 | trend | rise |
+|---|---|---|---|---|---|
+| `lit` | 0.422 | 0.445 | 0.440 | z = +0.94, p = 0.35 | +1.7 pts |
+| `lit_p2` | 0.522 | 0.552 | 0.568 | z = +6.18, **p = 6e-10** | +4.6 pts |
+| `p2` | 0.541 | 0.573 | 0.592 | z = +6.36, **p = 2e-10** | +5.1 pts |
+
+**More standards between deviants makes the models more likely to produce an MMN, without making
+the MMNs they do produce any deeper.** This is exactly the case the design anticipated: a monotone
+rate beside a flat gated trough is a real positive result, not a null, and the rate is the only
+outcome here that the −0.75 µV floor cannot censor. LIT points the same way but is underpowered
+(1,440 trials per level against NOVEL-P2's 7,620).
+
+**The effect is carried by the larger models.** Per-model trend within NOVEL-P2:
+
+| model | N=3 → N=7 | trend |
+|---|---|---|
+| whisper-tiny | .491 → .507 | z = +0.79, p = 0.43 |
+| whisper-base | .478 → .486 | z = +0.40, p = 0.69 |
+| whisper-small | .483 → .501 | z = +0.91, p = 0.36 |
+| whisper-medium | .573 → .657 | z = +4.33, **p = 1e-05** |
+| wav2vec2-medium | .696 → .769 | z = +4.15, **p = 3e-05** |
+| wav2vec2-large | .524 → .632 | z = +5.55, **p = 3e-08** |
+
+The three smallest whisper models are flat; the three larger models all show it. Worth flagging for
+a scaling project, though with six models and two architectures this is an observation to follow
+up, not a scaling law — and it is not something this design was built to test.
+
+### 2c. What N cannot tell us
+
+N is confounded with oddball probability **by construction**: the generator sets rare-tone
+probability to 1/(N+1), so N = 3/5/7 is 25% / 16.7% / 12.5%. The rate effect above is genuinely
+MMN-like in direction, but it cannot be attributed to local spacing rather than global rarity —
+both are real mechanisms in humans, and this design cannot separate them. See limit 1 in §3.
 
 ## 3. Interpretation limits
 

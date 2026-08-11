@@ -49,6 +49,8 @@ mpl.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
+from scipy import stats
+
 import mmn_dose_response_common as C
 
 POOLED_INK = "#333333"
@@ -98,9 +100,9 @@ def fig_pooled(tidy, out_png):
             hi_all += [a + b for a, b in zip(ys, es)]
 
         rho, p, n = C.spearman(*_cell_xy(frame))
-        ax.set_title(f"{C.SET_LABEL[set_key]}  ({set_key})", fontweight="bold", loc="left", pad=18)
-        ax.text(0.0, 1.012, f"S7@0.75 only: {len(gat)}/{len(frame)} trials · "
-                            f"ρ={rho:+.2f} (p={p:.3g}, n={n} cells)",
+        ax.set_title(f"{C.SET_LABEL[set_key]}  ({set_key})", fontweight="bold", loc="left", pad=26)
+        ax.text(0.0, 1.012, f"S7@0.75 only: {len(gat)}/{len(frame)} trials"
+                            f"\nρ={rho:+.2f} (p={p:.2g}, n={n} cells)",
                 transform=ax.transAxes, fontsize=7.6, color="#6b6b6b", va="bottom")
         _n_axis(ax)
         if set_key == "lit":
@@ -122,7 +124,11 @@ def fig_pooled(tidy, out_png):
         "paradigm re-rolled and are not independent. N is confounded with oddball probability by "
         "construction: the generator sets rare-tone probability to 1/(N+1), so N = 3/5/7 means "
         "25%/16.7%/12.5% (shown on the x-axis). A trough that deepens across N is MMN-like but "
-        "cannot be attributed to local spacing rather than global rarity."),
+        "cannot be attributed to local spacing rather than global rarity.\n"
+        "READ WITH CARE: these means are UNPAIRED, and the S7 gate admits a different mix of "
+        "conditions at each N, so a rising line here can be composition rather than deepening. "
+        "The paired within-condition test (n_effect_paired_n3_vs_n7.csv) is the one that "
+        "settles it — on LIT it is null (p=0.23, 50% of pairs) despite the rise drawn here."),
         fontsize=7.8, color="#555555", ha="left", va="top")
     return C.finish(fig, out_png)
 
@@ -201,9 +207,9 @@ def fig_rate(tidy, out_png):
                  else f"{int(tot.min())}–{int(tot.max())} trials per point")
         rho, p, _ = C.spearman(frame["N"].to_numpy(float), frame["s7"].astype(float).to_numpy())
         ax.set_ylim(0, 1.0)
-        ax.set_title(f"{C.SET_LABEL[set_key]}  ({set_key})", fontweight="bold", loc="left", pad=18)
-        ax.text(0.0, 1.012, f"pooled rate {frame['s7'].mean():.3f} · trial-level ρ={rho:+.3f} "
-                            f"(p={p:.3g}) · {denom}", transform=ax.transAxes, fontsize=7.6,
+        ax.set_title(f"{C.SET_LABEL[set_key]}  ({set_key})", fontweight="bold", loc="left", pad=26)
+        ax.text(0.0, 1.012, f"pooled rate {frame['s7'].mean():.3f} · ρ={rho:+.3f} (p={p:.2g})"
+                            f"\n{denom}", transform=ax.transAxes, fontsize=7.6,
                 color="#6b6b6b", va="bottom")
         _n_axis(ax)
         ax.set_ylabel("S7@0.75 rate  (S7 / all trials)" if set_key == "lit" else "")
@@ -252,6 +258,35 @@ def stats_table(tidy):
     return pd.DataFrame(rows)
 
 
+def paired_n3_vs_n7(tidy):
+    """Within-(model, condition) paired comparison of the N=3 and N=7 gated troughs.
+
+    THE test for an amplitude N-effect, and it disagrees with the unpaired means the pooled figure
+    draws. Pairing makes each condition its own control, which removes the between-condition
+    variance that dominates the trough distribution AND -- the reason it matters here -- removes
+    the composition confound: the S7 gate admits a DIFFERENT MIX of conditions at each N, so an
+    unpaired mean can shift across N without any single condition deepening. On LIT it does
+    exactly that (unpaired p=0.003, paired p=0.23 with 50% of pairs deeper, i.e. a coin flip).
+    """
+    rows = []
+    for set_key in ("lit", "lit_p2", "p2"):
+        cells = C.per_method_cells(C.set_frame(tidy, set_key))
+        wide = cells.pivot_table(index=["model", "method"], columns="N", values="trough_uv")
+        for model in ["POOLED"] + C.MODEL_ORDER:
+            w = wide if model == "POOLED" else wide[
+                wide.index.get_level_values("model") == model]
+            w = w.dropna(subset=[3, 7])
+            if len(w) < 10:
+                continue
+            delta = (w[7] - w[3])                      # negative = deeper at N=7
+            p = stats.wilcoxon(w[7], w[3]).pvalue
+            rows.append(dict(set=set_key, model=model, n_pairs=len(w),
+                             mean_n3=w[3].mean(), mean_n7=w[7].mean(),
+                             delta_uv=delta.mean(), wilcoxon_p=p,
+                             frac_pairs_deeper_at_n7=float((delta < 0).mean())))
+    return pd.DataFrame(rows)
+
+
 def source_agreement(st):
     """Per model: do LIT and NOVEL-P2 give the same rho sign? This is what licenses lit_p2.
 
@@ -269,7 +304,7 @@ def source_agreement(st):
     return pd.DataFrame(rows)
 
 
-def print_summary(tidy, st, agree):
+def print_summary(tidy, st, agree, paired):
     print("\n" + "=" * 92)
     print("Spearman rho: trough_uv vs N, FCz, mTRF, S7@0.75-gated "
           "(NEGATIVE rho = deeper with more standards = the MMN-like direction)")
@@ -296,6 +331,15 @@ def print_summary(tidy, st, agree):
     n_same = int(agree[agree.model != "POOLED"]["same_sign"].sum())
     print(f"  -> {n_same}/{len(C.MODEL_ORDER)} models agree on sign. lit_p2 reads as "
           f"{'one experiment with more n' if n_same >= 5 else 'a MIXTURE -- report per source'}.")
+
+    print("\n" + "=" * 92)
+    print("PAIRED N=3 vs N=7 within (model, condition) -- the amplitude test that controls for")
+    print("which conditions the S7 gate admits at each N (the pooled figure's means do not)")
+    print("=" * 92)
+    print(f"  {'set':<9}{'model':<17}{'pairs':>7}{'delta uV':>10}{'p':>11}{'% deeper':>10}")
+    for _, r in paired[paired.model == "POOLED"].iterrows():
+        print(f"  {r['set']:<9}{r.model:<17}{int(r.n_pairs):>7}{r.delta_uv:>+10.3f}"
+              f"{r.wilcoxon_p:>11.3g}{100 * r.frac_pairs_deeper_at_n7:>9.0f}%")
 
     print("\n" + "=" * 92)
     print("S7@0.75 rate per N (count / ALL trials) -- the uncensored companion")
@@ -336,14 +380,17 @@ def main():
 
     st = stats_table(tidy)
     agree = source_agreement(st)
+    paired = paired_n3_vs_n7(tidy)
     csv_dir = Path(args.csv_dir)
     csv_dir.mkdir(parents=True, exist_ok=True)
     st_path = csv_dir / "n_effect_stats.csv"
     st.to_csv(st_path, index=False, float_format="%.6g")
     agree.to_csv(csv_dir / "n_effect_source_agreement.csv", index=False, float_format="%.6g")
+    paired.to_csv(csv_dir / "n_effect_paired_n3_vs_n7.csv", index=False, float_format="%.6g")
     print(f"  wrote {st_path}  ({len(st)} rows)")
     print(f"  wrote {csv_dir / 'n_effect_source_agreement.csv'}")
-    print_summary(tidy, st, agree)
+    print(f"  wrote {csv_dir / 'n_effect_paired_n3_vs_n7.csv'}")
+    print_summary(tidy, st, agree, paired)
 
 
 if __name__ == "__main__":
