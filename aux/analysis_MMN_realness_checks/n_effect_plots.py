@@ -255,6 +255,88 @@ def fig_per_model(tidy, set_key, out_png, gate="s7", kind="median"):
 
 
 # ------------------------------------------------------------------------------------------
+# Figure 4 -- the raw-data view: the within-stimulus change distribution
+# ------------------------------------------------------------------------------------------
+def fig_change_dist(tidy, out_png, gate="s7"):
+    """One point per (model, stimulus): the N7 - N3 change in its own trough.
+
+    WHY THIS RATHER THAN A SCATTER OF TRIALS, which is what the deviance figures draw.
+    Deviance has a CONTINUOUS x -- 122 distinct semitone values carrying 125-981 gated points --
+    so a scatter spreads out and an OLS slope through it means something. N has THREE x-levels
+    carrying 4,000+ trials each, so the same treatment is three solid blocks in which a 0.03 uV
+    shift is invisible against a 1.5 uV spread.
+
+    The deeper reason is the unit. Trials within a stimulus are not independent (5 variations of
+    one paradigm, and the balanced set makes each stimulus contribute at all three N), so a
+    trial scatter would imply ~14,000 independent observations -- the exact inflation the
+    statistics here avoid by working at the cell level. The within-stimulus CHANGE is the unit
+    the inference actually uses, it plots at 130-1030 points, and it shows what an error bar
+    cannot: how wide and how nearly symmetric about zero the change distribution is.
+    """
+    fig, axes = plt.subplots(1, len(C.PANEL_SETS), figsize=(15.0, 5.0), sharey=True)
+    rng = np.random.default_rng(0)
+    for ax, set_key in zip(axes, C.PANEL_SETS):
+        frame = C.balanced_across_n(C.set_frame(tidy, set_key), gate)
+        cells = (C.gated(frame, gate)
+                 .groupby(["model", "method", "N"], observed=True)["trough_uv"]
+                 .median().reset_index())
+        wide = cells.pivot_table(index=["model", "method"], columns="N", values="trough_uv")
+        wide = wide.dropna(subset=list(C.N_LEVELS))
+
+        for i, model in enumerate(C.MODEL_ORDER):
+            st = C.style(model)
+            w = wide[wide.index.get_level_values("model") == model]
+            if w.empty:
+                continue
+            d = (w[7] - w[3]).to_numpy(float)
+            ax.scatter(i + rng.uniform(-0.3, 0.3, d.size), d, s=11, color=st["color"],
+                       alpha=0.5, lw=0, zorder=3)
+            ax.plot([i - 0.36, i + 0.36], [np.median(d)] * 2, color="#111111", lw=2.2, zorder=5)
+            # share deepening, pinned to the top of the panel so it never sits on the zero
+            # line or a median bar
+            ax.text(i, 0.985, f"{100 * (d < 0).mean():.0f}%", transform=ax.get_xaxis_transform(),
+                    ha="center", va="top", fontsize=7.5, color="#444444", zorder=6)
+
+        ax.axhline(0, color="#9a9a9a", lw=1.2, ls=":", zorder=1)
+        ax.set_xticks(range(len(C.MODEL_ORDER)))
+        ax.set_xticklabels([m.replace("whisper-", "w-").replace("wav2vec2-", "wv-")
+                            for m in C.MODEL_ORDER], rotation=45, ha="right", fontsize=8)
+        n_stim = len(wide)
+        ax.set_title(f"{C.SET_LABEL[set_key]}  ({set_key})", fontweight="bold", loc="left", pad=18)
+        ax.text(0.0, 1.012, f"{C.gate_label(gate, long=False)} · {n_stim} model×stimulus pairs",
+                transform=ax.transAxes, fontsize=7.6, color="#6b6b6b", va="bottom")
+        if set_key == C.PANEL_SETS[0]:
+            ax.set_ylabel("Δ trough,  N=7 − N=3  (µV)\n↓ deeper at N=7")
+
+    lim = float(np.nanpercentile(np.abs(
+        np.concatenate([((lambda w: (w[7] - w[3]).to_numpy(float))(
+            C.gated(C.balanced_across_n(C.set_frame(tidy, k), gate), gate)
+            .groupby(["model", "method", "N"], observed=True)["trough_uv"].median().reset_index()
+            .pivot_table(index=["model", "method"], columns="N", values="trough_uv")
+            .dropna(subset=list(C.N_LEVELS))))
+            for k in C.PANEL_SETS])), 99))
+    axes[0].set_ylim(-lim, lim)                 # symmetric about 0: no visual bias either way
+
+    fig.suptitle(f"Within-stimulus change in MMN trough across N at FCz — "
+                 f"({C.gate_label(gate, long=False)}-gated)",
+                 fontweight="bold", x=0.006, ha="left", y=1.02)
+    fig.text(0.006, -0.02, C.wrap(
+        "One point per (model, stimulus): that stimulus's own trough at N=7 minus its trough at "
+        "N=3, so each point is a within-stimulus change and the comparison needs no baseline "
+        "correction. Black bar = median; the % above each column is the share of stimuli that "
+        "deepened. The axis is symmetric about zero so neither direction is visually favoured, "
+        "and clipped at the 99th percentile of |Δ|.\n"
+        "This replaces a raw-trial scatter (the deviance figures' treatment) for two reasons: N "
+        "has only 3 x-levels carrying 4,000+ trials each, so a strip plot is a solid block in "
+        "which the ~0.05 µV effect is invisible; and trials within a stimulus are not "
+        "independent, so a trial scatter would imply ~14,000 independent observations. What it "
+        "shows that an error bar cannot: the change distribution is roughly ±1 µV wide and nearly "
+        "symmetric, so a 54–55% deepening share is barely better than a coin flip."),
+        fontsize=7.8, color="#555555", ha="left", va="top")
+    return C.finish(fig, out_png)
+
+
+# ------------------------------------------------------------------------------------------
 # Figure 3 -- the UNCENSORED view: S7@0.75 rate per N
 # ------------------------------------------------------------------------------------------
 def fig_rate(tidy, out_png, gate="s7"):
@@ -486,6 +568,7 @@ def main():
             stem = f"n_effect_per_model__{set_key}{C.CENTRAL_SUFFIX[kind]}"
             fig_per_model(tidy, set_key, C.fig_path(gate, set_key, stem, root), gate, kind)
     fig_rate(tidy, C.fig_path(gate, None, "n_effect_pass_rate", root), gate)
+    fig_change_dist(tidy, C.fig_path(gate, None, "n_effect_change_dist", root), gate)
 
     st = stats_table(tidy, gate)
     agree = source_agreement(st)

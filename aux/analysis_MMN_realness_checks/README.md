@@ -1,7 +1,7 @@
 # How to read these figures
 
 Two dose-response checks on whether the in-silico MMN behaves like a human MMN, at the **FCz
-electrode**, **mTRF** mapping, **six models**. 32 figures = 16 views × 2 gates, filed as
+electrode**, **mTRF** mapping, **six models**. 34 figures = 17 views × 2 gates, filed as
 `plots/<gate>/<set>/` — see §6.
 
 Read §1 first — it is the vocabulary every figure uses. Then find your figure in §3.
@@ -86,7 +86,7 @@ Both are among the best-replicated properties of the human MMN, which is why the
 
 ---
 
-## 3. The four figure families
+## 3. The five figure families
 
 ### A. `*_pooled_*` — the headline amplitude result
 
@@ -151,7 +151,29 @@ flat gated trough is a real positive, not a null.**
 *Watch:* LIT's per-model lines swing between 0 and 1 because most of its semitone values carry only
 2 conditions. Read the pooled line there.
 
-### D. `<gate>/lit_p2/deviance_overlap_lit_vs_p2.png` — is the combined set trustworthy?
+### D. `<gate>/all_sets/n_effect_change_dist.png` — the raw-data view of the N effect
+
+One point per (model, stimulus): that stimulus's own trough at N=7 minus its trough at N=3. Black
+bar = median, `%` above each column = share of stimuli that deepened, axis symmetric about zero.
+
+*Why this and not a scatter of trials, which is what the deviance figures draw.* Deviance has a
+**continuous** x — 122 distinct semitone values carrying 125–981 gated points — so a scatter
+spreads out and an OLS slope through it means something. N has **three** x-levels carrying 4,000+
+trials each, so the same treatment is three solid blocks in which a ~0.05 µV effect is invisible.
+And trials within a stimulus are not independent, so a trial scatter would imply ~14,000
+independent observations — the inflation every statistic here avoids by working at the cell level.
+The within-stimulus *change* is the unit the inference actually uses and plots at 130–1030 points.
+
+*What it shows that the error bars cannot:* the change distribution is roughly ±1 µV wide, nearly
+symmetric, with medians of −0.002 to −0.026 µV and 50–57% of stimuli deepening. The N effect is
+barely distinguishable from a coin flip at the level of individual stimuli — which is the honest
+reading, and is invisible in a figure that plots only the centre.
+
+*The exception worth seeing:* whisper-medium in LIT, 77% of stimuli deepening with a median of
+−0.30 µV. In the same panel wav2vec2-medium (35%), whisper-base (38%) and whisper-small (40%) run
+the *other* way. The pooled LIT line is an average over models that disagree in direction.
+
+### E. `<gate>/lit_p2/deviance_overlap_lit_vs_p2.png` — is the combined set trustworthy?
 
 The diagnostic for `lit_p2`. LIT spans 0.84–12 semitones and NOVEL-P2 spans 4.50–63, so a slope
 fitted across the union is substantially a **between-source contrast wearing a deviance label** —
