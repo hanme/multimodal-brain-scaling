@@ -74,6 +74,15 @@
   - [17.4 Cost model and budget](#174-cost-model-and-budget)
   - [17.5 Step-by-step run guide](#175-step-by-step-run-guide)
   - [17.6 Invariants and failure modes](#176-invariants-and-failure-modes)
+- [18. MMN "realness" checks at FCz — N-effect and deviance scaling (2026-08-11)](#18-mmn-realness-checks-at-fcz--n-effect-and-deviance-scaling-2026-08-11)
+  - [18.1 The result in one paragraph](#181-the-result-in-one-paragraph)
+  - [18.2 Why a cluster re-run was needed at all](#182-why-a-cluster-re-run-was-needed-at-all)
+  - [18.3 Code changes](#183-code-changes)
+  - [18.4 New artefacts](#184-new-artefacts)
+  - [18.5 The two re-runs](#185-the-two-re-runs)
+  - [18.6 Reporting decisions worth not re-litigating](#186-reporting-decisions-worth-not-re-litigating)
+  - [18.7 Interpretation limits](#187-interpretation-limits-short-form-full-list-in-the-memo)
+  - [18.8 Failure modes specific to this phase](#188-failure-modes-specific-to-this-phase)
 
 ---
 
@@ -1362,3 +1371,96 @@ PREDICTIONS_ROOT=outputs/insilico_mmn_predictions_novel_figs \
 - **A stale `METHOD_LIST` after a grid rebuild is the worst failure here, and it happened.** Rebuilding the grid renumbers every `method_id`, so if the stimuli are not re-staged, `method_1001` is one frequency pair in the audio and a different one in the CSV that scores it. The features come out internally consistent and simply describe the wrong pairs — no check downstream catches it. Both submitters now compare the method list against the metadata CSV condition-by-condition and refuse on any mismatch, and the extraction submitter also checks the named conditions were actually staged. The tell before the guard existed: the array range. `--array=0-1055` means 1056 conditions; the 43-point grid is `0-1805`.
 - **Forgetting `DATA_DIR` in Stage E overwrites the literature predictions** — the comparison baseline. There is no backup; the wrapper defaults to the literature path by design for the literature run. `submit_novel_insilico.sh` sets it for you and refuses any `PREDICTIONS_ROOT` under `outputs/insilico_mmn_predictions/`, so use it rather than hand-rolling the sbatch line.
 - **`--save_plots false` is not optional at 1,806 conditions.** With plots on, expect ~4 h/model of single-threaded matplotlib on top of the compute, likely exceeding the 12 h walltime for the slower models.
+
+---
+
+## 18. MMN "realness" checks at FCz — N-effect and deviance scaling (2026-08-11)
+
+**Scope.** Two dose-response checks on whether the in-silico MMN behaves like a human/clinical MMN, both asking the same question along axes the MMN literature has strong priors about: does the trough deepen as the paradigm makes the oddball more surprising? **(a) the N-effect** — more standards between deviants → deeper MMN; **(b) deviance scaling** — larger standard→deviant separation → deeper MMN. **Not covered:** any re-fitting. The mTRF mappings and the committed §1.5 electrode layers are frozen; the one cluster re-run here is a re-*apply* of the existing mapping, needed only because the driver was discarding data (§18.2).
+
+**Site:** the **FCz electrode only** — no parcels at any stage. mTRF only; the encoder is out of scope (it clears S7@0.75 in 16 of 360 cells across all ROIs). Six models — whisper-large excluded, for two independent reasons: its predicted µV run ~20–35× every other model (median S7-passing LIT trough at FCz −37.3 µV against a −1.08…−1.75 µV band for the other six), which would dominate any raw-µV pooled mean and force a symlog axis; and it was never run in the novel search, so keeping it would make `lit` and `p2` incomparable.
+
+**Everything lives in `aux/analysis_MMN_realness_checks/`.** Memo: `mmn_dose_response_fcz_memo.md`. Figure-reading guide: `README.md` — read that before the figures; 34 PNGs is not a self-describing set.
+
+### 18.1 The result in one paragraph
+
+**The models are dose-sensitive in the MMN-like direction on both axes, but far more in *whether* a mismatch response occurs than in *how deep* it is.** Across the N range the NOVEL-P2 trough deepens by 0.085 µV on a ~1.3 µV baseline (~6%) while the probability of producing a criterion-passing MMN rises 54% → 59% (Cochran–Armitage z = +6.36, p = 2e-10). Human MMN amplitude is graded; this looks closer to a near-threshold detection process. Hold that loosely, though: ridge shrinkage plus a linear mTRF readout compresses amplitude, and removing one layer of censoring (S7 → S2) nearly doubled the measured effect, so some of the flatness is demonstrably measurement rather than model. For deviance the effect is real but small and **range-limited**: ρ = −0.15 up to two octaves, reversing to +0.10 above, where a "deviant" is arguably a different sound. Both are written up with their limits in the memo.
+
+**Two results that only appeared because the analysis was decomposed:**
+
+- **LIT's headline ρ = −0.31 dissolves.** Split at the point NOVEL-P2 begins, it is flat within each half (−0.09, p = 0.51 below 3.16 st; −0.09, p = 0.48 in the 4.5–12 st overlap). The whole correlation is a −1.13 → −1.36 µV *step* between two dense method clusters that also differ in SOA (200–1000 ms) and duration (50–200 ms). It is a two-cluster contrast, not a gradient, and should not be quoted alone.
+- **The pooled N line averages over models that disagree in direction.** In LIT, whisper-medium deepens in 77% of its stimuli (median −0.30 µV) while wav2vec2-medium (35%), whisper-base (38%) and whisper-small (40%) run the other way. Within NOVEL-P2 the *rate* effect is likewise carried entirely by the three larger models (whisper-medium z = 4.33, wav2vec2-medium z = 4.15, wav2vec2-large z = 5.55, all p < 1e-4) while whisper tiny/base/small are flat. Suggestive for a scaling project; six models across two architectures, so a hypothesis, not a law.
+
+### 18.2 Why a cluster re-run was needed at all
+
+Each method's 15 deviants are a 3 × 5 grid of `N ∈ {3,5,7}` × `variation ∈ {1..5}`, so **N lives entirely inside the average the pipeline takes**. `analyze_method → finalize_method` returns `dev_stack [15, n_t, n_elec]` and `dev_ids`, but `insilico_mmn_electrodes.py` wrote only `deviant_mean` and discarded the rest. Verified absent in every committed electrode h5 for both sources, though `n_deviants = 15` confirms the trials were computed. One patch, two re-runs — deviance (§18.4) needed none of this and shipped first.
+
+The `deviants` stack *does* survive in the **parcel** h5s (and in `insilico_mmn_attn.py`'s output), which is what let the entire per-trial path be validated on real data before any cluster time was requested: per-trial scoring reproduced the pipeline's own stored `n7v1_peak` to **2.1–3.0 × 10⁻⁷** across all 288 (model × method) cells, and emitted exactly the expected 4,320 rows. Those parcel numbers are a plumbing check and appear in no figure.
+
+### 18.3 Code changes
+
+**`scripts/insilico_mmn_electrodes.py`** now also writes, per method group:
+
+| dataset | shape / dtype | contents |
+|---|---|---|
+| `deviants_fc` | `[n_dev, n_t, n_fc]` float32, gzip-4 | `dev_stack` sliced to the fronto-central cluster |
+| `deviants_fc_electrodes` | `S8` | that axis's electrode names, in slice order |
+| `deviant_ids` | `S40` | labels the trial axis of both it and `deviant_mean` |
+
+- **Fronto-central slice, not the full stack.** `CLUSTERS["frontal"] + CLUSTERS["central"]`, intersected with the electrodes that survived the NC floor rather than assumed present. The full 47-electrode stack would take each h5 from ~26 MB to ~230 MB for 40 electrodes of unused scalp; this costs ~35 MB/model and removes a second cluster round-trip if Fz is ever wanted. The analysis is FCz and nothing else — this is a storage decision only.
+- **`n_dev` is never hardcoded to 15.** It is sized from `dev_stack`, because `n_deviants` is `--trial_levels × --num_variations` and other configs of this same driver legitimately produce 1. The 15-trial assertion lives in the analysis script.
+- **Nothing else moved** — not the parcel driver, the mTRF fit, the layer map or the baseline multipliers, so both runs stay comparable to their committed screens.
+
+Three tests in `tests/test_insilico_mmn.py`, the load-bearing one being that `deviants_fc[:, :, FCz].mean(0)` reproduces the stored `deviant_mean` FCz column to float32 tolerance — the guarantee that the per-trial stack and the committed method-level results describe the same traces.
+
+### 18.4 New artefacts
+
+Under `aux/analysis_MMN_realness_checks/`:
+
+| file | what it is |
+|---|---|
+| `mmn_dose_response_common.py` | the shared vocabulary: sources, sets, gates, palette, the one summary statistic, the balanced-N filter |
+| `analyze_mmn_per_trial_n.py` | per-trial FCz scoring → the two tidy CSVs (4,320 + 22,860 rows) |
+| `n_effect_plots.py` | Plot 1 (N) — pooled, per-model, pass-rate, change-distribution + 4 stats CSVs |
+| `deviance_scaling_s7gated.py` | Plot 2 (deviance) — pooled, per-model, pass-rate, overlap diagnostic + stats CSV |
+| `README.md` | **the figure-reading guide** — vocabulary, the five figure families, five ways to misread them |
+| `handoff_per_trial_deviants_n_effect.md` | the cluster runbook (§18.5) |
+| `plots/<gate>/<set>/*.png`, `svgs/…` | 34 figures, mirrored trees |
+
+Scoring is imported, never reimplemented: `compute_z_diff`, `zscore_baseline`, `trace_stats`, `decide` from `analyze_mmn_criteria`; `uv_diff_wave` from `analyze_mmn_criteria_s5_s6`; knobs identical to `analyze_mmn_s7_roi.py` (WINDOW 100–240, RECOVERY_MS 120, RECOVERY_FRAC 0.5, CTRL_WINDOW 300–440, EDGE_GUARD_BINS 1).
+
+### 18.5 The two re-runs
+
+Both go to **new sibling roots** — `outputs/insilico_mmn_predictions_soafix_pertrial` and `..._novel_phase2_pertrial` — so the committed h5s are never written. `insilico_mmn_electrodes.py` opens with `h5py.File(path, "w")`, so pointing it at the existing roots destroys them; the siblings are what make the re-run reversible. Both names clear `submit_novel_insilico.sh`'s guard, which refuses only `outputs/insilico_mmn_predictions` and paths beneath it. Budget roughly double the prediction footprint (NOVEL-P2 is ~602 MB, plus ~35 MB/model of `deviants_fc`); check `lfs quota -g upschrimpf1 /work` first.
+
+Commands and the three verification gates are in `handoff_per_trial_deviants_n_effect.md`. All three passed on 2026-08-10. The one worth restating: **gate 3 must score into new CSV paths.** `outputs/results_soafix_full/mmn_s7_roi.csv` and `outputs/results_novel_search/phase2_mmn_s7_roi.csv` are the committed inputs the deviance analysis reads, and re-scoring in place would silently swap them for re-run output. Gate 3 is now an explicit MATCH/DRIFT comparison against the committed FCz S2/S7 table, which reproduced exactly — the patch adds a dataset and perturbs no verdict.
+
+> **Gate 1 matters more than it looks.** Gate 3 passing is *also* consistent with the patch never having been applied: if the cluster's `git pull` did not take, the re-run produces byte-identical verdicts with no `deviants_fc` written. Gate 1 is the only check that proves the patch ran.
+
+### 18.6 Reporting decisions worth not re-litigating
+
+Each of these was changed at least once during review; the reasoning is in the code comments and `README.md`.
+
+- **Two gates, both shipped.** `S7@0.75` (shape + µV floor) is the headline; **`S2`** (shape only) is the uncensored companion under `plots/s2/`. The floor removes the shallow tail *by construction* — exactly the traces a weak dose-response moves — so S7 numbers are a **lower bound**. Not a small effect: S7 keeps 48% of LIT's S2 traces and 73% of NOVEL-P2's, and the paired N7−N3 shift is −0.085 µV at S2 (p = 9e-5) against −0.047 µV at S7 (p = 0.004). The pooled cell-level ρ only reaches significance at S2.
+- **The N amplitude figures use a *balanced* set** — only stimuli producing a criterion-passing MMN at N=3 *and* 5 *and* 7. Without it the gate admits a different population at each N and the mean moves because membership changed, not because anything deepened. That was not hypothetical: the unbalanced LIT panel rose visibly (unpaired p = 0.003) while paired it was null (p = 0.23, 50% of stimuli — a coin flip). The **rate** figures are deliberately not balanced; their denominator is every condition by definition.
+- **One summary statistic everywhere: median with a 95% bootstrap CI**, with `__mean_sem` companions on an identical axis so the choice is auditable. 0 of 31 per-bin distributions are consistent with normality (Shapiro–Wilk), skewness −2 to −3; a median has no closed-form standard error, so ±1.96·SE would be unsupported. It does not manufacture a result — the N=3→7 change agrees to ≤0.02 µV between the two statistics.
+- **Linear semitone x-axis, not log.** Semitones are already log-frequency, so a log axis is log-of-log in Hz; it compressed the >24 st region where the trend reverses; and it does not even give more even bins (lit_p2 widths span 7.5× linearly against 11.7× in log₂).
+- **The `p2_top100` fourth panel is selected on the outcome twice** — NOVEL-P2 is already the ≥5/6-agreement subset, and ranking within it by agreement and depth selects again on the plotted quantity (S7 pass rate 83% vs p2's 56%). It bounds the best responders; it does not estimate an effect size, and no statistic is computed on it.
+- **Figures are reproducible.** Fixed `svg.hashsalt`, `metadata={"Date": None}` on SVG saves, and a seeded bootstrap: identical input gives byte-identical output. Without this every re-render rewrote all tracked SVGs with thousands of no-op line changes.
+
+### 18.7 Interpretation limits (short form; full list in the memo)
+
+- **N is confounded with oddball probability by construction.** The generator sets rare-tone probability to 1/(N+1) (`00aa_generate_audio_stimuli.py:339`), so N = 3/5/7 is 25% / 16.7% / 12.5%. A deepening trough is MMN-like but cannot separate local spacing from global rarity.
+
+  > **The generator's labels are inverted relative to the roles — check this before reading that code.** `generate_deviant_sequence`'s own docstring is explicit: *"the background (frequent) tone is the **deviant** frequency and the rare (oddball) tone is the **standard** frequency"*. So in a deviant sequence the suffix `["standard"] + ["deviant"] * N + ["standard"]` is **one oddball, N frequent tones, one oddball**, and `p_standard = 1.0 / (N + 1)` is the **oddball** probability, not the standard's. Read in isolation, both lines say the opposite of what they mean. The figures label the axis in *role* terms — "N standards between deviants", oddball probability 25% / 16.7% / 12.5% — which is correct, and matches the classic MMN reading, precisely because the code's names invert. The time-locked final tone is always the rare oddball.
+- **NOVEL-P2 is selected on the outcome variable** (`n_agree ≥ 5` at FCz in phase 1), which is essentially the quantity being plotted. It answers *"among stimuli that reliably evoke a model MMN, does amplitude scale?"* — not *"does deviance drive amplitude?"*. Its range is also truncated from below at 4.50 st: 0 of 42 pairs below 2 st survived, so the small-deviance end where the trend is most diagnostic is absent and LIT is the only coverage there.
+- **The `lit_p2` deviance slope is partly a between-source contrast** — LIT supplies nearly all conditions below 4.5 st, NOVEL-P2 nearly all above 12. Inside the 4.50–12 st overlap the two sources agree closely (ρ = −0.089 vs −0.094) but **both are non-significant**: agreement on a null, which rules out a source artefact without establishing a deviance effect. Never quote the `lit_p2` ρ without it. The caution does **not** apply to the `lit_p2` N-effect, where both sources span the identical N.
+- **Predicted µV are not literature EEG µV.** Ridge shrinks the amplitude and the 0.75 µV floor is calibrated to the models' own distribution, not a clinical scale. Only direction and monotonicity transfer.
+
+### 18.8 Failure modes specific to this phase
+
+- **`deviants_fc` absent** → `analyze_mmn_per_trial_n.py` exits with the re-run instruction rather than producing nothing. The committed electrode h5s are in this state until the §18.5 re-runs land.
+- **Scoring the re-run into the committed CSV paths** destroys the deviance analysis's inputs. See gate 3.
+- **A stale `phase2_final_ranking.csv`** would silently change which stimuli the `p2_top100` panel contains; `set_frame` asserts all 100 ranked methods match the scored data and refuses otherwise.
+- **`whisper-large` leaking back in** would break `lit`↔`p2` comparability. It is filtered at load time in `load_fcz`, not at plot time, so it cannot reach a panel or an appendix table.
+- **The per-trial CSVs are untracked**, matching the existing `mmn_s7_roi.csv` convention. Regenerating them needs the `_pertrial` prediction roots, not the committed ones.
