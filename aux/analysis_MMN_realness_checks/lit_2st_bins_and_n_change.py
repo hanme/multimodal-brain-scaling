@@ -223,8 +223,15 @@ def n_change_table(per_trial, gate="s7"):
         w = wide if model == "POOLED" else wide[wide.index.get_level_values("model") == model]
         if w.empty:
             continue
-        rec = dict(model=model, n_stimuli=len(w),
-                   mean_N3=w[3].mean(), mean_N5=w[5].mean(), mean_N7=w[7].mean())
+        rec = dict(model=model, n_stimuli=len(w))
+        # Levels get their own 95% CI so the trajectory figure can show one. Note these are
+        # BETWEEN-stimulus intervals and are far wider than the delta CIs below: the large
+        # stimulus-to-stimulus spread in absolute trough cancels in a within-stimulus difference.
+        for lvl in C.N_LEVELS:
+            m, lo, hi, _ = mean_ci(w[lvl])
+            rec[f"mean_N{lvl}"] = m
+            rec[f"mean_N{lvl}_ci_lo"] = lo
+            rec[f"mean_N{lvl}_ci_hi"] = hi
         for a, b in ((3, 5), (3, 7), (5, 7)):
             d = (w[b] - w[a])
             m, lo, hi, n = mean_ci(d)
@@ -239,36 +246,6 @@ def n_change_table(per_trial, gate="s7"):
 
 
 CONTRASTS = [(3, 5), (3, 7), (5, 7)]
-
-
-def fig_change_trajectory(ct, out_png, gate="s7"):
-    """The LEVELS in the table: mean trough at each N, one line per model plus pooled."""
-    fig, ax = plt.subplots(figsize=(7.4, 5.2))
-    xs = list(range(len(C.N_LEVELS)))
-    for _, r in ct.iterrows():
-        pooled = r.model == "POOLED"
-        st = dict(color=INK, marker="o", ls="-") if pooled else C.style(r.model)
-        ax.plot(xs, [r.mean_N3, r.mean_N5, r.mean_N7], color=st["color"], marker=st["marker"],
-                ls=st["ls"], lw=3.0 if pooled else 1.5, ms=9 if pooled else 6,
-                alpha=1.0 if pooled else 0.75, mec="white", mew=0.8,
-                zorder=5 if pooled else 3,
-                label=f"{r.model} (n={int(r.n_stimuli)})")
-    ax.set_xticks(xs)
-    ax.set_xticklabels([f"{n}\n({C.N_TO_P_DEVIANT[n]:.1%})" for n in C.N_LEVELS])
-    ax.set_xlim(-0.35, len(C.N_LEVELS) - 0.65)
-    ax.set_xlabel("N standards between deviants\n(oddball probability)")
-    ax.set_ylabel("Mean MMN trough (µV)\n↓ deeper")
-    ax.legend(frameon=False, fontsize=8, loc="center left", bbox_to_anchor=(1.01, 0.5))
-    ax.set_title(f"LIT — mean trough across N, per model "
-                 f"({C.gate_label(gate, long=False)})", fontweight="bold", loc="left")
-    fig.text(0.0, -0.19, C.wrap(
-        "The LEVELS behind lit_n_change_table.csv. Only stimuli passing at N=3 AND 5 AND 7 are "
-        "included; each stimulus's trough at a given N is the mean over ALL five variations, "
-        "including any that fail the µV floor. Lines are means over stimuli, so the vertical "
-        "offsets between models are amplitude-scale differences, not effects — read the SLOPES. "
-        "The companion forest figure carries the confidence intervals.", 104),
-        transform=ax.transAxes, fontsize=7.8, color="#555555", va="top")
-    C.finish(fig, out_png)
 
 
 def fig_change_forest(ct, out_png, gate="s7"):
@@ -386,26 +363,40 @@ def fig_change_trajectory(ct, out_png, gate="s7"):
     trajectory into a flat line. Subtracting each model's own N=3 value puts them all at zero
     there and shows what the table's contrast columns actually say.
     """
-    fig, ax = plt.subplots(figsize=(7.6, 5.2))
+    fig, ax = plt.subplots(figsize=(8.6, 5.4))
     xs = list(range(len(C.N_LEVELS)))
-    for m in ["POOLED"] + [x for x in C.MODEL_ORDER if x in set(ct["model"])]:
+    # Dodge the models apart so seven sets of error bars on three x-positions stay readable;
+    # POOLED stays on the true tick.
+    models = [x for x in C.MODEL_ORDER if x in set(ct["model"])]
+    dodge = dict(zip(models, np.linspace(-0.16, 0.16, len(models))))
+    dodge["POOLED"] = 0.0
+    for m in ["POOLED"] + models:
         r = ct[ct["model"] == m].iloc[0]
-        ys = [r["mean_N3"], r["mean_N5"], r["mean_N7"]]
-        ys = [y - ys[0] for y in ys]                       # re-baseline to N=3
+        # Re-baselining to N=3 makes each plotted value a WITHIN-STIMULUS difference, so the
+        # right interval is the paired delta CI already in the table -- not the between-stimulus
+        # CI of the level. N=3 is exactly 0 with zero width by construction, so it gets no bar.
+        ys = [0.0, r["d_N3_to_N5"], r["d_N3_to_N7"]]
+        err_lo = [0.0, r["d_N3_to_N5"] - r["d_N3_to_N5_ci_lo"],
+                  r["d_N3_to_N7"] - r["d_N3_to_N7_ci_lo"]]
+        err_hi = [0.0, r["d_N3_to_N5_ci_hi"] - r["d_N3_to_N5"],
+                  r["d_N3_to_N7_ci_hi"] - r["d_N3_to_N7"]]
         pooled = m == "POOLED"
         st = dict(color=INK, marker="D") if pooled else C.style(m)
-        ax.plot(xs, ys, color=st["color"], marker=st["marker"], ls="-",
-                lw=3.0 if pooled else 1.7, ms=9 if pooled else 7,
-                mec="white", mew=0.9, zorder=5 if pooled else 3,
-                label="POOLED" if pooled else m)
-        ax.annotate(f" {m}", (xs[-1], ys[-1]), fontsize=8,
-                    color=st["color"], va="center", ha="left",
-                    fontweight="bold" if pooled else "normal")
+        ax.errorbar(np.array(xs, float) + dodge[m], ys, yerr=[err_lo, err_hi],
+                    color=st["color"], marker=st["marker"], ls="-",
+                    lw=3.0 if pooled else 1.7, ms=9 if pooled else 7,
+                    elinewidth=2.0 if pooled else 1.1, capsize=4 if pooled else 2.5,
+                    mec="white", mew=0.9, zorder=6 if pooled else 3,
+                    label="POOLED" if pooled else m)
 
     ax.axhline(0, color="#9a9a9a", lw=1.2, ls=":", zorder=1)
     ax.set_xticks(xs)
     ax.set_xticklabels([f"{n}\n({C.N_TO_P_DEVIANT[n]:.1%})" for n in C.N_LEVELS])
-    ax.set_xlim(-0.15, len(C.N_LEVELS) - 1 + 0.95)
+    ax.set_xlim(-0.4, len(C.N_LEVELS) - 0.6)
+    n_by = dict(zip(ct["model"], ct["n_stimuli"]))
+    h, lab = ax.get_legend_handles_labels()
+    ax.legend(h, [f"{l}  (n={int(n_by[l])})" for l in lab], frameon=False, fontsize=8,
+              loc="center left", bbox_to_anchor=(1.01, 0.5))
     ax.set_xlabel("N standards between deviants\n(oddball probability)")
     ax.set_ylabel("Δ trough from N=3 (µV)\n↓ deeper")
     ax.set_title(f"LIT — trough trajectory across N, re-baselined to N=3 "
@@ -413,8 +404,11 @@ def fig_change_trajectory(ct, out_png, gate="s7"):
     fig.text(0.0, -0.16, C.wrap(
         "Each model's own N=3 mean is subtracted, so every line starts at zero and the panel shows "
         "SHAPE rather than level — the raw means span ~1.1 to ~2.4 µV between models, which on a "
-        "shared axis flattens every trajectory. Downward = deeper at higher N. This is the same "
-        "data as the forest plot's contrast columns, drawn as a path.", 96),
+        "shared axis flattens every trajectory. Downward = deeper at higher N. Bars are 95% CIs "
+        "of the WITHIN-STIMULUS change from N=3 — the correct interval once each line is "
+        "re-baselined, and the same numbers the forest plot draws; N=3 is exactly zero with zero "
+        "width by construction, so it carries no bar. Models are dodged apart for legibility "
+        "(POOLED sits on the tick). Only whisper-medium's intervals clear zero.", 96),
         transform=ax.transAxes, fontsize=7.8, color="#555555", va="top")
     C.finish(fig, out_png)
 
@@ -462,8 +456,6 @@ def main():
     ct = n_change_table(per_trial, gate)
     fig_change_forest(ct, C.fig_path(gate, "lit", f"lit_n_change_forest{sfx}", root), gate)
     fig_change_trajectory(ct, C.fig_path(gate, "lit", f"lit_n_change_trajectory{sfx}", root), gate)
-    fig_change_trajectory(ct, C.fig_path(gate, "lit", f"lit_n_change_trajectory{sfx}", root), gate)
-    fig_change_forest(ct, C.fig_path(gate, "lit", f"lit_n_change_forest{sfx}", root), gate)
 
     for name, d in ((f"lit_deviance_2st_trough{sfx}", s1),
                     (f"lit_deviance_2st_pass_rate{sfx}", s2),
