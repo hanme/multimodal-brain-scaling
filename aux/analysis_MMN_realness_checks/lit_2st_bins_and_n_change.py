@@ -7,6 +7,11 @@ Three deliverables, all restricted to the LITERATURE condition set (24 Frequency
   1. lit_deviance_2st_trough.png     mean MMN trough +- 95% CI per 2-semitone bin.
   2. lit_deviance_2st_pass_rate.png  mean per-stimulus pass rate (x/15) +- 95% CI per bin.
   3. lit_n_change_table.csv          mean change in trough from N=3->5, 3->7 and 5->7.
+  + a `__cond_boot` companion of (1) and (2): same data, but the unit is the CONDITION rather
+    than the row, the centre of (1) is the median, and both intervals are percentile bootstraps.
+    See fig_trough_cond_boot for why each of those three changes was made. The two versions are
+    kept side by side deliberately -- they answer the same question with different assumptions
+    and their numbers do not match.
 
 WHICH FILE FEEDS WHICH. (1) comes from the condition-level scored CSV
 (`results_soafix_full/mmn_s7_roi.csv`), whose rows are already the 15-trial average. (2) and (3)
@@ -45,6 +50,12 @@ BIN_EDGES = np.array([0.0, 2.0, 4.0, 6.0, 8.0, 10.0, 12.0])
 BIN_LABELS = ["[0,2)", "[2,4)", "[4,6)", "[6,8)", "[8,10)", "[10,12]"]
 INK = "#333333"
 
+# A bin with fewer than this many CONDITIONS gets its individual condition points drawn instead of
+# an interval. Two conditions cannot support one: a t-CI there uses t(0.975, 1) = 12.7 and spans
+# 7.3 uV, while a bootstrap can only resample the two values it has. Both are theatre.
+MIN_COND_FOR_CI = 4
+BOOT_N = 4000
+
 
 def assign_2st_bins(frame):
     """Add `bin` (ordered categorical) and `bin_mid` to a LIT frame."""
@@ -68,6 +79,33 @@ def mean_ci(values, alpha=0.05):
         return m, m, m, int(v.size)
     half = stats.t.ppf(1 - alpha / 2, v.size - 1) * (v.std(ddof=1) / np.sqrt(v.size))
     return m, m - half, m + half, int(v.size)
+
+
+def boot_ci(values, stat=np.median, n_boot=BOOT_N, alpha=0.05, seed=0):
+    """(centre, lo, hi, n) with a percentile bootstrap CI -- no distributional assumption."""
+    v = np.asarray(values, float)
+    v = v[np.isfinite(v)]
+    if v.size == 0:
+        return float("nan"), float("nan"), float("nan"), 0
+    c = float(stat(v))
+    if v.size < 2:
+        return c, c, c, int(v.size)
+    rng = np.random.default_rng(seed)
+    b = stat(rng.choice(v, size=(n_boot, v.size), replace=True), axis=1)
+    return c, float(np.percentile(b, 100 * alpha / 2)), \
+        float(np.percentile(b, 100 * (1 - alpha / 2))), int(v.size)
+
+
+def condition_values(frame, value_col, gate=None):
+    """Collapse the six models to ONE value per condition: the mean over models.
+
+    The rows of the scored CSV are not independent -- every condition contributes six of them, one
+    per model -- so an interval computed over rows treats n as up to 6x larger than it is. Reducing
+    to one value per condition first makes the unit of the interval the thing that actually varies
+    independently: the stimulus.
+    """
+    return (frame.groupby(["method", "bin"], observed=True)[value_col]
+            .mean().reset_index())
 
 
 def _bin_axis(ax):
@@ -125,6 +163,130 @@ def fig_trough(tidy, out_png, gate="s7"):
         f"empty. NOTE this is a MEAN ± t-based CI, not the median + bootstrap CI used by the main "
         f"figures in this directory; the trough distribution is strongly skewed, so these means "
         f"sit deeper than the corresponding medians and the two sets should not be mixed."),
+        transform=ax.transAxes, fontsize=7.8, color="#555555", va="top")
+    C.finish(fig, out_png)
+    return summ
+
+
+def fig_trough_cond_boot(tidy, out_png, gate="s7"):
+    """Figure A, recomputed: condition-level unit, median centre, bootstrap CI.
+
+    Three changes from the mean +- t-CI version, each fixing a measured problem:
+      * unit is the CONDITION, not the row -- rows are 6-per-condition and not independent;
+      * centre is the MEDIAN -- the condition-level distribution is still skewed (-0.16 to -1.79)
+        and the mean sits up to 0.85 uV away from the median in the sparsest bin;
+      * interval is a percentile BOOTSTRAP -- 4 of 5 bins fail Shapiro-Wilk, so the t-CI's
+        normality assumption does not hold.
+    Bins under MIN_COND_FOR_CI conditions get their raw condition points instead of an interval.
+    """
+    lit = assign_2st_bins(C.gated(C.set_frame(tidy, "lit"), gate))
+    per = condition_values(lit, "trough_uv")
+    fig, ax = plt.subplots(figsize=(8.0, 5.0))
+
+    rows, xs_ok, ys_ok = [], [], []
+    for lab in BIN_LABELS:
+        g = per[per["bin"] == lab]
+        x = BIN_EDGES[BIN_LABELS.index(lab)] + 1.0
+        c, lo, hi, n = boot_ci(g["trough_uv"], np.median)
+        rows.append(dict(bin=lab, median_uv=c, ci_lo=lo, ci_hi=hi, n_conditions=n,
+                         mean_uv=float(g["trough_uv"].mean()) if n else float("nan"),
+                         interval_shown=bool(n >= MIN_COND_FOR_CI)))
+        if n == 0:
+            continue
+        if n >= MIN_COND_FOR_CI:
+            ax.errorbar([x], [c], yerr=[[c - lo], [hi - c]], color=INK, marker="o", ms=8,
+                        lw=0, elinewidth=1.4, capsize=5, mfc=INK, zorder=4)
+            xs_ok.append(x); ys_ok.append(c)
+        else:
+            # too few conditions for any interval -- show the conditions themselves
+            ax.scatter(np.full(n, x) + np.linspace(-0.25, 0.25, n), g["trough_uv"],
+                       s=42, facecolors="none", edgecolors=INK, linewidths=1.3, zorder=4)
+            ax.annotate("n too small\nfor a CI", (x, float(g["trough_uv"].min())),
+                        textcoords="offset points", xytext=(0, -16), ha="center",
+                        fontsize=7, color="#999999", style="italic")
+        ax.annotate(f"n={n}", (x, float(g["trough_uv"].max())), textcoords="offset points",
+                    xytext=(0, 12), ha="center", fontsize=8, color="#6b6b6b")
+    ax.plot(xs_ok, ys_ok, color=INK, lw=1.6, zorder=2)
+
+    summ = pd.DataFrame(rows)
+    for lab in summ.loc[summ["n_conditions"] == 0, "bin"]:
+        ax.annotate("no LIT\nconditions", (BIN_EDGES[BIN_LABELS.index(lab)] + 1.0, 0.5),
+                    xycoords=("data", "axes fraction"), ha="center", va="center",
+                    fontsize=8, color="#999999", style="italic")
+
+    ax.axhline(0, color="#9a9a9a", lw=1, ls=":", zorder=1)
+    _bin_axis(ax)
+    ax.set_ylabel("MMN trough (µV)\n↓ deeper")
+    ax.set_title(f"LIT — MMN trough by deviance, 2-st bins — condition-level, bootstrap "
+                 f"({C.gate_label(gate, long=False)})", fontweight="bold", loc="left", fontsize=11)
+    fig.text(0.0, -0.19, C.wrap(
+        f"COMPANION to lit_deviance_2st_trough.png, recomputed three ways. The unit is the "
+        f"CONDITION (the six models are averaged within a condition first), because the scored "
+        f"CSV's rows are 6-per-condition and not independent — an interval over rows inflates n up "
+        f"to 6×. The centre is the MEDIAN, because the condition-level distribution is still "
+        f"skewed. The interval is a percentile BOOTSTRAP, because 4 of 5 bins fail a Shapiro–Wilk "
+        f"normality test. Bins with fewer than {MIN_COND_FOR_CI} conditions show their individual "
+        f"conditions as open circles instead of an interval — with n=2 neither a t-CI (±7 µV) nor "
+        f"a bootstrap (±0.6 µV) means anything. Numbers here will NOT match the mean ± t-CI "
+        f"version; that is the point of having both."),
+        transform=ax.transAxes, fontsize=7.8, color="#555555", va="top")
+    C.finish(fig, out_png)
+    return summ
+
+
+def fig_pass_rate_cond_boot(per_trial, tidy, out_png, gate="s7"):
+    """Figure B, recomputed: condition-level unit, bootstrap CI on the proportion."""
+    lit = C.set_frame(per_trial, "lit")
+    st = C.set_frame(tidy, "lit")[["method", "semitones"]].drop_duplicates()
+    col = C.GATES[gate][0]
+    rate = (lit.groupby(["model", "method"], observed=True)[col]
+            .agg(n_pass="sum", n_trials="size").reset_index())
+    rate["pass_rate"] = rate["n_pass"] / rate["n_trials"]
+    rate = assign_2st_bins(rate.merge(st, on="method", how="left"))
+    per = condition_values(rate, "pass_rate")
+
+    fig, ax = plt.subplots(figsize=(8.0, 5.0))
+    rows, xs_ok, ys_ok = [], [], []
+    for lab in BIN_LABELS:
+        g = per[per["bin"] == lab]
+        x = BIN_EDGES[BIN_LABELS.index(lab)] + 1.0
+        c, lo, hi, n = boot_ci(g["pass_rate"], np.mean)
+        rows.append(dict(bin=lab, mean_pass_rate=c, ci_lo=lo, ci_hi=hi, n_conditions=n,
+                         interval_shown=bool(n >= MIN_COND_FOR_CI)))
+        if n == 0:
+            continue
+        if n >= MIN_COND_FOR_CI:
+            ax.errorbar([x], [100 * c], yerr=[[100 * (c - lo)], [100 * (hi - c)]], color=INK,
+                        marker="o", ms=8, lw=0, elinewidth=1.4, capsize=5, mfc=INK, zorder=4)
+            xs_ok.append(x); ys_ok.append(100 * c)
+        else:
+            ax.scatter(np.full(n, x) + np.linspace(-0.25, 0.25, n), 100 * g["pass_rate"],
+                       s=42, facecolors="none", edgecolors=INK, linewidths=1.3, zorder=4)
+            ax.annotate("n too small\nfor a CI", (x, 100 * float(g["pass_rate"].min())),
+                        textcoords="offset points", xytext=(0, -22), ha="center",
+                        fontsize=7, color="#999999", style="italic")
+        ax.annotate(f"n={n}", (x, 100 * float(g["pass_rate"].max())),
+                    textcoords="offset points", xytext=(0, 12), ha="center",
+                    fontsize=8, color="#6b6b6b")
+    ax.plot(xs_ok, ys_ok, color=INK, lw=1.6, zorder=2)
+
+    summ = pd.DataFrame(rows)
+    for lab in summ.loc[summ["n_conditions"] == 0, "bin"]:
+        ax.annotate("no LIT\nconditions", (BIN_EDGES[BIN_LABELS.index(lab)] + 1.0, 50),
+                    ha="center", va="center", fontsize=8, color="#999999", style="italic")
+
+    ax.set_ylim(0, 100)
+    _bin_axis(ax)
+    ax.set_ylabel(f"{C.gate_label(gate, long=False)} pass rate (% of the 15 trials)")
+    ax.set_title(f"LIT — MMN pass rate by deviance, 2-st bins — condition-level, bootstrap "
+                 f"({C.gate_label(gate, long=False)})", fontweight="bold", loc="left", fontsize=11)
+    fig.text(0.0, -0.19, C.wrap(
+        f"COMPANION to lit_deviance_2st_pass_rate.png. Each condition's pass rate is the mean of "
+        f"its six models' x/15 rates, and the interval is a percentile BOOTSTRAP over conditions — "
+        f"a t-CI on a proportion is the weakest option available and can run outside [0,1] at small "
+        f"n. Bins under {MIN_COND_FOR_CI} conditions show their individual conditions instead. "
+        f"These intervals are roughly 1.4–2.7× narrower than the t-over-rows version, because the "
+        f"unit is now the condition rather than the model×condition pair."),
         transform=ax.transAxes, fontsize=7.8, color="#555555", va="top")
     C.finish(fig, out_png)
     return summ
@@ -453,12 +615,19 @@ def main():
     s1 = fig_trough(tidy, C.fig_path(gate, "lit", f"lit_deviance_2st_trough{sfx}", root), gate)
     s2 = fig_pass_rate(per_trial, tidy,
                        C.fig_path(gate, "lit", f"lit_deviance_2st_pass_rate{sfx}", root), gate)
+    s1b = fig_trough_cond_boot(
+        tidy, C.fig_path(gate, "lit", f"lit_deviance_2st_trough__cond_boot{sfx}", root), gate)
+    s2b = fig_pass_rate_cond_boot(
+        per_trial, tidy,
+        C.fig_path(gate, "lit", f"lit_deviance_2st_pass_rate__cond_boot{sfx}", root), gate)
     ct = n_change_table(per_trial, gate)
     fig_change_forest(ct, C.fig_path(gate, "lit", f"lit_n_change_forest{sfx}", root), gate)
     fig_change_trajectory(ct, C.fig_path(gate, "lit", f"lit_n_change_trajectory{sfx}", root), gate)
 
     for name, d in ((f"lit_deviance_2st_trough{sfx}", s1),
                     (f"lit_deviance_2st_pass_rate{sfx}", s2),
+                    (f"lit_deviance_2st_trough__cond_boot{sfx}", s1b),
+                    (f"lit_deviance_2st_pass_rate__cond_boot{sfx}", s2b),
                     (f"lit_n_change_table{sfx}", ct)):
         d.to_csv(csv_dir / f"{name}.csv", index=False, float_format="%.6g")
         print(f"  wrote {csv_dir / f'{name}.csv'}")
