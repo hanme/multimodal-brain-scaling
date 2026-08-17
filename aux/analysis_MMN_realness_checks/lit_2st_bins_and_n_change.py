@@ -56,6 +56,12 @@ INK = "#333333"
 MIN_COND_FOR_CI = 4
 BOOT_N = 4000
 
+# Bar geometry. Bins are 2 st wide, so a 1.7 bar leaves a clear gap between neighbours rather than
+# a continuous block. Bars are ANCHORED AT ZERO in both figures -- a bar encodes magnitude by its
+# length, so a truncated bar axis would misrepresent the ratios between bins.
+BAR_W = 1.7
+BAR_FILL = "#8a8a8a"
+
 
 def assign_2st_bins(frame):
     """Add `bin` (ordered categorical) and `bin_mid` to a LIT frame."""
@@ -135,14 +141,14 @@ def fig_trough(tidy, out_png, gate="s7"):
         if n == 0:
             continue
         x = BIN_EDGES[BIN_LABELS.index(lab)] + 1.0
-        ax.errorbar([x], [m], yerr=[[m - lo], [hi - m]], color=INK, marker="o", ms=8,
-                    lw=0, elinewidth=1.4, capsize=5, mfc=INK, zorder=3)
-        ax.annotate(f"n={n}", (x, m), textcoords="offset points", xytext=(0, 12),
-                    ha="center", fontsize=8, color="#6b6b6b")
+        ax.bar([x], [m], width=BAR_W, color=BAR_FILL, edgecolor="none", zorder=2)
+        ax.errorbar([x], [m], yerr=[[m - lo], [hi - m]], fmt="none", ecolor=INK,
+                    elinewidth=1.4, capsize=5, zorder=4)
+        # n sits clear of the whisker, i.e. below the deep end of the CI
+        ax.annotate(f"n={n}", (x, lo), textcoords="offset points", xytext=(0, -13),
+                    ha="center", va="top", fontsize=8, color="#6b6b6b")
 
     summ = pd.DataFrame(rows)
-    xs = [BIN_EDGES[BIN_LABELS.index(l)] + 1.0 for l in summ.dropna(subset=["mean_uv"])["bin"]]
-    ax.plot(xs, summ.dropna(subset=["mean_uv"])["mean_uv"], color=INK, lw=1.6, zorder=2)
 
     empty = [l for l in BIN_LABELS if summ.loc[summ["bin"] == l, "n_rows"].iloc[0] == 0]
     for lab in empty:
@@ -150,13 +156,16 @@ def fig_trough(tidy, out_png, gate="s7"):
                     xycoords=("data", "axes fraction"),
                     ha="center", va="center", fontsize=8, color="#999999", style="italic")
 
-    ax.axhline(0, color="#9a9a9a", lw=1, ls=":", zorder=1)
+    ax.axhline(0, color="#6b6b6b", lw=1.0, zorder=3)
+    deepest = float(np.nanmin(summ["ci_lo"])) if summ["ci_lo"].notna().any() else -1.0
+    ax.set_ylim(deepest * 1.16, 0)             # anchored at zero: bars encode magnitude
     _bin_axis(ax)
     ax.set_ylabel("MMN trough (µV)\n↓ deeper")
     ax.set_title(f"LIT — MMN trough by deviance, 2-semitone bins "
                  f"({C.gate_label(gate, long=False)}-gated)", fontweight="bold", loc="left")
     fig.text(0.0, -0.19, C.wrap(
-        f"Mean ± 95% CI of the trough within each 2-semitone bin, over the "
+        f"Bars are the MEAN trough within each 2-semitone bin, anchored at zero, with a 95% CI "
+        f"whisker; computed over the "
         f"{C.gate_label(gate, long=False)}-passing rows of all 6 models at FCz (mTRF); n = rows "
         f"per bin. Source: results_soafix_full/mmn_s7_roi.csv. Bin occupancy is very uneven — 10 "
         f"of LIT's 24 methods sit at 3.16 st and none fall between 3.16 and 7.02 st, so [4,6) is "
@@ -318,15 +327,13 @@ def fig_pass_rate(per_trial, tidy, out_png, gate="s7"):
         if n == 0:
             continue
         x = BIN_EDGES[BIN_LABELS.index(lab)] + 1.0
-        ax.errorbar([x], [100 * m], yerr=[[100 * (m - lo)], [100 * (hi - m)]], color=INK,
-                    marker="o", ms=8, lw=0, elinewidth=1.4, capsize=5, mfc=INK, zorder=3)
-        ax.annotate(f"n={n}", (x, 100 * m), textcoords="offset points", xytext=(0, 12),
-                    ha="center", fontsize=8, color="#6b6b6b")
+        ax.bar([x], [100 * m], width=BAR_W, color=BAR_FILL, edgecolor="none", zorder=2)
+        ax.errorbar([x], [100 * m], yerr=[[100 * (m - lo)], [100 * (hi - m)]], fmt="none",
+                    ecolor=INK, elinewidth=1.4, capsize=5, zorder=4)
+        ax.annotate(f"n={n}", (x, 100 * hi), textcoords="offset points", xytext=(0, 6),
+                    ha="center", va="bottom", fontsize=8, color="#6b6b6b")
 
     summ = pd.DataFrame(rows)
-    ok = summ.dropna(subset=["mean_pass_rate"])
-    ax.plot([BIN_EDGES[BIN_LABELS.index(l)] + 1.0 for l in ok["bin"]],
-            100 * ok["mean_pass_rate"], color=INK, lw=1.6, zorder=2)
     for lab in summ.loc[summ["n_model_conditions"] == 0, "bin"]:
         ax.annotate("no LIT\nconditions", (BIN_EDGES[BIN_LABELS.index(lab)] + 1.0, 50),
                     ha="center", va="center", fontsize=8, color="#999999", style="italic")
@@ -338,8 +345,8 @@ def fig_pass_rate(per_trial, tidy, out_png, gate="s7"):
                  f"({C.gate_label(gate, long=False)})", fontweight="bold", loc="left")
     fig.text(0.0, -0.19, C.wrap(
         f"Each (model, condition) contributes ONE pass rate = passing trials / 15, over the 3 "
-        f"N-levels × 5 variations. The plotted point is the mean of those rates within the bin, "
-        f"± a 95% CI; n = (model × condition) pairs. Source: "
+        f"N-levels × 5 variations. Bars are the mean of those rates within the bin, anchored at "
+        f"zero, with a 95% CI whisker; n = (model × condition) pairs. Source: "
         f"results_soafix_full/mmn_per_trial_n_fcz.csv — a x/15 rate does not exist in the "
         f"condition-level CSV, whose rows are already the 15-trial average. Unlike the gated "
         f"trough, this is a count outcome and so is not floored by the µV threshold."),
