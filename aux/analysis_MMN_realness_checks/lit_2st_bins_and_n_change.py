@@ -76,6 +76,9 @@ SOURCE_FILL = {"lit": "#5f5f5f", "p2": "#c2c2c2"}
 SOURCE_EDGE = {"lit": "none", "p2": "#5f5f5f"}
 GROUP_W = 0.78
 
+# The N-effect bar figures come in two deviance ranges: capped at LIT's maximum, and uncapped.
+N_CAPS = {"max12st": (12.0, "≤12 st"), "nomax": (float("inf"), "all deviance sizes")}
+
 
 def assign_2st_bins(frame):
     """Add `bin` (ordered categorical) and `bin_mid` to a LIT frame."""
@@ -697,6 +700,112 @@ def fig_pass_rate_litp2(per_trial, tidy, out_png, gate="s7"):
     return summ
 
 
+def _qualifying_cells(tidy, per_trial, cap, gate="s7"):
+    """Per-trial rows for the (model, condition) cells whose OVERALL response passed the criterion.
+
+    "Overall passed" is read as: that condition's 15-trial-AVERAGED trace cleared the gate -- the
+    `s7` verdict already in mmn_s7_roi.csv, which is scored on the average, not on any single
+    trial. Once a cell qualifies, ALL FIFTEEN of its trials are kept, including individually
+    failing ones, so a per-N mean is a mean over the whole 3x5 grid rather than over survivors.
+
+    The near-identical alternative -- requiring at least one passing TRIAL at each of N=3,5,7 --
+    selects 324 cells against this rule's 318 at the 12 st cap, 310 of them shared, so the choice
+    is not load-bearing here.
+    """
+    cond = (C.set_frame(tidy, "lit_p2")[["dataset", "model", "method", "semitones",
+                                         C.GATES[gate][0]]]
+            .rename(columns={C.GATES[gate][0]: "passed_overall"}))
+    pt = C.set_frame(per_trial, "lit_p2").merge(
+        cond, on=["dataset", "model", "method"], how="left")
+    pt = pt[(pt["semitones"] <= cap) & (pt["passed_overall"])]
+    return pt
+
+
+def _n_bar_figure(cells, value_col, ylabel, title, caption, out_png, scale=1.0,
+                  anchor_top=False, as_rate=False):
+    """One bar per N over LIT+NOVEL-P2 pooled; mean +- 95% CI across (model, condition) cells."""
+    if as_rate:
+        agg = (cells.groupby(["dataset", "model", "method", "N"], observed=True)[value_col]
+               .agg(v="mean", k="size").reset_index())
+    else:
+        agg = (cells.groupby(["dataset", "model", "method", "N"], observed=True)[value_col]
+               .agg(v="mean", k="size").reset_index())
+
+    fig, ax = plt.subplots(figsize=(7.2, 5.0))
+    rows = []
+    for i, n_lvl in enumerate(C.N_LEVELS):
+        v = agg.loc[agg["N"] == n_lvl, "v"]
+        m, lo, hi, n = mean_ci(v)
+        rows.append(dict(N=n_lvl, mean=m, ci_lo=lo, ci_hi=hi, n_cells=n))
+        if n == 0:
+            continue
+        ax.bar([i], [scale * m], width=0.62, color=BAR_FILL, edgecolor="none", zorder=2)
+        ax.errorbar([i], [scale * m], yerr=[[scale * (m - lo)], [scale * (hi - m)]],
+                    fmt="none", ecolor=INK, elinewidth=1.4, capsize=5, zorder=4)
+        tip = scale * (hi if anchor_top else lo)
+        ax.annotate(f"n={n}", (i, tip), textcoords="offset points",
+                    xytext=(0, 6 if anchor_top else -12), ha="center",
+                    va="bottom" if anchor_top else "top", fontsize=8, color="#6b6b6b")
+
+    ax.set_xticks(range(len(C.N_LEVELS)))
+    ax.set_xticklabels([f"{n}\n({C.N_TO_P_DEVIANT[n]:.1%})" for n in C.N_LEVELS])
+    ax.set_xlim(-0.6, len(C.N_LEVELS) - 0.4)
+    ax.set_xlabel("N standards between deviants\n(oddball probability)")
+    ax.set_ylabel(ylabel)
+    ax.set_title(title, fontweight="bold", loc="left", fontsize=11)
+    fig.text(0.0, -0.21, C.wrap(caption), transform=ax.transAxes, fontsize=7.8,
+             color="#555555", va="top")
+    return fig, ax, pd.DataFrame(rows)
+
+
+def fig_n_effect_bars(tidy, per_trial, cap_key, gate, root, csv_dir, sfx):
+    """The trough and pass-rate N-effect bars for one deviance cap."""
+    cap, cap_lab = N_CAPS[cap_key]
+    cells = _qualifying_cells(tidy, per_trial, cap, gate)
+    gl = C.gate_label(gate, long=False)
+    n_cond = cells.groupby(["dataset", "model", "method"]).ngroups
+    common = (f"LIT and NOVEL-P2 are pooled and treated as ONE sample, {cap_lab}. Only stimuli "
+              f"whose OVERALL ({gl}) response passed are included — {n_cond} model×condition "
+              f"cells — and for those, ALL FIFTEEN trials count, including individually failing "
+              f"ones. The unit of the bar is the (model, condition, N) cell: its five variations "
+              f"are averaged first, then the bar is the mean across cells with a 95% CI. ")
+
+    out = {}
+    # --- trough ---
+    fig, ax, t1 = _n_bar_figure(
+        cells, "trough_uv", "MMN trough (µV)\n↓ deeper",
+        f"LIT + NOVEL-P2 — MMN trough vs N, {cap_lab} ({gl})",
+        common + ("Bars are anchored at zero. Because inclusion is conditional on the overall "
+                  "response passing, the level here is selected upward; the SHAPE across N is "
+                  "what this figure is for, not the absolute depth."),
+        None)
+    deepest = float(np.nanmin(t1["ci_lo"]))
+    ax.axhline(0, color="#6b6b6b", lw=1.0, zorder=3)
+    ax.set_ylim(deepest * 1.2, 0)
+    p1 = C.fig_path(gate, "lit_p2", f"lit_p2_n_effect_trough__{cap_key}{sfx}", root)
+    C.finish(fig, p1)
+    out[f"lit_p2_n_effect_trough__{cap_key}{sfx}"] = t1
+
+    # --- pass rate ---
+    fig, ax, t2 = _n_bar_figure(
+        cells, C.GATES[gate][0], f"{gl} pass rate (% of the 5 variations)",
+        f"LIT + NOVEL-P2 — MMN pass rate vs N, {cap_lab} ({gl})",
+        common + ("Each cell contributes its pass rate over the 5 variations at that N. NOTE this "
+                  "rate is CONDITIONAL on the stimulus having passed overall, so it is high by "
+                  "construction and is not the unconditional probability of evoking an MMN — read "
+                  "it as how consistently an already-responding stimulus responds at each N."),
+        None, scale=100.0, anchor_top=True, as_rate=True)
+    ax.set_ylim(0, 100)
+    p2 = C.fig_path(gate, "lit_p2", f"lit_p2_n_effect_pass_rate__{cap_key}{sfx}", root)
+    C.finish(fig, p2)
+    out[f"lit_p2_n_effect_pass_rate__{cap_key}{sfx}"] = t2
+
+    for name, d in out.items():
+        d.to_csv(csv_dir / f"{name}.csv", index=False, float_format="%.6g")
+        print(f"  wrote {csv_dir / f'{name}.csv'}")
+    return out
+
+
 def print_change_table(ct, gate):
     print("\n" + "=" * 104)
     print(f"LIT — mean change in MMN trough across N ({C.gate_label(gate, long=False)}; µV, "
@@ -747,6 +856,8 @@ def main():
     s2c = fig_pass_rate_litp2(
         per_trial, tidy,
         C.fig_path(gate, "lit_p2", f"lit_p2_deviance_2st_pass_rate{sfx}", root), gate)
+    for cap_key in N_CAPS:
+        fig_n_effect_bars(tidy, per_trial, cap_key, gate, root, csv_dir, sfx)
     ct = n_change_table(per_trial, gate)
     fig_change_forest(ct, C.fig_path(gate, "lit", f"lit_n_change_forest{sfx}", root), gate)
     fig_change_trajectory(ct, C.fig_path(gate, "lit", f"lit_n_change_trajectory{sfx}", root), gate)
