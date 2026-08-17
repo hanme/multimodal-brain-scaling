@@ -62,6 +62,20 @@ BOOT_N = 4000
 BAR_W = 1.7
 BAR_FILL = "#8a8a8a"
 
+# lit+p2 versions are capped at LIT's own maximum deviance (12 st). NOVEL-P2 runs to 63 st, and
+# extending the 2-semitone grid over the union would give 32 bins of which 24 are P2-only and 7
+# hold two conditions -- a chart whose left half is one source and right half the other. Capping
+# keeps the SIX bins the LIT figures already use and retains the 58 of 254 P2 conditions that
+# actually overlap LIT's range.
+MAX_ST_LITP2 = 12.0
+# Source is drawn as two GROUPED bars per bin rather than one pooled bar, because 3 of the 6 bins
+# hold only one source ([0,2) and [2,4) are LIT-only, [4,6) is P2-only). A single pooled bar there
+# would render a change of source as a change of deviance -- the exact confound the overlap
+# diagnostic exists to test. A missing bar reads as "this source has no stimuli in this bin".
+SOURCE_FILL = {"lit": "#5f5f5f", "p2": "#c2c2c2"}
+SOURCE_EDGE = {"lit": "none", "p2": "#5f5f5f"}
+GROUP_W = 0.78
+
 
 def assign_2st_bins(frame):
     """Add `bin` (ordered categorical) and `bin_mid` to a LIT frame."""
@@ -582,6 +596,113 @@ def fig_change_trajectory(ct, out_png, gate="s7"):
     C.finish(fig, out_png)
 
 
+def _grouped_bins(frame):
+    """Cap at LIT's max deviance and assign the shared 2-st bins."""
+    return assign_2st_bins(frame[frame["semitones"] <= MAX_ST_LITP2].copy())
+
+
+def _grouped_bar_figure(get_values, ylabel, title, caption, scale=1.0,
+                        anchor_top=False):
+    """Shared renderer: grouped LIT/P2 bars per 2-semitone bin, mean +- 95% CI, n per bar."""
+    fig, ax = plt.subplots(figsize=(9.0, 5.2))
+    rows = []
+    for lab in BIN_LABELS:
+        xc = BIN_EDGES[BIN_LABELS.index(lab)] + 1.0
+        for k, ds in enumerate(("lit", "p2")):
+            v = get_values(lab, ds)
+            m, lo, hi, n = mean_ci(v)
+            rows.append(dict(bin=lab, dataset=ds, mean=m, ci_lo=lo, ci_hi=hi, n=n))
+            if n == 0:
+                continue
+            x = xc + (k - 0.5) * GROUP_W
+            ax.bar([x], [scale * m], width=GROUP_W * 0.92, color=SOURCE_FILL[ds],
+                   edgecolor=SOURCE_EDGE[ds], linewidth=1.0, zorder=2,
+                   label=C.DATASET_LABEL[ds] if lab == "[6,8)" else None)
+            if n >= 2:
+                ax.errorbar([x], [scale * m], yerr=[[scale * (m - lo)], [scale * (hi - m)]],
+                            fmt="none", ecolor=INK, elinewidth=1.3, capsize=4, zorder=4)
+            tip = scale * (hi if anchor_top else lo)
+            ax.annotate(f"{n}", (x, tip), textcoords="offset points",
+                        xytext=(0, 6 if anchor_top else -12), ha="center",
+                        va="bottom" if anchor_top else "top", fontsize=7.5, color="#6b6b6b")
+
+    summ = pd.DataFrame(rows)
+    for lab in BIN_LABELS:
+        if summ[(summ["bin"] == lab)]["n"].sum() == 0:
+            ax.annotate("no\nconditions", (BIN_EDGES[BIN_LABELS.index(lab)] + 1.0, 0.5),
+                        xycoords=("data", "axes fraction"), ha="center", va="center",
+                        fontsize=8, color="#999999", style="italic")
+    _bin_axis(ax)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title, fontweight="bold", loc="left", fontsize=11)
+    ax.legend(frameon=False, fontsize=8.5, loc="best")
+    fig.text(0.0, -0.19, C.wrap(caption), transform=ax.transAxes, fontsize=7.8,
+             color="#555555", va="top")
+    return fig, ax, summ
+
+
+def fig_trough_litp2(tidy, out_png, gate="s7"):
+    """Figure A for lit+p2: grouped LIT/P2 bars, capped at LIT's maximum deviance."""
+    lp = _grouped_bins(C.gated(C.set_frame(tidy, "lit_p2"), gate))
+
+    def vals(lab, ds):
+        return lp.loc[(lp["bin"] == lab) & (lp["dataset"] == ds), "trough_uv"]
+
+    fig, ax, summ = _grouped_bar_figure(
+        vals, "MMN trough (µV)\n↓ deeper",
+        f"LIT + NOVEL-P2 — MMN trough by deviance, 2-st bins, ≤{MAX_ST_LITP2:g} st "
+        f"({C.gate_label(gate, long=False)})",
+        caption=(
+            f"Bars are the MEAN trough per 2-semitone bin, anchored at zero, with a 95% CI "
+            f"whisker; numbers are {C.gate_label(gate, long=False)}-passing rows per bar "
+            f"(model × condition). Capped at {MAX_ST_LITP2:g} st, LIT's own maximum — NOVEL-P2 "
+            f"reaches 63 st, and extending the grid would give 32 bins of which 24 are P2-only. "
+            f"THE TWO SOURCES ARE DRAWN SEPARATELY BECAUSE THEY DO NOT COVER THE SAME RANGE: "
+            f"[0,2) and [2,4) are LIT-only and [4,6) is P2-only, so a single pooled bar would "
+            f"show a change of source as a change of deviance. Compare bars WITHIN a bin to see "
+            f"whether the sources agree; the three mixed bins are the only place that comparison "
+            f"is available. On this AMPLITUDE axis they do not agree consistently — NOVEL-P2 is "
+            f"shallower by 0.29 µV in [6,8), deeper by 0.41 µV in [8,10) and shallower by 0.32 µV "
+            f"in [10,12], i.e. the sign flips between bins. The pass-rate companion agrees far "
+            f"better, which is the more reliable of the two comparisons here."))
+    deepest = float(np.nanmin(summ["ci_lo"])) if summ["ci_lo"].notna().any() else -1.0
+    ax.axhline(0, color="#6b6b6b", lw=1.0, zorder=3)
+    ax.set_ylim(deepest * 1.18, 0)
+    C.finish(fig, out_png)
+    return summ
+
+
+def fig_pass_rate_litp2(per_trial, tidy, out_png, gate="s7"):
+    """Figure B for lit+p2: grouped LIT/P2 bars of the per-stimulus x/15 pass rate."""
+    st = C.set_frame(tidy, "lit_p2")[["method", "dataset", "semitones"]].drop_duplicates()
+    col = C.GATES[gate][0]
+    rate = (C.set_frame(per_trial, "lit_p2")
+            .groupby(["model", "method"], observed=True)[col]
+            .agg(n_pass="sum", n_trials="size").reset_index())
+    rate["pass_rate"] = rate["n_pass"] / rate["n_trials"]
+    lp = _grouped_bins(rate.merge(st, on="method", how="left"))
+
+    def vals(lab, ds):
+        return lp.loc[(lp["bin"] == lab) & (lp["dataset"] == ds), "pass_rate"]
+
+    fig, ax, summ = _grouped_bar_figure(
+        vals, f"{C.gate_label(gate, long=False)} pass rate (% of the 15 trials)",
+        f"LIT + NOVEL-P2 — MMN pass rate by deviance, 2-st bins, ≤{MAX_ST_LITP2:g} st "
+        f"({C.gate_label(gate, long=False)})",
+        scale=100.0, anchor_top=True,
+        caption=(
+            f"Each (model, condition) contributes ONE pass rate = passing trials / 15. Bars are "
+            f"the mean of those rates per bin with a 95% CI whisker; numbers are "
+            f"(model × condition) pairs. Capped at {MAX_ST_LITP2:g} st, LIT's own maximum. The "
+            f"two sources are drawn separately because [0,2) and [2,4) hold only LIT stimuli and "
+            f"[4,6) only NOVEL-P2 — pooling them would present a change of source as a change of "
+            f"deviance. NOVEL-P2 is SELECTED on model MMN agreement, so its bars are expected to "
+            f"sit higher than LIT's at the same deviance; that gap is selection, not stimulus."))
+    ax.set_ylim(0, 100)
+    C.finish(fig, out_png)
+    return summ
+
+
 def print_change_table(ct, gate):
     print("\n" + "=" * 104)
     print(f"LIT — mean change in MMN trough across N ({C.gate_label(gate, long=False)}; µV, "
@@ -627,6 +748,11 @@ def main():
     s2b = fig_pass_rate_cond_boot(
         per_trial, tidy,
         C.fig_path(gate, "lit", f"lit_deviance_2st_pass_rate__cond_boot{sfx}", root), gate)
+    s1c = fig_trough_litp2(
+        tidy, C.fig_path(gate, "lit_p2", f"lit_p2_deviance_2st_trough{sfx}", root), gate)
+    s2c = fig_pass_rate_litp2(
+        per_trial, tidy,
+        C.fig_path(gate, "lit_p2", f"lit_p2_deviance_2st_pass_rate{sfx}", root), gate)
     ct = n_change_table(per_trial, gate)
     fig_change_forest(ct, C.fig_path(gate, "lit", f"lit_n_change_forest{sfx}", root), gate)
     fig_change_trajectory(ct, C.fig_path(gate, "lit", f"lit_n_change_trajectory{sfx}", root), gate)
@@ -635,6 +761,8 @@ def main():
                     (f"lit_deviance_2st_pass_rate{sfx}", s2),
                     (f"lit_deviance_2st_trough__cond_boot{sfx}", s1b),
                     (f"lit_deviance_2st_pass_rate__cond_boot{sfx}", s2b),
+                    (f"lit_p2_deviance_2st_trough{sfx}", s1c),
+                    (f"lit_p2_deviance_2st_pass_rate{sfx}", s2c),
                     (f"lit_n_change_table{sfx}", ct)):
         d.to_csv(csv_dir / f"{name}.csv", index=False, float_format="%.6g")
         print(f"  wrote {csv_dir / f'{name}.csv'}")
