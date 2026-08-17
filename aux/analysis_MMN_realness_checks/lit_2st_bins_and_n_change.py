@@ -601,42 +601,38 @@ def _grouped_bins(frame):
     return assign_2st_bins(frame[frame["semitones"] <= MAX_ST_LITP2].copy())
 
 
-def _grouped_bar_figure(get_values, ylabel, title, caption, scale=1.0,
-                        anchor_top=False):
-    """Shared renderer: grouped LIT/P2 bars per 2-semitone bin, mean +- 95% CI, n per bar."""
-    fig, ax = plt.subplots(figsize=(9.0, 5.2))
+def _litp2_bar_figure(get_values, ylabel, title, caption, scale=1.0, anchor_top=False):
+    """One bar per 2-semitone bin over LIT + NOVEL-P2 treated as a SINGLE sample.
+
+    The two sources are pooled, not distinguished: within a bin every row counts the same
+    regardless of which condition set it came from.
+    """
+    fig, ax = plt.subplots(figsize=(8.4, 5.1))
     rows = []
     for lab in BIN_LABELS:
-        xc = BIN_EDGES[BIN_LABELS.index(lab)] + 1.0
-        for k, ds in enumerate(("lit", "p2")):
-            v = get_values(lab, ds)
-            m, lo, hi, n = mean_ci(v)
-            rows.append(dict(bin=lab, dataset=ds, mean=m, ci_lo=lo, ci_hi=hi, n=n))
-            if n == 0:
-                continue
-            x = xc + (k - 0.5) * GROUP_W
-            ax.bar([x], [scale * m], width=GROUP_W * 0.92, color=SOURCE_FILL[ds],
-                   edgecolor=SOURCE_EDGE[ds], linewidth=1.0, zorder=2,
-                   label=C.DATASET_LABEL[ds] if lab == "[6,8)" else None)
-            if n >= 2:
-                ax.errorbar([x], [scale * m], yerr=[[scale * (m - lo)], [scale * (hi - m)]],
-                            fmt="none", ecolor=INK, elinewidth=1.3, capsize=4, zorder=4)
-            tip = scale * (hi if anchor_top else lo)
-            ax.annotate(f"{n}", (x, tip), textcoords="offset points",
-                        xytext=(0, 6 if anchor_top else -12), ha="center",
-                        va="bottom" if anchor_top else "top", fontsize=7.5, color="#6b6b6b")
+        x = BIN_EDGES[BIN_LABELS.index(lab)] + 1.0
+        m, lo, hi, n = mean_ci(get_values(lab))
+        rows.append(dict(bin=lab, mean=m, ci_lo=lo, ci_hi=hi, n=n))
+        if n == 0:
+            continue
+        ax.bar([x], [scale * m], width=BAR_W, color=BAR_FILL, edgecolor="none", zorder=2)
+        if n >= 2:
+            ax.errorbar([x], [scale * m], yerr=[[scale * (m - lo)], [scale * (hi - m)]],
+                        fmt="none", ecolor=INK, elinewidth=1.4, capsize=5, zorder=4)
+        tip = scale * (hi if anchor_top else lo)
+        ax.annotate(f"n={n}", (x, tip), textcoords="offset points",
+                    xytext=(0, 6 if anchor_top else -12), ha="center",
+                    va="bottom" if anchor_top else "top", fontsize=8, color="#6b6b6b")
 
     summ = pd.DataFrame(rows)
-    for lab in BIN_LABELS:
-        if summ[(summ["bin"] == lab)]["n"].sum() == 0:
-            ax.annotate("no\nconditions", (BIN_EDGES[BIN_LABELS.index(lab)] + 1.0, 0.5),
-                        xycoords=("data", "axes fraction"), ha="center", va="center",
-                        fontsize=8, color="#999999", style="italic")
+    for lab in summ.loc[summ["n"] == 0, "bin"]:
+        ax.annotate("no\nconditions", (BIN_EDGES[BIN_LABELS.index(lab)] + 1.0, 0.5),
+                    xycoords=("data", "axes fraction"), ha="center", va="center",
+                    fontsize=8, color="#999999", style="italic")
     _bin_axis(ax)
     ax.set_ylabel(ylabel)
     ax.set_title(title, fontweight="bold", loc="left", fontsize=11)
-    ax.legend(frameon=False, fontsize=8.5, loc="best")
-    fig.text(0.0, -0.19, C.wrap(caption), transform=ax.transAxes, fontsize=7.8,
+    fig.text(0.0, -0.20, C.wrap(caption), transform=ax.transAxes, fontsize=7.8,
              color="#555555", va="top")
     return fig, ax, summ
 
@@ -645,10 +641,10 @@ def fig_trough_litp2(tidy, out_png, gate="s7"):
     """Figure A for lit+p2: grouped LIT/P2 bars, capped at LIT's maximum deviance."""
     lp = _grouped_bins(C.gated(C.set_frame(tidy, "lit_p2"), gate))
 
-    def vals(lab, ds):
-        return lp.loc[(lp["bin"] == lab) & (lp["dataset"] == ds), "trough_uv"]
+    def vals(lab):
+        return lp.loc[lp["bin"] == lab, "trough_uv"]
 
-    fig, ax, summ = _grouped_bar_figure(
+    fig, ax, summ = _litp2_bar_figure(
         vals, "MMN trough (µV)\n↓ deeper",
         f"LIT + NOVEL-P2 — MMN trough by deviance, 2-st bins, ≤{MAX_ST_LITP2:g} st "
         f"({C.gate_label(gate, long=False)})",
@@ -657,14 +653,11 @@ def fig_trough_litp2(tidy, out_png, gate="s7"):
             f"whisker; numbers are {C.gate_label(gate, long=False)}-passing rows per bar "
             f"(model × condition). Capped at {MAX_ST_LITP2:g} st, LIT's own maximum — NOVEL-P2 "
             f"reaches 63 st, and extending the grid would give 32 bins of which 24 are P2-only. "
-            f"THE TWO SOURCES ARE DRAWN SEPARATELY BECAUSE THEY DO NOT COVER THE SAME RANGE: "
-            f"[0,2) and [2,4) are LIT-only and [4,6) is P2-only, so a single pooled bar would "
-            f"show a change of source as a change of deviance. Compare bars WITHIN a bin to see "
-            f"whether the sources agree; the three mixed bins are the only place that comparison "
-            f"is available. On this AMPLITUDE axis they do not agree consistently — NOVEL-P2 is "
-            f"shallower by 0.29 µV in [6,8), deeper by 0.41 µV in [8,10) and shallower by 0.32 µV "
-            f"in [10,12], i.e. the sign flips between bins. The pass-rate companion agrees far "
-            f"better, which is the more reliable of the two comparisons here."))
+            f"LIT and NOVEL-P2 are treated as ONE sample: within a bin every row counts the "
+            f"same regardless of which condition set it came from. Note the two sets do not "
+            f"cover the same range — below 4 st the sample is literature stimuli only, and "
+            f"[4,6) is entirely NOVEL-P2 — so part of any change between the lowest bins is a "
+            f"change in which stimuli exist there rather than in deviance."))
     deepest = float(np.nanmin(summ["ci_lo"])) if summ["ci_lo"].notna().any() else -1.0
     ax.axhline(0, color="#6b6b6b", lw=1.0, zorder=3)
     ax.set_ylim(deepest * 1.18, 0)
@@ -682,10 +675,10 @@ def fig_pass_rate_litp2(per_trial, tidy, out_png, gate="s7"):
     rate["pass_rate"] = rate["n_pass"] / rate["n_trials"]
     lp = _grouped_bins(rate.merge(st, on="method", how="left"))
 
-    def vals(lab, ds):
-        return lp.loc[(lp["bin"] == lab) & (lp["dataset"] == ds), "pass_rate"]
+    def vals(lab):
+        return lp.loc[lp["bin"] == lab, "pass_rate"]
 
-    fig, ax, summ = _grouped_bar_figure(
+    fig, ax, summ = _litp2_bar_figure(
         vals, f"{C.gate_label(gate, long=False)} pass rate (% of the 15 trials)",
         f"LIT + NOVEL-P2 — MMN pass rate by deviance, 2-st bins, ≤{MAX_ST_LITP2:g} st "
         f"({C.gate_label(gate, long=False)})",
@@ -693,11 +686,12 @@ def fig_pass_rate_litp2(per_trial, tidy, out_png, gate="s7"):
         caption=(
             f"Each (model, condition) contributes ONE pass rate = passing trials / 15. Bars are "
             f"the mean of those rates per bin with a 95% CI whisker; numbers are "
-            f"(model × condition) pairs. Capped at {MAX_ST_LITP2:g} st, LIT's own maximum. The "
-            f"two sources are drawn separately because [0,2) and [2,4) hold only LIT stimuli and "
-            f"[4,6) only NOVEL-P2 — pooling them would present a change of source as a change of "
-            f"deviance. NOVEL-P2 is SELECTED on model MMN agreement, so its bars are expected to "
-            f"sit higher than LIT's at the same deviance; that gap is selection, not stimulus."))
+            f"(model × condition) pairs. Capped at {MAX_ST_LITP2:g} st, LIT's own maximum. "
+            f"LIT and NOVEL-P2 are treated as ONE sample. Pooling is well supported on this axis: "
+            f"where both sets have stimuli they agree closely, differing by only +5.6, +8.1 and "
+            f"−1.0 points across the three shared bins, with the top bin effectively identical — "
+            f"despite NOVEL-P2 being selected on model MMN agreement. Below 4 st the sample is "
+            f"literature stimuli only and [4,6) is entirely NOVEL-P2."))
     ax.set_ylim(0, 100)
     C.finish(fig, out_png)
     return summ
