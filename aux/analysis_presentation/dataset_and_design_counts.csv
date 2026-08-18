@@ -5,14 +5,14 @@ d2_dataset_license,CC-BY-4.0,license,https://zenodo.org/records/7775260,license
 d2_source_publication,10.1162/jocn_a_01467,doi,"Weissbart, Kandylaki & Reichenbach 2020, J Cogn Neurosci 32(1):155-166",citation
 d2_hdf5_30s,outputs/neural_data/surprisal_30s.h5,path,aux/sophies_repository_overview.md,§1.4 table
 d2_hdf5_10s,outputs/neural_data/surprisal_10s.h5,path,aux/sophies_repository_overview.md,§1.4 D2 10 s variant
-d2_n_subjects,13,subjects,"https://zenodo.org/records/7775260 + Weissbart, Kandylaki & Reichenbach 2020, J Cogn Neurosci 32(1):155-166","P00.h5..P12.h5; ""Thirteen participants"""
+d2_n_subjects,13,subjects,outputs/neural_data/surprisal_30s.h5 (cluster; read 2026-08-17 via probe_d2_cluster.py),attrs.n_subjects
 d2_n_subjects_crosscheck_1,13,subjects,aux/project_plan_20260611.md,line 715 table
 d2_n_subjects_crosscheck_2,13,subjects,aux/handoff_enable_large_wav2vec2_models.md,line 142 (P00.h5 .. P12.h5)
 d2_subject_age,25 +/- 3,years,"Weissbart, Kandylaki & Reichenbach 2020, J Cogn Neurosci 32(1):155-166",Participants
 d2_subject_sex,6 women of 13,count,"Weissbart, Kandylaki & Reichenbach 2020, J Cogn Neurosci 32(1):155-166",Participants
 d2_handedness,all right-handed,text,"Weissbart, Kandylaki & Reichenbach 2020, J Cogn Neurosci 32(1):155-166",Participants
 d2_native_language,English (native),text,"Weissbart, Kandylaki & Reichenbach 2020, J Cogn Neurosci 32(1):155-166",Participants
-d2_storage_granularity,group-averaged (subjects attr = ['group']),text,aux/XX_handover_for_Sophie.md,line 112 + format_eeg_hdf5.py:397
+d2_storage_granularity,group-averaged (attrs.subjects == ['group']),text,outputs/neural_data/surprisal_30s.h5 (cluster; read 2026-08-17 via probe_d2_cluster.py),attrs.subjects
 d2_stimulus_corpus,"3 public-domain short stories by J. M. Barrie and F. Anstey, 15 parts",text,"Weissbart, Kandylaki & Reichenbach 2020, J Cogn Neurosci 32(1):155-166",Experimental Design
 d2_story_AUN,"An Undergraduate's Aunt (F. Anstey) -- stems AUNP01-08, 8 parts",text,"Weissbart, Kandylaki & Reichenbach 2020, J Cogn Neurosci 32(1):155-166 + zenodo align_data.py",story_part_names
 d2_story_BRO,"My Brother Henry (J. M. Barrie) -- stems BROP01-03, 3 parts",text,"Weissbart, Kandylaki & Reichenbach 2020, J Cogn Neurosci 32(1):155-166 + zenodo align_data.py",story_part_names
@@ -21,31 +21,35 @@ d2_stimulus_source,"librivox.org public domain, single male narrator; text from 
 d2_task,passive listening + 30 multiple-choice comprehension questions (after each part),text,"Weissbart, Kandylaki & Reichenbach 2020, J Cogn Neurosci 32(1):155-166",Experimental Design
 d2_part_duration_mean,2.6 +/- 0.43,min,"Weissbart, Kandylaki & Reichenbach 2020, J Cogn Neurosci 32(1):155-166","""presented in 15 parts, each of which were 2.6 +/- 0.43 min long"""
 d2_total_duration_paper,40,min,"Weissbart, Kandylaki & Reichenbach 2020, J Cogn Neurosci 32(1):155-166","""The total length of the stories was 40 min"""
-d2_total_duration_from_filesize,2382,s,https://zenodo.org/records/7775260,1200596308 B / (63 ch x 8 B) at 1000 Hz
+d2_total_duration_from_filesize,2382.1,s,cluster audiobooks/*.wav,sum of 15 wav durations
 d2_all_subjects_heard_all_parts,yes (each of P00-P12 has a full permutation of parts 0-14),text,https://zenodo.org/records/7775260/files/stimulus_order.csv,13 rows x 15 columns
 d2_presentation_order,counterbalanced per participant (story block order rotated),text,https://zenodo.org/records/7775260/files/stimulus_order.csv,row values
 d2_n_parts_total,15,audiobook parts,aux/handoff_enable_large_wav2vec2_models.md,line 71 (AUNP01-08 + BROP01-03 + FLOP01-04)
 d2_n_parts_train,12,audiobook parts,aux/handoff_enable_large_wav2vec2_models.md,line 71 train stems
-d2_n_parts_test,3,audiobook parts,aux/handoff_enable_large_wav2vec2_models.md,line 71 test stems
-d2_n_train_windows,157,30 s windows,aux/XX_handover_for_Sophie.md,line 112 (157 train)
-d2_n_test_windows,43,30 s windows,aux/XX_handover_for_Sophie.md,line 112 (43 test)
+d2_n_parts_test,3,audiobook parts,outputs/neural_data/surprisal_30s.h5 (cluster; read 2026-08-17 via probe_d2_cluster.py),"attrs.test_parts == ['AUNP02','BROP02','BROP03']"
+d2_test_part_windows,AUNP02=13; BROP02=16; BROP03=14,windows,outputs/neural_data/surprisal_30s.h5 (cluster; read 2026-08-17 via probe_d2_cluster.py),Counter(part) over test/stimulus_ids
+d2_n_train_windows,157,30 s windows,outputs/neural_data/surprisal_30s.h5 (cluster; read 2026-08-17 via probe_d2_cluster.py),len(train/stimulus_ids)
+d2_n_test_windows,43,30 s windows,outputs/neural_data/surprisal_30s.h5 (cluster; read 2026-08-17 via probe_d2_cluster.py),len(test/stimulus_ids)
 d2_n_windows_total,200,30 s windows,derived,157 + 43
 d2_train_windows_per_part_sum,157,30 s windows,tests/test_attn_probe_temporal.py,lines 468-469 parts dict (sums to 157)
-d2_window_duration,30,s,aux/sophies_repository_overview.md,§1.4
-d2_window_stride,10,s,aux/sophies_repository_overview.md,§1.4
-d2_sampling_rate,50,Hz,scripts/eeg_targets.py,FS = 50.0
-d2_time_step,20,ms,scripts/eeg_targets.py,TIME_STEP_MS = 20.0
+d2_window_duration,30.0,s,outputs/neural_data/surprisal_30s.h5 (cluster; read 2026-08-17 via probe_d2_cluster.py),attrs.window_duration_s
+d2_window_stride,10.0,s,outputs/neural_data/surprisal_30s.h5 (cluster; read 2026-08-17 via probe_d2_cluster.py),attrs.window_stride_s
+d2_sampling_rate,50,Hz,outputs/neural_data/surprisal_30s.h5 (cluster; read 2026-08-17 via probe_d2_cluster.py),attrs.target_sr
+d2_time_step,20.0,ms,outputs/neural_data/surprisal_30s.h5 (cluster; read 2026-08-17 via probe_d2_cluster.py),attrs.time_step_ms
 d2_highpass,0.5,Hz,outputs/results/eeg_mapping/whisper-base__electrodes__D2.json,highpass_hz
 d2_stimulus_seconds_train,1810,s,derived,10*157 + 20*12
 d2_stimulus_seconds_test,490,s,derived,10*43 + 20*3
 d2_stimulus_seconds_total,2300,s,derived,10*200 + 20*15
 d2_stimulus_minutes_per_subject,38.3,min,derived,2300/60 -- audio covered by the 200 formatted windows
-d2_stimulus_minutes_per_subject_upper,39.7,min,Zenodo file sizes,1200596308 B / (63 ch x 8 B) / 1000 Hz -- full aligned recording
+d2_stimulus_minutes_per_subject_upper,39.70,min,cluster audiobooks/*.wav,2382.1/60
 d2_subject_hours,8.3,subject-hours,derived,13 * 2300/3600 -- only the windows the mTRF sees
-d2_subject_hours_upper,8.6,subject-hours,Zenodo file sizes,13 * 2382/3600 -- full aligned recording
-d2_window_coverage_fraction,96.6,percent,derived,2300 / 2382
-d2_untiled_tail,5.5,s per part (mean),derived,(2382 - 2300)/15; rule allows 0-10 s/part
-d2_n_channels_native,63,electrodes,zenodo align_data.py + Zenodo file sizes + aux/project_plan_20260611.md,"64 actiCAP electrodes recorded, Sound channel dropped -> 63"
+d2_subject_hours_upper,8.60,subject-hours,derived,13 * 2382.1/3600
+d2_window_coverage_fraction,96.6,percent,derived,2300 / 2382.1
+d2_untiled_tail,5.5,s per part (mean),derived,(2382.1-2300)/15; observed range 0.00-9.79
+d2_tiling_rule_verified,yes -- predicted == actual for all 15 parts,text,probe_d2_cluster.py block 3,floor((D-30)/10)+1 vs h5
+d2_part_duration_min,109.79,s,cluster audiobooks/FLOP03.wav,wav duration
+d2_part_duration_max,196.97,s,cluster audiobooks/FLOP04.wav,wav duration
+d2_n_channels_native,63,electrodes,outputs/neural_data/surprisal_30s.h5 (cluster; read 2026-08-17 via probe_d2_cluster.py),len(attrs.channel_names)
 d2_n_electrodes_recorded,64,active electrodes,"Weissbart, Kandylaki & Reichenbach 2020, J Cogn Neurosci 32(1):155-166","""64 active electrodes (actiCAP, BrainProducts)"""
 d2_amplifier,actiCHamp (BrainProducts); actiCAP cap; BrainVision format,text,"Weissbart, Kandylaki & Reichenbach 2020, J Cogn Neurosci 32(1):155-166 + zenodo align_data.py",read_raw_brainvision
 d2_native_sampling_rate,1000,Hz,https://zenodo.org/records/7775260/files/align_data.py,"f.create_dataset('srate', data=(1000,))"
@@ -53,8 +57,13 @@ d2_native_reference,left earlobe,text,"Weissbart, Kandylaki & Reichenbach 2020, 
 d2_distributed_state,"unprocessed EEG, time-aligned to audiobook onsets",text,https://zenodo.org/records/7775260,description
 d2_audio_sample_rate,16000,Hz,https://zenodo.org/records/7775260/files/preprocess.py,assert fs == 16000
 d2_nc_floor,0.2,Pearson r,outputs/results/eeg_mapping/whisper-base__electrodes__D2.json,nc_r_threshold
-d2_n_electrodes_retained,47,electrodes,outputs/results/eeg_mapping/whisper-tiny__electrodes__D2.json,len(targets)
-d2_nc_r_fcz,0.9924,Pearson r,outputs/results/eeg_mapping/whisper-tiny__electrodes__D2.json,nc_r[targets.index('FCz')]
+d2_n_electrodes_retained,47,electrodes,outputs/neural_data/surprisal_30s.h5 (cluster; read 2026-08-17 via probe_d2_cluster.py),53 surviving rois minus 6 pseudo-ROIs
+d2_nc_r_fcz,0.9923,Pearson r,outputs/neural_data/surprisal_30s.h5 (cluster; read 2026-08-17 via probe_d2_cluster.py),noise_ceilings/group/FCz
+d2_n_rois_in_file,69,rois,outputs/neural_data/surprisal_30s.h5 (cluster; read 2026-08-17 via probe_d2_cluster.py),63 electrodes + 5 *_cluster + whole_brain
+d2_n_electrodes_dropped,16,electrodes,outputs/neural_data/surprisal_30s.h5 (cluster; read 2026-08-17 via probe_d2_cluster.py),nc r <= 0.2
+d2_electrodes_dropped,AF4;AF7;AFz;C1;CP3;CP4;CP5;CP6;F5;FC1;FC5;Fp1;Oz;P8;POz;T8,names,outputs/neural_data/surprisal_30s.h5 (cluster; read 2026-08-17 via probe_d2_cluster.py),"noise_ceilings/group, r <= 0.2"
+d2_electrodes_dropped_near_zero,11 of 16 at r < 0.01 (AF4;AF7;AFz;C1;CP4;CP5;CP6;F5;FC1;Fp1;POz),electrodes,outputs/neural_data/surprisal_30s.h5 (cluster; read 2026-08-17 via probe_d2_cluster.py),noise_ceilings/group
+mmn_fc_roi_actual,"Fz;FCz;Cz;FC2;F1;F2 (6 of the nominal 7; FC1 excluded, nc r = 0.001)",electrodes,outputs/insilico_mmn_predictions_soafix/*/electrode_predictions__*.h5,attrs.fc_roi
 d2_nc_r_min_retained,0.2074,Pearson r,outputs/results/eeg_mapping/whisper-tiny__electrodes__D2.json,min(nc_r)
 d2_n_parcels,5,parcels,outputs/results/eeg_mapping/whisper-small__parcels__D2.json,targets
 d2_cv_scheme,grouped 4-fold by audiobook part,text,outputs/results/eeg_mapping/whisper-base__electrodes__D2.json,n_folds

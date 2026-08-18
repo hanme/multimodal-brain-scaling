@@ -1,0 +1,7 @@
+model,lit_top5_best_uv,lit_top5_median_uv,lit_top5_median_recovery_frac,lit_top5_n_s7_pass,lit_top5_n_s4_specific,lit_top5_n_downsloping,lit_top5_median_post_slope,lit_n_conditions,lit_s7_rate,p2_top5_best_uv,p2_top5_median_uv,p2_top5_median_recovery_frac,p2_top5_n_s7_pass,p2_top5_n_s4_specific,p2_top5_n_downsloping,p2_top5_median_post_slope,p2_n_conditions,p2_s7_rate,gap_median_uv,gap_best_uv,gap_s7_rate,top10_n_clean,heldout_test_r_electrodes,heldout_r_source
+whisper-tiny,-2.646,-2.168,1.648,5,5,0,0.784,48,0.333,-2.628,-2.407,1.31,5,5,0,1.79,254,0.492,-0.239,0.018,0.159,10,0.2118,"blocks.0, n=47"
+whisper-base,-1.344,-1.235,1.47,5,5,1,0.398,48,0.271,-2.646,-2.393,0.722,5,5,0,1.331,254,0.48,-1.158,-1.302,0.209,9,0.1731,"blocks.0, n=47"
+whisper-small,-1.488,-1.32,1.559,5,4,0,0.676,48,0.312,-3.327,-3.054,1.592,5,5,0,3.954,254,0.496,-1.734,-1.839,0.184,9,0.1178,"blocks.1, n=47"
+whisper-medium,-9.609,-2.301,1.505,5,5,1,1.65,48,0.542,-4.672,-3.987,2.496,5,5,0,5.824,254,0.61,-1.686,4.937,0.068,9,0.0793,"blocks.12, n=47"
+wav2vec2-medium,-2.081,-1.877,0.935,5,4,0,0.611,48,0.604,-3.789,-2.927,1.071,5,5,0,2.518,254,0.736,-1.05,-1.708,0.132,9,0.2231,"encoder.layers.2, n=47"
+wav2vec2-large,-7.902,-3.761,0.848,4,3,1,1.313,48,0.542,-8.053,-7.63,0.835,4,5,0,4.523,254,0.555,-3.869,-0.151,0.013,7,0.2439,"encoder.layers.12, n=47"

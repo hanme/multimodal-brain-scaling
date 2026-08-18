@@ -13,7 +13,9 @@ What each block settles (numbering matches the memo's "Still open" list):
   2  per-part window counts for BOTH splits, including the 3 test parts
   3  whether format_eeg_hdf5_surprisal.py windows like format_eeg_hdf5.py, by predicting each
      part's window count from its wav duration and diffing against the h5
-  4  which of the 63 channels survive the NC floor, and which 16 do not
+  4  which of the 63 real electrodes survive the NC floor, and which do not (the file's `rois`
+     also contain 6 pseudo-channels -- 5 `*_cluster` averages + `whole_brain` -- which the mapping
+     drops via eeg_targets.NON_ELECTRODE and which are reported separately here)
   7  n_subjects as recorded by the formatter (group_count)
 """
 import argparse
@@ -143,17 +145,34 @@ def main():
     max_nc = float(f.attrs.get("max_nc", 100.0))
     subj = subjects[0]
     if "noise_ceilings" in f and subj in f["noise_ceilings"]:
-        keep, drop = [], []
+        # `rois` mixes real electrodes with pseudo-channels; the mapping keeps only the former
+        # (scripts/eeg_targets.py NON_ELECTRODE), so count them apart or you will report 53 not 47.
+        pseudo_tags = ("_cluster", "whole_brain")
+        keep, drop, pseudo = [], [], []
         for roi in rois:
             if roi not in f["noise_ceilings"][subj]:
                 continue
             nc = np.sqrt(np.asarray(f["noise_ceilings"][subj][roi][()]) / max_nc + 1e-6)
             r = float(np.nanmean(nc))            # mean over time (and members, if any)
-            (keep if r > a.nc_threshold else drop).append((roi, r))
+            if any(t in roi for t in pseudo_tags):
+                pseudo.append((roi, r))
+            else:
+                (keep if r > a.nc_threshold else drop).append((roi, r))
         keep.sort(key=lambda x: -x[1])
-        print(f"\n  SURVIVE ({len(keep)}): " + ", ".join(f"{n}={r:.3f}" for n, r in keep))
-        print(f"\n  DROPPED ({len(drop)}): " + ", ".join(f"{n}={r:.3f}" for n, r in drop))
-        d = dict(keep + drop)
+        drop.sort(key=lambda x: -x[1])
+        print(f"\n  {len(keep) + len(drop)} real electrodes + {len(pseudo)} pseudo-ROIs"
+              f" = {len(rois)} rois")
+        print(f"\n  SURVIVE ({len(keep)} electrodes): "
+              + ", ".join(f"{n}={r:.3f}" for n, r in keep))
+        print(f"\n  DROPPED ({len(drop)} electrodes): "
+              + ", ".join(f"{n}={r:.3f}" for n, r in drop))
+        near0 = [n for n, r in drop if r < 0.01]
+        if near0:
+            print(f"\n  of those, {len(near0)} sit at r < 0.01 -- functionally exact zero, the same"
+                  f" signature that disqualified D1: {', '.join(near0)}")
+        print(f"\n  pseudo-ROIs (not mapping targets): "
+              + ", ".join(f"{n}={r:.3f}" for n, r in pseudo))
+        d = dict(keep + drop + pseudo)
         for e in ("FCz", "Fz", "Cz", "FC1", "FC2", "F1", "F2"):
             print(f"    {e:4s} {d.get(e, float('nan')):.4f}" if e in d else f"    {e:4s} ABSENT")
     else:

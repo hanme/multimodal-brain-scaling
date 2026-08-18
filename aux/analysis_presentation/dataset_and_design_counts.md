@@ -23,7 +23,7 @@ applies, so do not quote it as ours.
 | quantity | value | source |
 |---|---|---|
 | dataset | Weissbart "Cortical Surprisal" naturalistic speech EEG | Zenodo 7775260 |
-| subjects | **13** (`P00.h5` … `P12.h5`) | Zenodo file listing; paper, Participants ("Thirteen participants") |
+| subjects | **13** | `surprisal_30s.h5` `attrs.n_subjects`; Zenodo `P00.h5`…`P12.h5`; paper, Participants |
 | demographics | aged 25 ± 3 y, 6 women, all right-handed native English speakers | paper, Participants |
 | storage in our pipeline | **group-averaged** (`subjects = ['group']`); no per-subject arrays | `format_eeg_hdf5.py:397` schema; `XX_handover_for_Sophie.md:112` |
 | corpus | 3 public-domain short stories, single male narrator (librivox.org); text from Project Gutenberg ebook 32846 | paper, Experimental Design |
@@ -33,12 +33,12 @@ applies, so do not quote it as ours.
 | coverage | all 13 subjects heard all 15 parts; block order counterbalanced per participant | `stimulus_order.csv` — 13 rows, each a full permutation of 0–14 |
 | task | passive listening; 30 multiple-choice comprehension questions in total, after each part | paper, Experimental Design |
 | acquisition | 64 active electrodes (actiCAP) + actiCHamp amplifier, BrainProducts; **1 kHz**; **left-earlobe reference**; audio recorded in parallel via StimTrak for alignment | paper, EEG Acquisition; `align_data.py` `srate = 1000` |
-| channels distributed | **63** — `align_data.py` does `raw.drop_channels('Sound')`, so the StimTrak channel occupies one of the 64 slots | `align_data.py`; Zenodo file sizes; `project_plan_20260611.md:715` |
+| channels | **63** — `align_data.py` does `raw.drop_channels('Sound')`, so the StimTrak channel occupies one of the 64 slots | `align_data.py`; Zenodo file sizes; `project_plan_20260611.md:715` |
 | audio | 16 kHz wav (`audiobooks.zip`, 62.0 MB) | `preprocess.py` `assert fs == 16000` |
 | our resampling | 50 Hz (20 ms bins), 0.5 Hz high-pass | `scripts/eeg_targets.py:20-21`; `eeg_mapping/*.json` `highpass_hz` |
 | windows | 30 s duration / 10 s stride | overview §1.4 |
-| train / test | **157 / 43** windows (12 / 3 audiobook parts) | `XX_handover_for_Sophie.md:112`; `project_plan_20260611.md:715` |
-| NC floor | Pearson r > 0.2 → **47 of 63** electrodes retained | `eeg_mapping/*__electrodes__D2.json` `nc_r_threshold`, `len(targets)` |
+| train / test | **157 / 43** windows (12 / 3 audiobook parts) | `surprisal_30s.h5` `train/stimulus_ids`, `test/stimulus_ids` (read 2026-08-17) |
+| NC floor | Pearson r > 0.2 → **47 of 63** electrodes retained (16 dropped) | `surprisal_30s.h5` `noise_ceilings/group`; `eeg_mapping/*__electrodes__D2.json` `targets` |
 | FCz noise ceiling | **r = 0.9924** (max of the 47; min retained 0.2074) | `eeg_mapping/whisper-tiny__electrodes__D2.json` `nc_r` |
 | parcels | 5 (frontal, central, temporal, parietal, occipital) | `eeg_mapping/*__parcels__D2.json` `targets` |
 | CV | grouped 4-fold **by audiobook part** (30 s windows at 10 s stride overlap by 20 s) | `n_folds`; `scripts/eeg_targets.py:46` |
@@ -60,38 +60,62 @@ Previously a single unsourced claim in `project_plan_20260611.md:715`. Now corro
 So the cap carried **64 active electrodes**, one slot fed by StimTrak, leaving **63 scalp channels**
 in the HDF5 — of which 47 survive our NC floor.
 
-### Subject-hours — the arithmetic, now with an external check
+### Subject-hours — settled, three ways
 
-The HDF5 our pipeline reads stores window counts, not durations. Windows tile each part from t=0 at
-a 10 s stride while `start + 30 s ≤ part duration` (`format_eeg_hdf5.py:59-68`), so a part yielding
-`n` windows covers `10·(n−1) + 30` s of audio.
+Read from the cluster on 2026-08-17 with `aux/analysis_presentation/probe_d2_cluster.py`. The h5's
+own attributes confirm `n_subjects 13`, `window_duration_s 30.0`, `window_stride_s 10.0`,
+`target_sr 50`, `subjects ['group']`, and `test_parts ['AUNP02','BROP02','BROP03']`.
 
-```
-train : 10 × 157 + 20 × 12 parts = 1810 s = 30.2 min
-test  : 10 ×  43 + 20 ×  3 parts =  490 s =  8.2 min
-total : 10 × 200 + 20 × 15 parts = 2300 s = 38.3 min per subject
-subject-hours entering the mTRF  = 13 × 2300 / 3600 = 8.3 h
-```
-
-Independently, the full aligned recording from the exact Zenodo file size:
+Windows tile each part from t=0 at a 10 s stride while `start + 30 s ≤ part duration`, so `n`
+windows cover `10·(n−1) + 30` s:
 
 ```
-1200596308 B / (63 ch × 8 B) = 2,382,135 samples @ 1 kHz = 2382 s = 39.7 min
-full-recording subject-hours = 13 × 2382 / 3600 = 8.6 h      (paper's 40 min ⇒ 8.7 h)
+train : 157 windows over 12 parts = 10×157 + 20×12 = 1810 s = 30.2 min
+test  :  43 windows over  3 parts = 10× 43 + 20× 3 =  490 s =  8.2 min
+        (AUNP02 13, BROP02 16, BROP03 14)
+total : 200 windows over 15 parts                  = 2300 s = 38.3 min per subject
+subject-hours entering the mTRF = 13 × 2300/3600 = 8.31 h
 ```
 
-The two agree: the windows cover **96.6 %** of the recording, the shortfall being the untiled tail
-of each part — 82 s over 15 parts, **5.5 s/part** on average, inside the 0–10 s the tiling rule
-allows. A third check: 16 kHz 16-bit mono × 2382 s = 76.2 MB raw, and `audiobooks.zip` is 62.0 MB.
+**The tiling assumption is closed.** For all 15 parts, the window count predicted from the wav
+duration equals the count in the h5 — so `format_eeg_hdf5_surprisal.py` tiles exactly like
+`format_eeg_hdf5.py`. Part durations run 109.79 s (FLOP03) to 196.97 s (FLOP04); every untiled tail
+falls in [0.00, 9.79) s as the rule requires, AUNP08 landing on exactly 180.00 s with zero tail.
 
-**Quote 8.3 subject-hours** as what the mapping is fit on, or **8.6–8.7** as what was recorded — but
-say which. The earlier 38.3–40.8 min bound is superseded by the measured 39.7 min.
+```
+total audio = 2382.1 s = 39.70 min per subject   (sum of the 15 wavs)
+full-recording subject-hours = 13 × 2382.1/3600 = 8.60 h
+```
 
-**Remaining assumption.** That `format_eeg_hdf5_surprisal.py` (sibling *temporal-analysis* project,
-not in this checkout) windows identically to the D1 formatter here. The 96.6 % agreement above is
-strong circumstantial support but not a read of that file. Two earlier assumptions are now closed:
-all 13 subjects did hear all 15 parts (`stimulus_order.csv`), and the 12/3 train/test part split is
-confirmed against the canonical 15-part list in `align_data.py`.
+Three independent routes agree on that duration: the wavs (2382.1 s), the Zenodo HDF5 file size
+(1200596308 B / (63 ch × 8 B) = 2382.1 s), and the paper's "total length of the stories was 40 min".
+The 200 windows cover **96.6 %** of it; the 82 s shortfall is the per-part tail, 5.5 s on average.
+
+**Quote 8.3 subject-hours** as what the mapping is fit on, or **8.6** as what was recorded — say
+which. Nothing about the duration is inferred any more.
+
+### Which channels survive the noise-ceiling floor
+
+The file carries **69 `rois`** = 63 real electrodes + 6 pseudo-channels (5 `*_cluster` averages plus
+`whole_brain`). The mapping drops the pseudo-channels via `eeg_targets.NON_ELECTRODE`, so:
+
+```
+63 electrodes − 16 below the floor = 47 mapping targets   ← matches eeg_mapping/*.json exactly
+```
+
+**Dropped (16), NC r ≤ 0.2:** `AF4 .002, AF7 .002, AFz .001, C1 .001, CP3 .196, CP4 .001, CP5 .001,
+CP6 .002, F5 .002, FC1 .001, FC5 .133, Fp1 .002, Oz .169, P8 .085, POz .001, T8 .132`.
+
+Two things follow. First, **11 of the 16 sit at r ≈ 0.001–0.002 — functionally exact zero**, the same
+signature that disqualified D1 Broderick ("several at exact 0.000, likely a montage artifact",
+overview §1.4). It does not undermine D2, whose fronto-central channels are the best in the file
+(FCz 0.992, F2 0.984, Cz 0.777, Fz 0.658), but it is worth one honest sentence: a sixth of D2's
+montage carries no usable cross-subject signal.
+
+Second, it **explains the parcel memberships** quoted in `XX_handover_for_Sophie.md:116` — temporal
+is `T7` alone because T8 is dropped, parietal omits P8, occipital omits Oz. And it explains the
+fronto-central ROI actually used by the MMN read-out, `Fz,FCz,Cz,FC2,F1,F2` (the h5 `fc_roi` attr):
+FC1 is the seventh nominal member and fails the floor at r = 0.001.
 
 ### Committed mTRF layer per model (electrodes, D2)
 
@@ -256,30 +280,25 @@ per subject (40 min / 2382 s); whether all 13 subjects heard all 15 parts (yes);
 montage (now corroborated three ways); the audiobook titles and narrator; native sampling rate,
 reference, amplifier and cap; participant demographics; the task; dataset DOI and licence.
 
+**Closed 2026-08-17 by a cluster read** (`aux/analysis_presentation/probe_d2_cluster.py`, output
+pasted into this session): the h5's own attributes; per-part window counts for both splits including
+the 3 test parts; the tiling-rule equivalence with `format_eeg_hdf5.py`; the 16 sub-floor electrodes;
+and `n_subjects = 13` as the formatter recorded it. Also closed the same day: the wav2vec2
+`chosen_layer` JSONs, which appeared in the local checkout.
+
 **Still open:**
 
-1. **The D2 HDF5 in this checkout.** `outputs/neural_data/` does not exist here;
-   `surprisal_30s.h5`, `surprisal_10s.h5`, `surprisal_10s_stride5.h5` are gitignored, cluster-only.
-   Its own attributes (`n_subjects`, `window_duration_s`, `window_stride_s`, `target_sr`,
-   `channel_names`) were never read — the D2 numbers come from Zenodo, the paper, prose, JSON and
-   test artefacts. Per overview §13.4 there is no D2 formatter here either.
-2. **Per-part window counts for the 3 test parts.** Only the total (43) is documented. The 12 train
-   parts are pinned by `tests/test_attn_probe_temporal.py:468-469` (sums to exactly 157).
-3. **That `format_eeg_hdf5_surprisal.py` windows identically to `format_eeg_hdf5.py`** — the D2
-   formatter lives in the sibling *temporal-analysis* project and was not read. Supported to 96.6 %
-   by the duration reconciliation above, not proven.
-4. **Which 47 of the 63 channels survive per dataset build** — the 47 names are verified; the 16
-   dropped ones are not enumerated anywhere committed.
-5. **`chosen_layer` JSON for whisper-large.** `outputs/results/eeg_mapping/` now holds the 4 small
-   whisper models *and* both wav2vec2 models × {parcels, electrodes}, but not whisper-large. Its
+1. **`chosen_layer` JSON for whisper-large.** `outputs/results/eeg_mapping/` holds the 4 small
+   whisper models and both wav2vec2 models × {parcels, electrodes}, but not whisper-large. Its
    `blocks.21` is corroborated twice (SLURM layer map + the layer embedded in the committed
    prediction h5 filename); the JSON `chosen_layer`, `cv_score_chosen` and `test_r_chosen` were not
-   read. *(Resolved 2026-08-17 for wav2vec2 — see the layer table. The two handoff docs still say
-   `encoder.layers.0` placeholder; that is stale.)*
-6. **Held-out test r for whisper-large** — same reason.
-7. **Whether every subject contributed to every window of the group average.** All 13 heard all 15
-   parts, but `n_subjects` in our h5 is `group_count` (subjects successfully loaded), which could
-   differ if a load failed; not verifiable here.
+   read, so whisper-large has no test r in the layer table. Command B below closes it.
+2. **Held-out test r for whisper-large** — same reason.
+3. **The audiobook parts are not equally split across stories in the test set.** `test_parts` is
+   `AUNP02, BROP02, BROP03` — two of the three held-out parts come from *My Brother Henry*, and
+   *Gilray's Flower Pot* contributes none. Whether that was deliberate is not recorded anywhere in
+   this checkout. It is a property of the split, not an error, but do not describe the test set as
+   "one part per audiobook".
 
 ### Cluster commands that close the open items
 
@@ -301,10 +320,11 @@ Defaults: `--h5 outputs/neural_data/surprisal_30s.h5`, `--audio_dir` the recover
 `.../multimodal-brain-scaling-temporal-analysis/data/cortical_suprisal_dataset/audiobooks`.
 Smoke-tested locally against a synthetic D2-shaped fixture; the mismatch branch was verified to fire.
 
-Expected if every number in this memo is right: `n_subjects 13`; `window_duration_s 30.0`,
-`window_stride_s 10.0`, `target_sr 50`; 157 windows over 12 parts + 43 over 3; 15 rows in block 3
-all matching with a tail of 0-10 s each and a total of about 2382 s; 47 of 63 channels surviving
-with FCz about 0.99.
+**Already run, 2026-08-17.** It returned exactly the expected values: `n_subjects 13`,
+`window_duration_s 30.0`, `window_stride_s 10.0`, `target_sr 50`; 157 windows over 12 parts and 43
+over 3 (AUNP02 13, BROP02 16, BROP03 14); all 15 rows in block 3 matching, tails in [0.00, 9.79) s,
+total 2382.1 s; 47 of 63 electrodes surviving with FCz = 0.992. Re-run it after any re-format of the
+D2 HDF5 — block 3 is the regression test for the tiling rule.
 
 **B. Items 5 and 6 - the missing whisper-large layer JSON.** (The wav2vec2 pair landed locally on
 2026-08-17; the loop still covers all three so the run doubles as a cross-check that the cluster
