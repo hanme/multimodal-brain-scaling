@@ -1,0 +1,139 @@
+quantity,value,unit,source_file,source_field
+d2_dataset_name,"Weissbart ""Cortical Surprisal"" naturalistic speech EEG (Zenodo 7775260)",text,https://zenodo.org/records/7775260,record title
+d2_dataset_doi,"10.5281/zenodo.7775260 (v2.0.0, 2022-09-16)",doi,https://zenodo.org/records/7775260,DOI
+d2_dataset_license,CC-BY-4.0,license,https://zenodo.org/records/7775260,license
+d2_source_publication,10.1162/jocn_a_01467,doi,"Weissbart, Kandylaki & Reichenbach 2020, J Cogn Neurosci 32(1):155-166",citation
+d2_hdf5_30s,outputs/neural_data/surprisal_30s.h5,path,aux/sophies_repository_overview.md,§1.4 table
+d2_hdf5_10s,outputs/neural_data/surprisal_10s.h5,path,aux/sophies_repository_overview.md,§1.4 D2 10 s variant
+d2_n_subjects,13,subjects,"https://zenodo.org/records/7775260 + Weissbart, Kandylaki & Reichenbach 2020, J Cogn Neurosci 32(1):155-166","P00.h5..P12.h5; ""Thirteen participants"""
+d2_n_subjects_crosscheck_1,13,subjects,aux/project_plan_20260611.md,line 715 table
+d2_n_subjects_crosscheck_2,13,subjects,aux/handoff_enable_large_wav2vec2_models.md,line 142 (P00.h5 .. P12.h5)
+d2_subject_age,25 +/- 3,years,"Weissbart, Kandylaki & Reichenbach 2020, J Cogn Neurosci 32(1):155-166",Participants
+d2_subject_sex,6 women of 13,count,"Weissbart, Kandylaki & Reichenbach 2020, J Cogn Neurosci 32(1):155-166",Participants
+d2_handedness,all right-handed,text,"Weissbart, Kandylaki & Reichenbach 2020, J Cogn Neurosci 32(1):155-166",Participants
+d2_native_language,English (native),text,"Weissbart, Kandylaki & Reichenbach 2020, J Cogn Neurosci 32(1):155-166",Participants
+d2_storage_granularity,group-averaged (subjects attr = ['group']),text,aux/XX_handover_for_Sophie.md,line 112 + format_eeg_hdf5.py:397
+d2_stimulus_corpus,"3 public-domain short stories by J. M. Barrie and F. Anstey, 15 parts",text,"Weissbart, Kandylaki & Reichenbach 2020, J Cogn Neurosci 32(1):155-166",Experimental Design
+d2_story_AUN,"An Undergraduate's Aunt (F. Anstey) -- stems AUNP01-08, 8 parts",text,"Weissbart, Kandylaki & Reichenbach 2020, J Cogn Neurosci 32(1):155-166 + zenodo align_data.py",story_part_names
+d2_story_BRO,"My Brother Henry (J. M. Barrie) -- stems BROP01-03, 3 parts",text,"Weissbart, Kandylaki & Reichenbach 2020, J Cogn Neurosci 32(1):155-166 + zenodo align_data.py",story_part_names
+d2_story_FLO,"Gilray's Flower Pot (J. M. Barrie) -- stems FLOP01-04, 4 parts",text,"Weissbart, Kandylaki & Reichenbach 2020, J Cogn Neurosci 32(1):155-166 + zenodo align_data.py",story_part_names
+d2_stimulus_source,"librivox.org public domain, single male narrator; text from Project Gutenberg ebook 32846",text,"Weissbart, Kandylaki & Reichenbach 2020, J Cogn Neurosci 32(1):155-166",Experimental Design
+d2_task,passive listening + 30 multiple-choice comprehension questions (after each part),text,"Weissbart, Kandylaki & Reichenbach 2020, J Cogn Neurosci 32(1):155-166",Experimental Design
+d2_part_duration_mean,2.6 +/- 0.43,min,"Weissbart, Kandylaki & Reichenbach 2020, J Cogn Neurosci 32(1):155-166","""presented in 15 parts, each of which were 2.6 +/- 0.43 min long"""
+d2_total_duration_paper,40,min,"Weissbart, Kandylaki & Reichenbach 2020, J Cogn Neurosci 32(1):155-166","""The total length of the stories was 40 min"""
+d2_total_duration_from_filesize,2382,s,https://zenodo.org/records/7775260,1200596308 B / (63 ch x 8 B) at 1000 Hz
+d2_all_subjects_heard_all_parts,yes (each of P00-P12 has a full permutation of parts 0-14),text,https://zenodo.org/records/7775260/files/stimulus_order.csv,13 rows x 15 columns
+d2_presentation_order,counterbalanced per participant (story block order rotated),text,https://zenodo.org/records/7775260/files/stimulus_order.csv,row values
+d2_n_parts_total,15,audiobook parts,aux/handoff_enable_large_wav2vec2_models.md,line 71 (AUNP01-08 + BROP01-03 + FLOP01-04)
+d2_n_parts_train,12,audiobook parts,aux/handoff_enable_large_wav2vec2_models.md,line 71 train stems
+d2_n_parts_test,3,audiobook parts,aux/handoff_enable_large_wav2vec2_models.md,line 71 test stems
+d2_n_train_windows,157,30 s windows,aux/XX_handover_for_Sophie.md,line 112 (157 train)
+d2_n_test_windows,43,30 s windows,aux/XX_handover_for_Sophie.md,line 112 (43 test)
+d2_n_windows_total,200,30 s windows,derived,157 + 43
+d2_train_windows_per_part_sum,157,30 s windows,tests/test_attn_probe_temporal.py,lines 468-469 parts dict (sums to 157)
+d2_window_duration,30,s,aux/sophies_repository_overview.md,§1.4
+d2_window_stride,10,s,aux/sophies_repository_overview.md,§1.4
+d2_sampling_rate,50,Hz,scripts/eeg_targets.py,FS = 50.0
+d2_time_step,20,ms,scripts/eeg_targets.py,TIME_STEP_MS = 20.0
+d2_highpass,0.5,Hz,outputs/results/eeg_mapping/whisper-base__electrodes__D2.json,highpass_hz
+d2_stimulus_seconds_train,1810,s,derived,10*157 + 20*12
+d2_stimulus_seconds_test,490,s,derived,10*43 + 20*3
+d2_stimulus_seconds_total,2300,s,derived,10*200 + 20*15
+d2_stimulus_minutes_per_subject,38.3,min,derived,2300/60 -- audio covered by the 200 formatted windows
+d2_stimulus_minutes_per_subject_upper,39.7,min,Zenodo file sizes,1200596308 B / (63 ch x 8 B) / 1000 Hz -- full aligned recording
+d2_subject_hours,8.3,subject-hours,derived,13 * 2300/3600 -- only the windows the mTRF sees
+d2_subject_hours_upper,8.6,subject-hours,Zenodo file sizes,13 * 2382/3600 -- full aligned recording
+d2_window_coverage_fraction,96.6,percent,derived,2300 / 2382
+d2_untiled_tail,5.5,s per part (mean),derived,(2382 - 2300)/15; rule allows 0-10 s/part
+d2_n_channels_native,63,electrodes,zenodo align_data.py + Zenodo file sizes + aux/project_plan_20260611.md,"64 actiCAP electrodes recorded, Sound channel dropped -> 63"
+d2_n_electrodes_recorded,64,active electrodes,"Weissbart, Kandylaki & Reichenbach 2020, J Cogn Neurosci 32(1):155-166","""64 active electrodes (actiCAP, BrainProducts)"""
+d2_amplifier,actiCHamp (BrainProducts); actiCAP cap; BrainVision format,text,"Weissbart, Kandylaki & Reichenbach 2020, J Cogn Neurosci 32(1):155-166 + zenodo align_data.py",read_raw_brainvision
+d2_native_sampling_rate,1000,Hz,https://zenodo.org/records/7775260/files/align_data.py,"f.create_dataset('srate', data=(1000,))"
+d2_native_reference,left earlobe,text,"Weissbart, Kandylaki & Reichenbach 2020, J Cogn Neurosci 32(1):155-166",EEG Acquisition
+d2_distributed_state,"unprocessed EEG, time-aligned to audiobook onsets",text,https://zenodo.org/records/7775260,description
+d2_audio_sample_rate,16000,Hz,https://zenodo.org/records/7775260/files/preprocess.py,assert fs == 16000
+d2_nc_floor,0.2,Pearson r,outputs/results/eeg_mapping/whisper-base__electrodes__D2.json,nc_r_threshold
+d2_n_electrodes_retained,47,electrodes,outputs/results/eeg_mapping/whisper-tiny__electrodes__D2.json,len(targets)
+d2_nc_r_fcz,0.9924,Pearson r,outputs/results/eeg_mapping/whisper-tiny__electrodes__D2.json,nc_r[targets.index('FCz')]
+d2_nc_r_min_retained,0.2074,Pearson r,outputs/results/eeg_mapping/whisper-tiny__electrodes__D2.json,min(nc_r)
+d2_n_parcels,5,parcels,outputs/results/eeg_mapping/whisper-small__parcels__D2.json,targets
+d2_cv_scheme,grouped 4-fold by audiobook part,text,outputs/results/eeg_mapping/whisper-base__electrodes__D2.json,n_folds
+mtrf_lag_window,0-800,ms,outputs/results/eeg_mapping/whisper-base__electrodes__D2.json,lag_max_ms
+mtrf_pca_var,None,n/a,outputs/results/eeg_mapping/whisper-base__electrodes__D2.json,pca_var
+layer_whisper-tiny_electrodes,blocks.0,layer,outputs/results/eeg_mapping/whisper-tiny__electrodes__D2.json,chosen_layer
+layer_whisper-base_electrodes,blocks.0,layer,outputs/results/eeg_mapping/whisper-base__electrodes__D2.json,chosen_layer
+layer_whisper-small_electrodes,blocks.1,layer,outputs/results/eeg_mapping/whisper-small__electrodes__D2.json,chosen_layer
+layer_whisper-medium_electrodes,blocks.12,layer,outputs/results/eeg_mapping/whisper-medium__electrodes__D2.json,chosen_layer
+layer_whisper-large_electrodes,blocks.21,layer,scripts/slurm_insilico_mmn_electrodes.sh,MTRF_ELECTRODES_LAYER (JSON absent locally)
+layer_wav2vec2-medium_electrodes,encoder.layers.2,layer,outputs/results/eeg_mapping/wav2vec2-medium__electrodes__D2.json,chosen_layer
+layer_wav2vec2-large_electrodes,encoder.layers.12,layer,outputs/results/eeg_mapping/wav2vec2-large__electrodes__D2.json,chosen_layer
+test_r_mean_whisper-tiny_electrodes,0.212,Pearson r,outputs/results/eeg_mapping/whisper-tiny__electrodes__D2.json,mean(test_r_chosen)
+test_r_mean_whisper-base_electrodes,0.173,Pearson r,outputs/results/eeg_mapping/whisper-base__electrodes__D2.json,mean(test_r_chosen)
+test_r_mean_whisper-small_electrodes,0.118,Pearson r,outputs/results/eeg_mapping/whisper-small__electrodes__D2.json,mean(test_r_chosen)
+test_r_mean_whisper-medium_electrodes,0.079,Pearson r,outputs/results/eeg_mapping/whisper-medium__electrodes__D2.json,mean(test_r_chosen)
+test_r_fcz_whisper-tiny_electrodes,0.139,Pearson r,outputs/results/eeg_mapping/whisper-tiny__electrodes__D2.json,test_r_chosen[FCz]
+test_r_fcz_whisper-base_electrodes,0.145,Pearson r,outputs/results/eeg_mapping/whisper-base__electrodes__D2.json,test_r_chosen[FCz]
+test_r_fcz_whisper-small_electrodes,0.118,Pearson r,outputs/results/eeg_mapping/whisper-small__electrodes__D2.json,test_r_chosen[FCz]
+test_r_fcz_whisper-medium_electrodes,0.125,Pearson r,outputs/results/eeg_mapping/whisper-medium__electrodes__D2.json,test_r_chosen[FCz]
+test_r_mean_wav2vec2-medium_electrodes,0.223,Pearson r,outputs/results/eeg_mapping/wav2vec2-medium__electrodes__D2.json,mean(test_r_chosen)
+test_r_mean_wav2vec2-large_electrodes,0.244,Pearson r,outputs/results/eeg_mapping/wav2vec2-large__electrodes__D2.json,mean(test_r_chosen)
+test_r_fcz_wav2vec2-medium_electrodes,0.139,Pearson r,outputs/results/eeg_mapping/wav2vec2-medium__electrodes__D2.json,test_r_chosen[FCz]
+test_r_fcz_wav2vec2-large_electrodes,0.133,Pearson r,outputs/results/eeg_mapping/wav2vec2-large__electrodes__D2.json,test_r_chosen[FCz]
+fit_protocol_whisper,30 s window / 10 s stride,text,aux/handoff_enable_large_wav2vec2_models.md,Decisions locked in table
+fit_protocol_wav2vec2,10 s window / 10 s stride,text,aux/handoff_enable_large_wav2vec2_models.md,Decisions locked in table
+lit_n_methods,24,frequency methods,data/metadata/literature_frequency_intensity_duration_metadata.csv,change_type == Frequency
+lit_n_conditions,48,conditions,outputs/results_soafix_full/mmn_s7_roi.csv,"distinct method (24 x {regular, counter})"
+lit_method_ids,9;10;12;17;18;19;20;21;27;28;29;30;31;32;33;37;43;44;53;55;60;72;74;75,ids,data/metadata/literature_frequency_intensity_duration_metadata.csv,method_id
+lit_standard_freqs,600;633;1000,Hz,data/metadata/literature_frequency_intensity_duration_metadata.csv,standard_freq
+lit_deviant_freqs,700;1000;1050;1064;1122;1200;1500;1850;2000,Hz,data/metadata/literature_frequency_intensity_duration_metadata.csv,deviant_freq
+lit_deviance_min,5.0,percent,derived,"abs(dev-std)/std, method 37 (1000->1050)"
+lit_deviance_max,100.0,percent,derived,"abs(dev-std)/std, method 55 (1000->2000)"
+lit_soa_min,200,ms,data/metadata/literature_frequency_intensity_duration_metadata.csv,standard_soa
+lit_soa_max,1000,ms,data/metadata/literature_frequency_intensity_duration_metadata.csv,standard_soa
+lit_tone_duration_min,50,ms,data/metadata/literature_frequency_intensity_duration_metadata.csv,standard_dur
+lit_tone_duration_max,200,ms,data/metadata/literature_frequency_intensity_duration_metadata.csv,standard_dur
+lit_intensity_range,75-85,dB,data/metadata/literature_frequency_intensity_duration_metadata.csv,standard_int
+lit_tone_slots_min,29,tones per 30 s clip,scripts/00aa_generate_audio_stimuli.py,"compute_tone_slots(30000, dur, isi, 400.0)"
+lit_tone_slots_max,148,tones per 30 s clip,scripts/00aa_generate_audio_stimuli.py,"compute_tone_slots(30000, dur, isi, 400.0)"
+lit_n_models,7,models,outputs/results_soafix_full/mmn_s7_roi.csv,distinct model
+lit_cells_7_models,336,model x condition cells,outputs/results_soafix_full/mmn_s7_roi.csv,"rows at roi=FCz, dip_uv_threshold=0.75"
+lit_cells_6_models,288,model x condition cells,derived,48 * 6 (whisper-large excluded)
+novel_n_frequencies,43,frequencies,outputs/results_novel_search/grid_index.csv,distinct f_low U f_high
+novel_step,1.5,semitones,scripts/build_novel_grid_csv.py,SEMITONE_STEP
+novel_freq_min,200,Hz,outputs/results_novel_search/grid_index.csv,min(f_low)
+novel_freq_max,7611,Hz,outputs/results_novel_search/grid_index.csv,max(f_high)
+novel_step_deviance,8.8,percent,outputs/results_novel_search/grid_index.csv,min(pct_deviance)
+novel_max_deviance,3705.5,percent,outputs/results_novel_search/grid_index.csv,max(pct_deviance)
+novel_n_pairs,903,unordered pairs,outputs/results_novel_search/grid_index.csv,row count = 43*42/2
+novel_n_directions,2,directions per pair,scripts/build_novel_grid_csv.py,regular / counter
+novel_n_direction_instances,1806,conditions,outputs/results_novel_search/phase1_ranked_directions.csv,row count
+novel_soa,580,ms,scripts/build_novel_grid_csv.py,SOA_MS
+novel_tone_duration,80,ms,scripts/build_novel_grid_csv.py,TONE_DUR_MS
+novel_intensity,80,dB,scripts/build_novel_grid_csv.py,INTENSITY_DB
+novel_tone_slots,50,tones per 30 s clip,scripts/00aa_generate_audio_stimuli.py,"compute_tone_slots(30000, 80, 500, 0.0)"
+phase1_n_models,6,models,outputs/results_novel_search/phase1_mmn_s7_roi.csv,distinct model (whisper-large excluded)
+phase1_deviants_per_condition,1,deviant clip,outputs/insilico_mmn_predictions_novel/*/electrode_predictions__*.h5,n_deviants attr
+phase1_cells,10836,model x condition cells,derived,1806 * 6
+phase2_selection_rule,at least one direction with n_agree >= 5 of 6 models (S7 at FCz),text,scripts/novel_search_common.py,MIN_AGREE_PHASE2
+phase2_n_pairs,127,pairs,outputs/results_novel_search/phase2_selected_pairs.csv,row count
+phase2_n_pairs_at_6of6,17,pairs,outputs/results_novel_search/phase1_ranked_directions.csv,max n_agree per pair == 6
+phase2_n_pairs_at_5of6,110,pairs,outputs/results_novel_search/phase1_ranked_directions.csv,max n_agree per pair == 5
+phase2_n_qualifying_instances,131,direction-instances,outputs/results_novel_search/phase1_ranked_directions.csv,n_agree >= 5
+phase2_n_carried_reversals,123,direction-instances,derived,254 - 131
+phase2_n_conditions,254,conditions,outputs/novel_methods_phase2.txt,line count
+phase2_n_models,6,models,outputs/results_novel_search/phase2_mmn_s7_roi.csv,distinct model
+phase2_cells_6_models,1524,model x condition cells,derived,254 * 6
+phase2_cells_7_models,1778,model x condition cells,derived,254 * 7 (hypothetical; whisper-large was not run)
+per_condition_n_standard_files,1,wav,scripts/00aa_generate_audio_stimuli.py,StimulusGrid.files_per_direction
+per_condition_n_deviant_files,15,wav,outputs/insilico_mmn_predictions_soafix/*/electrode_predictions__*.h5,n_deviants attr
+per_condition_trial_levels,3;5;7,N,scripts/00aa_generate_audio_stimuli.py,TRIAL_LEVELS
+per_condition_n_variations,5,variations per N,scripts/00aa_generate_audio_stimuli.py,NUM_VARIATIONS
+per_condition_total_wavs,16,wav,derived,1 + 3*5
+oddball_probability_N3,25.0,percent,scripts/00aa_generate_audio_stimuli.py,generate_deviant_sequence: 1/(N+1)
+oddball_probability_N5,16.7,percent,scripts/00aa_generate_audio_stimuli.py,generate_deviant_sequence: 1/(N+1)
+oddball_probability_N7,12.5,percent,scripts/00aa_generate_audio_stimuli.py,generate_deviant_sequence: 1/(N+1)
+mmn_readout_site,FCz,electrode,scripts/novel_search_common.py,ROI
+mmn_readout_definition,mean(15 deviants) - standard,text,scripts/insilico_mmn.py,finalize_method
+mmn_baseline_window,-3 x SOA to 0 relative to final-tone onset,text,scripts/insilico_mmn.py,finalize_method baseline_start_mult/-end_mult
+mmn_scoring_window,100-240,ms,scripts/insilico_mmn.py,finalize_method mmn_win
+mmn_s7_uv_floor,0.75,microvolts,scripts/novel_search_common.py,DIP_UV_THRESHOLD
